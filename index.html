@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="color-scheme" content="light" />
+<title>Data Entry</title>
+<style>
+  :root {
+    --bg: #f2f2f7;
+    --card: #ffffff;
+    --text: #1c1c1e;
+    --muted: #8e8e93;
+    --sep: #e5e5ea;
+    --blue: #007aff;
+    --green: #34c759;
+    --orange: #ff9500;
+    --red: #ff3b30;
+    --field: #f2f2f7;
+    --shadow: 0 1px 3px rgba(0,0,0,0.06);
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+    --tabbar-h: 56px;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+    font-size: 17px;
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    min-height: 100vh;
+    padding-top: calc(var(--safe-top) + 8px);
+    padding-bottom: calc(var(--safe-bottom) + var(--tabbar-h) + 12px);
+  }
+  .wrap { max-width: 480px; margin: 0 auto; padding: 0 16px; }
+
+  header { padding: 8px 4px 18px; }
+  h1 { font-size: 32px; font-weight: 700; margin: 0; letter-spacing: -0.5px; }
+  .sub { color: var(--muted); font-size: 15px; margin-top: 3px; }
+
+  /* Views */
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* Segmented type selector */
+  .seg {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    margin-bottom: 22px;
+  }
+  .seg button {
+    appearance: none; border: none; cursor: pointer;
+    background: var(--card); color: var(--text);
+    border-radius: 16px; padding: 18px 12px;
+    font-size: 17px; font-weight: 600;
+    box-shadow: var(--shadow);
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    border: 2px solid transparent;
+    transition: transform .08s ease, border-color .15s ease;
+  }
+  .seg button .ic { font-size: 26px; }
+  .seg button:active { transform: scale(0.97); }
+  .seg button.on[data-type="delivery"] { border-color: var(--blue); color: var(--blue); }
+  .seg button.on[data-type="inventory"] { border-color: var(--orange); color: var(--orange); }
+
+  .group-label { font-size: 13px; color: var(--muted); font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.4px; margin: 0 4px 8px; }
+
+  .card {
+    background: var(--card); border-radius: 16px; box-shadow: var(--shadow);
+    overflow: hidden; margin-bottom: 22px;
+  }
+  .row {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 16px; min-height: 52px; gap: 12px;
+    border-bottom: 1px solid var(--sep);
+  }
+  .row:last-child { border-bottom: none; }
+  .row .lbl { font-size: 17px; flex-shrink: 0; }
+  .row input[type="datetime-local"] {
+    appearance: none; border: none; background: transparent; color: var(--text);
+    font-family: inherit; font-size: 17px; text-align: right; flex: 1;
+    min-width: 0;
+  }
+
+  /* Location pills */
+  .pills { display: flex; gap: 8px; }
+  .pill {
+    appearance: none; border: none; cursor: pointer;
+    background: var(--field); color: var(--text);
+    padding: 9px 16px; border-radius: 999px; font-size: 15px; font-weight: 600;
+    transition: transform .08s ease;
+  }
+  .pill:active { transform: scale(0.95); }
+  .pill.on { background: var(--blue); color: #fff; }
+
+  /* Stepper amounts */
+  .amt { display: flex; align-items: center; gap: 14px; }
+  .amt .step {
+    width: 34px; height: 34px; border-radius: 999px; border: none; cursor: pointer;
+    background: var(--field); color: var(--text);
+    font-size: 22px; font-weight: 500; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .amt .step:active { background: var(--sep); }
+  .amt .val {
+    width: 60px; text-align: center; font-size: 19px; font-weight: 600;
+    border: none; background: transparent; color: var(--text); font-family: inherit;
+  }
+  .amt .val::-webkit-outer-spin-button,
+  .amt .val::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .amt .val { -moz-appearance: textfield; }
+
+  .submit {
+    width: 100%; appearance: none; border: none; cursor: pointer;
+    background: var(--blue); color: #fff; font-size: 18px; font-weight: 700;
+    padding: 17px; border-radius: 16px;
+    box-shadow: 0 6px 20px rgba(0,122,255,0.3);
+    transition: transform .08s ease, opacity .15s ease;
+  }
+  .submit:active { transform: scale(0.98); }
+
+  .hint { color: var(--muted); font-size: 13px; margin: -14px 4px 22px; }
+
+  /* ---- Database view ---- */
+  .db-entry {
+    background: var(--card); border-radius: 16px; box-shadow: var(--shadow);
+    padding: 14px 16px; margin-bottom: 12px;
+  }
+  .db-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
+  .db-type {
+    font-size: 13px; font-weight: 700; padding: 4px 10px; border-radius: 8px;
+    display: inline-flex; align-items: center; gap: 5px;
+  }
+  .db-type.delivery { background: rgba(0,122,255,0.12); color: var(--blue); }
+  .db-type.inventory { background: rgba(255,149,0,0.14); color: var(--orange); }
+  .db-when { font-size: 13px; color: var(--muted); text-align: right; }
+  .db-loc { font-size: 14px; color: var(--muted); margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; gap: 5px; }
+  .db-loc .loc-name { display: flex; align-items: center; gap: 5px; }
+  .db-amts { display: flex; flex-wrap: wrap; gap: 8px; }
+  .db-chip {
+    background: var(--field); border-radius: 10px; padding: 7px 11px;
+    font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px;
+  }
+  .db-chip .n { color: var(--blue); }
+  .db-empty { text-align: center; color: var(--muted); padding: 60px 20px; }
+  .db-empty .big { font-size: 44px; margin-bottom: 12px; }
+  .db-day { font-size: 13px; color: var(--muted); font-weight: 600;
+    text-transform: uppercase; letter-spacing: 0.4px; margin: 18px 4px 10px; }
+  .db-day:first-child { margin-top: 4px; }
+
+  /* ---- Tab bar ---- */
+  .tabbar {
+    position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
+    height: calc(var(--tabbar-h) + var(--safe-bottom));
+    padding-bottom: var(--safe-bottom);
+    background: rgba(255,255,255,0.92);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    backdrop-filter: saturate(180%) blur(20px);
+    border-top: 1px solid var(--sep);
+    display: flex;
+  }
+  .tabbar button {
+    flex: 1; appearance: none; border: none; background: none; cursor: pointer;
+    color: var(--muted); font-family: inherit;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
+    font-size: 11px; font-weight: 600;
+  }
+  .tabbar button .tic { font-size: 22px; line-height: 1; }
+  .tabbar button.on { color: var(--blue); }
+
+  /* ---- Confirmation sheet ---- */
+  .scrim {
+    position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,0.4);
+    opacity: 0; pointer-events: none; transition: opacity .25s ease;
+    display: flex; align-items: flex-end; justify-content: center;
+  }
+  .scrim.show { opacity: 1; pointer-events: auto; }
+  .sheet {
+    width: 100%; max-width: 480px;
+    background: var(--card); border-radius: 22px 22px 0 0;
+    padding: 22px 20px calc(var(--safe-bottom) + 20px);
+    transform: translateY(100%); transition: transform .28s cubic-bezier(.2,.8,.2,1);
+  }
+  .scrim.show .sheet { transform: translateY(0); }
+  .sheet h2 { font-size: 20px; font-weight: 700; margin: 0 0 4px; text-align: center; }
+  .sheet .warn { font-size: 13px; color: var(--muted); text-align: center; margin-bottom: 18px; }
+  .sheet .sum {
+    background: var(--field); border-radius: 14px; padding: 4px 14px; margin-bottom: 20px;
+  }
+  .sheet .sum .l {
+    display: flex; justify-content: space-between; gap: 12px; padding: 11px 0;
+    border-bottom: 1px solid var(--sep); font-size: 15px;
+  }
+  .sheet .sum .l:last-child { border-bottom: none; }
+  .sheet .sum .l .k { color: var(--muted); }
+  .sheet .sum .l .v { font-weight: 600; text-align: right; }
+  .sheet .actions { display: flex; flex-direction: column; gap: 10px; }
+  .btn-primary {
+    appearance: none; border: none; cursor: pointer; width: 100%;
+    background: var(--blue); color: #fff; font-size: 18px; font-weight: 700;
+    padding: 16px; border-radius: 15px; font-family: inherit;
+  }
+  .btn-primary:active { transform: scale(0.98); }
+  .btn-ghost {
+    appearance: none; border: none; cursor: pointer; width: 100%;
+    background: transparent; color: var(--muted); font-size: 17px; font-weight: 600;
+    padding: 12px; font-family: inherit;
+  }
+  .btn-danger {
+    appearance: none; border: none; cursor: pointer; width: 100%;
+    background: var(--red); color: #fff; font-size: 18px; font-weight: 700;
+    padding: 16px; border-radius: 15px; font-family: inherit;
+  }
+  .btn-danger:active { transform: scale(0.98); }
+
+  /* Delete alert (centered) */
+  .scrim.alert { align-items: center; padding: 0 28px; }
+  .alert-box {
+    width: 100%; max-width: 360px; background: var(--card);
+    border-radius: 20px; padding: 22px 20px 20px;
+    transform: scale(0.92); transition: transform .22s ease;
+  }
+  .scrim.alert.show .alert-box { transform: scale(1); }
+  .alert-box h2 { font-size: 19px; font-weight: 700; margin: 0 0 6px; text-align: center; }
+  .alert-box p { font-size: 14px; color: var(--muted); margin: 0 0 16px; text-align: center; line-height: 1.4; }
+  .alert-box input {
+    width: 100%; box-sizing: border-box; padding: 13px 14px; font-size: 17px;
+    border: 1px solid var(--sep); border-radius: 12px; background: var(--field);
+    color: var(--text); font-family: inherit; margin-bottom: 6px;
+  }
+  .alert-box input:focus { outline: none; border-color: var(--blue); }
+  .alert-err { color: var(--red); font-size: 13px; min-height: 18px; margin-bottom: 10px; text-align: center; }
+
+  /* Delete button on entries */
+  .db-del {
+    appearance: none; border: none; cursor: pointer; background: var(--field);
+    color: var(--red); font-size: 15px; width: 32px; height: 32px; border-radius: 999px;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .db-del:active { background: var(--sep); }
+
+  /* Toast */
+  .toast {
+    position: fixed; left: 50%; bottom: calc(var(--safe-bottom) + var(--tabbar-h) + 18px);
+    transform: translateX(-50%) translateY(20px);
+    background: var(--green); color: #fff; font-weight: 600; font-size: 15px;
+    padding: 13px 22px; border-radius: 14px; box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+    opacity: 0; pointer-events: none; transition: all .3s ease; z-index: 70;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+</style>
+</head>
+<body>
+
+<!-- ===== ENTRY VIEW ===== -->
+<div class="view active" id="view-entry">
+  <div class="wrap">
+    <header>
+      <h1>New Entry</h1>
+      <div class="sub" id="todayLabel">—</div>
+    </header>
+
+    <form id="form" autocomplete="off">
+      <div class="seg" role="tablist" aria-label="Entry type">
+        <button type="button" class="on" data-type="delivery" aria-pressed="true">
+          <span class="ic">🚚</span><span>Delivery</span>
+        </button>
+        <button type="button" data-type="inventory" aria-pressed="false">
+          <span class="ic">📦</span><span>Inventory</span>
+        </button>
+      </div>
+
+      <div class="group-label">Details</div>
+      <div class="card">
+        <div class="row">
+          <span class="lbl">Date &amp; time</span>
+          <input type="datetime-local" id="datetime" />
+        </div>
+        <div class="row">
+          <span class="lbl">Location</span>
+          <div class="pills" id="locPills">
+            <button type="button" class="pill on" data-loc="La Mirada">La Mirada</button>
+            <button type="button" class="pill" data-loc="Stanton">Stanton</button>
+          </div>
+        </div>
+      </div>
+      <div class="hint">Defaults to now (PST). Adjust for a future entry.</div>
+
+      <div class="group-label">Amount</div>
+      <div class="card" id="amounts">
+        <div class="row">
+          <span class="lbl">🍋 Lemon Poppy</span>
+          <div class="amt" data-product="Lemon Poppy">
+            <button type="button" class="step minus">−</button>
+            <input class="val" type="number" inputmode="numeric" value="0" min="0" />
+            <button type="button" class="step plus">+</button>
+          </div>
+        </div>
+        <div class="row">
+          <span class="lbl">🧂 Sea Salt</span>
+          <div class="amt" data-product="Sea Salt">
+            <button type="button" class="step minus">−</button>
+            <input class="val" type="number" inputmode="numeric" value="0" min="0" />
+            <button type="button" class="step plus">+</button>
+          </div>
+        </div>
+        <div class="row">
+          <span class="lbl">💜 Ube</span>
+          <div class="amt" data-product="Ube">
+            <button type="button" class="step minus">−</button>
+            <input class="val" type="number" inputmode="numeric" value="0" min="0" />
+            <button type="button" class="step plus">+</button>
+          </div>
+        </div>
+      </div>
+
+      <button type="submit" class="submit" id="submitBtn">Submit Entry</button>
+    </form>
+  </div>
+</div>
+
+<!-- ===== DATABASE VIEW ===== -->
+<div class="view" id="view-db">
+  <div class="wrap">
+    <header>
+      <h1>Database</h1>
+      <div class="sub" id="dbCount">—</div>
+    </header>
+    <div id="dbList"></div>
+  </div>
+</div>
+
+<!-- ===== Tab bar ===== -->
+<nav class="tabbar">
+  <button data-tab="entry" class="on"><span class="tic">➕</span><span>New Entry</span></button>
+  <button data-tab="db"><span class="tic">🗂️</span><span>Database</span></button>
+</nav>
+
+<!-- ===== Confirmation sheet ===== -->
+<div class="scrim" id="scrim">
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+    <h2 id="sheetTitle">Confirm entry</h2>
+    <div class="warn">⚠️ Entries can't be edited or deleted after submitting.</div>
+    <div class="sum" id="sheetSum"></div>
+    <div class="actions">
+      <button class="btn-primary" id="confirmBtn">Confirm &amp; Submit</button>
+      <button class="btn-ghost" id="cancelBtn">Go back</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">✓ <span id="toastMsg">Entry submitted</span></div>
+
+<script>
+  const STORE_KEY = 'dataEntries.v1';
+  const PRODUCTS = ['Lemon Poppy', 'Sea Salt', 'Ube'];
+  const PRODUCT_ICON = { 'Lemon Poppy': '🍋', 'Sea Salt': '🧂', 'Ube': '💜' };
+  const state = { type: 'delivery', location: 'La Mirada' };
+
+  // ---- PST default datetime ----
+  function nowPST() {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+      timeZone: 'America/Los_Angeles',
+      year: 'numeric', month: '2-digit', day: '2-digit',
+      hour: '2-digit', minute: '2-digit', hour12: false
+    }).formatToParts(new Date());
+    const g = t => parts.find(p => p.type === t).value;
+    return `${g('year')}-${g('month')}-${g('day')}T${g('hour')}:${g('minute')}`;
+  }
+  const dt = document.getElementById('datetime');
+  dt.value = nowPST();
+  document.getElementById('todayLabel').textContent =
+    new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/Los_Angeles', weekday: 'long', month: 'long', day: 'numeric'
+    }).format(new Date()) + ' · PST';
+
+  // ---- Type selector ----
+  document.querySelectorAll('.seg button').forEach(b => {
+    b.addEventListener('click', () => {
+      document.querySelectorAll('.seg button').forEach(x => {
+        x.classList.remove('on'); x.setAttribute('aria-pressed', 'false');
+      });
+      b.classList.add('on'); b.setAttribute('aria-pressed', 'true');
+      state.type = b.dataset.type;
+    });
+  });
+
+  // ---- Location pills ----
+  document.getElementById('locPills').addEventListener('click', e => {
+    const p = e.target.closest('.pill'); if (!p) return;
+    document.querySelectorAll('#locPills .pill').forEach(x => x.classList.remove('on'));
+    p.classList.add('on');
+    state.location = p.dataset.loc;
+  });
+
+  // ---- Steppers ----
+  document.getElementById('amounts').addEventListener('click', e => {
+    const btn = e.target.closest('.step'); if (!btn) return;
+    const input = btn.parentElement.querySelector('.val');
+    let v = parseInt(input.value || '0', 10);
+    v = btn.classList.contains('plus') ? v + 1 : Math.max(0, v - 1);
+    input.value = v;
+    if (navigator.vibrate) navigator.vibrate(8);
+  });
+  document.querySelectorAll('.amt .val').forEach(inp => {
+    inp.addEventListener('input', () => { inp.value = inp.value.replace(/[^0-9]/g, ''); });
+  });
+
+  // ---- Read current form into a payload ----
+  function readForm() {
+    const amounts = {};
+    document.querySelectorAll('.amt').forEach(a => {
+      amounts[a.dataset.product] = parseInt(a.querySelector('.val').value || '0', 10);
+    });
+    return {
+      type: state.type,
+      datetime: dt.value,
+      timezone: 'America/Los_Angeles',
+      location: state.location,
+      amounts
+    };
+  }
+
+  function fmtWhen(iso) {
+    // iso is "YYYY-MM-DDTHH:MM" (local PST wall-clock)
+    const [d, t] = iso.split('T');
+    const [y, mo, day] = d.split('-').map(Number);
+    const [h, mi] = t.split(':').map(Number);
+    const dateObj = new Date(y, mo - 1, day, h, mi);
+    return new Intl.DateTimeFormat('en-US', {
+      month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'
+    }).format(dateObj);
+  }
+  function dayKey(iso) {
+    const [y, mo, day] = iso.split('T')[0].split('-').map(Number);
+    return new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
+      .format(new Date(y, mo - 1, day));
+  }
+
+  // ---- Confirmation sheet ----
+  const scrim = document.getElementById('scrim');
+  let pending = null;
+
+  document.getElementById('form').addEventListener('submit', e => {
+    e.preventDefault();
+    pending = readForm();
+    const cap = s => s[0].toUpperCase() + s.slice(1);
+    const amtLines = PRODUCTS
+      .filter(p => pending.amounts[p] > 0)
+      .map(p => `<div class="l"><span class="k">${PRODUCT_ICON[p]} ${p}</span><span class="v">${pending.amounts[p]}</span></div>`)
+      .join('') || `<div class="l"><span class="k">Amounts</span><span class="v">All zero</span></div>`;
+    document.getElementById('sheetSum').innerHTML =
+      `<div class="l"><span class="k">Type</span><span class="v">${cap(pending.type)}</span></div>` +
+      `<div class="l"><span class="k">When</span><span class="v">${fmtWhen(pending.datetime)} PST</span></div>` +
+      `<div class="l"><span class="k">Location</span><span class="v">${pending.location}</span></div>` +
+      amtLines;
+    scrim.classList.add('show');
+  });
+
+  document.getElementById('cancelBtn').addEventListener('click', () => {
+    scrim.classList.remove('show'); pending = null;
+  });
+  scrim.addEventListener('click', e => {
+    if (e.target === scrim) { scrim.classList.remove('show'); pending = null; }
+  });
+
+  document.getElementById('confirmBtn').addEventListener('click', () => {
+    if (!pending) return;
+    const record = { ...pending, submittedAt: new Date().toISOString() };
+
+    // TODO: POST `record` to backend -> Notion. Stored locally for now.
+    const all = loadEntries();
+    all.push(record);
+    localStorage.setItem(STORE_KEY, JSON.stringify(all));
+    console.log('SUBMIT', JSON.stringify(record, null, 2));
+
+    scrim.classList.remove('show');
+    pending = null;
+
+    const toast = document.getElementById('toast');
+    document.getElementById('toastMsg').textContent =
+      `${record.type[0].toUpperCase()+record.type.slice(1)} saved · ${record.location}`;
+    toast.classList.add('show');
+    if (navigator.vibrate) navigator.vibrate([10, 40, 10]);
+    setTimeout(() => toast.classList.remove('show'), 2200);
+
+    // reset for next entry
+    document.querySelectorAll('.amt .val').forEach(v => v.value = 0);
+    dt.value = nowPST();
+    renderDB();
+  });
+
+  // ---- Storage + Database view ----
+  function loadEntries() {
+    try { return JSON.parse(localStorage.getItem(STORE_KEY)) || []; }
+    catch { return []; }
+  }
+
+  function renderDB() {
+    const list = document.getElementById('dbList');
+    const entries = loadEntries().slice().sort((a, b) => b.datetime.localeCompare(a.datetime));
+    document.getElementById('dbCount').textContent =
+      entries.length ? `${entries.length} ${entries.length === 1 ? 'entry' : 'entries'}` : 'No entries yet';
+
+    if (!entries.length) {
+      list.innerHTML = `<div class="db-empty"><div class="big">🗂️</div>Nothing submitted yet.<br>Your entries will appear here.</div>`;
+      return;
+    }
+
+    let html = '', lastDay = null;
+    for (const e of entries) {
+      const dk = dayKey(e.datetime);
+      if (dk !== lastDay) { html += `<div class="db-day">${dk}</div>`; lastDay = dk; }
+      const cap = s => s[0].toUpperCase() + s.slice(1);
+      const chips = PRODUCTS.filter(p => e.amounts[p] > 0)
+        .map(p => `<span class="db-chip">${PRODUCT_ICON[p]} ${p} <span class="n">${e.amounts[p]}</span></span>`)
+        .join('') || `<span class="db-chip" style="color:var(--muted)">No amounts</span>`;
+      html +=
+        `<div class="db-entry">
+           <div class="db-head">
+             <span class="db-type ${e.type}">${e.type==='delivery'?'🚚':'📦'} ${cap(e.type)}</span>
+             <span class="db-when">${fmtWhen(e.datetime)}</span>
+           </div>
+           <div class="db-loc">
+             <span class="loc-name">📍 ${e.location}</span>
+             <button class="db-del" data-id="${e.submittedAt || e.datetime}" aria-label="Delete entry" title="Delete">🗑️</button>
+           </div>
+           <div class="db-amts">${chips}</div>
+         </div>`;
+    }
+    list.innerHTML = html;
+  }
+
+  // ---- Tab switching ----
+  document.querySelector('.tabbar').addEventListener('click', e => {
+    const btn = e.target.closest('button'); if (!btn) return;
+    const tab = btn.dataset.tab;
+    document.querySelectorAll('.tabbar button').forEach(b => b.classList.toggle('on', b === btn));
+    document.getElementById('view-entry').classList.toggle('active', tab === 'entry');
+    document.getElementById('view-db').classList.toggle('active', tab === 'db');
+    if (tab === 'db') renderDB();
+    window.scrollTo(0, 0);
+  });
+
+  renderDB();
+</script>
+</body>
+</html>
