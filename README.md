@@ -23,40 +23,48 @@ python3 -m http.server 4173
 
 ## Notion sync
 
-Entries are saved on the device first, then synced to the Notion **Sales** database
-via a small serverless function (`api/sync.js`) so the Notion token never touches the
-client. Each entry shows **✓ Synced to Notion** or **⟳ Not synced — tap to retry**;
-unsynced entries retry automatically when the Database tab opens.
+Entries are saved on the device first, then synced to Notion via small serverless
+functions so the Notion token never touches the client.
 
-Field mapping (app → Notion):
+- `api/sync.js` — creates the row, **routing by type**: Delivery entries go to the
+  **Deliveries** database, Inventory entries go to the **Inventory** database.
+- `api/tag-delete.js` — soft delete. The app's 🗑️ (password `kairos`) doesn't remove
+  anything; it ticks the row's **Tagged for deletion** checkbox in Notion and greys
+  the entry in the app so it can be reviewed before any real removal.
+
+Each entry shows **✓ Synced to Notion**, **⟳ Not synced — tap to retry**, or
+**🏷️ Tagged for deletion**. Unsynced/untagged actions retry automatically when the
+Database tab opens.
+
+Field mapping (app → both databases):
 
 | App | Notion column |
 |-----|---------------|
-| Type (Delivery/Inventory) | `Type` |
-| Location | `Select` |
+| Location | `Location` |
 | Date | `Date` (date only) |
 | Lemon Poppy | `Lemon Poppy` |
 | Sea Salt | `Sea Salt Butter` |
 | Ube | `Ube` |
 
-(Matcha and Chocolate are written as 0 — not collected by the app.)
+The Delivery/Inventory choice selects *which database* the row lands in (no Type column).
 
 ### Deploy the sync backend (Vercel)
 
 1. Create a Notion **internal integration** at <https://www.notion.so/my-integrations>,
    copy its secret token.
-2. Open the **Sales** database in Notion → ••• menu → **Connections** → add your integration
-   (this grants it write access).
+2. In Notion, open **both** the **Deliveries** and **Inventory** databases → ••• menu →
+   **Connections** → add your integration (grants write access to each).
 3. Import this repo into <https://vercel.com> (New Project → import `data-entry-app`).
-4. In the Vercel project, add an environment variable: `NOTION_TOKEN` = your integration token.
-   (Optional: `APP_KEY` to require a shared key header; `NOTION_DATABASE_ID` to override the target DB.)
-5. Deploy. Your app is now at `https://<project>.vercel.app` with sync working out of the box
-   (`SYNC_ENDPOINT` is `/api/sync`, same origin).
+4. Add a Vercel environment variable: `NOTION_TOKEN` = your integration token.
+   The database ids are baked in as defaults; override with `NOTION_DELIVERIES_DB` /
+   `NOTION_INVENTORY_DB` if needed. Optional `APP_KEY` requires a shared `x-app-key` header.
+5. Deploy. The app is now at `https://<project>.vercel.app` with sync + soft-delete working
+   (`SYNC_ENDPOINT` / `TAG_DELETE_ENDPOINT` are same-origin `/api/...`).
 
-If you instead keep the app on GitHub Pages, set `SYNC_ENDPOINT` in `index.html` to the
-absolute URL `https://<project>.vercel.app/api/sync`.
+If you keep the app on GitHub Pages instead, point `SYNC_ENDPOINT` and `TAG_DELETE_ENDPOINT`
+in `index.html` at the absolute `https://<project>.vercel.app/api/...` URLs.
 
 ## Status
 
-Frontend complete and verified. Notion sync implemented (`api/sync.js`); deploy the
-backend with the steps above to turn it on.
+Frontend complete and verified. Two routed Notion databases created; sync + soft-delete
+implemented. Deploy the Vercel backend (steps above) to turn it on live.

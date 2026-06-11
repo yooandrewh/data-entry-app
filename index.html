@@ -253,6 +253,9 @@
   .db-sync.ok { color: var(--green); }
   .db-sync.pending { color: var(--muted); }
   .db-sync.retry { color: var(--orange); background: rgba(255,149,0,0.12); cursor: pointer; }
+  .db-sync.tagged { color: var(--red); background: rgba(255,59,48,0.1); }
+  .db-entry.tagged { opacity: 0.6; }
+  .db-entry.tagged .db-type { filter: grayscale(0.4); }
 
   /* Toast */
   .toast {
@@ -368,12 +371,12 @@
 <!-- ===== Delete confirmation (password) ===== -->
 <div class="scrim alert" id="delScrim">
   <div class="alert-box" role="dialog" aria-modal="true" aria-labelledby="delTitle">
-    <h2 id="delTitle">Delete entry?</h2>
-    <p>This permanently removes the entry and can't be undone. Enter the password to confirm.</p>
+    <h2 id="delTitle">Tag for deletion?</h2>
+    <p>This flags the entry for deletion in Notion — nothing is removed, so it can be reviewed first. Enter the password to confirm.</p>
     <input type="password" id="delPass" placeholder="Password" autocomplete="off" autocapitalize="off" autocorrect="off" />
     <div class="alert-err" id="delErr"></div>
     <div class="actions">
-      <button class="btn-danger" id="delConfirmBtn">Delete</button>
+      <button class="btn-danger" id="delConfirmBtn">Tag for deletion</button>
       <button class="btn-ghost" id="delCancelBtn">Cancel</button>
     </div>
   </div>
@@ -394,6 +397,7 @@
   // this to your absolute Vercel URL, e.g. 'https://your-project.vercel.app/api/sync'.
   // Leave '' to disable syncing (entries stay only on this device).
   const SYNC_ENDPOINT = '/api/sync';
+  const TAG_DELETE_ENDPOINT = '/api/tag-delete';
 
   // ---- PST default datetime ----
   function nowPST() {
@@ -536,15 +540,18 @@
   }
 
   // ---- Notion sync ----
-  function markSynced(id, ok) {
+  const keyOf = e => e.submittedAt || e.datetime;
+  function patchEntry(id, patch) {
     const all = loadEntries();
-    const it = all.find(x => (x.submittedAt || x.datetime) === id);
-    if (it) { it.synced = ok; localStorage.setItem(STORE_KEY, JSON.stringify(all)); }
-    renderDB();
+    const it = all.find(x => keyOf(x) === id);
+    if (it) { Object.assign(it, patch); localStorage.setItem(STORE_KEY, JSON.stringify(all)); }
+    return it;
   }
+
+  // Create the row in Notion (routed to Deliveries/Inventory by the backend).
   async function syncEntry(rec) {
     if (!SYNC_ENDPOINT) { renderDB(); return; }
-    const id = rec.submittedAt || rec.datetime;
+    const id = keyOf(rec);
     try {
       const r = await fetch(SYNC_ENDPOINT, {
         method: 'POST',
@@ -552,14 +559,52 @@
         body: JSON.stringify(rec),
       });
       if (!r.ok) throw new Error('HTTP ' + r.status);
-      markSynced(id, true);
+      const data = await r.json().catch(() => ({}));
+      patchEntry(id, { synced: true, notionId: data.id || rec.notionId, notionUrl: data.url || rec.notionUrl });
+      renderDB();
+      // If the user already asked to delete this before it finished syncing,
+      // push the deletion tag now that we have a Notion page id.
+      const updated = loadEntries().find(x => keyOf(x) === id);
+      if (updated && updated.taggedForDeletion && !updated.tagPushed) pushTag(updated);
     } catch (err) {
-      markSynced(id, false);
+      patchEntry(id, { synced: false });
+      renderDB();
     }
   }
+
+  // Mark the Notion row's "Tagged for deletion" checkbox (soft delete).
+  async function pushTag(rec) {
+    const id = keyOf(rec);
+    if (!TAG_DELETE_ENDPOINT || !rec.notionId) { renderDB(); return; }
+    try {
+      const r = await fetch(TAG_DELETE_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pageId: rec.notionId, tagged: true }),
+      });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      patchEntry(id, { tagPushed: true });
+    } catch (err) {
+      patchEntry(id, { tagPushed: false });
+    }
+    renderDB();
+  }
+
+  function tagForDeletion(rec) {
+    const id = keyOf(rec);
+    patchEntry(id, { taggedForDeletion: true });
+    renderDB();
+    const updated = loadEntries().find(x => keyOf(x) === id);
+    if (updated && updated.notionId) pushTag(updated);
+    // If not synced yet, the tag is pushed automatically once syncEntry completes.
+  }
+
   function retryUnsynced() {
     if (!SYNC_ENDPOINT) return;
-    loadEntries().filter(e => !e.synced).forEach(syncEntry);
+    loadEntries().forEach(e => {
+      if (!e.synced) syncEntry(e);
+      else if (e.taggedForDeletion && !e.tagPushed) pushTag(e);
+    });
   }
 
   function renderDB() {
@@ -582,24 +627,30 @@
         .map(p => `<span class="db-chip">${PRODUCT_ICON[p]} ${p} <span class="n">${e.amounts[p]}</span></span>`)
         .join('') || `<span class="db-chip" style="color:var(--muted)">No amounts</span>`;
       const id = esc(e.submittedAt || e.datetime);
-      let sync = '';
-      if (SYNC_ENDPOINT) {
-        sync = e.synced
+      let footer = '';
+      if (e.taggedForDeletion) {
+        const pending = (TAG_DELETE_ENDPOINT && e.notionId && !e.tagPushed) ? ' (syncing…)' : '';
+        footer = `<div class="db-sync tagged">🏷️ Tagged for deletion${pending}</div>`;
+      } else if (SYNC_ENDPOINT) {
+        footer = e.synced
           ? `<div class="db-sync ok">✓ Synced to Notion</div>`
           : `<button class="db-sync retry" data-retry="${id}">⟳ Not synced — tap to retry</button>`;
       }
+      const trash = e.taggedForDeletion
+        ? ''
+        : `<button class="db-del" data-id="${id}" aria-label="Delete entry" title="Delete">🗑️</button>`;
       html +=
-        `<div class="db-entry">
+        `<div class="db-entry${e.taggedForDeletion ? ' tagged' : ''}">
            <div class="db-head">
              <span class="db-type ${e.type}">${e.type==='delivery'?'🚚':'📦'} ${cap(e.type)}</span>
              <span class="db-when">${fmtWhen(e.datetime)}</span>
            </div>
            <div class="db-loc">
              <span class="loc-name">📍 ${esc(e.location)}</span>
-             <button class="db-del" data-id="${id}" aria-label="Delete entry" title="Delete">🗑️</button>
+             ${trash}
            </div>
            <div class="db-amts">${chips}</div>
-           ${sync}
+           ${footer}
          </div>`;
     }
     list.innerHTML = html;
@@ -660,16 +711,11 @@
       if (navigator.vibrate) navigator.vibrate([20, 40, 20]);
       return;
     }
-    const all = loadEntries();
-    const idx = all.findIndex(x => (x.submittedAt || x.datetime) === pendingDeleteId);
-    if (idx > -1) {
-      all.splice(idx, 1);
-      localStorage.setItem(STORE_KEY, JSON.stringify(all));
-    }
+    const rec = loadEntries().find(x => (x.submittedAt || x.datetime) === pendingDeleteId);
     closeDel();
-    renderDB();
+    if (rec) tagForDeletion(rec);   // soft delete: flag in Notion, keep visible
     const toast = document.getElementById('toast');
-    document.getElementById('toastMsg').textContent = 'Entry deleted';
+    document.getElementById('toastMsg').textContent = 'Tagged for deletion';
     toast.classList.add('show');
     if (navigator.vibrate) navigator.vibrate(15);
     setTimeout(() => toast.classList.remove('show'), 1800);

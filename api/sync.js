@@ -1,16 +1,20 @@
 // Vercel serverless function: receives an entry from the app and creates a row
-// in the Notion "Sales" database. The Notion token lives ONLY here (server-side),
-// never in the client.
+// in the matching Notion database — Deliveries or Inventory, routed by `type`.
+// The Notion token lives ONLY here (server-side), never in the client.
 //
 // Required env var (set in Vercel project settings):
 //   NOTION_TOKEN          - your Notion internal integration secret (ntn_... / secret_...)
-// Optional env vars:
-//   NOTION_DATABASE_ID    - defaults to the Sales database id below
+// Optional env vars (override the defaults below):
+//   NOTION_DELIVERIES_DB  - Deliveries database id
+//   NOTION_INVENTORY_DB   - Inventory database id
 //   APP_KEY               - if set, requests must send a matching "x-app-key" header
 
-const DEFAULT_DATABASE_ID = '46376427d7d383bf97240131fa5eda73'; // Sales
+const DB_BY_TYPE = {
+  delivery: process.env.NOTION_DELIVERIES_DB || '9600856eb32c44a99771dbec4acbcb5a',
+  inventory: process.env.NOTION_INVENTORY_DB || '7dc1fbfd6bed47539a7844eecc7e06f8',
+};
 
-// App product name -> Notion column name. Matcha/Chocolate stay 0 (not in app).
+// App product name -> Notion column name.
 const PRODUCT_MAP = {
   'Lemon Poppy': 'Lemon Poppy',
   'Sea Salt': 'Sea Salt Butter',
@@ -18,7 +22,6 @@ const PRODUCT_MAP = {
 };
 
 export default async function handler(req, res) {
-  // CORS — allow the GitHub Pages site (or any origin) to call this endpoint.
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-app-key');
@@ -39,22 +42,23 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Missing required fields (type, datetime, location)' });
     }
 
+    const databaseId = DB_BY_TYPE[String(type).toLowerCase()];
+    if (!databaseId) return res.status(400).json({ error: `Unknown type: ${type}` });
+
     const cap = (s) => String(s).charAt(0).toUpperCase() + String(s).slice(1);
     const a = amounts || {};
-    const typeLabel = cap(type);                 // "Delivery" | "Inventory"
-    const dateOnly = String(datetime).split('T')[0]; // "YYYY-MM-DD" (matches DB date display)
+    const dateOnly = String(datetime).split('T')[0]; // "YYYY-MM-DD"
 
     const properties = {
-      'notes': { title: [{ text: { content: `${typeLabel} — ${location}` } }] },
-      'Type': { select: { name: typeLabel } },
-      'Select': { select: { name: location } },
+      'notes': { title: [{ text: { content: `${cap(type)} — ${location}` } }] },
+      'Location': { select: { name: location } },
       'Date': { date: { start: dateOnly } },
+      'Tagged for deletion': { checkbox: false },
     };
     for (const [appName, notionName] of Object.entries(PRODUCT_MAP)) {
       properties[notionName] = { number: Number(a[appName]) || 0 };
     }
 
-    const databaseId = process.env.NOTION_DATABASE_ID || DEFAULT_DATABASE_ID;
     const r = await fetch('https://api.notion.com/v1/pages', {
       method: 'POST',
       headers: {
@@ -66,11 +70,9 @@ export default async function handler(req, res) {
     });
 
     const data = await r.json();
-    if (!r.ok) {
-      return res.status(r.status).json({ error: 'Notion API error', detail: data });
-    }
+    if (!r.ok) return res.status(r.status).json({ error: 'Notion API error', detail: data });
     return res.status(200).json({ ok: true, id: data.id, url: data.url });
   } catch (e) {
-    return res.status(500).json({ error: String(e && e.message || e) });
+    return res.status(500).json({ error: String((e && e.message) || e) });
   }
 }
