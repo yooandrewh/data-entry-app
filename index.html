@@ -492,9 +492,9 @@
       .map(p => `<div class="l"><span class="k">${PRODUCT_ICON[p]} ${p}</span><span class="v">${pending.amounts[p]}</span></div>`)
       .join('') || `<div class="l"><span class="k">Amounts</span><span class="v">All zero</span></div>`;
     document.getElementById('sheetSum').innerHTML =
-      `<div class="l"><span class="k">Type</span><span class="v">${cap(pending.type)}</span></div>` +
-      `<div class="l"><span class="k">When</span><span class="v">${fmtWhen(pending.datetime)} PST</span></div>` +
-      `<div class="l"><span class="k">Location</span><span class="v">${pending.location}</span></div>` +
+      `<div class="l"><span class="k">Type</span><span class="v">${esc(cap(pending.type))}</span></div>` +
+      `<div class="l"><span class="k">When</span><span class="v">${esc(fmtWhen(pending.datetime))} PST</span></div>` +
+      `<div class="l"><span class="k">Location</span><span class="v">${esc(pending.location)}</span></div>` +
       amtLines;
     scrim.classList.add('show');
   });
@@ -541,6 +541,8 @@
 
   // ---- Notion sync ----
   const keyOf = e => e.submittedAt || e.datetime;
+  const syncInFlight = new Set();   // entries whose create is currently running
+  const tagInFlight = new Set();    // entries whose tag is currently running
   function patchEntry(id, patch) {
     const all = loadEntries();
     const it = all.find(x => keyOf(x) === id);
@@ -552,23 +554,33 @@
   async function syncEntry(rec) {
     if (!SYNC_ENDPOINT) { renderDB(); return; }
     const id = keyOf(rec);
+    // Use the freshest stored copy so concurrent callers see up-to-date flags.
+    const current = loadEntries().find(x => keyOf(x) === id) || rec;
+    // Already created in Notion — never create a second row; just finish a pending tag.
+    if (current.synced) {
+      if (current.taggedForDeletion && !current.tagPushed) pushTag(current);
+      return;
+    }
+    if (syncInFlight.has(id)) return;   // a create is already running for this entry
+    syncInFlight.add(id);
     try {
       const r = await fetch(SYNC_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(rec),
+        body: JSON.stringify(current),
       });
       if (!r.ok) throw new Error('HTTP ' + r.status);
       const data = await r.json().catch(() => ({}));
       patchEntry(id, { synced: true, notionId: data.id || rec.notionId, notionUrl: data.url || rec.notionUrl });
       renderDB();
-      // If the user already asked to delete this before it finished syncing,
-      // push the deletion tag now that we have a Notion page id.
+      // If the user asked to delete this before it finished syncing, tag it now.
       const updated = loadEntries().find(x => keyOf(x) === id);
       if (updated && updated.taggedForDeletion && !updated.tagPushed) pushTag(updated);
     } catch (err) {
       patchEntry(id, { synced: false });
       renderDB();
+    } finally {
+      syncInFlight.delete(id);
     }
   }
 
@@ -576,6 +588,8 @@
   async function pushTag(rec) {
     const id = keyOf(rec);
     if (!TAG_DELETE_ENDPOINT || !rec.notionId) { renderDB(); return; }
+    if (tagInFlight.has(id)) return;
+    tagInFlight.add(id);
     try {
       const r = await fetch(TAG_DELETE_ENDPOINT, {
         method: 'POST',
@@ -586,8 +600,10 @@
       patchEntry(id, { tagPushed: true });
     } catch (err) {
       patchEntry(id, { tagPushed: false });
+    } finally {
+      tagInFlight.delete(id);
+      renderDB();
     }
-    renderDB();
   }
 
   function tagForDeletion(rec) {

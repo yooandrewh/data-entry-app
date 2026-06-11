@@ -21,6 +21,16 @@ const PRODUCT_MAP = {
   'Ube': 'Ube',
 };
 
+// Allowed locations (must match the Location select options in both databases).
+const ALLOWED_LOCATIONS = ['La Mirada', 'Stanton'];
+
+// Coerce an amount to a safe non-negative integer (caps absurd values).
+function cleanAmount(v) {
+  const n = Math.floor(Number(v));
+  if (!Number.isFinite(n) || n < 0) return 0;
+  return Math.min(n, 1000000);
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -45,9 +55,18 @@ export default async function handler(req, res) {
     const databaseId = DB_BY_TYPE[String(type).toLowerCase()];
     if (!databaseId) return res.status(400).json({ error: `Unknown type: ${type}` });
 
+    if (!ALLOWED_LOCATIONS.includes(location)) {
+      return res.status(400).json({ error: `Unknown location: ${location}` });
+    }
+
+    // datetime is "YYYY-MM-DDTHH:MM"; we store the date portion. Validate it.
+    const dateOnly = String(datetime).split('T')[0];
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateOnly)) {
+      return res.status(400).json({ error: `Invalid datetime: ${datetime}` });
+    }
+
     const cap = (s) => String(s).charAt(0).toUpperCase() + String(s).slice(1);
-    const a = amounts || {};
-    const dateOnly = String(datetime).split('T')[0]; // "YYYY-MM-DD"
+    const a = (amounts && typeof amounts === 'object') ? amounts : {};
 
     const properties = {
       'notes': { title: [{ text: { content: `${cap(type)} — ${location}` } }] },
@@ -56,7 +75,7 @@ export default async function handler(req, res) {
       'Tagged for deletion': { checkbox: false },
     };
     for (const [appName, notionName] of Object.entries(PRODUCT_MAP)) {
-      properties[notionName] = { number: Number(a[appName]) || 0 };
+      properties[notionName] = { number: cleanAmount(a[appName]) };
     }
 
     const r = await fetch('https://api.notion.com/v1/pages', {
