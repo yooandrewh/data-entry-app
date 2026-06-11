@@ -347,11 +347,25 @@
 <div class="scrim" id="scrim">
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
     <h2 id="sheetTitle">Confirm entry</h2>
-    <div class="warn">⚠️ Entries can't be edited or deleted after submitting.</div>
+    <div class="warn">⚠️ Double-check before submitting. Deleting later needs the password.</div>
     <div class="sum" id="sheetSum"></div>
     <div class="actions">
       <button class="btn-primary" id="confirmBtn">Confirm &amp; Submit</button>
       <button class="btn-ghost" id="cancelBtn">Go back</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Delete confirmation (password) ===== -->
+<div class="scrim alert" id="delScrim">
+  <div class="alert-box" role="dialog" aria-modal="true" aria-labelledby="delTitle">
+    <h2 id="delTitle">Delete entry?</h2>
+    <p>This permanently removes the entry and can't be undone. Enter the password to confirm.</p>
+    <input type="password" id="delPass" placeholder="Password" autocomplete="off" autocapitalize="off" autocorrect="off" />
+    <div class="alert-err" id="delErr"></div>
+    <div class="actions">
+      <button class="btn-danger" id="delConfirmBtn">Delete</button>
+      <button class="btn-ghost" id="delCancelBtn">Cancel</button>
     </div>
   </div>
 </div>
@@ -363,6 +377,8 @@
   const PRODUCTS = ['Lemon Poppy', 'Sea Salt', 'Ube'];
   const PRODUCT_ICON = { 'Lemon Poppy': '🍋', 'Sea Salt': '🧂', 'Ube': '💜' };
   const state = { type: 'delivery', location: 'La Mirada' };
+  const esc = s => String(s).replace(/[&<>"']/g, c =>
+    ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 
   // ---- PST default datetime ----
   function nowPST() {
@@ -529,8 +545,8 @@
              <span class="db-when">${fmtWhen(e.datetime)}</span>
            </div>
            <div class="db-loc">
-             <span class="loc-name">📍 ${e.location}</span>
-             <button class="db-del" data-id="${e.submittedAt || e.datetime}" aria-label="Delete entry" title="Delete">🗑️</button>
+             <span class="loc-name">📍 ${esc(e.location)}</span>
+             <button class="db-del" data-id="${esc(e.submittedAt || e.datetime)}" aria-label="Delete entry" title="Delete">🗑️</button>
            </div>
            <div class="db-amts">${chips}</div>
          </div>`;
@@ -547,6 +563,57 @@
     document.getElementById('view-db').classList.toggle('active', tab === 'db');
     if (tab === 'db') renderDB();
     window.scrollTo(0, 0);
+  });
+
+  // ---- Delete entry (password-gated) ----
+  // NOTE: a client-side password is only a deterrent — anyone can read it in the
+  // page source. Real protection needs server-side auth.
+  const DELETE_PASSWORD = 'kairos';
+  const delScrim = document.getElementById('delScrim');
+  const delPass = document.getElementById('delPass');
+  const delErr = document.getElementById('delErr');
+  let pendingDeleteId = null;
+
+  function closeDel() {
+    delScrim.classList.remove('show');
+    pendingDeleteId = null; delPass.value = ''; delErr.textContent = '';
+  }
+
+  document.getElementById('dbList').addEventListener('click', e => {
+    const btn = e.target.closest('.db-del'); if (!btn) return;
+    pendingDeleteId = btn.dataset.id;
+    delPass.value = ''; delErr.textContent = '';
+    delScrim.classList.add('show');
+    setTimeout(() => delPass.focus(), 200);
+  });
+
+  document.getElementById('delCancelBtn').addEventListener('click', closeDel);
+  delScrim.addEventListener('click', e => { if (e.target === delScrim) closeDel(); });
+  delPass.addEventListener('keydown', e => {
+    if (e.key === 'Enter') document.getElementById('delConfirmBtn').click();
+  });
+
+  document.getElementById('delConfirmBtn').addEventListener('click', () => {
+    if (pendingDeleteId == null) return;
+    if (delPass.value !== DELETE_PASSWORD) {
+      delErr.textContent = 'Incorrect password.';
+      delPass.value = '';
+      if (navigator.vibrate) navigator.vibrate([20, 40, 20]);
+      return;
+    }
+    const all = loadEntries();
+    const idx = all.findIndex(x => (x.submittedAt || x.datetime) === pendingDeleteId);
+    if (idx > -1) {
+      all.splice(idx, 1);
+      localStorage.setItem(STORE_KEY, JSON.stringify(all));
+    }
+    closeDel();
+    renderDB();
+    const toast = document.getElementById('toast');
+    document.getElementById('toastMsg').textContent = 'Entry deleted';
+    toast.classList.add('show');
+    if (navigator.vibrate) navigator.vibrate(15);
+    setTimeout(() => toast.classList.remove('show'), 1800);
   });
 
   renderDB();
