@@ -244,6 +244,15 @@
     display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   }
   .db-del:active { background: var(--sep); }
+  .db-sync {
+    appearance: none; font-family: inherit; border: none; cursor: default;
+    margin-top: 10px; font-size: 12px; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 9px; border-radius: 8px; background: transparent;
+  }
+  .db-sync.ok { color: var(--green); }
+  .db-sync.pending { color: var(--muted); }
+  .db-sync.retry { color: var(--orange); background: rgba(255,149,0,0.12); cursor: pointer; }
 
   /* Toast */
   .toast {
@@ -380,6 +389,12 @@
   const esc = s => String(s).replace(/[&<>"']/g, c =>
     ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 
+  // Where to POST entries so they sync to Notion. '/api/sync' works when the app
+  // is hosted on Vercel (same origin). If you keep the app on GitHub Pages, set
+  // this to your absolute Vercel URL, e.g. 'https://your-project.vercel.app/api/sync'.
+  // Leave '' to disable syncing (entries stay only on this device).
+  const SYNC_ENDPOINT = '/api/sync';
+
   // ---- PST default datetime ----
   function nowPST() {
     const parts = new Intl.DateTimeFormat('en-CA', {
@@ -489,13 +504,14 @@
 
   document.getElementById('confirmBtn').addEventListener('click', () => {
     if (!pending) return;
-    const record = { ...pending, submittedAt: new Date().toISOString() };
+    const record = { ...pending, submittedAt: new Date().toISOString(), synced: false };
 
-    // TODO: POST `record` to backend -> Notion. Stored locally for now.
     const all = loadEntries();
     all.push(record);
     localStorage.setItem(STORE_KEY, JSON.stringify(all));
-    console.log('SUBMIT', JSON.stringify(record, null, 2));
+
+    // Fire-and-forget sync to Notion (entry is already saved locally).
+    syncEntry(record);
 
     scrim.classList.remove('show');
     pending = null;
@@ -519,6 +535,33 @@
     catch { return []; }
   }
 
+  // ---- Notion sync ----
+  function markSynced(id, ok) {
+    const all = loadEntries();
+    const it = all.find(x => (x.submittedAt || x.datetime) === id);
+    if (it) { it.synced = ok; localStorage.setItem(STORE_KEY, JSON.stringify(all)); }
+    renderDB();
+  }
+  async function syncEntry(rec) {
+    if (!SYNC_ENDPOINT) { renderDB(); return; }
+    const id = rec.submittedAt || rec.datetime;
+    try {
+      const r = await fetch(SYNC_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(rec),
+      });
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      markSynced(id, true);
+    } catch (err) {
+      markSynced(id, false);
+    }
+  }
+  function retryUnsynced() {
+    if (!SYNC_ENDPOINT) return;
+    loadEntries().filter(e => !e.synced).forEach(syncEntry);
+  }
+
   function renderDB() {
     const list = document.getElementById('dbList');
     const entries = loadEntries().slice().sort((a, b) => b.datetime.localeCompare(a.datetime));
@@ -538,6 +581,13 @@
       const chips = PRODUCTS.filter(p => e.amounts[p] > 0)
         .map(p => `<span class="db-chip">${PRODUCT_ICON[p]} ${p} <span class="n">${e.amounts[p]}</span></span>`)
         .join('') || `<span class="db-chip" style="color:var(--muted)">No amounts</span>`;
+      const id = esc(e.submittedAt || e.datetime);
+      let sync = '';
+      if (SYNC_ENDPOINT) {
+        sync = e.synced
+          ? `<div class="db-sync ok">✓ Synced to Notion</div>`
+          : `<button class="db-sync retry" data-retry="${id}">⟳ Not synced — tap to retry</button>`;
+      }
       html +=
         `<div class="db-entry">
            <div class="db-head">
@@ -546,9 +596,10 @@
            </div>
            <div class="db-loc">
              <span class="loc-name">📍 ${esc(e.location)}</span>
-             <button class="db-del" data-id="${esc(e.submittedAt || e.datetime)}" aria-label="Delete entry" title="Delete">🗑️</button>
+             <button class="db-del" data-id="${id}" aria-label="Delete entry" title="Delete">🗑️</button>
            </div>
            <div class="db-amts">${chips}</div>
+           ${sync}
          </div>`;
     }
     list.innerHTML = html;
@@ -561,7 +612,7 @@
     document.querySelectorAll('.tabbar button').forEach(b => b.classList.toggle('on', b === btn));
     document.getElementById('view-entry').classList.toggle('active', tab === 'entry');
     document.getElementById('view-db').classList.toggle('active', tab === 'db');
-    if (tab === 'db') renderDB();
+    if (tab === 'db') { renderDB(); retryUnsynced(); }
     window.scrollTo(0, 0);
   });
 
@@ -580,11 +631,19 @@
   }
 
   document.getElementById('dbList').addEventListener('click', e => {
-    const btn = e.target.closest('.db-del'); if (!btn) return;
-    pendingDeleteId = btn.dataset.id;
-    delPass.value = ''; delErr.textContent = '';
-    delScrim.classList.add('show');
-    setTimeout(() => delPass.focus(), 200);
+    const del = e.target.closest('.db-del');
+    if (del) {
+      pendingDeleteId = del.dataset.id;
+      delPass.value = ''; delErr.textContent = '';
+      delScrim.classList.add('show');
+      setTimeout(() => delPass.focus(), 200);
+      return;
+    }
+    const retry = e.target.closest('[data-retry]');
+    if (retry) {
+      const rec = loadEntries().find(x => (x.submittedAt || x.datetime) === retry.dataset.retry);
+      if (rec) { retry.textContent = '⟳ Syncing…'; syncEntry(rec); }
+    }
   });
 
   document.getElementById('delCancelBtn').addEventListener('click', closeDel);
@@ -617,6 +676,7 @@
   });
 
   renderDB();
+  retryUnsynced();
 </script>
 </body>
 </html>
