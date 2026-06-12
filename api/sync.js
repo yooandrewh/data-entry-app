@@ -31,6 +31,26 @@ function cleanAmount(v) {
   return Math.min(n, 1000000);
 }
 
+// Best-effort phone push via ntfy.sh. Set NTFY_TOPIC in Vercel (a long, private
+// name) and subscribe the ntfy app to the same topic. Never blocks/fails the sync.
+async function sendNotification({ type, location, dateOnly, amounts }) {
+  const topic = process.env.NTFY_TOPIC;
+  if (!topic) return;
+  const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+  const parts = Object.keys(PRODUCT_MAP)
+    .map((p) => { const n = cleanAmount(amounts[p]); return n > 0 ? `${p} ${n}` : null; })
+    .filter(Boolean);
+  const body = `${parts.length ? parts.join(', ') : 'No amounts'} · ${dateOnly}`;
+  await fetch(`https://ntfy.sh/${topic}`, {
+    method: 'POST',
+    headers: {
+      'Title': `${cap(type)} - ${location}`,        // ASCII only (HTTP header)
+      'Tags': type === 'delivery' ? 'truck' : 'package',
+    },
+    body,
+  });
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -90,6 +110,10 @@ export default async function handler(req, res) {
 
     const data = await r.json();
     if (!r.ok) return res.status(r.status).json({ error: 'Notion API error', detail: data });
+
+    // Push a phone notification (best-effort — a failure here never fails the sync).
+    await sendNotification({ type, location, dateOnly, amounts: a }).catch(() => {});
+
     return res.status(200).json({ ok: true, id: data.id, url: data.url });
   } catch (e) {
     return res.status(500).json({ error: String((e && e.message) || e) });
