@@ -31,6 +31,20 @@ function cleanAmount(v) {
   return Math.min(n, 1000000);
 }
 
+// Turn a local wall-clock "YYYY-MM-DDTHH:MM" into a full ISO datetime with the
+// correct America/Los_Angeles offset (handles PST -08:00 vs PDT -07:00), so
+// Notion stores the date AND time. Returns null if the input is malformed.
+function laDateTime(local) {
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(String(local))) return null;
+  const asUTC = new Date(local + ':00Z');
+  const tzName = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Los_Angeles', timeZoneName: 'longOffset',
+  }).formatToParts(asUTC).find((p) => p.type === 'timeZoneName').value; // e.g. "GMT-07:00"
+  const m = tzName.match(/GMT([+-])(\d{1,2})(?::?(\d{2}))?/);
+  const offset = m ? `${m[1]}${m[2].padStart(2, '0')}:${m[3] || '00'}` : 'Z';
+  return `${local}:00${offset}`;
+}
+
 // Best-effort phone push via ntfy.sh. Set NTFY_TOPIC in Vercel (a long, private
 // name) and subscribe the ntfy app to the same topic. Never blocks/fails the sync.
 async function sendNotification({ type, location, dateOnly, amounts }) {
@@ -79,11 +93,10 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: `Unknown location: ${location}` });
     }
 
-    // datetime is "YYYY-MM-DDTHH:MM"; we store the date portion. Validate it.
-    const dateOnly = String(datetime).split('T')[0];
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateOnly)) {
-      return res.status(400).json({ error: `Invalid datetime: ${datetime}` });
-    }
+    // Store the full date + time (with the right PST/PDT offset).
+    const startIso = laDateTime(datetime);
+    if (!startIso) return res.status(400).json({ error: `Invalid datetime: ${datetime}` });
+    const dateOnly = String(datetime).split('T')[0]; // for the short push text
 
     const cap = (s) => String(s).charAt(0).toUpperCase() + String(s).slice(1);
     const a = (amounts && typeof amounts === 'object') ? amounts : {};
@@ -91,7 +104,7 @@ export default async function handler(req, res) {
     const properties = {
       'notes': { title: [{ text: { content: `${cap(type)} — ${location}` } }] },
       'Location': { select: { name: location } },
-      'Date': { date: { start: dateOnly } },
+      'Date': { date: { start: startIso } },
       'Tagged for deletion': { checkbox: false },
     };
     for (const [appName, notionName] of Object.entries(PRODUCT_MAP)) {
