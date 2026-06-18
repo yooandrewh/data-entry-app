@@ -256,6 +256,16 @@
   .db-sync.ok { color: var(--green); }
   .db-sync.pending { color: var(--muted); }
   .db-sync.retry { color: var(--orange); background: rgba(255,149,0,0.12); cursor: pointer; }
+  .db-filter {
+    display: flex; gap: 4px; background: var(--field); border-radius: 12px;
+    padding: 4px; margin-bottom: 16px;
+  }
+  .db-filter button {
+    flex: 1; appearance: none; border: none; cursor: pointer; font-family: inherit;
+    background: transparent; color: var(--text); font-size: 14px; font-weight: 600;
+    padding: 9px 6px; border-radius: 9px; transition: background .15s ease;
+  }
+  .db-filter button.on { background: var(--card); box-shadow: var(--shadow); }
   .db-sync.tagged { color: var(--red); background: rgba(255,59,48,0.1); }
   .db-entry.tagged { opacity: 0.6; }
   .db-entry.tagged .db-type { filter: grayscale(0.4); }
@@ -348,6 +358,11 @@
       <h1>Database</h1>
       <div class="sub" id="dbCount">—</div>
     </header>
+    <div class="db-filter" id="dbFilter">
+      <button class="on" data-filter="all">All</button>
+      <button data-filter="delivery">🚚 Deliveries</button>
+      <button data-filter="inventory">📦 Inventory</button>
+    </div>
     <div id="dbList"></div>
   </div>
 </div>
@@ -641,6 +656,10 @@
   }
 
   let renderSeq = 0;
+  let lastEntries = [];      // merged (pending + remote), cached for filter toggling
+  let lastRemoteOk = true;
+  let dbFilter = 'all';      // 'all' | 'delivery' | 'inventory'
+
   async function renderDB() {
     const list = document.getElementById('dbList');
     const countEl = document.getElementById('dbCount');
@@ -661,16 +680,30 @@
     const pending = remoteOk
       ? local.filter(e => !e.synced && !(e.notionId && remoteIds.has(e.notionId)))
       : local;
-    const entries = [...pending, ...remote]
+    lastEntries = [...pending, ...remote]
       .sort((a, b) => String(b.datetime).localeCompare(String(a.datetime)));
+    lastRemoteOk = remoteOk;
+    paintDB();
+  }
+
+  function paintDB() {
+    const list = document.getElementById('dbList');
+    const countEl = document.getElementById('dbCount');
+    const entries = dbFilter === 'all'
+      ? lastEntries
+      : lastEntries.filter(e => e.type === dbFilter);
 
     const n = entries.length;
+    const noun = dbFilter === 'delivery' ? (n === 1 ? 'delivery' : 'deliveries')
+      : dbFilter === 'inventory' ? 'inventory'
+      : (n === 1 ? 'entry' : 'entries');
     countEl.textContent = n
-      ? `${n} ${n === 1 ? 'entry' : 'entries'}${remoteOk ? '' : ' · offline'}`
-      : (remoteOk ? 'No entries yet' : 'Offline');
+      ? `${n} ${noun}${lastRemoteOk ? '' : ' · offline'}`
+      : (lastRemoteOk ? `No ${dbFilter === 'all' ? 'entries' : noun} yet` : 'Offline');
 
     if (!n) {
-      list.innerHTML = `<div class="db-empty"><div class="big">🗂️</div>Nothing submitted yet.<br>Entries from all devices appear here.</div>`;
+      const what = dbFilter === 'all' ? 'Nothing submitted yet.' : `No ${noun} yet.`;
+      list.innerHTML = `<div class="db-empty"><div class="big">🗂️</div>${what}<br>Entries from all devices appear here.</div>`;
       return;
     }
 
@@ -718,6 +751,14 @@
     document.getElementById('view-db').classList.toggle('active', tab === 'db');
     if (tab === 'db') { renderDB(); retryUnsynced(); }
     window.scrollTo(0, 0);
+  });
+
+  // ---- Database filter (All / Deliveries / Inventory) ----
+  document.getElementById('dbFilter').addEventListener('click', e => {
+    const btn = e.target.closest('button'); if (!btn) return;
+    dbFilter = btn.dataset.filter;
+    document.querySelectorAll('#dbFilter button').forEach(b => b.classList.toggle('on', b === btn));
+    paintDB();   // re-render from cache, no re-fetch
   });
 
   // ---- Delete entry (password-gated) ----
