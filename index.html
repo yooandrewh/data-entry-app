@@ -335,8 +335,19 @@
 
 <div class="beta-banner">🧪 BETA · sales &amp; projections are estimates</div>
 
+<!-- ===== HOME VIEW ===== -->
+<div class="view active" id="view-home">
+  <div class="wrap">
+    <header>
+      <h1>Overview</h1>
+      <div class="sub" id="homeSub">—</div>
+    </header>
+    <div id="homeContent"></div>
+  </div>
+</div>
+
 <!-- ===== ENTRY VIEW ===== -->
-<div class="view active" id="view-entry">
+<div class="view" id="view-entry">
   <div class="wrap">
     <header>
       <h1>New Entry</h1>
@@ -467,10 +478,11 @@
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar">
-  <button data-tab="entry" class="on"><span class="tic">➕</span><span>Entry</span></button>
-  <button data-tab="db"><span class="tic">🗂️</span><span>Database</span></button>
+  <button data-tab="home" class="on"><span class="tic">🏠</span><span>Home</span></button>
+  <button data-tab="entry"><span class="tic">➕</span><span>Entry</span></button>
+  <button data-tab="db"><span class="tic">🗂️</span><span>Data</span></button>
   <button data-tab="sales"><span class="tic">📈</span><span>Sales</span></button>
-  <button data-tab="proj"><span class="tic">🔮</span><span>Projections</span></button>
+  <button data-tab="proj"><span class="tic">🔮</span><span>Forecast</span></button>
 </nav>
 
 <!-- ===== Confirmation sheet ===== -->
@@ -866,12 +878,13 @@
   }
 
   // ---- Tab switching ----
-  const VIEWS = { entry: 'view-entry', db: 'view-db', sales: 'view-sales', proj: 'view-proj' };
+  const VIEWS = { home: 'view-home', entry: 'view-entry', db: 'view-db', sales: 'view-sales', proj: 'view-proj' };
   document.querySelector('.tabbar').addEventListener('click', e => {
     const btn = e.target.closest('button'); if (!btn) return;
     const tab = btn.dataset.tab;
     document.querySelectorAll('.tabbar button').forEach(b => b.classList.toggle('on', b === btn));
     Object.entries(VIEWS).forEach(([t, id]) => document.getElementById(id).classList.toggle('active', t === tab));
+    if (tab === 'home') { salesCache = null; renderHome(); }
     if (tab === 'db') { renderDB(); retryUnsynced(); }
     if (tab === 'sales') { salesCache = null; renderSales(); }
     if (tab === 'proj') { salesCache = null; renderProj(); }
@@ -895,6 +908,12 @@
   function ymdMinus(days) {
     const [y, mo, d] = nowPST().slice(0, 10).split('-').map(Number);
     const dt = new Date(y, mo - 1, d - days);
+    const p = n => String(n).padStart(2, '0');
+    return `${dt.getFullYear()}-${p(dt.getMonth() + 1)}-${p(dt.getDate())}`;
+  }
+  function addDays(ymd, delta) {
+    const [y, mo, d] = ymd.split('-').map(Number);
+    const dt = new Date(y, mo - 1, d + delta);
     const p = n => String(n).padStart(2, '0');
     return `${dt.getFullYear()}-${p(dt.getMonth() + 1)}-${p(dt.getDate())}`;
   }
@@ -1054,11 +1073,119 @@
     renderSales();
   });
 
-  // ===== Projections tab =====
+  // ===== Shared projection math (used by Home + Projections) =====
   let projScenario = 'base';
   const RUN_WINDOW = 14;                          // days of sales history for run-rate
   const SCN = { bear: 0.75, base: 1, bull: 1.25 };
+  const ZERO = () => ({ 'Lemon Poppy': 0, 'Sea Salt': 0, 'Ube': 0 });
+  const fmtD = d => d === Infinity ? '∞' : (d < 1 ? '<1 day' : (Math.round(d) === 1 ? '1 day' : Math.round(d) + ' days'));
 
+  // Per-location stats: run-rate (anchored to that location's latest sales date,
+  // so un-entered days don't dilute it) + current stock (latest inventory +
+  // deliveries since − sales since).
+  function locStats(loc, sales, entries) {
+    const locSales = sales.filter(s => s.location === loc);
+    const latestSale = locSales.reduce((m, s) => s.date > m ? s.date : m, '');
+    const winStart = latestSale ? addDays(latestSale, -(RUN_WINDOW - 1)) : '';
+    const rate = ZERO();
+    for (const s of locSales) {
+      if (!latestSale || s.date < winStart || s.date > latestSale) continue;
+      for (const p of PRODUCTS) rate[p] += (s.amounts[p] || 0);
+    }
+    for (const p of PRODUCTS) rate[p] = rate[p] / RUN_WINDOW;
+
+    const invs = entries.filter(e => e.type === 'inventory' && e.location === loc && !e.taggedForDeletion)
+      .sort((a, b) => String(b.datetime).localeCompare(String(a.datetime)));
+    const latestInv = invs[0];
+    let stock = null, stockTotal = 0, invDate = null;
+    if (latestInv) {
+      invDate = String(latestInv.datetime).slice(0, 10);
+      const deliv = ZERO(), sold = ZERO();
+      for (const e of entries)
+        if (e.type === 'delivery' && e.location === loc && !e.taggedForDeletion && String(e.datetime).slice(0, 10) > invDate)
+          for (const p of PRODUCTS) deliv[p] += (e.amounts[p] || 0);
+      for (const s of locSales) if (s.date > invDate) for (const p of PRODUCTS) sold[p] += (s.amounts[p] || 0);
+      stock = {};
+      for (const p of PRODUCTS) { stock[p] = Math.max(0, (latestInv.amounts[p] || 0) + deliv[p] - sold[p]); stockTotal += stock[p]; }
+    }
+    return { rate, stock, stockTotal, invDate, latestSale, hasInv: !!latestInv };
+  }
+  function runout(stats, factor) {
+    const days = {}; let firstP = null, firstD = Infinity;
+    if (!stats.hasInv) return { days, firstP, firstD };
+    for (const p of PRODUCTS) {
+      const r = stats.rate[p] * factor;
+      days[p] = r > 0 ? stats.stock[p] / r : Infinity;
+      if (days[p] < firstD) { firstD = days[p]; firstP = p; }
+    }
+    return { days, firstP, firstD };
+  }
+  function soldLastDays(loc, sales, n) {
+    const from = ymdMinus(n - 1);
+    let t = 0;
+    for (const s of sales) if (s.location === loc && s.date >= from) for (const p of PRODUCTS) t += (s.amounts[p] || 0);
+    return t;
+  }
+  function fmtAgo(ymd) {
+    if (!ymd) return 'never';
+    const [y, mo, d] = ymd.split('-').map(Number);
+    const then = new Date(y, mo - 1, d);
+    const [ty, tmo, td] = nowPST().slice(0, 10).split('-').map(Number);
+    const diff = Math.round((new Date(ty, tmo - 1, td) - then) / 86400000);
+    const lbl = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(then);
+    const rel = diff <= 0 ? 'today' : diff === 1 ? 'yesterday' : `${diff}d ago`;
+    return `${lbl} · ${rel}`;
+  }
+
+  // ===== Home / Overview tab =====
+  async function renderHome() {
+    const content = document.getElementById('homeContent');
+    const sub = document.getElementById('homeSub');
+    sub.textContent = 'Loading…';
+    let sales, entries;
+    try { [sales, entries] = await Promise.all([getSales(), fetchRemoteEntries()]); }
+    catch (e) {
+      sub.textContent = 'Could not load';
+      content.innerHTML = `<div class="db-empty"><div class="big">🏠</div>Couldn't load data.<br>Open the app from the Vercel link and connect the Sales database.</div>`;
+      return;
+    }
+    sub.textContent = nowPST() ? new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric' }).format(parseEntryDate(nowPST().slice(0, 10))) + ' · PST' : '';
+
+    const lastSales = sales.reduce((m, s) => s.date > m ? s.date : m, '');
+    const dlv = entries.filter(e => e.type === 'delivery' && !e.taggedForDeletion);
+    const inv = entries.filter(e => e.type === 'inventory' && !e.taggedForDeletion);
+    const lastDel = dlv.reduce((m, e) => { const d = String(e.datetime).slice(0, 10); return d > m ? d : m; }, '');
+    const lastInv = inv.reduce((m, e) => { const d = String(e.datetime).slice(0, 10); return d > m ? d : m; }, '');
+
+    let html = `<div class="group-label">Last updated</div><div class="card">
+        <div class="row"><span class="lbl">📈 Sales</span><span class="db-when">${fmtAgo(lastSales)}</span></div>
+        <div class="row"><span class="lbl">🚚 Deliveries</span><span class="db-when">${fmtAgo(lastDel)}</span></div>
+        <div class="row"><span class="lbl">📦 Inventory</span><span class="db-when">${fmtAgo(lastInv)}</span></div>
+      </div>`;
+
+    html += `<div class="group-label">By location</div>`;
+    for (const loc of LOCATIONS) {
+      const st = locStats(loc, sales, entries);
+      const ro = runout(st, SCN.base);
+      const sold7 = soldLastDays(loc, sales, 7);
+      const stockChips = st.hasInv
+        ? PRODUCTS.map(p => `<span class="db-chip">${PRODUCT_ICON[p]} ${st.stock[p]}</span>`).join('')
+        : `<span class="db-chip" style="color:var(--muted)">No inventory count yet</span>`;
+      const runoutLine = !st.hasInv ? ''
+        : ro.firstD === Infinity
+          ? `<div class="proj-runout" style="font-size:14px">No recent sales — can't project</div>`
+          : `<div class="proj-runout">Runs out in <span class="big">${fmtD(ro.firstD)}</span> <span style="color:var(--muted);font-weight:600">(${PRODUCT_ICON[ro.firstP]} ${ro.firstP})</span></div>`;
+      html += `<div class="proj-card">
+          <h3>📍 ${loc}</h3>
+          <div class="proj-sub">${st.hasInv ? `${st.stockTotal} on hand · counted ${fmtWhen(st.invDate)}` : 'Add an inventory count to project run-out'} · ${sold7} sold last 7d</div>
+          <div class="proj-stock-chips">${stockChips}</div>
+          ${runoutLine}
+        </div>`;
+    }
+    content.innerHTML = html;
+  }
+
+  // ===== Projections tab =====
   async function renderProj() {
     const list = document.getElementById('projList');
     const sub = document.getElementById('projSub');
@@ -1070,58 +1197,27 @@
       list.innerHTML = `<div class="db-empty"><div class="big">🔮</div>Couldn't load data.<br>Connect the integration to the Sales database.</div>`;
       return;
     }
-    const today = nowPST().slice(0, 10);
-    const winStart = ymdMinus(RUN_WINDOW - 1);
     const factor = SCN[projScenario];
-    sub.textContent = `${projScenario === 'base' ? 'Base case' : projScenario === 'bull' ? 'Bull · +25% sales' : 'Bear · −25% sales'} · run-rate from last ${RUN_WINDOW} days`;
+    sub.textContent = `${projScenario === 'base' ? 'Base case' : projScenario === 'bull' ? 'Bull · +25% sales' : 'Bear · −25% sales'} · run-rate from last ${RUN_WINDOW} days of sales`;
 
-    const fmtD = d => d === Infinity ? '∞' : (d < 1 ? '<1 day' : (Math.round(d) === 1 ? '1 day' : Math.round(d) + ' days'));
     let html = '';
     for (const loc of LOCATIONS) {
-      const rate = { 'Lemon Poppy': 0, 'Sea Salt': 0, 'Ube': 0 };
-      for (const s of sales) {
-        if (s.location !== loc || s.date < winStart || s.date > today) continue;
-        for (const p of PRODUCTS) rate[p] += (s.amounts[p] || 0);
-      }
-      for (const p of PRODUCTS) rate[p] = rate[p] / RUN_WINDOW;
-
-      const invs = entries
-        .filter(e => e.type === 'inventory' && e.location === loc && !e.taggedForDeletion)
-        .sort((a, b) => String(b.datetime).localeCompare(String(a.datetime)));
-      const latestInv = invs[0];
-      if (!latestInv) {
+      const st = locStats(loc, sales, entries);
+      if (!st.hasInv) {
         html += `<div class="proj-card"><h3>📍 ${loc}</h3><div class="proj-sub">No inventory count logged yet — add an Inventory entry to project run-out.</div></div>`;
         continue;
       }
-      const invDate = String(latestInv.datetime).slice(0, 10);
-      const deliv = { 'Lemon Poppy': 0, 'Sea Salt': 0, 'Ube': 0 };
-      for (const e of entries) {
-        if (e.type === 'delivery' && e.location === loc && !e.taggedForDeletion && String(e.datetime).slice(0, 10) > invDate)
-          for (const p of PRODUCTS) deliv[p] += (e.amounts[p] || 0);
-      }
-      const soldSince = { 'Lemon Poppy': 0, 'Sea Salt': 0, 'Ube': 0 };
-      for (const s of sales) {
-        if (s.location === loc && s.date > invDate) for (const p of PRODUCTS) soldSince[p] += (s.amounts[p] || 0);
-      }
-      const stock = {}; let stockTotal = 0, firstP = null, firstD = Infinity;
-      const days = {};
-      for (const p of PRODUCTS) {
-        stock[p] = Math.max(0, (latestInv.amounts[p] || 0) + deliv[p] - soldSince[p]);
-        stockTotal += stock[p];
-        const r = rate[p] * factor;
-        days[p] = r > 0 ? stock[p] / r : Infinity;
-        if (days[p] < firstD) { firstD = days[p]; firstP = p; }
-      }
-      const stockChips = PRODUCTS.map(p => `<span class="db-chip">${PRODUCT_ICON[p]} ${stock[p]}</span>`).join('');
-      const rateRows = PRODUCTS.map(p => `<div class="proj-row"><span class="k">${PRODUCT_ICON[p]} ${p}</span><span><b>${fmtD(days[p])}</b> · ${rate[p].toFixed(1)}/day</span></div>`).join('');
-      const runout = firstD === Infinity
+      const ro = runout(st, factor);
+      const stockChips = PRODUCTS.map(p => `<span class="db-chip">${PRODUCT_ICON[p]} ${st.stock[p]}</span>`).join('');
+      const rateRows = PRODUCTS.map(p => `<div class="proj-row"><span class="k">${PRODUCT_ICON[p]} ${p}</span><span><b>${fmtD(ro.days[p])}</b> · ${st.rate[p].toFixed(1)}/day</span></div>`).join('');
+      const runoutTxt = ro.firstD === Infinity
         ? 'No recent sales — can\'t project'
-        : `Runs out in <span class="big">${fmtD(firstD)}</span> <span style="color:var(--muted);font-weight:600">(${PRODUCT_ICON[firstP]} ${firstP} first)</span>`;
+        : `Runs out in <span class="big">${fmtD(ro.firstD)}</span> <span style="color:var(--muted);font-weight:600">(${PRODUCT_ICON[ro.firstP]} ${ro.firstP} first)</span>`;
       html += `<div class="proj-card">
           <h3>📍 ${loc}</h3>
-          <div class="proj-sub">${stockTotal} on hand · counted ${fmtWhen(invDate)}</div>
+          <div class="proj-sub">${st.stockTotal} on hand · counted ${fmtWhen(st.invDate)}</div>
           <div class="proj-stock-chips">${stockChips}</div>
-          <div class="proj-runout">${runout}</div>
+          <div class="proj-runout">${runoutTxt}</div>
           ${rateRows}
         </div>`;
     }
@@ -1134,7 +1230,7 @@
     renderProj();
   });
 
-  renderDB();
+  renderHome();
   retryUnsynced();
 </script>
 </body>
