@@ -401,6 +401,7 @@
   // Leave '' to disable syncing (entries stay only on this device).
   const SYNC_ENDPOINT = '/api/sync';
   const TAG_DELETE_ENDPOINT = '/api/tag-delete';
+  const ENTRIES_ENDPOINT = '/api/entries';   // shared read: all entries from Notion
 
   // ---- PST default datetime ----
   function nowPST() {
@@ -466,20 +467,26 @@
     };
   }
 
-  function fmtWhen(iso) {
-    // iso is "YYYY-MM-DDTHH:MM" (local PST wall-clock)
-    const [d, t] = iso.split('T');
-    const [y, mo, day] = d.split('-').map(Number);
-    const [h, mi] = t.split(':').map(Number);
-    const dateObj = new Date(y, mo - 1, day, h, mi);
-    return new Intl.DateTimeFormat('en-US', {
-      month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit'
-    }).format(dateObj);
+  // Handles both "YYYY-MM-DD" (date-only) and full ISO datetimes (with offset),
+  // as returned by Notion, plus the app's own "YYYY-MM-DDTHH:MM".
+  function parseEntryDate(s) {
+    s = String(s || '');
+    if (/^\d{4}-\d{2}-\d{2}$/.test(s)) {
+      const [y, mo, d] = s.split('-').map(Number);
+      return new Date(y, mo - 1, d);
+    }
+    return new Date(s);
   }
-  function dayKey(iso) {
-    const [y, mo, day] = iso.split('T')[0].split('-').map(Number);
+  function fmtWhen(s) {
+    const hasTime = String(s).includes('T');
+    const opts = hasTime
+      ? { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }
+      : { month: 'short', day: 'numeric' };
+    return new Intl.DateTimeFormat('en-US', opts).format(parseEntryDate(s));
+  }
+  function dayKey(s) {
     return new Intl.DateTimeFormat('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
-      .format(new Date(y, mo - 1, day));
+      .format(parseEntryDate(s));
   }
 
   // ---- Confirmation sheet ----
@@ -626,38 +633,65 @@
     });
   }
 
-  function renderDB() {
-    const list = document.getElementById('dbList');
-    const entries = loadEntries().slice().sort((a, b) => b.datetime.localeCompare(a.datetime));
-    document.getElementById('dbCount').textContent =
-      entries.length ? `${entries.length} ${entries.length === 1 ? 'entry' : 'entries'}` : 'No entries yet';
+  async function fetchRemoteEntries() {
+    const r = await fetch(ENTRIES_ENDPOINT, { cache: 'no-store' });
+    if (!r.ok) throw new Error('HTTP ' + r.status);
+    const data = await r.json();
+    return Array.isArray(data.entries) ? data.entries : [];
+  }
 
-    if (!entries.length) {
-      list.innerHTML = `<div class="db-empty"><div class="big">🗂️</div>Nothing submitted yet.<br>Your entries will appear here.</div>`;
+  let renderSeq = 0;
+  async function renderDB() {
+    const list = document.getElementById('dbList');
+    const countEl = document.getElementById('dbCount');
+    const seq = ++renderSeq;
+
+    let remote = [], remoteOk = false;
+    if (ENTRIES_ENDPOINT) {
+      if (!list.dataset.loaded) countEl.textContent = 'Loading…';
+      try { remote = await fetchRemoteEntries(); remoteOk = true; list.dataset.loaded = '1'; }
+      catch (e) { remoteOk = false; }
+    }
+    if (seq !== renderSeq) return; // a newer render started — drop this stale one
+
+    const local = loadEntries();
+    const remoteIds = new Set(remote.map(e => e.notionId).filter(Boolean));
+    // This device's entries not yet in Notion (pending sync). If the shared read
+    // failed, fall back to all local entries so nothing vanishes while offline.
+    const pending = remoteOk
+      ? local.filter(e => !e.synced && !(e.notionId && remoteIds.has(e.notionId)))
+      : local;
+    const entries = [...pending, ...remote]
+      .sort((a, b) => String(b.datetime).localeCompare(String(a.datetime)));
+
+    const n = entries.length;
+    countEl.textContent = n
+      ? `${n} ${n === 1 ? 'entry' : 'entries'}${remoteOk ? '' : ' · offline'}`
+      : (remoteOk ? 'No entries yet' : 'Offline');
+
+    if (!n) {
+      list.innerHTML = `<div class="db-empty"><div class="big">🗂️</div>Nothing submitted yet.<br>Entries from all devices appear here.</div>`;
       return;
     }
 
+    const cap = s => s[0].toUpperCase() + s.slice(1);
     let html = '', lastDay = null;
     for (const e of entries) {
       const dk = dayKey(e.datetime);
       if (dk !== lastDay) { html += `<div class="db-day">${dk}</div>`; lastDay = dk; }
-      const cap = s => s[0].toUpperCase() + s.slice(1);
       const chips = PRODUCTS.filter(p => e.amounts[p] > 0)
         .map(p => `<span class="db-chip">${PRODUCT_ICON[p]} ${p} <span class="n">${e.amounts[p]}</span></span>`)
         .join('') || `<span class="db-chip" style="color:var(--muted)">No amounts</span>`;
-      const id = esc(e.submittedAt || e.datetime);
-      let footer = '';
+      let footer = '', trash = '';
       if (e.taggedForDeletion) {
-        const pending = (TAG_DELETE_ENDPOINT && e.notionId && !e.tagPushed) ? ' (syncing…)' : '';
-        footer = `<div class="db-sync tagged">🏷️ Tagged for deletion${pending}</div>`;
-      } else if (SYNC_ENDPOINT) {
-        footer = e.synced
-          ? `<div class="db-sync ok">✓ Synced to Notion</div>`
-          : `<button class="db-sync retry" data-retry="${id}">⟳ Not synced — tap to retry</button>`;
+        footer = `<div class="db-sync tagged">🏷️ Tagged for deletion</div>`;
+      } else if (e.notionId) {
+        footer = `<div class="db-sync ok">✓ Synced to Notion</div>`;
+        trash = `<button class="db-del" data-id="${esc(e.notionId)}" aria-label="Delete entry" title="Delete">🗑️</button>`;
+      } else {
+        const rid = esc(e.submittedAt || e.datetime);
+        footer = `<button class="db-sync retry" data-retry="${rid}">⟳ Not synced — tap to retry</button>`;
       }
-      const trash = e.taggedForDeletion
-        ? ''
-        : `<button class="db-del" data-id="${id}" aria-label="Delete entry" title="Delete">🗑️</button>`;
       html +=
         `<div class="db-entry${e.taggedForDeletion ? ' tagged' : ''}">
            <div class="db-head">
@@ -722,22 +756,33 @@
     if (e.key === 'Enter') document.getElementById('delConfirmBtn').click();
   });
 
-  document.getElementById('delConfirmBtn').addEventListener('click', () => {
-    if (pendingDeleteId == null) return;
+  document.getElementById('delConfirmBtn').addEventListener('click', async () => {
+    if (!pendingDeleteId) return;                       // pendingDeleteId is a Notion page id
     if (delPass.value !== DELETE_PASSWORD) {
       delErr.textContent = 'Incorrect password.';
       delPass.value = '';
       if (navigator.vibrate) navigator.vibrate([20, 40, 20]);
       return;
     }
-    const rec = loadEntries().find(x => (x.submittedAt || x.datetime) === pendingDeleteId);
+    const notionId = pendingDeleteId;
     closeDel();
-    if (rec) tagForDeletion(rec);   // soft delete: flag in Notion, keep visible
+    // Reflect locally too, if this entry originated on this device.
+    const localRec = loadEntries().find(x => x.notionId === notionId);
+    if (localRec) patchEntry(keyOf(localRec), { taggedForDeletion: true });
+    try {
+      const r = await fetch(TAG_DELETE_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pageId: notionId, tagged: true }),
+      });
+      if (r.ok && localRec) patchEntry(keyOf(localRec), { tagPushed: true });
+    } catch (e) {}
     const toast = document.getElementById('toast');
     document.getElementById('toastMsg').textContent = 'Tagged for deletion';
     toast.classList.add('show');
     if (navigator.vibrate) navigator.vibrate(15);
     setTimeout(() => toast.classList.remove('show'), 1800);
+    renderDB();
   });
 
   renderDB();
