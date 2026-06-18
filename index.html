@@ -319,6 +319,7 @@
     background: rgba(255,149,0,0.14); color: #8a4b00; font-size: 13px; font-weight: 600;
     padding: 8px 11px; border-radius: 10px; margin: 0 0 12px;
   }
+  .home-refreshed { text-align: center; color: var(--muted); font-size: 12px; margin: 6px 0 2px; }
   .db-sync.tagged { color: var(--red); background: rgba(255,59,48,0.1); }
   .db-entry.tagged { opacity: 0.6; }
   .db-entry.tagged .db-type { filter: grayscale(0.4); }
@@ -1111,11 +1112,14 @@
     const latestInv = invs[0];
     let stock = null, stockTotal = 0, invDate = null;
     if (latestInv) {
-      invDate = String(latestInv.datetime).slice(0, 10);
+      const invDT = String(latestInv.datetime);     // full timestamp of the count
+      invDate = invDT.slice(0, 10);
       const deliv = ZERO(), sold = ZERO();
+      // Count deliveries logged AFTER the count time (so a same-day, later delivery counts).
       for (const e of entries)
-        if (e.type === 'delivery' && e.location === loc && !e.taggedForDeletion && String(e.datetime).slice(0, 10) > invDate)
+        if (e.type === 'delivery' && e.location === loc && !e.taggedForDeletion && String(e.datetime) > invDT)
           for (const p of PRODUCTS) deliv[p] += (e.amounts[p] || 0);
+      // Sales are daily totals (no time) — only subtract sales dated strictly after the count day.
       for (const s of locSales) if (s.date > invDate) for (const p of PRODUCTS) sold[p] += (s.amounts[p] || 0);
       stock = {};
       for (const p of PRODUCTS) { stock[p] = Math.max(0, (latestInv.amounts[p] || 0) + deliv[p] - sold[p]); stockTotal += stock[p]; }
@@ -1137,6 +1141,12 @@
     let t = 0;
     for (const s of sales) if (s.location === loc && s.date >= from) for (const p of PRODUCTS) t += (s.amounts[p] || 0);
     return t;
+  }
+  function nowLabel() {
+    return new Intl.DateTimeFormat('en-US', {
+      timeZone: 'America/Los_Angeles', month: 'short', day: 'numeric',
+      hour: 'numeric', minute: '2-digit'
+    }).format(new Date());
   }
   function daysSince(ymd) {
     if (!ymd) return Infinity;
@@ -1210,6 +1220,7 @@
           ${runoutLine}
         </div>`;
     }
+    html += `<div class="home-refreshed">↻ Refreshed ${nowLabel()} PST</div>`;
     content.innerHTML = html;
   }
 
