@@ -1106,6 +1106,14 @@
     const sellDays = sellingDates.size || 1;
     for (const p of PRODUCTS) rate[p] = rate[p] / sellDays;
 
+    // TEMP one-off (remove to revert): Stanton's POS/OCR only captured Lemon Poppy,
+    // so split its total sales rate evenly across the 3 flavors for a fairer forecast.
+    const EVEN_SPLIT = ['Stanton'];
+    if (EVEN_SPLIT.includes(loc)) {
+      const total = PRODUCTS.reduce((s, p) => s + rate[p], 0);
+      for (const p of PRODUCTS) rate[p] = total / PRODUCTS.length;
+    }
+
     const locDelivs = entries.filter(e => e.type === 'delivery' && e.location === loc && !e.taggedForDeletion);
     const lastDelivery = locDelivs.reduce((m, e) => { const d = String(e.datetime).slice(0, 10); return d > m ? d : m; }, '');
     const invs = entries.filter(e => e.type === 'inventory' && e.location === loc && !e.taggedForDeletion)
