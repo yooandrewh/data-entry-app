@@ -522,8 +522,10 @@
 <script>
   const STORE_KEY = 'dataEntries.v1';
   const PRODUCTS = ['Lemon Poppy', 'Sea Salt', 'Ube'];
-  const PRODUCT_ICON = { 'Lemon Poppy': '🍋', 'Sea Salt': '🧂', 'Ube': '💜' };
+  const PRODUCT_ICON = { 'Lemon Poppy': '🍋', 'Sea Salt': '🧂', 'Ube': '💜', 'Matcha': '🍵', 'Chocolate': '🍫', 'Unknown': '❓' };
   const LOCATIONS = ['La Mirada', 'Stanton'];
+  // The app stocks 3 flavors (PRODUCTS); actual sales include more — show them all in Sales.
+  const SALES_FLAVORS = ['Lemon Poppy', 'Sea Salt', 'Ube', 'Matcha', 'Chocolate', 'Unknown'];
   const state = { type: 'delivery', location: 'La Mirada' };
   const esc = s => String(s).replace(/[&<>"']/g, c =>
     ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
@@ -1038,8 +1040,9 @@
     const groups = {};
     for (const s of rows) {
       const key = salesGroup === 'week' ? weekStart(s.date) : s.date;
-      if (!groups[key]) groups[key] = { key, amounts: { 'Lemon Poppy': 0, 'Sea Salt': 0, 'Ube': 0 }, total: 0 };
-      for (const p of PRODUCTS) { const v = s.amounts[p] || 0; groups[key].amounts[p] += v; groups[key].total += v; }
+      if (!groups[key]) { groups[key] = { key, amounts: {}, total: 0 }; SALES_FLAVORS.forEach(f => groups[key].amounts[f] = 0); }
+      for (const f of SALES_FLAVORS) groups[key].amounts[f] += (s.amounts[f] || 0);
+      groups[key].total += (typeof s.total === 'number' ? s.total : SALES_FLAVORS.reduce((t, f) => t + (s.amounts[f] || 0), 0));
     }
     const ordered = Object.values(groups).sort((a, b) => b.key.localeCompare(a.key));
     const grand = ordered.reduce((s, g) => s + g.total, 0);
@@ -1055,8 +1058,8 @@
       const label = salesGroup === 'week'
         ? 'Week of ' + new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(parseEntryDate(g.key))
         : dayKey(g.key);
-      const chips = PRODUCTS.filter(p => g.amounts[p] > 0)
-        .map(p => `<span class="db-chip">${PRODUCT_ICON[p]} ${p} <span class="n">${g.amounts[p]}</span></span>`)
+      const chips = SALES_FLAVORS.filter(f => g.amounts[f] > 0)
+        .map(f => `<span class="db-chip">${PRODUCT_ICON[f]} ${f} <span class="n">${g.amounts[f]}</span></span>`)
         .join('') || `<span class="db-chip" style="color:var(--muted)">0</span>`;
       html += `<div class="db-entry">
           <div class="db-head"><span class="db-type" style="background:rgba(52,199,89,0.14);color:var(--green)">📈 ${label}</span><span class="db-when">${g.total} total</span></div>
@@ -1153,7 +1156,8 @@
   function soldLastDays(loc, sales, n) {
     const from = ymdMinus(n - 1);
     let t = 0;
-    for (const s of sales) if (s.location === loc && s.date >= from) for (const p of PRODUCTS) t += (s.amounts[p] || 0);
+    for (const s of sales) if (s.location === loc && s.date >= from)
+      t += (typeof s.total === 'number' ? s.total : PRODUCTS.reduce((x, p) => x + (s.amounts[p] || 0), 0));
     return t;
   }
   function nowLabel() {

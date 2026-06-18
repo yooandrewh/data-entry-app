@@ -1,10 +1,10 @@
-// Reads the Sales (Square/OCR POS) database — actual sales — for the Sales and
-// Projections tabs. Token stays server-side.
+// Reads the "Sales (OCR — full)" database — the complete daily POS/OCR sales —
+// for the Sales and Projections tabs. Token stays server-side.
 //
 // Required env var: NOTION_TOKEN  (optional: APP_KEY, NOTION_SALES_DB)
-// NOTE: the Notion integration must be connected to the Sales database too.
+// NOTE: the Notion integration must be connected to this database.
 
-const SALES_DB = process.env.NOTION_SALES_DB || '46376427d7d383bf97240131fa5eda73';
+const SALES_DB = process.env.NOTION_SALES_DB || '37db22a9532743b19177df842181e49f';
 const num = (p) => (p && typeof p.number === 'number') ? p.number : 0;
 
 async function querySales(token) {
@@ -30,14 +30,21 @@ async function querySales(token) {
       const props = pg.properties || {};
       const date = (props.Date && props.Date.date && props.Date.date.start) || '';
       if (!date) continue;
+      const amounts = {
+        'Lemon Poppy': num(props['Lemon Poppy']),
+        'Sea Salt': num(props['Sea Salt Butter']),
+        'Ube': num(props['Ube']),
+        'Matcha': num(props['Matcha']),
+        'Chocolate': num(props['Chocolate']),
+        'Unknown': num(props['Unknown']),
+      };
+      // true total sold = every flavor (matches the store's combined numbers)
+      const total = Object.values(amounts).reduce((s, v) => s + v, 0);
       out.push({
         date: String(date).slice(0, 10),
-        location: (props.Select && props.Select.select && props.Select.select.name) || '',
-        amounts: {
-          'Lemon Poppy': num(props['Lemon Poppy']),
-          'Sea Salt': num(props['Sea Salt Butter']),
-          'Ube': num(props['Ube']),
-        },
+        location: (props.Location && props.Location.select && props.Location.select.name) || '',
+        amounts,
+        total,
       });
     }
     cursor = data.has_more ? data.next_cursor : undefined;
