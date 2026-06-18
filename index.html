@@ -267,6 +267,25 @@
     padding: 9px 6px; border-radius: 9px; transition: background .15s ease;
   }
   .db-filter button.on { background: var(--card); box-shadow: var(--shadow); }
+  .db-presets { display: flex; gap: 8px; margin-bottom: 10px; }
+  .db-presets button {
+    appearance: none; border: none; cursor: pointer; font-family: inherit;
+    background: var(--field); color: var(--text); font-size: 13px; font-weight: 600;
+    padding: 7px 14px; border-radius: 999px;
+  }
+  .db-presets button.on { background: var(--blue); color: #fff; }
+  .db-dates { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+  .db-dates input[type="date"] {
+    flex: 1; min-width: 0; appearance: none; border: 1px solid var(--sep);
+    background: var(--card); color: var(--text); font-family: inherit; font-size: 14px;
+    padding: 8px 10px; border-radius: 10px;
+  }
+  .db-dates-sep { color: var(--muted); }
+  .db-date-clear {
+    appearance: none; border: none; cursor: pointer; font-family: inherit;
+    background: var(--field); color: var(--blue); font-weight: 600; font-size: 13px;
+    padding: 8px 12px; border-radius: 10px;
+  }
   .db-summary {
     background: var(--card); border-radius: 16px; box-shadow: var(--shadow);
     padding: 14px 16px; margin-bottom: 14px;
@@ -370,6 +389,17 @@
       <button class="on" data-filter="all">All</button>
       <button data-filter="delivery">🚚 Deliveries</button>
       <button data-filter="inventory">📦 Inventory</button>
+    </div>
+    <div class="db-presets" id="dbPresets">
+      <button type="button" data-days="0">Today</button>
+      <button type="button" data-days="6">7 days</button>
+      <button type="button" data-days="29">30 days</button>
+    </div>
+    <div class="db-dates">
+      <input type="date" id="dateFrom" aria-label="From date" />
+      <span class="db-dates-sep">–</span>
+      <input type="date" id="dateTo" aria-label="To date" />
+      <button type="button" class="db-date-clear" id="dateClear" hidden>Clear</button>
     </div>
     <div id="dbList"></div>
   </div>
@@ -667,6 +697,7 @@
   let lastEntries = [];      // merged (pending + remote), cached for filter toggling
   let lastRemoteOk = true;
   let dbFilter = 'all';      // 'all' | 'delivery' | 'inventory'
+  let dateFrom = '', dateTo = '';   // 'YYYY-MM-DD' range (empty = all time)
 
   async function renderDB() {
     const list = document.getElementById('dbList');
@@ -697,9 +728,13 @@
   function paintDB() {
     const list = document.getElementById('dbList');
     const countEl = document.getElementById('dbCount');
-    const entries = dbFilter === 'all'
-      ? lastEntries
-      : lastEntries.filter(e => e.type === dbFilter);
+    const entries = lastEntries.filter(e => {
+      if (dbFilter !== 'all' && e.type !== dbFilter) return false;
+      const d = String(e.datetime).slice(0, 10); // YYYY-MM-DD
+      if (dateFrom && d < dateFrom) return false;
+      if (dateTo && d > dateTo) return false;
+      return true;
+    });
 
     const n = entries.length;
     const noun = dbFilter === 'delivery' ? (n === 1 ? 'delivery' : 'deliveries')
@@ -780,6 +815,34 @@
     document.querySelectorAll('#dbFilter button').forEach(b => b.classList.toggle('on', b === btn));
     paintDB();   // re-render from cache, no re-fetch
   });
+
+  // ---- Date-range filter (presets + custom From/To) ----
+  const fromEl = document.getElementById('dateFrom');
+  const toEl = document.getElementById('dateTo');
+  const dateClearBtn = document.getElementById('dateClear');
+  const clearPresets = () => document.querySelectorAll('#dbPresets button').forEach(b => b.classList.remove('on'));
+
+  function ymdMinus(days) {
+    const [y, mo, d] = nowPST().slice(0, 10).split('-').map(Number);
+    const dt = new Date(y, mo - 1, d - days);
+    const p = n => String(n).padStart(2, '0');
+    return `${dt.getFullYear()}-${p(dt.getMonth() + 1)}-${p(dt.getDate())}`;
+  }
+  function applyDateRange() {
+    fromEl.value = dateFrom; toEl.value = dateTo;
+    dateClearBtn.hidden = !(dateFrom || dateTo);
+    paintDB();
+  }
+
+  document.getElementById('dbPresets').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    dateFrom = ymdMinus(Number(b.dataset.days)); dateTo = ymdMinus(0);
+    clearPresets(); b.classList.add('on');
+    applyDateRange();
+  });
+  dateClearBtn.addEventListener('click', () => { dateFrom = ''; dateTo = ''; clearPresets(); applyDateRange(); });
+  fromEl.addEventListener('change', () => { dateFrom = fromEl.value; clearPresets(); applyDateRange(); });
+  toEl.addEventListener('change', () => { dateTo = toEl.value; clearPresets(); applyDateRange(); });
 
   // ---- Delete entry (password-gated) ----
   // NOTE: a client-side password is only a deterrent — anyone can read it in the
