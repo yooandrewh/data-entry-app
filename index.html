@@ -315,6 +315,10 @@
   .proj-row:last-child { border-bottom: none; }
   .proj-row .k { color: var(--muted); }
   .proj-row b { color: var(--blue); }
+  .proj-warn {
+    background: rgba(255,149,0,0.14); color: #8a4b00; font-size: 13px; font-weight: 600;
+    padding: 8px 11px; border-radius: 10px; margin: 0 0 12px;
+  }
   .db-sync.tagged { color: var(--red); background: rgba(255,59,48,0.1); }
   .db-entry.tagged { opacity: 0.6; }
   .db-entry.tagged .db-type { filter: grayscale(0.4); }
@@ -1134,15 +1138,30 @@
     for (const s of sales) if (s.location === loc && s.date >= from) for (const p of PRODUCTS) t += (s.amounts[p] || 0);
     return t;
   }
+  function daysSince(ymd) {
+    if (!ymd) return Infinity;
+    const [y, mo, d] = ymd.split('-').map(Number);
+    const [ty, tmo, td] = nowPST().slice(0, 10).split('-').map(Number);
+    return Math.round((new Date(ty, tmo - 1, td) - new Date(y, mo - 1, d)) / 86400000);
+  }
   function fmtAgo(ymd) {
     if (!ymd) return 'never';
     const [y, mo, d] = ymd.split('-').map(Number);
     const then = new Date(y, mo - 1, d);
-    const [ty, tmo, td] = nowPST().slice(0, 10).split('-').map(Number);
-    const diff = Math.round((new Date(ty, tmo - 1, td) - then) / 86400000);
+    const diff = daysSince(ymd);
     const lbl = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(then);
     const rel = diff <= 0 ? 'today' : diff === 1 ? 'yesterday' : `${diff}d ago`;
     return `${lbl} · ${rel}`;
+  }
+  // Warn when a location's forecast rests on stale or thin sales data.
+  function staleWarn(st) {
+    if (!st.hasInv) return '';
+    const sd = daysSince(st.latestSale);
+    const msgs = [];
+    if (sd === Infinity) msgs.push('no sales history');
+    else if (sd > 7) msgs.push(`sales data is ${sd}d old`);
+    if (st.sellDays < 3 && sd !== Infinity) msgs.push(`only ${st.sellDays} sales day${st.sellDays === 1 ? '' : 's'} of data`);
+    return msgs.length ? `<div class="proj-warn">⚠️ ${msgs.join(' · ')} — forecast may be unreliable</div>` : '';
   }
 
   // ===== Home / Overview tab =====
@@ -1186,6 +1205,7 @@
       html += `<div class="proj-card">
           <h3>📍 ${loc}</h3>
           <div class="proj-sub">${st.hasInv ? `${st.stockTotal} on hand · counted ${fmtWhen(st.invDate)}` : 'Add an inventory count to project run-out'} · ${sold7} sold last 7d</div>
+          ${staleWarn(st)}
           <div class="proj-stock-chips">${stockChips}</div>
           ${runoutLine}
         </div>`;
@@ -1228,6 +1248,7 @@
       html += `<div class="proj-card">
           <h3>📍 ${loc}</h3>
           <div class="proj-sub">${st.stockTotal} on hand · counted ${fmtWhen(st.invDate)} · rate from ${st.sellDays} sales ${st.sellDays === 1 ? 'day' : 'days'}</div>
+          ${staleWarn(st)}
           <div class="proj-stock-chips">${stockChips}</div>
           <div class="proj-runout">${runoutTxt}</div>
           ${rateRows}
