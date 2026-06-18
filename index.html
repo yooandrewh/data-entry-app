@@ -151,6 +151,7 @@
     font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px;
   }
   .db-chip .n { color: var(--blue); }
+  .db-chip.db-total { background: rgba(0,122,255,0.12); color: var(--blue); }
   .db-empty { text-align: center; color: var(--muted); padding: 60px 20px; }
   .db-empty .big { font-size: 44px; margin-bottom: 12px; }
   .db-day { font-size: 13px; color: var(--muted); font-weight: 600;
@@ -729,9 +730,11 @@
     for (const e of entries) {
       const dk = dayKey(e.datetime);
       if (dk !== lastDay) { html += `<div class="db-day">${dk}</div>`; lastDay = dk; }
-      const chips = PRODUCTS.filter(p => e.amounts[p] > 0)
+      const eTotal = PRODUCTS.reduce((s, p) => s + (e.amounts[p] || 0), 0);
+      const flavorChips = PRODUCTS.filter(p => e.amounts[p] > 0)
         .map(p => `<span class="db-chip">${PRODUCT_ICON[p]} ${p} <span class="n">${e.amounts[p]}</span></span>`)
         .join('') || `<span class="db-chip" style="color:var(--muted)">No amounts</span>`;
+      const chips = flavorChips + (eTotal > 0 ? `<span class="db-chip db-total">${eTotal} total</span>` : '');
       let footer = '', trash = '';
       if (e.taggedForDeletion) {
         footer = `<div class="db-sync tagged">🏷️ Tagged for deletion</div>`;
