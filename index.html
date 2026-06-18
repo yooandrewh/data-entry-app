@@ -293,6 +293,8 @@
   .db-summary .ds-total { font-size: 15px; color: var(--muted); font-weight: 600; }
   .db-summary .ds-total b { font-size: 26px; color: var(--text); font-weight: 700; margin-right: 5px; }
   .db-summary .ds-break { display: flex; gap: 16px; margin-top: 8px; font-size: 14px; font-weight: 600; }
+  .db-summary .ds-loc { margin-top: 6px; color: var(--muted); }
+  .db-summary .ds-loc b { color: var(--text); }
   .db-sync.tagged { color: var(--red); background: rgba(255,59,48,0.1); }
   .db-entry.tagged { opacity: 0.6; }
   .db-entry.tagged .db-type { filter: grayscale(0.4); }
@@ -444,6 +446,7 @@
   const STORE_KEY = 'dataEntries.v1';
   const PRODUCTS = ['Lemon Poppy', 'Sea Salt', 'Ube'];
   const PRODUCT_ICON = { 'Lemon Poppy': '🍋', 'Sea Salt': '🧂', 'Ube': '💜' };
+  const LOCATIONS = ['La Mirada', 'Stanton'];
   const state = { type: 'delivery', location: 'La Mirada' };
   const esc = s => String(s).replace(/[&<>"']/g, c =>
     ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
@@ -754,13 +757,18 @@
 
     // Madeleine totals for the entries shown (excluding ones tagged for deletion).
     const totals = { 'Lemon Poppy': 0, 'Sea Salt': 0, 'Ube': 0 };
+    const locTotals = {};
     let grand = 0;
     for (const e of entries) {
       if (e.taggedForDeletion) continue;
-      for (const p of PRODUCTS) { const v = e.amounts[p] || 0; totals[p] += v; grand += v; }
+      let sum = 0;
+      for (const p of PRODUCTS) { const v = e.amounts[p] || 0; totals[p] += v; sum += v; }
+      grand += sum;
+      locTotals[e.location] = (locTotals[e.location] || 0) + sum;
     }
     const breakdown = PRODUCTS.map(p => `<span>${PRODUCT_ICON[p]} ${totals[p]}</span>`).join('');
-    let html = `<div class="db-summary"><div class="ds-total"><b>${grand}</b> madeleine${grand === 1 ? '' : 's'}</div><div class="ds-break">${breakdown}</div></div>`;
+    const locBreak = LOCATIONS.map(l => `<span>${l} <b>${locTotals[l] || 0}</b></span>`).join('');
+    let html = `<div class="db-summary"><div class="ds-total"><b>${grand}</b> madeleine${grand === 1 ? '' : 's'}</div><div class="ds-break">${breakdown}</div><div class="ds-break ds-loc">📍 ${locBreak}</div></div>`;
     let lastDay = null;
     for (const e of entries) {
       const dk = dayKey(e.datetime);
