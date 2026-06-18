@@ -8,8 +8,8 @@
 // tagged, so this endpoint can't be used to flag arbitrary pages elsewhere.
 
 const ALLOWED_DBS = [
-  process.env.NOTION_DELIVERIES_DB || '9600856eb32c44a99771dbec4acbcb5a',
-  process.env.NOTION_INVENTORY_DB || '7dc1fbfd6bed47539a7844eecc7e06f8',
+  process.env.NOTION_DELIVERIES_DB || '74476427d7d3831ab84e8107cf70285a',
+  process.env.NOTION_INVENTORY_DB || 'd1576427d7d382568a7b81a8e89c740c',
 ].map((id) => id.replace(/-/g, ''));
 
 const NOTION_HEADERS = (token) => ({

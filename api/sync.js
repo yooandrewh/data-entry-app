@@ -9,9 +9,10 @@
 //   NOTION_INVENTORY_DB   - Inventory database id
 //   APP_KEY               - if set, requests must send a matching "x-app-key" header
 
+// Consolidated onto the original Kairosbaking Deliveries/Inventory databases.
 const DB_BY_TYPE = {
-  delivery: process.env.NOTION_DELIVERIES_DB || '9600856eb32c44a99771dbec4acbcb5a',
-  inventory: process.env.NOTION_INVENTORY_DB || '7dc1fbfd6bed47539a7844eecc7e06f8',
+  delivery: process.env.NOTION_DELIVERIES_DB || '74476427d7d3831ab84e8107cf70285a',
+  inventory: process.env.NOTION_INVENTORY_DB || 'd1576427d7d382568a7b81a8e89c740c',
 };
 
 // App product name -> Notion column name.
@@ -103,7 +104,7 @@ export default async function handler(req, res) {
 
     const properties = {
       'notes': { title: [{ text: { content: `${cap(type)} — ${location}` } }] },
-      'Location': { select: { name: location } },
+      'Select': { select: { name: location } },
       'Date': { date: { start: startIso } },
       'Tagged for deletion': { checkbox: false },
     };

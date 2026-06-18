@@ -4,8 +4,8 @@
 // Required env var: NOTION_TOKEN   (optional: APP_KEY, NOTION_DELIVERIES_DB, NOTION_INVENTORY_DB)
 
 const DBS = [
-  { type: 'delivery', id: process.env.NOTION_DELIVERIES_DB || '9600856eb32c44a99771dbec4acbcb5a' },
-  { type: 'inventory', id: process.env.NOTION_INVENTORY_DB || '7dc1fbfd6bed47539a7844eecc7e06f8' },
+  { type: 'delivery', id: process.env.NOTION_DELIVERIES_DB || '74476427d7d3831ab84e8107cf70285a' },
+  { type: 'inventory', id: process.env.NOTION_INVENTORY_DB || 'd1576427d7d382568a7b81a8e89c740c' },
 ];
 
 const num = (p) => (p && typeof p.number === 'number') ? p.number : 0;
@@ -35,7 +35,7 @@ async function queryDb(token, db) {
         notionId: pg.id,
         type: db.type,
         datetime: (props.Date && props.Date.date && props.Date.date.start) || '',
-        location: (props.Location && props.Location.select && props.Location.select.name) || '',
+        location: (props.Select && props.Select.select && props.Select.select.name) || '',
         amounts: {
           'Lemon Poppy': num(props['Lemon Poppy']),
           'Sea Salt': num(props['Sea Salt Butter']),
