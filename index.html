@@ -1087,12 +1087,18 @@
     const locSales = sales.filter(s => s.location === loc);
     const latestSale = locSales.reduce((m, s) => s.date > m ? s.date : m, '');
     const winStart = latestSale ? addDays(latestSale, -(RUN_WINDOW - 1)) : '';
+    // Run-rate = average per ACTIVE sales day (days that actually had sales),
+    // not per calendar day — so no-sale/closed days don't dilute sparse data.
     const rate = ZERO();
+    const sellingDates = new Set();
     for (const s of locSales) {
       if (!latestSale || s.date < winStart || s.date > latestSale) continue;
-      for (const p of PRODUCTS) rate[p] += (s.amounts[p] || 0);
+      let any = false;
+      for (const p of PRODUCTS) { const v = s.amounts[p] || 0; rate[p] += v; if (v > 0) any = true; }
+      if (any) sellingDates.add(s.date);
     }
-    for (const p of PRODUCTS) rate[p] = rate[p] / RUN_WINDOW;
+    const sellDays = sellingDates.size || 1;
+    for (const p of PRODUCTS) rate[p] = rate[p] / sellDays;
 
     const locDelivs = entries.filter(e => e.type === 'delivery' && e.location === loc && !e.taggedForDeletion);
     const lastDelivery = locDelivs.reduce((m, e) => { const d = String(e.datetime).slice(0, 10); return d > m ? d : m; }, '');
@@ -1110,7 +1116,7 @@
       stock = {};
       for (const p of PRODUCTS) { stock[p] = Math.max(0, (latestInv.amounts[p] || 0) + deliv[p] - sold[p]); stockTotal += stock[p]; }
     }
-    return { rate, stock, stockTotal, invDate, latestSale, lastDelivery, hasInv: !!latestInv };
+    return { rate, stock, stockTotal, invDate, latestSale, lastDelivery, sellDays, hasInv: !!latestInv };
   }
   function runout(stats, factor) {
     const days = {}; let firstP = null, firstD = Infinity;
@@ -1200,7 +1206,7 @@
       return;
     }
     const factor = SCN[projScenario];
-    sub.textContent = `${projScenario === 'base' ? 'Base case' : projScenario === 'bull' ? 'Bull · +25% sales' : 'Bear · −25% sales'} · run-rate from last ${RUN_WINDOW} days of sales`;
+    sub.textContent = `${projScenario === 'base' ? 'Base case' : projScenario === 'bull' ? 'Bull · +25% sales' : 'Bear · −25% sales'} · rate = avg per active sales day`;
 
     let html = '';
     for (const loc of LOCATIONS) {
@@ -1211,7 +1217,7 @@
       }
       const ro = runout(st, factor);
       const stockChips = PRODUCTS.map(p => `<span class="db-chip">${PRODUCT_ICON[p]} ${st.stock[p]}</span>`).join('');
-      const rateRows = PRODUCTS.map(p => `<div class="proj-row"><span class="k">${PRODUCT_ICON[p]} ${p}</span><span><b>${fmtD(ro.days[p])}</b> · ${st.rate[p].toFixed(1)}/day</span></div>`).join('');
+      const rateRows = PRODUCTS.map(p => `<div class="proj-row"><span class="k">${PRODUCT_ICON[p]} ${p}</span><span><b>${fmtD(ro.days[p])}</b> · ${st.rate[p].toFixed(1)}/sales day</span></div>`).join('');
       const freshRows =
         `<div class="proj-row"><span class="k">📈 Last sales</span><span>${fmtAgo(st.latestSale)}</span></div>` +
         `<div class="proj-row"><span class="k">🚚 Last delivery</span><span>${fmtAgo(st.lastDelivery)}</span></div>` +
@@ -1221,7 +1227,7 @@
         : `Runs out in <span class="big">${fmtD(ro.firstD)}</span> <span style="color:var(--muted);font-weight:600">(${PRODUCT_ICON[ro.firstP]} ${ro.firstP} first)</span>`;
       html += `<div class="proj-card">
           <h3>📍 ${loc}</h3>
-          <div class="proj-sub">${st.stockTotal} on hand · counted ${fmtWhen(st.invDate)}</div>
+          <div class="proj-sub">${st.stockTotal} on hand · counted ${fmtWhen(st.invDate)} · rate from ${st.sellDays} sales ${st.sellDays === 1 ? 'day' : 'days'}</div>
           <div class="proj-stock-chips">${stockChips}</div>
           <div class="proj-runout">${runoutTxt}</div>
           ${rateRows}
