@@ -1083,6 +1083,7 @@
   const RUN_WINDOW = 14;                          // days of sales history for run-rate
   const SCN = { bear: 0.75, base: 1, bull: 1.25 };
   const ZERO = () => ({ 'Lemon Poppy': 0, 'Sea Salt': 0, 'Ube': 0 });
+  const ts = s => { const t = new Date(s).getTime(); return isNaN(t) ? 0 : t; };  // compare real instants
   const fmtD = d => d === Infinity ? '∞' : (d < 1 ? '<1 day' : (Math.round(d) === 1 ? '1 day' : Math.round(d) + ' days'));
 
   // Per-location stats: run-rate (anchored to that location's latest sales date,
@@ -1117,7 +1118,7 @@
       const deliv = ZERO(), sold = ZERO();
       // Count deliveries logged AFTER the count time (so a same-day, later delivery counts).
       for (const e of entries)
-        if (e.type === 'delivery' && e.location === loc && !e.taggedForDeletion && String(e.datetime) > invDT)
+        if (e.type === 'delivery' && e.location === loc && !e.taggedForDeletion && ts(e.datetime) > ts(invDT))
           for (const p of PRODUCTS) deliv[p] += (e.amounts[p] || 0);
       // Sales are daily totals (no time) — only subtract sales dated strictly after the count day.
       for (const s of locSales) if (s.date > invDate) for (const p of PRODUCTS) sold[p] += (s.amounts[p] || 0);
