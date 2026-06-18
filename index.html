@@ -1020,7 +1020,7 @@
   function weekStart(ymd) {
     const [y, mo, d] = ymd.split('-').map(Number);
     const dt = new Date(y, mo - 1, d);
-    dt.setDate(dt.getDate() - dt.getDay());   // back to Sunday
+    dt.setDate(dt.getDate() - ((dt.getDay() + 6) % 7));   // back to Monday (Mon–Sun weeks)
     const p = n => String(n).padStart(2, '0');
     return `${dt.getFullYear()}-${p(dt.getMonth() + 1)}-${p(dt.getDate())}`;
   }
@@ -1108,14 +1108,6 @@
     }
     const sellDays = sellingDates.size || 1;
     for (const p of PRODUCTS) rate[p] = rate[p] / sellDays;
-
-    // TEMP one-off (remove to revert): Stanton's POS/OCR only captured Lemon Poppy,
-    // so split its total sales rate evenly across the 3 flavors for a fairer forecast.
-    const EVEN_SPLIT = ['Stanton'];
-    if (EVEN_SPLIT.includes(loc)) {
-      const total = PRODUCTS.reduce((s, p) => s + rate[p], 0);
-      for (const p of PRODUCTS) rate[p] = total / PRODUCTS.length;
-    }
 
     const locDelivs = entries.filter(e => e.type === 'delivery' && e.location === loc && !e.taggedForDeletion);
     const lastDelivery = locDelivs.reduce((m, e) => { const d = String(e.datetime).slice(0, 10); return d > m ? d : m; }, '');
