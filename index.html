@@ -320,6 +320,11 @@
     padding: 8px 11px; border-radius: 10px; margin: 0 0 12px;
   }
   .home-refreshed { text-align: center; color: var(--muted); font-size: 12px; margin: 6px 0 2px; }
+  .home-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
+  .metric { background: var(--card); border-radius: 16px; box-shadow: var(--shadow); padding: 14px 16px; }
+  .metric .m-label { font-size: 13px; color: var(--muted); font-weight: 600; }
+  .metric .m-val { font-size: 26px; font-weight: 700; margin-top: 4px; }
+  .metric .m-sub { font-size: 12px; color: var(--muted); }
   .db-sync.tagged { color: var(--red); background: rgba(255,59,48,0.1); }
   .db-entry.tagged { opacity: 0.6; }
   .db-entry.tagged .db-type { filter: grayscale(0.4); }
@@ -526,6 +531,8 @@
   const LOCATIONS = ['La Mirada', 'Stanton'];
   // The app stocks 3 flavors (PRODUCTS); actual sales include more — show them all in Sales.
   const SALES_FLAVORS = ['Lemon Poppy', 'Sea Salt', 'Ube', 'Matcha', 'Chocolate', 'Unknown'];
+  const PRICE_PER_UNIT = 2.50;   // $/madeleine (from Financial Dashboard: $192.50 / 77 units)
+  const usd = n => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n);
   const state = { type: 'delivery', location: 'La Mirada' };
   const esc = s => String(s).replace(/[&<>"']/g, c =>
     ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
@@ -1230,6 +1237,17 @@
           ${runoutLine}
         </div>`;
     }
+    // Last 7 days — combined revenue + quantity sold (all locations, all flavors)
+    const from7 = ymdMinus(6);
+    let qty7 = 0;
+    for (const s of sales) if (s.date >= from7)
+      qty7 += (typeof s.total === 'number' ? s.total : SALES_FLAVORS.reduce((t, f) => t + (s.amounts[f] || 0), 0));
+    html += `<div class="group-label">Last 7 days</div>
+      <div class="home-metrics">
+        <div class="metric"><div class="m-label">Revenue</div><div class="m-val">${usd(qty7 * PRICE_PER_UNIT)}</div></div>
+        <div class="metric"><div class="m-label">Sold</div><div class="m-val">${qty7}</div><div class="m-sub">madeleines</div></div>
+      </div>`;
+
     html += `<div class="home-refreshed">↻ Refreshed ${nowLabel()} PST</div>`;
     content.innerHTML = html;
   }
