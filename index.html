@@ -266,6 +266,13 @@
     padding: 9px 6px; border-radius: 9px; transition: background .15s ease;
   }
   .db-filter button.on { background: var(--card); box-shadow: var(--shadow); }
+  .db-summary {
+    background: var(--card); border-radius: 16px; box-shadow: var(--shadow);
+    padding: 14px 16px; margin-bottom: 14px;
+  }
+  .db-summary .ds-total { font-size: 15px; color: var(--muted); font-weight: 600; }
+  .db-summary .ds-total b { font-size: 26px; color: var(--text); font-weight: 700; margin-right: 5px; }
+  .db-summary .ds-break { display: flex; gap: 16px; margin-top: 8px; font-size: 14px; font-weight: 600; }
   .db-sync.tagged { color: var(--red); background: rgba(255,59,48,0.1); }
   .db-entry.tagged { opacity: 0.6; }
   .db-entry.tagged .db-type { filter: grayscale(0.4); }
@@ -708,7 +715,17 @@
     }
 
     const cap = s => s[0].toUpperCase() + s.slice(1);
-    let html = '', lastDay = null;
+
+    // Madeleine totals for the entries shown (excluding ones tagged for deletion).
+    const totals = { 'Lemon Poppy': 0, 'Sea Salt': 0, 'Ube': 0 };
+    let grand = 0;
+    for (const e of entries) {
+      if (e.taggedForDeletion) continue;
+      for (const p of PRODUCTS) { const v = e.amounts[p] || 0; totals[p] += v; grand += v; }
+    }
+    const breakdown = PRODUCTS.map(p => `<span>${PRODUCT_ICON[p]} ${totals[p]}</span>`).join('');
+    let html = `<div class="db-summary"><div class="ds-total"><b>${grand}</b> madeleine${grand === 1 ? '' : 's'}</div><div class="ds-break">${breakdown}</div></div>`;
+    let lastDay = null;
     for (const e of entries) {
       const dk = dayKey(e.datetime);
       if (dk !== lastDay) { html += `<div class="db-day">${dk}</div>`; lastDay = dk; }
