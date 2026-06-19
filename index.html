@@ -343,7 +343,7 @@
 </head>
 <body>
 
-<div class="beta-banner">🧪 BETA · estimates · app updated Jun 19, 2026 · 11:40 AM PST</div>
+<div class="beta-banner">🧪 BETA · estimates · app updated Jun 19, 2026 · 11:48 AM PST</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -1076,7 +1076,18 @@
       list.innerHTML = `<div class="db-empty"><div class="big">📈</div>No sales in this range.</div>`;
       return;
     }
-    let html = '';
+    // Cumulative block for the current filter (total + revenue + flavors + locations)
+    const flavorTotals = {}; SALES_FLAVORS.forEach(f => flavorTotals[f] = 0);
+    const locTotals = {};
+    for (const s of rows) {
+      for (const f of SALES_FLAVORS) flavorTotals[f] += (s.amounts[f] || 0);
+      const st = (typeof s.total === 'number' ? s.total : SALES_FLAVORS.reduce((t, f) => t + (s.amounts[f] || 0), 0));
+      locTotals[s.location] = (locTotals[s.location] || 0) + st;
+    }
+    const breakdown = SALES_FLAVORS.filter(f => flavorTotals[f] > 0)
+      .map(f => `<span>${PRODUCT_ICON[f]} ${flavorTotals[f]}</span>`).join('');
+    const locBreak = LOCATIONS.map(l => `<span>${l} <b>${locTotals[l] || 0}</b></span>`).join('');
+    let html = `<div class="db-summary"><div class="ds-total"><b>${grand}</b> sold · ${usd(grand * PRICE_PER_UNIT)}</div><div class="ds-break">${breakdown}</div>${dataLoc === 'all' ? `<div class="ds-break ds-loc">📍 ${locBreak}</div>` : ''}</div>`;
     for (const g of ordered) {
       const label = salesGroup === 'week'
         ? 'Week of ' + new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(parseEntryDate(g.key))
