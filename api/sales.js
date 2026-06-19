@@ -38,17 +38,20 @@ async function querySales(token) {
         'Chocolate': num(props['Chocolate']),
         'Unknown': num(props['Unknown']),
       };
-      const flavorSum = Object.values(amounts).reduce((s, v) => s + v, 0);
+      // A "flight" = 1 Lemon Poppy + 1 Sea Salt + 1 Ube (3 madeleines), recorded in
+      // its own column and NOT in the flavor columns — so fold each flight into those
+      // three flavors. Everything downstream (totals, revenue, run-rate) then counts it.
       const flights = num(props['Flights']);
-      const notionTotal = (props.Total && props.Total.formula && typeof props.Total.formula.number === 'number')
-        ? props.Total.formula.number : null;
+      amounts['Lemon Poppy'] += flights;
+      amounts['Sea Salt'] += flights;
+      amounts['Ube'] += flights;
+      const total = Object.values(amounts).reduce((s, v) => s + v, 0);
       out.push({
         date: String(date).slice(0, 10),
         location: (props.Location && props.Location.select && props.Location.select.name) || '',
         amounts,
-        total: flavorSum,       // (diagnostic: flavor columns only, for now)
+        total,
         flights,
-        notionTotal,
       });
     }
     cursor = data.has_more ? data.next_cursor : undefined;
