@@ -343,7 +343,7 @@
 </head>
 <body>
 
-<div class="beta-banner">🧪 BETA · estimates · app updated Jun 19, 2026 · 11:36 AM PST</div>
+<div class="beta-banner">🧪 BETA · estimates · app updated Jun 19, 2026 · 11:40 AM PST</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -352,6 +352,11 @@
       <h1>Overview</h1>
       <div class="sub" id="homeSub">—</div>
     </header>
+    <div class="db-filter" id="homeLoc">
+      <button class="on" data-loc="all">All</button>
+      <button data-loc="La Mirada">La Mirada</button>
+      <button data-loc="Stanton">Stanton</button>
+    </div>
     <div id="homeContent"></div>
   </div>
 </div>
@@ -466,6 +471,11 @@
       <h1>Projections</h1>
       <div class="sub" id="projSub">—</div>
     </header>
+    <div class="db-filter" id="projLoc">
+      <button class="on" data-loc="all">All</button>
+      <button data-loc="La Mirada">La Mirada</button>
+      <button data-loc="Stanton">Stanton</button>
+    </div>
     <div class="db-filter" id="projScenario">
       <button data-scn="bear">🐻 Bear</button>
       <button class="on" data-scn="base">Base</button>
@@ -1090,6 +1100,7 @@
 
   // ===== Shared projection math (used by Home + Projections) =====
   let projScenario = 'base';
+  let projLoc = 'all', homeLoc = 'all';   // independent per-tab location filters
   const RUN_WINDOW = 14;                          // days of sales history for run-rate
   const SCN = { bear: 0.75, base: 1, bull: 1.25 };
   const ZERO = () => ({ 'Lemon Poppy': 0, 'Sea Salt': 0, 'Ube': 0 });
@@ -1218,7 +1229,7 @@
       </div>`;
 
     html += `<div class="group-label">By location</div>`;
-    for (const loc of LOCATIONS) {
+    for (const loc of LOCATIONS.filter(l => homeLoc === 'all' || l === homeLoc)) {
       const st = locStats(loc, sales, entries);
       const ro = runout(st, SCN.base);
       const sold7 = soldLastDays(loc, sales, 7);
@@ -1240,7 +1251,7 @@
     // Last 7 days — combined revenue + quantity sold (all locations, all flavors)
     const from7 = ymdMinus(6);
     let qty7 = 0;
-    for (const s of sales) if (s.date >= from7)
+    for (const s of sales) if (s.date >= from7 && (homeLoc === 'all' || s.location === homeLoc))
       qty7 += (typeof s.total === 'number' ? s.total : SALES_FLAVORS.reduce((t, f) => t + (s.amounts[f] || 0), 0));
     html += `<div class="group-label">Last 7 days</div>
       <div class="home-metrics">
@@ -1268,7 +1279,7 @@
     sub.textContent = `${projScenario === 'base' ? 'Base case' : projScenario === 'bull' ? 'Bull · +25% sales' : 'Bear · −25% sales'} · rate = avg per active sales day`;
 
     let html = '';
-    for (const loc of LOCATIONS) {
+    for (const loc of LOCATIONS.filter(l => projLoc === 'all' || l === projLoc)) {
       const st = locStats(loc, sales, entries);
       if (!st.hasInv) {
         html += `<div class="proj-card"><h3>📍 ${loc}</h3><div class="proj-sub">No inventory count logged yet — add an Inventory entry to project run-out.</div></div>`;
@@ -1301,6 +1312,18 @@
     projScenario = b.dataset.scn;
     document.querySelectorAll('#projScenario button').forEach(x => x.classList.toggle('on', x === b));
     renderProj();
+  });
+  document.getElementById('projLoc').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    projLoc = b.dataset.loc;
+    document.querySelectorAll('#projLoc button').forEach(x => x.classList.toggle('on', x === b));
+    renderProj();
+  });
+  document.getElementById('homeLoc').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    homeLoc = b.dataset.loc;
+    document.querySelectorAll('#homeLoc button').forEach(x => x.classList.toggle('on', x === b));
+    renderHome();
   });
 
   // Re-run the active tab when the app returns to the foreground (e.g., reopened
