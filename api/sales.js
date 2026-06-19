@@ -38,13 +38,17 @@ async function querySales(token) {
         'Chocolate': num(props['Chocolate']),
         'Unknown': num(props['Unknown']),
       };
-      // true total sold = every flavor (matches the store's combined numbers)
-      const total = Object.values(amounts).reduce((s, v) => s + v, 0);
+      const flavorSum = Object.values(amounts).reduce((s, v) => s + v, 0);
+      const flights = num(props['Flights']);
+      const notionTotal = (props.Total && props.Total.formula && typeof props.Total.formula.number === 'number')
+        ? props.Total.formula.number : null;
       out.push({
         date: String(date).slice(0, 10),
         location: (props.Location && props.Location.select && props.Location.select.name) || '',
         amounts,
-        total,
+        total: flavorSum,       // (diagnostic: flavor columns only, for now)
+        flights,
+        notionTotal,
       });
     }
     cursor = data.has_more ? data.next_cursor : undefined;
