@@ -343,7 +343,7 @@
 </head>
 <body>
 
-<div class="beta-banner">🧪 BETA · estimates · app updated Jun 19, 2026 · 11:26 AM PST</div>
+<div class="beta-banner">🧪 BETA · estimates · app updated Jun 19, 2026 · 11:36 AM PST</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -423,17 +423,26 @@
   </div>
 </div>
 
-<!-- ===== DATABASE VIEW ===== -->
+<!-- ===== DATA VIEW (Sales + Deliveries + Inventory) ===== -->
 <div class="view" id="view-db">
   <div class="wrap">
     <header>
-      <h1>Database</h1>
+      <h1>Data</h1>
       <div class="sub" id="dbCount">—</div>
     </header>
     <div class="db-filter" id="dbFilter">
-      <button class="on" data-filter="all">All</button>
+      <button class="on" data-filter="sales">📈 Sales</button>
       <button data-filter="delivery">🚚 Deliveries</button>
       <button data-filter="inventory">📦 Inventory</button>
+    </div>
+    <div class="db-filter" id="dataLoc">
+      <button class="on" data-loc="all">All</button>
+      <button data-loc="La Mirada">La Mirada</button>
+      <button data-loc="Stanton">Stanton</button>
+    </div>
+    <div class="db-filter" id="salesGroup">
+      <button class="on" data-group="day">By day</button>
+      <button data-group="week">By week</button>
     </div>
     <div class="db-presets" id="dbPresets">
       <button type="button" data-days="0">Today</button>
@@ -447,26 +456,6 @@
       <button type="button" class="db-date-clear" id="dateClear" hidden>Clear</button>
     </div>
     <div id="dbList"></div>
-  </div>
-</div>
-
-<!-- ===== SALES VIEW ===== -->
-<div class="view" id="view-sales">
-  <div class="wrap">
-    <header>
-      <h1>Sales</h1>
-      <div class="sub" id="salesSub">—</div>
-    </header>
-    <div class="db-filter" id="salesLoc">
-      <button class="on" data-loc="all">All</button>
-      <button data-loc="La Mirada">La Mirada</button>
-      <button data-loc="Stanton">Stanton</button>
-    </div>
-    <div class="db-filter" id="salesGroup">
-      <button class="on" data-group="day">By day</button>
-      <button data-group="week">By week</button>
-    </div>
-    <div id="salesList"></div>
   </div>
 </div>
 
@@ -491,7 +480,6 @@
   <button data-tab="home" class="on"><span class="tic">🏠</span><span>Home</span></button>
   <button data-tab="entry"><span class="tic">➕</span><span>Entry</span></button>
   <button data-tab="db"><span class="tic">🗂️</span><span>Data</span></button>
-  <button data-tab="sales"><span class="tic">📈</span><span>Sales</span></button>
   <button data-tab="proj"><span class="tic">🔮</span><span>Forecast</span></button>
 </nav>
 
@@ -785,10 +773,19 @@
   let renderSeq = 0;
   let lastEntries = [];      // merged (pending + remote), cached for filter toggling
   let lastRemoteOk = true;
-  let dbFilter = 'all';      // 'all' | 'delivery' | 'inventory'
+  let dbFilter = 'sales';    // 'sales' | 'delivery' | 'inventory' (the Data tab's view)
+  let dataLoc = 'all';       // 'all' | 'La Mirada' | 'Stanton'
   let dateFrom = '', dateTo = '';   // 'YYYY-MM-DD' range (empty = all time)
 
+  // Single entry point for the Data tab — dispatches to Sales or entries.
+  function renderData() {
+    document.getElementById('salesGroup').hidden = (dbFilter !== 'sales');
+    if (dbFilter === 'sales') renderSalesView();
+    else renderDB();
+  }
+
   async function renderDB() {
+    if (dbFilter === 'sales') return;   // entries view only
     const list = document.getElementById('dbList');
     const countEl = document.getElementById('dbCount');
     const seq = ++renderSeq;
@@ -818,7 +815,8 @@
     const list = document.getElementById('dbList');
     const countEl = document.getElementById('dbCount');
     const entries = lastEntries.filter(e => {
-      if (dbFilter !== 'all' && e.type !== dbFilter) return false;
+      if (e.type !== dbFilter) return false;   // 'delivery' | 'inventory'
+      if (dataLoc !== 'all' && e.location !== dataLoc) return false;
       const d = String(e.datetime).slice(0, 10); // YYYY-MM-DD
       if (dateFrom && d < dateFrom) return false;
       if (dateTo && d > dateTo) return false;
@@ -826,16 +824,13 @@
     });
 
     const n = entries.length;
-    const noun = dbFilter === 'delivery' ? (n === 1 ? 'delivery' : 'deliveries')
-      : dbFilter === 'inventory' ? 'inventory'
-      : (n === 1 ? 'entry' : 'entries');
+    const noun = dbFilter === 'delivery' ? (n === 1 ? 'delivery' : 'deliveries') : 'inventory';
     countEl.textContent = n
       ? `${n} ${noun}${lastRemoteOk ? '' : ' · offline'}`
-      : (lastRemoteOk ? `No ${dbFilter === 'all' ? 'entries' : noun} yet` : 'Offline');
+      : (lastRemoteOk ? `No ${noun} yet` : 'Offline');
 
     if (!n) {
-      const what = dbFilter === 'all' ? 'Nothing submitted yet.' : `No ${noun} yet.`;
-      list.innerHTML = `<div class="db-empty"><div class="big">🗂️</div>${what}<br>Entries from all devices appear here.</div>`;
+      list.innerHTML = `<div class="db-empty"><div class="big">🗂️</div>No ${noun} yet.<br>Entries from all devices appear here.</div>`;
       return;
     }
 
@@ -892,25 +887,31 @@
   }
 
   // ---- Tab switching ----
-  const VIEWS = { home: 'view-home', entry: 'view-entry', db: 'view-db', sales: 'view-sales', proj: 'view-proj' };
+  const VIEWS = { home: 'view-home', entry: 'view-entry', db: 'view-db', proj: 'view-proj' };
   document.querySelector('.tabbar').addEventListener('click', e => {
     const btn = e.target.closest('button'); if (!btn) return;
     const tab = btn.dataset.tab;
     document.querySelectorAll('.tabbar button').forEach(b => b.classList.toggle('on', b === btn));
     Object.entries(VIEWS).forEach(([t, id]) => document.getElementById(id).classList.toggle('active', t === tab));
     if (tab === 'home') { salesCache = null; renderHome(); }
-    if (tab === 'db') { renderDB(); retryUnsynced(); }
-    if (tab === 'sales') { salesCache = null; renderSales(); }
+    if (tab === 'db') { salesCache = null; renderData(); retryUnsynced(); }
     if (tab === 'proj') { salesCache = null; renderProj(); }
     window.scrollTo(0, 0);
   });
 
-  // ---- Database filter (All / Deliveries / Inventory) ----
+  // ---- Data type filter (Sales / Deliveries / Inventory) ----
   document.getElementById('dbFilter').addEventListener('click', e => {
     const btn = e.target.closest('button'); if (!btn) return;
     dbFilter = btn.dataset.filter;
     document.querySelectorAll('#dbFilter button').forEach(b => b.classList.toggle('on', b === btn));
-    paintDB();   // re-render from cache, no re-fetch
+    renderData();
+  });
+  // ---- Location filter (All / La Mirada / Stanton) ----
+  document.getElementById('dataLoc').addEventListener('click', e => {
+    const btn = e.target.closest('button'); if (!btn) return;
+    dataLoc = btn.dataset.loc;
+    document.querySelectorAll('#dataLoc button').forEach(b => b.classList.toggle('on', b === btn));
+    renderData();
   });
 
   // ---- Date-range filter (presets + custom From/To) ----
@@ -934,7 +935,7 @@
   function applyDateRange() {
     fromEl.value = dateFrom; toEl.value = dateTo;
     dateClearBtn.hidden = !(dateFrom || dateTo);
-    paintDB();
+    renderData();
   }
 
   document.getElementById('dbPresets').addEventListener('click', e => {
@@ -1014,7 +1015,7 @@
 
   // ===== Sales tab =====
   let salesCache = null;
-  let salesLoc = 'all', salesGroup = 'day';
+  let salesGroup = 'day';
 
   async function getSales() {
     if (salesCache) return salesCache;
@@ -1032,9 +1033,9 @@
     return `${dt.getFullYear()}-${p(dt.getMonth() + 1)}-${p(dt.getDate())}`;
   }
 
-  async function renderSales() {
-    const list = document.getElementById('salesList');
-    const sub = document.getElementById('salesSub');
+  async function renderSalesView() {
+    const list = document.getElementById('dbList');
+    const sub = document.getElementById('dbCount');
     sub.textContent = 'Loading…';
     let sales;
     try { sales = await getSales(); }
@@ -1043,7 +1044,12 @@
       list.innerHTML = `<div class="db-empty"><div class="big">📈</div>Couldn't load sales.<br>Connect the integration to the Sales database.</div>`;
       return;
     }
-    const rows = salesLoc === 'all' ? sales : sales.filter(s => s.location === salesLoc);
+    const rows = sales.filter(s => {
+      if (dataLoc !== 'all' && s.location !== dataLoc) return false;
+      if (dateFrom && s.date < dateFrom) return false;
+      if (dateTo && s.date > dateTo) return false;
+      return true;
+    });
     const groups = {};
     for (const s of rows) {
       const key = salesGroup === 'week' ? weekStart(s.date) : s.date;
@@ -1057,7 +1063,7 @@
       ? `${grand} sold · ${ordered.length} ${salesGroup === 'week' ? 'weeks' : 'days'}`
       : 'No sales';
     if (!ordered.length) {
-      list.innerHTML = `<div class="db-empty"><div class="big">📈</div>No sales in the Sales database yet.</div>`;
+      list.innerHTML = `<div class="db-empty"><div class="big">📈</div>No sales in this range.</div>`;
       return;
     }
     let html = '';
@@ -1075,17 +1081,11 @@
     }
     list.innerHTML = html;
   }
-  document.getElementById('salesLoc').addEventListener('click', e => {
-    const b = e.target.closest('button'); if (!b) return;
-    salesLoc = b.dataset.loc;
-    document.querySelectorAll('#salesLoc button').forEach(x => x.classList.toggle('on', x === b));
-    renderSales();
-  });
   document.getElementById('salesGroup').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
     salesGroup = b.dataset.group;
     document.querySelectorAll('#salesGroup button').forEach(x => x.classList.toggle('on', x === b));
-    renderSales();
+    renderSalesView();
   });
 
   // ===== Shared projection math (used by Home + Projections) =====
