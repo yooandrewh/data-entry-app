@@ -343,7 +343,7 @@
 </head>
 <body>
 
-<div class="beta-banner">🧪 BETA · estimates · app updated Jun 19, 2026 · 11:48 AM PST</div>
+<div class="beta-banner">🧪 BETA · estimates · app updated Jun 20, 2026 · 1:43 PM PST</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -1337,16 +1337,21 @@
     renderHome();
   });
 
-  // Re-run the active tab when the app returns to the foreground (e.g., reopened
-  // the next day), so dates/projections refresh locally without a manual reload.
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState !== 'visible') return;
+  // Pull fresh data for whatever tab is showing (skips while a dialog is open).
+  function refreshActiveTab() {
+    if (document.getElementById('delScrim').classList.contains('show')) return;
     const active = document.querySelector('.tabbar button.on')?.dataset.tab;
     if (active === 'home') { salesCache = null; renderHome(); }
     else if (active === 'proj') { salesCache = null; renderProj(); }
-    else if (active === 'sales') { salesCache = null; renderSales(); }
-    else if (active === 'db') renderDB();
+    else if (active === 'db') { salesCache = null; renderData(); }
+  }
+  // Refresh when the app returns to the foreground…
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') refreshActiveTab();
   });
+  // …and auto-refresh every 60s while it's open, so new Notion entries show up
+  // without a manual reload.
+  setInterval(() => { if (document.visibilityState === 'visible') refreshActiveTab(); }, 60000);
 
   renderHome();
   retryUnsynced();
