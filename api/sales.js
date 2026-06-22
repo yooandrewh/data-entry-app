@@ -38,13 +38,10 @@ async function querySales(token) {
         'Chocolate': num(props['Chocolate']),
         'Unknown': num(props['Unknown']),
       };
-      // A "flight" = 1 Lemon Poppy + 1 Sea Salt + 1 Ube (3 madeleines), recorded in
-      // its own column and NOT in the flavor columns — so fold each flight into those
-      // three flavors. Everything downstream (totals, revenue, run-rate) then counts it.
+      // NOTE: the OCR/parser ALREADY folds each flight's 3 madeleines into the
+      // LP/SS/Ube flavor columns. The Flights column is just an informational count
+      // ("how many flights"), NOT a separate bucket — so do NOT add it again.
       const flights = num(props['Flights']);
-      amounts['Lemon Poppy'] += flights;
-      amounts['Sea Salt'] += flights;
-      amounts['Ube'] += flights;
       const total = Object.values(amounts).reduce((s, v) => s + v, 0);
       out.push({
         date: String(date).slice(0, 10),
