@@ -1,0 +1,7 @@
+{
+  "name": "data-entry-app",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "iPhone data-entry app for Kairos baking; static frontend + Vercel serverless functions backed by Google Sheets."
+}

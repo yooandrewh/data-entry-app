@@ -1,59 +1,43 @@
-// Vercel serverless function: returns ALL rows from both Notion databases so every
-// device shows the same shared list (read side of the sync). Token stays server-side.
+// Vercel serverless function: returns ALL rows from the Deliveries + Inventory
+// tabs of the Google Sheet so every device shows the same shared list (read side
+// of the sync). The service-account key stays server-side.
 //
-// Required env var: NOTION_TOKEN   (optional: APP_KEY, NOTION_DELIVERIES_DB, NOTION_INVENTORY_DB)
+// Required env vars: GOOGLE_SA_JSON, SHEET_ID   (optional: APP_KEY)
 
-const DBS = [
-  { type: 'delivery', id: process.env.NOTION_DELIVERIES_DB || '74476427d7d3831ab84e8107cf70285a' },
-  { type: 'inventory', id: process.env.NOTION_INVENTORY_DB || 'd1576427d7d382568a7b81a8e89c740c' },
+import { getRows } from './_sheets.js';
+
+const TABS = [
+  { type: 'delivery', tab: process.env.SHEET_DELIVERIES_TAB || 'Deliveries' },
+  { type: 'inventory', tab: process.env.SHEET_INVENTORY_TAB || 'Inventory' },
 ];
 
-const num = (p) => (p && typeof p.number === 'number') ? p.number : 0;
+// Sheet cells come back as strings; coerce to a number (blank -> 0).
+const num = (v) => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
+const truthy = (v) => /^(true|yes|1|__yes__)$/i.test(String(v || '').trim());
 
-async function queryDb(token, db) {
-  const out = [];
-  let cursor;
-  do {
-    const r = await fetch(`https://api.notion.com/v1/databases/${db.id}/query`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Notion-Version': '2022-06-28',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        page_size: 100,
-        start_cursor: cursor,
-        sorts: [{ property: 'Date', direction: 'descending' }],
-      }),
-    });
-    const data = await r.json();
-    if (!r.ok) throw new Error(JSON.stringify(data));
-    for (const pg of data.results) {
-      const props = pg.properties || {};
-      // Goodwill (free samples given out) lives in the Deliveries DB as a negative
-      // adjustment, marked by its "Goodwill — …" title. Surface it as its own type.
-      const titleArr = (props.notes && props.notes.title) || [];
-      const title = titleArr.map((t) => (t && t.plain_text) || '').join('');
-      const isGoodwill = db.type === 'delivery' && /goodwill/i.test(title);
-      out.push({
-        notionId: pg.id,
-        type: isGoodwill ? 'goodwill' : db.type,
-        datetime: (props.Date && props.Date.date && props.Date.date.start) || '',
-        location: (props.Select && props.Select.select && props.Select.select.name) || '',
+async function readTab({ type, tab }) {
+  const { rows } = await getRows(tab);
+  return rows
+    .filter((r) => (r.id || r.Date))                 // skip fully-empty rows
+    .map((r) => {
+      // Goodwill (free samples) lives in the Deliveries tab as a negative
+      // adjustment, marked by its "Goodwill — …" notes title.
+      const isGoodwill = type === 'delivery' && /goodwill/i.test(String(r.notes || ''));
+      return {
+        notionId: r.id || '',                        // Sheets row id (kept the field name)
+        type: isGoodwill ? 'goodwill' : type,
+        datetime: r.Date || '',
+        location: r.Select || '',
         amounts: {
-          'Lemon Poppy': num(props['Lemon Poppy']),
-          'Sea Salt': num(props['Sea Salt Butter']),
-          'Ube': num(props['Ube']),
-          'Dot': num(props['Dot']),
+          'Lemon Poppy': num(r['Lemon Poppy']),
+          'Sea Salt': num(r['Sea Salt Butter']),
+          'Ube': num(r['Ube']),
+          'Dot': num(r['Dot']),
         },
-        taggedForDeletion: !!(props['Tagged for deletion'] && props['Tagged for deletion'].checkbox),
+        taggedForDeletion: truthy(r['Tagged for deletion']),
         synced: true,
-      });
-    }
-    cursor = data.has_more ? data.next_cursor : undefined;
-  } while (cursor);
-  return out;
+      };
+    });
 }
 
 export default async function handler(req, res) {
@@ -63,14 +47,12 @@ export default async function handler(req, res) {
 
   if (req.method === 'OPTIONS') return res.status(204).end();
 
-  const token = process.env.NOTION_TOKEN;
-  if (!token) return res.status(500).json({ error: 'Server is missing NOTION_TOKEN' });
   if (process.env.APP_KEY && req.headers['x-app-key'] !== process.env.APP_KEY) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
   try {
-    const all = (await Promise.all(DBS.map((db) => queryDb(token, db)))).flat();
+    const all = (await Promise.all(TABS.map(readTab))).flat();
     all.sort((a, b) => String(b.datetime).localeCompare(String(a.datetime)));
     return res.status(200).json({ entries: all });
   } catch (e) {

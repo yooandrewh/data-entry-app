@@ -1,61 +1,12 @@
-// Reads the "Sales (OCR — full)" database — the complete daily POS/OCR sales —
-// for the Sales and Projections tabs. Token stays server-side.
+// Reads the "Sales" tab of the Google Sheet — the complete daily POS/OCR sales —
+// for the Sales and Projections tabs. The service-account key stays server-side.
 //
-// Required env var: NOTION_TOKEN  (optional: APP_KEY, NOTION_SALES_DB)
-// NOTE: the Notion integration must be connected to this database.
+// Required env vars: GOOGLE_SA_JSON, SHEET_ID   (optional: APP_KEY, SHEET_SALES_TAB)
 
-const SALES_DB = process.env.NOTION_SALES_DB || '37db22a9532743b19177df842181e49f';
-const num = (p) => (p && typeof p.number === 'number') ? p.number : 0;
+import { getRows } from './_sheets.js';
 
-async function querySales(token) {
-  const out = [];
-  let cursor;
-  do {
-    const r = await fetch(`https://api.notion.com/v1/databases/${SALES_DB}/query`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Notion-Version': '2022-06-28',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        page_size: 100,
-        start_cursor: cursor,
-        sorts: [{ property: 'Date', direction: 'descending' }],
-      }),
-    });
-    const data = await r.json();
-    if (!r.ok) throw new Error(JSON.stringify(data));
-    for (const pg of data.results) {
-      const props = pg.properties || {};
-      const date = (props.Date && props.Date.date && props.Date.date.start) || '';
-      if (!date) continue;
-      const amounts = {
-        'Lemon Poppy': num(props['Lemon Poppy']),
-        'Sea Salt': num(props['Sea Salt Butter']),
-        'Ube': num(props['Ube']),
-        'Dot': num(props['Dot']),
-        'Matcha': num(props['Matcha']),
-        'Chocolate': num(props['Chocolate']),
-        'Unknown': num(props['Unknown']),
-      };
-      // NOTE: the OCR/parser ALREADY folds each flight's 3 madeleines into the
-      // LP/SS/Ube flavor columns. The Flights column is just an informational count
-      // ("how many flights"), NOT a separate bucket — so do NOT add it again.
-      const flights = num(props['Flights']);
-      const total = Object.values(amounts).reduce((s, v) => s + v, 0);
-      out.push({
-        date: String(date).slice(0, 10),
-        location: (props.Location && props.Location.select && props.Location.select.name) || '',
-        amounts,
-        total,
-        flights,
-      });
-    }
-    cursor = data.has_more ? data.next_cursor : undefined;
-  } while (cursor);
-  return out;
-}
+const SALES_TAB = process.env.SHEET_SALES_TAB || 'Sales';
+const num = (v) => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -64,14 +15,31 @@ export default async function handler(req, res) {
 
   if (req.method === 'OPTIONS') return res.status(204).end();
 
-  const token = process.env.NOTION_TOKEN;
-  if (!token) return res.status(500).json({ error: 'Server is missing NOTION_TOKEN' });
   if (process.env.APP_KEY && req.headers['x-app-key'] !== process.env.APP_KEY) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
   try {
-    const sales = await querySales(token);
+    const { rows } = await getRows(SALES_TAB);
+    const sales = [];
+    for (const r of rows) {
+      const date = String(r.Date || '');
+      if (!date) continue;
+      const amounts = {
+        'Lemon Poppy': num(r['Lemon Poppy']),
+        'Sea Salt': num(r['Sea Salt Butter']),
+        'Ube': num(r['Ube']),
+        'Dot': num(r['Dot']),
+        'Matcha': num(r['Matcha']),
+        'Chocolate': num(r['Chocolate']),
+        'Unknown': num(r['Unknown']),
+      };
+      // The OCR/parser ALREADY folds each flight's 3 madeleines into the LP/SS/Ube
+      // columns. Flights is an informational count, NOT a separate bucket — don't add it.
+      const flights = num(r['Flights']);
+      const total = Object.values(amounts).reduce((s, v) => s + v, 0);
+      sales.push({ date: date.slice(0, 10), location: r.Location || '', amounts, total, flights });
+    }
     return res.status(200).json({ sales });
   } catch (e) {
     return res.status(500).json({ error: String((e && e.message) || e) });

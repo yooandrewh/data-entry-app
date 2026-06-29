@@ -1,0 +1,8 @@
+# Exported business data — keep local, do NOT commit to the public repo.
+migration/*.xlsx
+migration/*.csv
+
+# Local env / deps
+node_modules/
+.env*
+.vercel

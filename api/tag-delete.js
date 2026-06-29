@@ -1,22 +1,17 @@
-// Vercel serverless function: marks a Notion row's "Tagged for deletion" checkbox.
-// Nothing is actually deleted — the row stays in Notion, flagged for review.
+// Vercel serverless function: marks a row's "Tagged for deletion" column TRUE in
+// the Google Sheet. Nothing is actually deleted — the row stays, flagged for review.
 //
-// Body: { pageId: "<notion page id>", tagged?: true }
-// Required env var: NOTION_TOKEN   (optional: APP_KEY — same as sync.js)
+// Body: { pageId: "<sheet row id>", tagged?: true }
+// Required env vars: GOOGLE_SA_JSON, SHEET_ID   (optional: APP_KEY)
 //
-// Safety: only pages that live in the Deliveries/Inventory databases can be
-// tagged, so this endpoint can't be used to flag arbitrary pages elsewhere.
+// Safety: only rows in the Deliveries/Inventory tabs can be tagged.
 
-const ALLOWED_DBS = [
-  process.env.NOTION_DELIVERIES_DB || '74476427d7d3831ab84e8107cf70285a',
-  process.env.NOTION_INVENTORY_DB || 'd1576427d7d382568a7b81a8e89c740c',
-].map((id) => id.replace(/-/g, ''));
+import { getRows, updateCell } from './_sheets.js';
 
-const NOTION_HEADERS = (token) => ({
-  'Authorization': `Bearer ${token}`,
-  'Notion-Version': '2022-06-28',
-  'Content-Type': 'application/json',
-});
+const TABS = [
+  process.env.SHEET_DELIVERIES_TAB || 'Deliveries',
+  process.env.SHEET_INVENTORY_TAB || 'Inventory',
+];
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -25,9 +20,6 @@ export default async function handler(req, res) {
 
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-
-  const token = process.env.NOTION_TOKEN;
-  if (!token) return res.status(500).json({ error: 'Server is missing NOTION_TOKEN' });
 
   if (process.env.APP_KEY && req.headers['x-app-key'] !== process.env.APP_KEY) {
     return res.status(401).json({ error: 'Unauthorized' });
@@ -38,34 +30,17 @@ export default async function handler(req, res) {
     if (!pageId || typeof pageId !== 'string') {
       return res.status(400).json({ error: 'Missing pageId' });
     }
-    // Accept only a UUID (with or without dashes) to avoid path injection.
-    if (!/^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}$/i.test(pageId)) {
-      return res.status(400).json({ error: 'Invalid pageId' });
+
+    // Find the row by its id across the managed tabs, then flip the checkbox cell.
+    for (const tab of TABS) {
+      const { header, rows } = await getRows(tab);
+      const hit = rows.find((r) => String(r.id) === pageId);
+      if (hit) {
+        await updateCell(tab, header, hit._row, 'Tagged for deletion', tagged === false ? 'FALSE' : 'TRUE');
+        return res.status(200).json({ ok: true, id: pageId });
+      }
     }
-
-    // Verify the page belongs to one of our databases before modifying it.
-    const pageRes = await fetch(`https://api.notion.com/v1/pages/${pageId}`, {
-      headers: NOTION_HEADERS(token),
-    });
-    const page = await pageRes.json();
-    if (!pageRes.ok) return res.status(pageRes.status).json({ error: 'Notion API error', detail: page });
-
-    const parentDb = (page.parent && page.parent.database_id || '').replace(/-/g, '');
-    if (!ALLOWED_DBS.includes(parentDb)) {
-      return res.status(403).json({ error: 'Page is not in a managed database' });
-    }
-
-    const r = await fetch(`https://api.notion.com/v1/pages/${pageId}`, {
-      method: 'PATCH',
-      headers: NOTION_HEADERS(token),
-      body: JSON.stringify({
-        properties: { 'Tagged for deletion': { checkbox: tagged !== false } },
-      }),
-    });
-
-    const data = await r.json();
-    if (!r.ok) return res.status(r.status).json({ error: 'Notion API error', detail: data });
-    return res.status(200).json({ ok: true, id: data.id });
+    return res.status(404).json({ error: 'Row not found in a managed tab' });
   } catch (e) {
     return res.status(500).json({ error: String((e && e.message) || e) });
   }

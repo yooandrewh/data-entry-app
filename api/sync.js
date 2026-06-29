@@ -1,26 +1,28 @@
-// Vercel serverless function: receives an entry from the app and creates a row
-// in the matching Notion database — Deliveries or Inventory, routed by `type`.
-// The Notion token lives ONLY here (server-side), never in the client.
+// Vercel serverless function: receives an entry from the app and appends a row to
+// the matching tab of the Google Sheet — Deliveries or Inventory, routed by `type`.
+// The service-account key lives ONLY here (server-side), never in the client.
 //
-// Required env var (set in Vercel project settings):
-//   NOTION_TOKEN          - your Notion internal integration secret (ntn_... / secret_...)
-// Optional env vars (override the defaults below):
-//   NOTION_DELIVERIES_DB  - Deliveries database id
-//   NOTION_INVENTORY_DB   - Inventory database id
-//   APP_KEY               - if set, requests must send a matching "x-app-key" header
+// Required env vars (set in Vercel project settings):
+//   GOOGLE_SA_JSON  - the service-account key JSON, base64-encoded
+//   SHEET_ID        - the spreadsheet id
+// Optional env vars:
+//   SHEET_DELIVERIES_TAB / SHEET_INVENTORY_TAB - tab name overrides
+//   APP_KEY         - if set, requests must send a matching "x-app-key" header
+//   NTFY_TOPIC      - ntfy.sh topic for phone push notifications
 
-// Consolidated onto the original Kairosbaking Deliveries/Inventory databases.
-const DELIVERIES_DB = process.env.NOTION_DELIVERIES_DB || '74476427d7d3831ab84e8107cf70285a';
-const DB_BY_TYPE = {
-  delivery: DELIVERIES_DB,
-  inventory: process.env.NOTION_INVENTORY_DB || 'd1576427d7d382568a7b81a8e89c740c',
-  // Goodwill = free samples given out. Stored in the Deliveries DB as a NEGATIVE
-  // stock adjustment so it subtracts from on-hand (and from projections) like a
-  // negative delivery.
-  goodwill: DELIVERIES_DB,
+import crypto from 'node:crypto';
+import { appendRow, sheetId } from './_sheets.js';
+
+const DELIVERIES_TAB = process.env.SHEET_DELIVERIES_TAB || 'Deliveries';
+const TAB_BY_TYPE = {
+  delivery: DELIVERIES_TAB,
+  inventory: process.env.SHEET_INVENTORY_TAB || 'Inventory',
+  // Goodwill = free samples given out. Stored in the Deliveries tab as a NEGATIVE
+  // stock adjustment so it subtracts from on-hand (and from projections).
+  goodwill: DELIVERIES_TAB,
 };
 
-// App product name -> Notion column name.
+// App product name -> Sheet column name.
 const PRODUCT_MAP = {
   'Lemon Poppy': 'Lemon Poppy',
   'Sea Salt': 'Sea Salt Butter',
@@ -28,7 +30,7 @@ const PRODUCT_MAP = {
   'Dot': 'Dot',
 };
 
-// Allowed locations (must match the Location select options in both databases).
+// Allowed locations (must match the Select column values in the sheet).
 const ALLOWED_LOCATIONS = ['La Mirada', 'Stanton'];
 
 // Coerce an amount to a safe integer (caps absurd values). Negatives are allowed
@@ -40,8 +42,8 @@ function cleanAmount(v) {
 }
 
 // Turn a local wall-clock "YYYY-MM-DDTHH:MM" into a full ISO datetime with the
-// correct America/Los_Angeles offset (handles PST -08:00 vs PDT -07:00), so
-// Notion stores the date AND time. Returns null if the input is malformed.
+// correct America/Los_Angeles offset (handles PST -08:00 vs PDT -07:00). Returns
+// null if the input is malformed.
 function laDateTime(local) {
   if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(String(local))) return null;
   const asUTC = new Date(local + ':00Z');
@@ -53,8 +55,7 @@ function laDateTime(local) {
   return `${local}:00${offset}`;
 }
 
-// Best-effort phone push via ntfy.sh. Set NTFY_TOPIC in Vercel (a long, private
-// name) and subscribe the ntfy app to the same topic. Never blocks/fails the sync.
+// Best-effort phone push via ntfy.sh. Never blocks/fails the sync.
 async function sendNotification({ type, location, dateOnly, amounts }) {
   const topic = process.env.NTFY_TOPIC;
   if (!topic) return;
@@ -84,9 +85,6 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const token = process.env.NOTION_TOKEN;
-  if (!token) return res.status(500).json({ error: 'Server is missing NOTION_TOKEN' });
-
   if (process.env.APP_KEY && req.headers['x-app-key'] !== process.env.APP_KEY) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
@@ -97,8 +95,8 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Missing required fields (type, datetime, location)' });
     }
 
-    const databaseId = DB_BY_TYPE[String(type).toLowerCase()];
-    if (!databaseId) return res.status(400).json({ error: `Unknown type: ${type}` });
+    const tab = TAB_BY_TYPE[String(type).toLowerCase()];
+    if (!tab) return res.status(400).json({ error: `Unknown type: ${type}` });
 
     if (!ALLOWED_LOCATIONS.includes(location)) {
       return res.status(400).json({ error: `Unknown location: ${location}` });
@@ -112,36 +110,29 @@ export default async function handler(req, res) {
     const cap = (s) => String(s).charAt(0).toUpperCase() + String(s).slice(1);
     const a = (amounts && typeof amounts === 'object') ? amounts : {};
     const isGoodwill = String(type).toLowerCase() === 'goodwill';
+    const id = crypto.randomUUID();
 
-    const properties = {
-      'notes': { title: [{ text: { content: `${cap(type)} — ${location}` } }] },
-      'Select': { select: { name: location } },
-      'Date': { date: { start: startIso } },
-      'Tagged for deletion': { checkbox: false },
+    // Build the row object; appendRow() orders it to match the tab's header.
+    const row = {
+      id,
+      Date: startIso,
+      Select: location,
+      'Tagged for deletion': 'FALSE',
+      notes: `${cap(type)} — ${location}`,
     };
-    for (const [appName, notionName] of Object.entries(PRODUCT_MAP)) {
+    for (const [appName, colName] of Object.entries(PRODUCT_MAP)) {
       // Goodwill removes stock: always store a negative number regardless of sign entered.
       const n = cleanAmount(a[appName]);
-      properties[notionName] = { number: isGoodwill ? -Math.abs(n) : n };
+      row[colName] = isGoodwill ? -Math.abs(n) : n;
     }
 
-    const r = await fetch('https://api.notion.com/v1/pages', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Notion-Version': '2022-06-28',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ parent: { database_id: databaseId }, properties }),
-    });
-
-    const data = await r.json();
-    if (!r.ok) return res.status(r.status).json({ error: 'Notion API error', detail: data });
+    await appendRow(tab, row);
 
     // Push a phone notification (best-effort — a failure here never fails the sync).
     await sendNotification({ type, location, dateOnly, amounts: a }).catch(() => {});
 
-    return res.status(200).json({ ok: true, id: data.id, url: data.url });
+    const url = `https://docs.google.com/spreadsheets/d/${sheetId()}/edit`;
+    return res.status(200).json({ ok: true, id, url });
   } catch (e) {
     return res.status(500).json({ error: String((e && e.message) || e) });
   }

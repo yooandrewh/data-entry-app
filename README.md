@@ -21,50 +21,48 @@ python3 -m http.server 4173
 # then visit http://localhost:4173
 ```
 
-## Notion sync
+## Google Sheets sync
 
-Entries are saved on the device first, then synced to Notion via small serverless
-functions so the Notion token never touches the client.
+Entries are saved on the device first, then synced to a **Google Sheet** via small
+serverless functions so the service-account key never touches the client.
 
-- `api/sync.js` — creates the row, **routing by type**: Delivery entries go to the
-  **Deliveries** database, Inventory entries go to the **Inventory** database.
+- `api/sync.js` — appends the row, **routing by type**: Delivery/Goodwill entries go
+  to the **Deliveries** tab, Inventory entries go to the **Inventory** tab.
+- `api/entries.js` — reads both tabs (the shared list every device sees).
 - `api/tag-delete.js` — soft delete. The app's 🗑️ (password `kairos`) doesn't remove
-  anything; it ticks the row's **Tagged for deletion** checkbox in Notion and greys
-  the entry in the app so it can be reviewed before any real removal.
+  anything; it sets the row's **Tagged for deletion** cell to TRUE and greys the
+  entry in the app so it can be reviewed before any real removal.
+- `api/sales.js` — reads the **Sales** tab for the Sales/Projections views.
+- `api/_sheets.js` — shared, zero-dependency Sheets client (service-account JWT
+  signed with Node's built-in `crypto`).
 
-Each entry shows **✓ Synced to Notion**, **⟳ Not synced — tap to retry**, or
+Each entry shows **✓ Synced to Sheets**, **⟳ Not synced — tap to retry**, or
 **🏷️ Tagged for deletion**. Unsynced/untagged actions retry automatically when the
 Database tab opens.
 
-Field mapping (app → both databases):
+Field mapping (app → sheet column):
 
-| App | Notion column |
-|-----|---------------|
-| Location | `Location` |
-| Date | `Date` (date only) |
+| App | Sheet column |
+|-----|--------------|
+| Location | `Select` (Deliveries/Inventory), `Location` (Sales) |
+| Date | `Date` (full datetime) |
 | Lemon Poppy | `Lemon Poppy` |
 | Sea Salt | `Sea Salt Butter` |
 | Ube | `Ube` |
+| Dot | `Dot` |
 
-The Delivery/Inventory choice selects *which database* the row lands in (no Type column).
+The Delivery/Inventory/Goodwill choice selects *which tab* the row lands in.
+Goodwill rows are negative stock adjustments written to the Deliveries tab.
 
 ### Deploy the sync backend (Vercel)
 
-1. Create a Notion **internal integration** at <https://www.notion.so/my-integrations>,
-   copy its secret token.
-2. In Notion, open **both** the **Deliveries** and **Inventory** databases → ••• menu →
-   **Connections** → add your integration (grants write access to each).
-3. Import this repo into <https://vercel.com> (New Project → import `data-entry-app`).
-4. Add a Vercel environment variable: `NOTION_TOKEN` = your integration token.
-   The database ids are baked in as defaults; override with `NOTION_DELIVERIES_DB` /
-   `NOTION_INVENTORY_DB` if needed. Optional `APP_KEY` requires a shared `x-app-key` header.
-5. Deploy. The app is now at `https://<project>.vercel.app` with sync + soft-delete working
-   (`SYNC_ENDPOINT` / `TAG_DELETE_ENDPOINT` are same-origin `/api/...`).
-
-If you keep the app on GitHub Pages instead, point `SYNC_ENDPOINT` and `TAG_DELETE_ENDPOINT`
-in `index.html` at the absolute `https://<project>.vercel.app/api/...` URLs.
+The backend was migrated from Notion to Google Sheets. See
+[`migration/SETUP.md`](migration/SETUP.md) for the full one-time setup: create the
+sheet (from `migration/kairos-baking.xlsx`), make a Google service account, share the
+sheet with it, and set the Vercel env vars `SHEET_ID` and `GOOGLE_SA_JSON`.
 
 ## Status
 
-Frontend complete and verified. Two routed Notion databases created; sync + soft-delete
-implemented. Deploy the Vercel backend (steps above) to turn it on live.
+Frontend complete and verified. Backend migrated to Google Sheets (Deliveries /
+Inventory / Sales tabs); sync + soft-delete implemented. Complete `migration/SETUP.md`
+to turn it on live.

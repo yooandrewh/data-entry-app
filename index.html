@@ -429,7 +429,7 @@
           </div>
         </div>
         <div class="row">
-          <span class="lbl">🔴 Dot</span>
+          <span class="lbl">🍰 Dot</span>
           <div class="amt" data-product="Dot">
             <button type="button" class="step minus">−</button>
             <input class="val" type="number" inputmode="numeric" value="0" min="0" />
@@ -526,7 +526,7 @@
 <div class="scrim alert" id="delScrim">
   <div class="alert-box" role="dialog" aria-modal="true" aria-labelledby="delTitle">
     <h2 id="delTitle">Tag for deletion?</h2>
-    <p>This flags the entry for deletion in Notion — nothing is removed, so it can be reviewed first. Enter the password to confirm.</p>
+    <p>This flags the entry for deletion in the sheet — nothing is removed, so it can be reviewed first. Enter the password to confirm.</p>
     <input type="password" id="delPass" placeholder="Password" autocomplete="off" autocapitalize="off" autocorrect="off" />
     <div class="alert-err" id="delErr"></div>
     <div class="actions">
@@ -541,7 +541,7 @@
 <script>
   const STORE_KEY = 'dataEntries.v1';
   const PRODUCTS = ['Lemon Poppy', 'Sea Salt', 'Ube', 'Dot'];
-  const PRODUCT_ICON = { 'Lemon Poppy': '🍋', 'Sea Salt': '🧂', 'Ube': '💜', 'Dot': '🔴', 'Matcha': '🍵', 'Chocolate': '🍫', 'Unknown': '❓' };
+  const PRODUCT_ICON = { 'Lemon Poppy': '🍋', 'Sea Salt': '🧂', 'Ube': '💜', 'Dot': '🍰', 'Matcha': '🍵', 'Chocolate': '🍫', 'Unknown': '❓' };
   const LOCATIONS = ['La Mirada', 'Stanton'];
   // Flavors the app stocks (PRODUCTS) plus extra ones that show up in sales.
   const SALES_FLAVORS = ['Lemon Poppy', 'Sea Salt', 'Ube', 'Dot', 'Matcha', 'Chocolate', 'Unknown'];
@@ -917,7 +917,7 @@
       if (e.taggedForDeletion) {
         footer = `<div class="db-sync tagged">🏷️ Tagged for deletion</div>`;
       } else if (e.notionId) {
-        footer = `<div class="db-sync ok">✓ Synced to Notion</div>`;
+        footer = `<div class="db-sync ok">✓ Synced to Sheets</div>`;
         trash = `<button class="db-del" data-id="${esc(e.notionId)}" aria-label="Delete entry" title="Delete">🗑️</button>`;
       } else {
         const rid = esc(e.submittedAt || e.datetime);
