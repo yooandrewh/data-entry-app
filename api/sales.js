@@ -34,6 +34,7 @@ async function querySales(token) {
         'Lemon Poppy': num(props['Lemon Poppy']),
         'Sea Salt': num(props['Sea Salt Butter']),
         'Ube': num(props['Ube']),
+        'Dot': num(props['Dot']),
         'Matcha': num(props['Matcha']),
         'Chocolate': num(props['Chocolate']),
         'Unknown': num(props['Unknown']),

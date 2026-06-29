@@ -20,6 +20,7 @@ const PRODUCT_MAP = {
   'Lemon Poppy': 'Lemon Poppy',
   'Sea Salt': 'Sea Salt Butter',
   'Ube': 'Ube',
+  'Dot': 'Dot',
 };
 
 // Allowed locations (must match the Location select options in both databases).

@@ -346,7 +346,7 @@
 </head>
 <body>
 
-<div class="beta-banner">🧪 BETA · estimates · app updated Jun 21, 2026 · 6:40 PM PST</div>
+<div class="beta-banner">🧪 BETA · estimates · app updated Jun 29, 2026 · 11:33 AM PST</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -419,6 +419,14 @@
         <div class="row">
           <span class="lbl">💜 Ube</span>
           <div class="amt" data-product="Ube">
+            <button type="button" class="step minus">−</button>
+            <input class="val" type="number" inputmode="numeric" value="0" min="0" />
+            <button type="button" class="step plus">+</button>
+          </div>
+        </div>
+        <div class="row">
+          <span class="lbl">🔴 Dot</span>
+          <div class="amt" data-product="Dot">
             <button type="button" class="step minus">−</button>
             <input class="val" type="number" inputmode="numeric" value="0" min="0" />
             <button type="button" class="step plus">+</button>
@@ -527,11 +535,11 @@
 
 <script>
   const STORE_KEY = 'dataEntries.v1';
-  const PRODUCTS = ['Lemon Poppy', 'Sea Salt', 'Ube'];
-  const PRODUCT_ICON = { 'Lemon Poppy': '🍋', 'Sea Salt': '🧂', 'Ube': '💜', 'Matcha': '🍵', 'Chocolate': '🍫', 'Unknown': '❓' };
+  const PRODUCTS = ['Lemon Poppy', 'Sea Salt', 'Ube', 'Dot'];
+  const PRODUCT_ICON = { 'Lemon Poppy': '🍋', 'Sea Salt': '🧂', 'Ube': '💜', 'Dot': '🔴', 'Matcha': '🍵', 'Chocolate': '🍫', 'Unknown': '❓' };
   const LOCATIONS = ['La Mirada', 'Stanton'];
-  // The app stocks 3 flavors (PRODUCTS); actual sales include more — show them all in Sales.
-  const SALES_FLAVORS = ['Lemon Poppy', 'Sea Salt', 'Ube', 'Matcha', 'Chocolate', 'Unknown'];
+  // Flavors the app stocks (PRODUCTS) plus extra ones that show up in sales.
+  const SALES_FLAVORS = ['Lemon Poppy', 'Sea Salt', 'Ube', 'Dot', 'Matcha', 'Chocolate', 'Unknown'];
   const PRICE_PER_UNIT = 2.50;   // $/madeleine (from Financial Dashboard: $192.50 / 77 units)
   const FLIGHT_ICON = '✈️';      // flights are a count (already inside the flavor totals)
   const usd = n => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n);
@@ -851,7 +859,7 @@
     const cap = s => s[0].toUpperCase() + s.slice(1);
 
     // Madeleine totals for the entries shown (excluding ones tagged for deletion).
-    const totals = { 'Lemon Poppy': 0, 'Sea Salt': 0, 'Ube': 0 };
+    const totals = Object.fromEntries(PRODUCTS.map(p => [p, 0]));
     const locTotals = {};
     let grand = 0;
     for (const e of entries) {
@@ -1125,7 +1133,7 @@
   let projLoc = 'all', homeLoc = 'all';   // independent per-tab location filters
   const RUN_WINDOW = 14;                          // days of sales history for run-rate
   const SCN = { bear: 0.75, base: 1, bull: 1.25 };
-  const ZERO = () => ({ 'Lemon Poppy': 0, 'Sea Salt': 0, 'Ube': 0 });
+  const ZERO = () => Object.fromEntries(PRODUCTS.map(p => [p, 0]));
   const ts = s => { const t = new Date(s).getTime(); return isNaN(t) ? 0 : t; };  // compare real instants
   const fmtD = d => d === Infinity ? '∞' : (d < 1 ? '<1 day' : (Math.round(d) === 1 ? '1 day' : Math.round(d) + ' days'));
 

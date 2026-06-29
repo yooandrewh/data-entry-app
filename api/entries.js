@@ -40,6 +40,7 @@ async function queryDb(token, db) {
           'Lemon Poppy': num(props['Lemon Poppy']),
           'Sea Salt': num(props['Sea Salt Butter']),
           'Ube': num(props['Ube']),
+          'Dot': num(props['Dot']),
         },
         taggedForDeletion: !!(props['Tagged for deletion'] && props['Tagged for deletion'].checkbox),
         synced: true,
