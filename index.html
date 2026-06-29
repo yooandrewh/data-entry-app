@@ -53,14 +53,14 @@
 
   /* Segmented type selector */
   .seg {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 10px;
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;
     margin-bottom: 22px;
   }
   .seg button {
     appearance: none; border: none; cursor: pointer;
     background: var(--card); color: var(--text);
-    border-radius: 16px; padding: 18px 12px;
-    font-size: 17px; font-weight: 600;
+    border-radius: 16px; padding: 16px 6px;
+    font-size: 15px; font-weight: 600;
     box-shadow: var(--shadow);
     display: flex; flex-direction: column; align-items: center; gap: 8px;
     border: 2px solid transparent;
@@ -70,6 +70,7 @@
   .seg button:active { transform: scale(0.97); }
   .seg button.on[data-type="delivery"] { border-color: var(--blue); color: var(--blue); }
   .seg button.on[data-type="inventory"] { border-color: var(--orange); color: var(--orange); }
+  .seg button.on[data-type="goodwill"] { border-color: #16a34a; color: #16a34a; }
 
   .group-label { font-size: 13px; color: var(--muted); font-weight: 600;
     text-transform: uppercase; letter-spacing: 0.4px; margin: 0 4px 8px; }
@@ -346,7 +347,7 @@
 </head>
 <body>
 
-<div class="beta-banner">🧪 BETA · estimates · app updated Jun 29, 2026 · 11:33 AM PST</div>
+<div class="beta-banner">🧪 BETA · estimates · app updated Jun 29, 2026 · 12:57 PM PST</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -380,6 +381,9 @@
         <button type="button" data-type="inventory" aria-pressed="false">
           <span class="ic">📦</span><span>Inventory</span>
         </button>
+        <button type="button" data-type="goodwill" aria-pressed="false">
+          <span class="ic">🎁</span><span>Goodwill</span>
+        </button>
       </div>
 
       <div class="group-label">Details</div>
@@ -398,7 +402,7 @@
       </div>
       <div class="hint">Defaults to now (PST). Adjust for a future entry.</div>
 
-      <div class="group-label">Amount</div>
+      <div class="group-label" id="amtLabel">Amount</div>
       <div class="card" id="amounts">
         <div class="row">
           <span class="lbl">🍋 Lemon Poppy</span>
@@ -450,6 +454,7 @@
       <button class="on" data-filter="sales">📈 Sales</button>
       <button data-filter="delivery">🚚 Deliveries</button>
       <button data-filter="inventory">📦 Inventory</button>
+      <button data-filter="goodwill">🎁 Goodwill</button>
     </div>
     <div class="db-filter" id="dataLoc">
       <button class="on" data-loc="all">All</button>
@@ -580,6 +585,8 @@
       });
       b.classList.add('on'); b.setAttribute('aria-pressed', 'true');
       state.type = b.dataset.type;
+      const lbl = document.getElementById('amtLabel');
+      lbl.textContent = state.type === 'goodwill' ? 'Samples given out (removed from stock)' : 'Amount';
     });
   });
 
@@ -596,12 +603,16 @@
     const btn = e.target.closest('.step'); if (!btn) return;
     const input = btn.parentElement.querySelector('.val');
     let v = parseInt(input.value || '0', 10);
-    v = btn.classList.contains('plus') ? v + 1 : Math.max(0, v - 1);
+    if (!Number.isFinite(v)) v = 0;
+    v = btn.classList.contains('plus') ? v + 1 : v - 1;   // negatives allowed (e.g. removing stock)
     input.value = v;
     if (navigator.vibrate) navigator.vibrate(8);
   });
   document.querySelectorAll('.amt .val').forEach(inp => {
-    inp.addEventListener('input', () => { inp.value = inp.value.replace(/[^0-9]/g, ''); });
+    // allow an optional leading minus, then digits
+    inp.addEventListener('input', () => {
+      inp.value = inp.value.replace(/[^0-9-]/g, '').replace(/(?!^)-/g, '');
+    });
   });
 
   // ---- Read current form into a payload ----
@@ -649,14 +660,23 @@
     e.preventDefault();
     pending = readForm();
     const cap = s => s[0].toUpperCase() + s.slice(1);
+    const isGoodwill = pending.type === 'goodwill';
     const amtLines = PRODUCTS
-      .filter(p => pending.amounts[p] > 0)
-      .map(p => `<div class="l"><span class="k">${PRODUCT_ICON[p]} ${p}</span><span class="v">${pending.amounts[p]}</span></div>`)
+      .filter(p => pending.amounts[p] !== 0)
+      .map(p => {
+        const n = pending.amounts[p];
+        const shown = isGoodwill ? `−${Math.abs(n)}` : n;   // goodwill always removes stock
+        return `<div class="l"><span class="k">${PRODUCT_ICON[p]} ${p}</span><span class="v">${shown}</span></div>`;
+      })
       .join('') || `<div class="l"><span class="k">Amounts</span><span class="v">All zero</span></div>`;
+    const goodwillNote = isGoodwill
+      ? `<div class="l"><span class="k">🎁 Goodwill</span><span class="v">samples given — removes from stock</span></div>`
+      : '';
     document.getElementById('sheetSum').innerHTML =
       `<div class="l"><span class="k">Type</span><span class="v">${esc(cap(pending.type))}</span></div>` +
       `<div class="l"><span class="k">When</span><span class="v">${esc(fmtWhen(pending.datetime))} PST</span></div>` +
       `<div class="l"><span class="k">Location</span><span class="v">${esc(pending.location)}</span></div>` +
+      goodwillNote +
       amtLines;
     scrim.classList.add('show');
   });
@@ -846,7 +866,12 @@
     });
 
     const n = entries.length;
-    const noun = dbFilter === 'delivery' ? (n === 1 ? 'delivery' : 'deliveries') : 'inventory';
+    const NOUNS = {
+      delivery: n === 1 ? 'delivery' : 'deliveries',
+      inventory: 'inventory',
+      goodwill: n === 1 ? 'goodwill entry' : 'goodwill entries',
+    };
+    const noun = NOUNS[dbFilter] || dbFilter;
     countEl.textContent = n
       ? `${n} ${noun}${lastRemoteOk ? '' : ' · offline'}`
       : (lastRemoteOk ? `No ${noun} yet` : 'Offline');
@@ -869,18 +894,25 @@
       grand += sum;
       locTotals[e.location] = (locTotals[e.location] || 0) + sum;
     }
-    const breakdown = PRODUCTS.map(p => `<span>${PRODUCT_ICON[p]} ${totals[p]}</span>`).join('');
-    const locBreak = LOCATIONS.map(l => `<span>${l} <b>${locTotals[l] || 0}</b></span>`).join('');
-    let html = `<div class="db-summary"><div class="ds-total"><b>${grand}</b> madeleine${grand === 1 ? '' : 's'}</div><div class="ds-break">${breakdown}</div><div class="ds-break ds-loc">📍 ${locBreak}</div></div>`;
+    const gw = dbFilter === 'goodwill';   // goodwill totals are negative — show magnitudes
+    const mag = v => gw ? Math.abs(v) : v;
+    const breakdown = PRODUCTS.map(p => `<span>${PRODUCT_ICON[p]} ${mag(totals[p])}</span>`).join('');
+    const locBreak = LOCATIONS.map(l => `<span>${l} <b>${mag(locTotals[l] || 0)}</b></span>`).join('');
+    const sumLabel = gw ? `madeleine${Math.abs(grand) === 1 ? '' : 's'} given out` : `madeleine${grand === 1 ? '' : 's'}`;
+    let html = `<div class="db-summary"><div class="ds-total"><b>${mag(grand)}</b> ${sumLabel}</div><div class="ds-break">${breakdown}</div><div class="ds-break ds-loc">📍 ${locBreak}</div></div>`;
     let lastDay = null;
     for (const e of entries) {
       const dk = dayKey(e.datetime);
       if (dk !== lastDay) { html += `<div class="db-day">${dk}</div>`; lastDay = dk; }
+      const isGw = e.type === 'goodwill';
       const eTotal = PRODUCTS.reduce((s, p) => s + (e.amounts[p] || 0), 0);
-      const flavorChips = PRODUCTS.filter(p => e.amounts[p] > 0)
-        .map(p => `<span class="db-chip">${PRODUCT_ICON[p]} ${p} <span class="n">${e.amounts[p]}</span></span>`)
+      const flavorChips = PRODUCTS.filter(p => e.amounts[p] !== 0)
+        .map(p => `<span class="db-chip">${PRODUCT_ICON[p]} ${p} <span class="n">${isGw ? Math.abs(e.amounts[p]) : e.amounts[p]}</span></span>`)
         .join('') || `<span class="db-chip" style="color:var(--muted)">No amounts</span>`;
-      const chips = flavorChips + (eTotal > 0 ? `<span class="db-chip db-total">${eTotal} total</span>` : '');
+      const totalChip = eTotal !== 0
+        ? `<span class="db-chip db-total">${isGw ? Math.abs(eTotal) + ' given out' : eTotal + ' total'}</span>`
+        : '';
+      const chips = flavorChips + totalChip;
       let footer = '', trash = '';
       if (e.taggedForDeletion) {
         footer = `<div class="db-sync tagged">🏷️ Tagged for deletion</div>`;
@@ -894,7 +926,7 @@
       html +=
         `<div class="db-entry${e.taggedForDeletion ? ' tagged' : ''}">
            <div class="db-head">
-             <span class="db-type ${e.type}">${e.type==='delivery'?'🚚':'📦'} ${cap(e.type)}</span>
+             <span class="db-type ${e.type}">${e.type==='delivery'?'🚚':(e.type==='goodwill'?'🎁':'📦')} ${cap(e.type)}</span>
              <span class="db-when">${fmtWhen(e.datetime)}</span>
            </div>
            <div class="db-loc">
@@ -1167,9 +1199,10 @@
       const invDT = String(latestInv.datetime);     // full timestamp of the count
       invDate = invDT.slice(0, 10);
       const deliv = ZERO(), sold = ZERO();
-      // Count deliveries logged AFTER the count time (so a same-day, later delivery counts).
+      // Count deliveries (and goodwill removals, stored as negatives) logged AFTER
+      // the count time (so a same-day, later delivery/removal counts).
       for (const e of entries)
-        if (e.type === 'delivery' && e.location === loc && !e.taggedForDeletion && ts(e.datetime) > ts(invDT))
+        if ((e.type === 'delivery' || e.type === 'goodwill') && e.location === loc && !e.taggedForDeletion && ts(e.datetime) > ts(invDT))
           for (const p of PRODUCTS) deliv[p] += (e.amounts[p] || 0);
       // Sales are daily totals (no time) — only subtract sales dated strictly after the count day.
       for (const s of locSales) if (s.date > invDate) for (const p of PRODUCTS) sold[p] += (s.amounts[p] || 0);

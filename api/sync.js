@@ -10,9 +10,14 @@
 //   APP_KEY               - if set, requests must send a matching "x-app-key" header
 
 // Consolidated onto the original Kairosbaking Deliveries/Inventory databases.
+const DELIVERIES_DB = process.env.NOTION_DELIVERIES_DB || '74476427d7d3831ab84e8107cf70285a';
 const DB_BY_TYPE = {
-  delivery: process.env.NOTION_DELIVERIES_DB || '74476427d7d3831ab84e8107cf70285a',
+  delivery: DELIVERIES_DB,
   inventory: process.env.NOTION_INVENTORY_DB || 'd1576427d7d382568a7b81a8e89c740c',
+  // Goodwill = free samples given out. Stored in the Deliveries DB as a NEGATIVE
+  // stock adjustment so it subtracts from on-hand (and from projections) like a
+  // negative delivery.
+  goodwill: DELIVERIES_DB,
 };
 
 // App product name -> Notion column name.
@@ -26,11 +31,12 @@ const PRODUCT_MAP = {
 // Allowed locations (must match the Location select options in both databases).
 const ALLOWED_LOCATIONS = ['La Mirada', 'Stanton'];
 
-// Coerce an amount to a safe non-negative integer (caps absurd values).
+// Coerce an amount to a safe integer (caps absurd values). Negatives are allowed
+// so the app can record stock removals (goodwill samples / manual adjustments).
 function cleanAmount(v) {
   const n = Math.floor(Number(v));
-  if (!Number.isFinite(n) || n < 0) return 0;
-  return Math.min(n, 1000000);
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(-1000000, Math.min(n, 1000000));
 }
 
 // Turn a local wall-clock "YYYY-MM-DDTHH:MM" into a full ISO datetime with the
@@ -53,15 +59,18 @@ async function sendNotification({ type, location, dateOnly, amounts }) {
   const topic = process.env.NTFY_TOPIC;
   if (!topic) return;
   const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+  const isGoodwill = String(type).toLowerCase() === 'goodwill';
   const parts = Object.keys(PRODUCT_MAP)
-    .map((p) => { const n = cleanAmount(amounts[p]); return n > 0 ? `${p} ${n}` : null; })
+    .map((p) => { const n = Math.abs(cleanAmount(amounts[p])); return n > 0 ? `${p} ${n}` : null; })
     .filter(Boolean);
-  const body = `${parts.length ? parts.join(', ') : 'No amounts'} · ${dateOnly}`;
+  const lead = isGoodwill ? 'Samples out: ' : '';
+  const body = `${lead}${parts.length ? parts.join(', ') : 'No amounts'} · ${dateOnly}`;
+  const tag = isGoodwill ? 'gift' : (type === 'delivery' ? 'truck' : 'package');
   await fetch(`https://ntfy.sh/${topic}`, {
     method: 'POST',
     headers: {
       'Title': `${cap(type)} - ${location}`,        // ASCII only (HTTP header)
-      'Tags': type === 'delivery' ? 'truck' : 'package',
+      'Tags': tag,
     },
     body,
   });
@@ -102,6 +111,7 @@ export default async function handler(req, res) {
 
     const cap = (s) => String(s).charAt(0).toUpperCase() + String(s).slice(1);
     const a = (amounts && typeof amounts === 'object') ? amounts : {};
+    const isGoodwill = String(type).toLowerCase() === 'goodwill';
 
     const properties = {
       'notes': { title: [{ text: { content: `${cap(type)} — ${location}` } }] },
@@ -110,7 +120,9 @@ export default async function handler(req, res) {
       'Tagged for deletion': { checkbox: false },
     };
     for (const [appName, notionName] of Object.entries(PRODUCT_MAP)) {
-      properties[notionName] = { number: cleanAmount(a[appName]) };
+      // Goodwill removes stock: always store a negative number regardless of sign entered.
+      const n = cleanAmount(a[appName]);
+      properties[notionName] = { number: isGoodwill ? -Math.abs(n) : n };
     }
 
     const r = await fetch('https://api.notion.com/v1/pages', {

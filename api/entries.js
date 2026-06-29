@@ -31,9 +31,14 @@ async function queryDb(token, db) {
     if (!r.ok) throw new Error(JSON.stringify(data));
     for (const pg of data.results) {
       const props = pg.properties || {};
+      // Goodwill (free samples given out) lives in the Deliveries DB as a negative
+      // adjustment, marked by its "Goodwill — …" title. Surface it as its own type.
+      const titleArr = (props.notes && props.notes.title) || [];
+      const title = titleArr.map((t) => (t && t.plain_text) || '').join('');
+      const isGoodwill = db.type === 'delivery' && /goodwill/i.test(title);
       out.push({
         notionId: pg.id,
-        type: db.type,
+        type: isGoodwill ? 'goodwill' : db.type,
         datetime: (props.Date && props.Date.date && props.Date.date.start) || '',
         location: (props.Select && props.Select.select && props.Select.select.name) || '',
         amounts: {
