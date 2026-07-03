@@ -182,6 +182,35 @@
   .tabbar button .tic { font-size: 22px; line-height: 1; }
   .tabbar button.on { color: var(--blue); }
 
+  /* ---- Stores analytics ---- */
+  .store-card { background: var(--card); border-radius: 16px; box-shadow: var(--shadow); padding: 16px; margin-bottom: 18px; }
+  .store-card h3 { margin: 0; font-size: 19px; }
+  .store-tag { font-size: 13px; color: var(--muted); margin: 2px 0 14px; }
+  .smetrics { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .smetric { background: var(--field); border-radius: 12px; padding: 10px 12px; }
+  .smetric .v { font-size: 20px; font-weight: 800; letter-spacing: -0.3px; }
+  .smetric .k { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.3px; margin-top: 2px; }
+  .ssec { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; margin: 18px 2px 9px; }
+  .store-note { font-size: 13px; color: var(--text); background: var(--field); border-radius: 10px; padding: 8px 11px; margin: 12px 0 2px; }
+  .fbar { display: grid; grid-template-columns: 84px 1fr 30px; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 13px; }
+  .fbar .track { background: var(--sep); border-radius: 6px; height: 10px; overflow: hidden; }
+  .fbar .fill { height: 100%; border-radius: 6px; background: var(--blue); }
+  .fbar .fill.old { background: var(--muted); opacity: 0.5; }
+  .fbar .n { text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
+  .vbars { display: flex; align-items: flex-end; gap: 5px; height: 66px; margin-top: 2px; }
+  .vbar { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
+  .vbar .col { width: 100%; background: var(--blue); border-radius: 4px 4px 0 0; min-height: 2px; transition: height .2s; }
+  .vbar .col.hot { background: var(--orange); }
+  .vbar .lb { font-size: 9.5px; color: var(--muted); }
+  .cashrow { display: grid; grid-template-columns: 1fr auto; gap: 8px; font-size: 13px; padding: 4px 0; border-top: 1px solid var(--sep); }
+  .cashrow:first-child { border-top: none; }
+  .cashrow .c-n { color: var(--muted); font-variant-numeric: tabular-nums; }
+  .home-stores { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 22px; }
+  .hstore { background: var(--card); border-radius: 14px; box-shadow: var(--shadow); padding: 12px; }
+  .hstore .hs-n { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
+  .hstore .hs-big { font-size: 22px; font-weight: 800; letter-spacing: -0.3px; }
+  .hstore .hs-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
   /* ---- Confirmation sheet ---- */
   .scrim {
     position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,0.4);
@@ -347,7 +376,7 @@
 </head>
 <body>
 
-<div class="beta-banner">🧪 BETA · estimates · app updated Jun 29, 2026 · 1:39 PM PST</div>
+<div class="beta-banner">🧪 BETA · estimates · app updated Jul 2, 2026 · 7:57 PM PST</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -501,12 +530,24 @@
   </div>
 </div>
 
+<!-- ===== STORES VIEW (per-store analytics from OCR) ===== -->
+<div class="view" id="view-stores">
+  <div class="wrap">
+    <header>
+      <h1>Stores</h1>
+      <div class="sub" id="storesSub">—</div>
+    </header>
+    <div id="storesList"></div>
+  </div>
+</div>
+
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar">
   <button data-tab="home" class="on"><span class="tic">🏠</span><span>Home</span></button>
   <button data-tab="entry"><span class="tic">➕</span><span>Entry</span></button>
   <button data-tab="db"><span class="tic">🗂️</span><span>Data</span></button>
   <button data-tab="proj"><span class="tic">🔮</span><span>Forecast</span></button>
+  <button data-tab="stores"><span class="tic">🏪</span><span>Stores</span></button>
 </nav>
 
 <!-- ===== Confirmation sheet ===== -->
@@ -941,7 +982,7 @@
   }
 
   // ---- Tab switching ----
-  const VIEWS = { home: 'view-home', entry: 'view-entry', db: 'view-db', proj: 'view-proj' };
+  const VIEWS = { home: 'view-home', entry: 'view-entry', db: 'view-db', proj: 'view-proj', stores: 'view-stores' };
   document.querySelector('.tabbar').addEventListener('click', e => {
     const btn = e.target.closest('button'); if (!btn) return;
     const tab = btn.dataset.tab;
@@ -950,8 +991,119 @@
     if (tab === 'home') { salesCache = null; renderHome(); }
     if (tab === 'db') { salesCache = null; renderData(); retryUnsynced(); }
     if (tab === 'proj') { salesCache = null; renderProj(); }
+    if (tab === 'stores') { renderStores(); }
     window.scrollTo(0, 0);
   });
+
+  // ===== Stores tab (whole-store performance + per-store madeleine analytics) =====
+  let storeStatsCache = null, storeSalesCache = null;
+  async function getStoreStats() {
+    if (storeStatsCache) return storeStatsCache;
+    const r = await fetch('/api/store-stats', { cache: 'no-store' });
+    storeStatsCache = r.ok ? (await r.json()).stats : null;
+    return storeStatsCache;
+  }
+  async function getStoreSales() {
+    if (storeSalesCache) return storeSalesCache;
+    const r = await fetch('/api/store-sales', { cache: 'no-store' });
+    storeSalesCache = r.ok ? ((await r.json()).sales || []) : [];
+    return storeSalesCache;
+  }
+  const CUR_FLAVORS = ['Lemon Poppy', 'Sea Salt', 'Ube', 'Dot'];   // still-sold flavors
+  const DOWK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+  const hlabel = h => `${h % 12 || 12}${h < 12 ? 'a' : 'p'}`;
+  const mean = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0;
+
+  // Aggregate the WHOLE-STORE daily rows (all products) for one location.
+  function wholeStore(rows) {
+    if (!rows.length) return null;
+    rows = rows.slice().sort((a, b) => a.date.localeCompare(b.date));
+    const rev = rows.filter(r => r.revenue != null);
+    const txns = rows.filter(r => r.transactions != null);
+    const ticks = rows.filter(r => r.avgTicket != null);
+    const both = rows.filter(r => r.transactions != null && r.madeleines != null);
+    const madTotal = rows.reduce((s, r) => s + (r.madeleines || 0), 0);
+    const totalRev = rev.reduce((s, r) => s + r.revenue, 0);
+    return {
+      days: rows.length, from: rows[0].date, to: rows[rows.length - 1].date,
+      avgRev: mean(rev.map(r => r.revenue)), totalRev,
+      txnsPerDay: txns.length ? mean(txns.map(r => r.transactions)) : null,
+      avgTicket: ticks.length ? mean(ticks.map(r => r.avgTicket)) : null,
+      madPerDay: mean(rows.map(r => r.madeleines || 0)),
+      madAttach: both.length ? mean(both.map(r => r.madeleines / r.transactions * 100)) : null,
+      madRevShare: totalRev ? madTotal * PRICE_PER_UNIT / totalRev * 100 : null,
+      trend: rev.slice(-14),
+    };
+  }
+
+  async function renderStores() {
+    const list = document.getElementById('storesList');
+    const sub = document.getElementById('storesSub');
+    if (!list.dataset.loaded) sub.textContent = 'Loading…';
+    let stats, gsales;
+    try { [stats, gsales] = await Promise.all([getStoreStats(), getStoreSales()]); }
+    catch (e) { sub.textContent = 'Could not load'; list.innerHTML = `<div class="db-empty"><div class="big">🏪</div>Couldn't load store data.</div>`; return; }
+    const madStores = (stats && stats.stores) || {};
+    const salesByLoc = {};
+    for (const r of gsales) (salesByLoc[r.location] = salesByLoc[r.location] || []).push(r);
+    const names = [...new Set([...LOCATIONS, ...Object.keys(salesByLoc), ...Object.keys(madStores)])]
+      .filter(n => salesByLoc[n] || madStores[n]);
+    if (!names.length) {
+      sub.textContent = 'No data yet';
+      list.innerHTML = `<div class="db-empty"><div class="big">🏪</div>No store data yet.</div>`;
+      return;
+    }
+    list.dataset.loaded = '1';
+    sub.textContent = 'Whole-store performance + madeleine analytics';
+
+    let html = '';
+    for (const name of names) {
+      const ws = wholeStore(salesByLoc[name] || []);
+      const s = madStores[name];
+      html += `<div class="store-card"><h3>📍 ${esc(name)}</h3>`;
+
+      if (ws) {
+        html += `<div class="store-tag">Whole store · ${fmtWhen(ws.from)}–${fmtWhen(ws.to)} · ${ws.days} days</div>`;
+        const m = [[usd(Math.round(ws.avgRev)), 'revenue / day']];
+        if (ws.txnsPerDay != null) m.push([Math.round(ws.txnsPerDay), 'orders / day']);
+        if (ws.avgTicket != null) m.push([usd(ws.avgTicket), 'avg ticket']);
+        m.push([usd(Math.round(ws.totalRev)), `total · ${ws.days}d`]);
+        html += `<div class="smetrics">${m.map(([v, k]) => `<div class="smetric"><div class="v">${v}</div><div class="k">${k}</div></div>`).join('')}</div>`;
+        const bits = [`🍩 ${ws.madPerDay.toFixed(1)} madeleines/day`];
+        if (ws.madAttach != null) bits.push(`~${ws.madAttach.toFixed(1)}% of orders`);
+        if (ws.madRevShare != null) bits.push(`~${ws.madRevShare.toFixed(1)}% of revenue`);
+        html += `<div class="store-note">${bits.join(' · ')}</div>`;
+        if (ws.trend.length > 1) {
+          const tmax = Math.max(...ws.trend.map(r => r.revenue));
+          html += `<div class="ssec">Revenue · last ${ws.trend.length} days</div><div class="vbars">` +
+            ws.trend.map(r => `<div class="vbar"><div class="col" style="height:${Math.round(r.revenue / tmax * 100)}%"></div></div>`).join('') + `</div>`;
+        }
+      }
+
+      if (s) {
+        const topCur = CUR_FLAVORS.filter(f => s.flavors[f]).sort((a, b) => s.flavors[b] - s.flavors[a])[0];
+        html += `<div class="ssec" style="margin-top:20px">🍩 Madeleines${topCur ? ` · ${PRODUCT_ICON[topCur]} ${topCur}-led` : ''}</div>`;
+        const metrics = [[s.madsPerDay, 'sold / day'], [usd(s.aov), 'avg order'], [s.basket, 'items / order'], [usd(s.madRevenue), 'mad revenue']];
+        html += `<div class="smetrics">${metrics.map(([v, k]) => `<div class="smetric"><div class="v">${v}</div><div class="k">${k}</div></div>`).join('')}</div>`;
+        const total = Object.values(s.flavors).reduce((a, b) => a + b, 0) || 1;
+        const flavKeys = [...CUR_FLAVORS.filter(f => s.flavors[f]), ...Object.keys(s.flavors).filter(f => !CUR_FLAVORS.includes(f) && s.flavors[f])];
+        const fmax = Math.max(1, ...flavKeys.map(f => s.flavors[f]));
+        html += `<div class="ssec">Flavor mix</div>` + flavKeys.map(f => {
+          const v = s.flavors[f], old = !CUR_FLAVORS.includes(f);
+          return `<div class="fbar"><span>${PRODUCT_ICON[f] || ''} ${f}</span><div class="track"><div class="fill${old ? ' old' : ''}" style="width:${Math.round(v / fmax * 100)}%"></div></div><span class="n">${Math.round(v / total * 100)}%</span></div>`;
+        }).join('');
+        const dmax = Math.max(1, ...DOWK.map(d => s.dow[d] || 0));
+        html += `<div class="ssec">Busiest days</div><div class="vbars">` + DOWK.map(d => `<div class="vbar"><div class="col${d === 'Sat' || d === 'Sun' ? ' hot' : ''}" style="height:${Math.round((s.dow[d] || 0) / dmax * 100)}%"></div><span class="lb">${d[0]}</span></div>`).join('') + `</div>`;
+        const hk = Object.keys(s.hours).map(Number).sort((a, b) => a - b);
+        const hmax = Math.max(1, ...hk.map(h => s.hours[h]));
+        const peakH = hk.reduce((m, h) => s.hours[h] > s.hours[m] ? h : m, hk[0]);
+        html += `<div class="ssec">By hour · peak ${hlabel(peakH)}m</div><div class="vbars">` + hk.map(h => `<div class="vbar"><div class="col${h === peakH ? ' hot' : ''}" style="height:${Math.round(s.hours[h] / hmax * 100)}%"></div><span class="lb">${h % 3 === 0 ? hlabel(h) : ''}</span></div>`).join('') + `</div>`;
+        html += `<div class="ssec">Top cashiers</div>` + (s.cashiers || []).map(([n, c]) => `<div class="cashrow"><span>${esc(n)}</span><span class="c-n">${c}</span></div>`).join('');
+      }
+      html += `</div>`;
+    }
+    list.innerHTML = html;
+  }
 
   // ---- Data type filter (Sales / Deliveries / Inventory) ----
   document.getElementById('dbFilter').addEventListener('click', e => {
@@ -1321,6 +1473,22 @@
         <div class="metric"><div class="m-label">Revenue</div><div class="m-val">${usd(qty7 * PRICE_PER_UNIT)}</div></div>
         <div class="metric"><div class="m-label">Sold</div><div class="m-val">${qty7}</div><div class="m-sub">madeleines</div></div>
       </div>`;
+
+    // Per-store headline cards — whole-store $/day (Stores tab has the full picture)
+    try {
+      const [ss, gs] = await Promise.all([getStoreStats().catch(() => null), getStoreSales().catch(() => [])]);
+      const byLoc = {}; for (const r of gs) (byLoc[r.location] = byLoc[r.location] || []).push(r);
+      const cards = LOCATIONS.filter(l => homeLoc === 'all' || l === homeLoc).map(l => {
+        const w = wholeStore(byLoc[l] || []);
+        const s = ss && ss.stores && ss.stores[l];
+        if (!w && !s) return '';
+        const big = w ? usd(Math.round(w.avgRev)) : String(s.madsPerDay);
+        const bigSub = w ? '/day' : '/day mad';
+        const sub2 = w ? `${w.madPerDay.toFixed(1)} madeleines/day` : `AOV ${usd(s.aov)}`;
+        return `<div class="hstore"><div class="hs-n">📍 ${esc(l)}</div><div class="hs-big">${big}<span style="font-size:13px;font-weight:600;color:var(--muted)"> ${bigSub}</span></div><div class="hs-sub">${sub2}</div></div>`;
+      }).filter(Boolean).join('');
+      if (cards) html += `<div class="group-label">Stores</div><div class="home-stores">${cards}</div>`;
+    } catch (e) { /* store data optional on Home */ }
 
     html += `<div class="home-refreshed">↻ Refreshed ${nowLabel()} PST</div>`;
     content.innerHTML = html;

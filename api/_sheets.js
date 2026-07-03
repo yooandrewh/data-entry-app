@@ -110,6 +110,12 @@ export async function getRows(tab) {
   return { header, rows };
 }
 
+// Read a raw A1 range, returning the 2-D values array (or [] if empty/missing).
+export async function getValues(range) {
+  const data = await api(`/values/${encodeURIComponent(range)}?${RENDER}`);
+  return data.values || [];
+}
+
 // Read just the header row of a tab (cheap; used before appending).
 async function getHeader(tab) {
   const data = await api(`/values/${encodeURIComponent(tab)}!1:1?${RENDER}`);
