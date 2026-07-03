@@ -20,6 +20,9 @@ const TAB_BY_TYPE = {
   // Goodwill = free samples given out. Stored in the Deliveries tab as a NEGATIVE
   // stock adjustment so it subtracts from on-hand (and from projections).
   goodwill: DELIVERIES_TAB,
+  // Transfer = moving stock between stores. Written as TWO Deliveries-tab rows:
+  // a negative one at the source and a positive one at the destination.
+  transfer: DELIVERIES_TAB,
 };
 
 // App product name -> Sheet column name.
@@ -56,23 +59,22 @@ function laDateTime(local) {
 }
 
 // Best-effort phone push via ntfy.sh. Never blocks/fails the sync.
-async function sendNotification({ type, location, dateOnly, amounts }) {
+async function sendNotification({ type, location, to, dateOnly, amounts }) {
   const topic = process.env.NTFY_TOPIC;
   if (!topic) return;
   const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
-  const isGoodwill = String(type).toLowerCase() === 'goodwill';
+  const t = String(type).toLowerCase();
+  const isGoodwill = t === 'goodwill', isXfer = t === 'transfer';
   const parts = Object.keys(PRODUCT_MAP)
     .map((p) => { const n = Math.abs(cleanAmount(amounts[p])); return n > 0 ? `${p} ${n}` : null; })
     .filter(Boolean);
-  const lead = isGoodwill ? 'Samples out: ' : '';
+  const lead = isGoodwill ? 'Samples out: ' : isXfer ? 'Moved: ' : '';
   const body = `${lead}${parts.length ? parts.join(', ') : 'No amounts'} · ${dateOnly}`;
-  const tag = isGoodwill ? 'gift' : (type === 'delivery' ? 'truck' : 'package');
+  const tag = isGoodwill ? 'gift' : isXfer ? 'arrows_counterclockwise' : (type === 'delivery' ? 'truck' : 'package');
+  const title = isXfer ? `Transfer - ${location} -> ${to}` : `${cap(type)} - ${location}`;  // ASCII only (HTTP header)
   await fetch(`https://ntfy.sh/${topic}`, {
     method: 'POST',
-    headers: {
-      'Title': `${cap(type)} - ${location}`,        // ASCII only (HTTP header)
-      'Tags': tag,
-    },
+    headers: { 'Title': title, 'Tags': tag },
     body,
   });
 }
@@ -110,6 +112,28 @@ export default async function handler(req, res) {
     const cap = (s) => String(s).charAt(0).toUpperCase() + String(s).slice(1);
     const a = (amounts && typeof amounts === 'object') ? amounts : {};
     const isGoodwill = String(type).toLowerCase() === 'goodwill';
+
+    // ---- Transfer: two linked rows (out of source, into destination) ----
+    if (String(type).toLowerCase() === 'transfer') {
+      const to = req.body && req.body.to;
+      if (!ALLOWED_LOCATIONS.includes(to) || to === location) {
+        return res.status(400).json({ error: `Invalid transfer destination: ${to}` });
+      }
+      const mkRow = (rowId, sel, notes, sign) => {
+        const r = { id: rowId, Date: startIso, Select: sel, 'Tagged for deletion': 'FALSE', notes };
+        for (const [appName, colName] of Object.entries(PRODUCT_MAP)) {
+          r[colName] = sign * Math.abs(cleanAmount(a[appName]));
+        }
+        return r;
+      };
+      const srcId = crypto.randomUUID(), dstId = crypto.randomUUID();
+      await appendRow(DELIVERIES_TAB, mkRow(srcId, location, `Transfer → ${to}`, -1));
+      await appendRow(DELIVERIES_TAB, mkRow(dstId, to, `Transfer ← ${location}`, +1));
+      await sendNotification({ type, location, to, dateOnly, amounts: a }).catch(() => {});
+      const url = `https://docs.google.com/spreadsheets/d/${sheetId()}/edit`;
+      return res.status(200).json({ ok: true, id: srcId, ids: [srcId, dstId], url });
+    }
+
     const id = crypto.randomUUID();
 
     // Build the row object; appendRow() orders it to match the tab's header.

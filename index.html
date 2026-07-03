@@ -53,7 +53,7 @@
 
   /* Segmented type selector */
   .seg {
-    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
     margin-bottom: 22px;
   }
   .seg button {
@@ -71,6 +71,7 @@
   .seg button.on[data-type="delivery"] { border-color: var(--blue); color: var(--blue); }
   .seg button.on[data-type="inventory"] { border-color: var(--orange); color: var(--orange); }
   .seg button.on[data-type="goodwill"] { border-color: #16a34a; color: #16a34a; }
+  .seg button.on[data-type="transfer"] { border-color: #7c3aed; color: #7c3aed; }
 
   .group-label { font-size: 13px; color: var(--muted); font-weight: 600;
     text-transform: uppercase; letter-spacing: 0.4px; margin: 0 4px 8px; }
@@ -376,7 +377,7 @@
 </head>
 <body>
 
-<div class="beta-banner">🧪 BETA · estimates · app updated Jul 2, 2026 · 7:57 PM PST</div>
+<div class="beta-banner">🧪 BETA · estimates · app updated Jul 3, 2026 · 3:02 PM PST</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -413,6 +414,9 @@
         <button type="button" data-type="goodwill" aria-pressed="false">
           <span class="ic">🎁</span><span>Goodwill</span>
         </button>
+        <button type="button" data-type="transfer" aria-pressed="false">
+          <span class="ic">🔄</span><span>Transfer</span>
+        </button>
       </div>
 
       <div class="group-label">Details</div>
@@ -422,14 +426,15 @@
           <input type="datetime-local" id="datetime" />
         </div>
         <div class="row">
-          <span class="lbl">Location</span>
+          <span class="lbl" id="locLabel">Location</span>
           <div class="pills" id="locPills">
             <button type="button" class="pill on" data-loc="La Mirada">La Mirada</button>
             <button type="button" class="pill" data-loc="Stanton">Stanton</button>
           </div>
         </div>
       </div>
-      <div class="hint">Defaults to now (PST). Adjust for a future entry.</div>
+      <div class="hint" id="baseHint">Defaults to now (PST). Adjust for a future entry.</div>
+      <div class="hint" id="xferHint" hidden style="color:#7c3aed;font-weight:600"></div>
 
       <div class="group-label" id="amtLabel">Amount</div>
       <div class="card" id="amounts">
@@ -484,6 +489,7 @@
       <button data-filter="delivery">🚚 Deliveries</button>
       <button data-filter="inventory">📦 Inventory</button>
       <button data-filter="goodwill">🎁 Goodwill</button>
+      <button data-filter="transfer">🔄 Transfers</button>
     </div>
     <div class="db-filter" id="dataLoc">
       <button class="on" data-loc="all">All</button>
@@ -618,6 +624,19 @@
       timeZone: 'America/Los_Angeles', weekday: 'long', month: 'long', day: 'numeric'
     }).format(new Date()) + ' · PST';
 
+  // The other store (transfers move stock from the selected location to this one).
+  const otherLoc = l => LOCATIONS.find(x => x !== l) || l;
+  function syncTypeUI() {
+    const isXfer = state.type === 'transfer';
+    document.getElementById('amtLabel').textContent =
+      state.type === 'goodwill' ? 'Samples given out (removed from stock)'
+      : isXfer ? 'Quantity to move' : 'Amount';
+    document.getElementById('locLabel').textContent = isXfer ? 'From' : 'Location';
+    const xh = document.getElementById('xferHint');
+    xh.hidden = !isXfer;
+    if (isXfer) xh.textContent = `🔄 Moves to ${otherLoc(state.location)}`;
+  }
+
   // ---- Type selector ----
   document.querySelectorAll('.seg button').forEach(b => {
     b.addEventListener('click', () => {
@@ -626,8 +645,7 @@
       });
       b.classList.add('on'); b.setAttribute('aria-pressed', 'true');
       state.type = b.dataset.type;
-      const lbl = document.getElementById('amtLabel');
-      lbl.textContent = state.type === 'goodwill' ? 'Samples given out (removed from stock)' : 'Amount';
+      syncTypeUI();
     });
   });
 
@@ -637,6 +655,7 @@
     document.querySelectorAll('#locPills .pill').forEach(x => x.classList.remove('on'));
     p.classList.add('on');
     state.location = p.dataset.loc;
+    if (state.type === 'transfer') syncTypeUI();
   });
 
   // ---- Steppers ----
@@ -667,6 +686,7 @@
       datetime: dt.value,
       timezone: 'America/Los_Angeles',
       location: state.location,
+      to: state.type === 'transfer' ? otherLoc(state.location) : undefined,
       amounts
     };
   }
@@ -702,21 +722,25 @@
     pending = readForm();
     const cap = s => s[0].toUpperCase() + s.slice(1);
     const isGoodwill = pending.type === 'goodwill';
+    const isXfer = pending.type === 'transfer';
     const amtLines = PRODUCTS
       .filter(p => pending.amounts[p] !== 0)
       .map(p => {
         const n = pending.amounts[p];
-        const shown = isGoodwill ? `−${Math.abs(n)}` : n;   // goodwill always removes stock
+        const shown = isGoodwill ? `−${Math.abs(n)}` : isXfer ? Math.abs(n) : n;
         return `<div class="l"><span class="k">${PRODUCT_ICON[p]} ${p}</span><span class="v">${shown}</span></div>`;
       })
       .join('') || `<div class="l"><span class="k">Amounts</span><span class="v">All zero</span></div>`;
     const goodwillNote = isGoodwill
       ? `<div class="l"><span class="k">🎁 Goodwill</span><span class="v">samples given — removes from stock</span></div>`
       : '';
+    const whereRow = isXfer
+      ? `<div class="l"><span class="k">Move</span><span class="v">${esc(pending.location)} → ${esc(pending.to)}</span></div>`
+      : `<div class="l"><span class="k">Location</span><span class="v">${esc(pending.location)}</span></div>`;
     document.getElementById('sheetSum').innerHTML =
       `<div class="l"><span class="k">Type</span><span class="v">${esc(cap(pending.type))}</span></div>` +
       `<div class="l"><span class="k">When</span><span class="v">${esc(fmtWhen(pending.datetime))} PST</span></div>` +
-      `<div class="l"><span class="k">Location</span><span class="v">${esc(pending.location)}</span></div>` +
+      whereRow +
       goodwillNote +
       amtLines;
     scrim.classList.add('show');
@@ -911,6 +935,7 @@
       delivery: n === 1 ? 'delivery' : 'deliveries',
       inventory: 'inventory',
       goodwill: n === 1 ? 'goodwill entry' : 'goodwill entries',
+      transfer: n === 1 ? 'transfer leg' : 'transfer legs',
     };
     const noun = NOUNS[dbFilter] || dbFilter;
     countEl.textContent = n
@@ -925,35 +950,45 @@
     const cap = s => s[0].toUpperCase() + s.slice(1);
 
     // Madeleine totals for the entries shown (excluding ones tagged for deletion).
+    const gw = dbFilter === 'goodwill';        // goodwill totals are negative — show magnitudes
+    const isXferView = dbFilter === 'transfer'; // transfers net to 0 — count only the "into" leg
     const totals = Object.fromEntries(PRODUCTS.map(p => [p, 0]));
     const locTotals = {};
     let grand = 0;
     for (const e of entries) {
       if (e.taggedForDeletion) continue;
       let sum = 0;
-      for (const p of PRODUCTS) { const v = e.amounts[p] || 0; totals[p] += v; sum += v; }
+      for (const p of PRODUCTS) { let v = e.amounts[p] || 0; if (isXferView) v = Math.max(0, v); totals[p] += v; sum += v; }
       grand += sum;
       locTotals[e.location] = (locTotals[e.location] || 0) + sum;
     }
-    const gw = dbFilter === 'goodwill';   // goodwill totals are negative — show magnitudes
-    const mag = v => gw ? Math.abs(v) : v;
+    const mag = v => (gw || isXferView) ? Math.abs(v) : v;
     const breakdown = PRODUCTS.map(p => `<span>${PRODUCT_ICON[p]} ${mag(totals[p])}</span>`).join('');
     const locBreak = LOCATIONS.map(l => `<span>${l} <b>${mag(locTotals[l] || 0)}</b></span>`).join('');
-    const sumLabel = gw ? `madeleine${Math.abs(grand) === 1 ? '' : 's'} given out` : `madeleine${grand === 1 ? '' : 's'}`;
+    const sumLabel = gw ? `madeleine${Math.abs(grand) === 1 ? '' : 's'} given out`
+      : isXferView ? `madeleine${mag(grand) === 1 ? '' : 's'} moved`
+      : `madeleine${grand === 1 ? '' : 's'}`;
     let html = `<div class="db-summary"><div class="ds-total"><b>${mag(grand)}</b> ${sumLabel}</div><div class="ds-break">${breakdown}</div><div class="ds-break ds-loc">📍 ${locBreak}</div></div>`;
     let lastDay = null;
     for (const e of entries) {
       const dk = dayKey(e.datetime);
       if (dk !== lastDay) { html += `<div class="db-day">${dk}</div>`; lastDay = dk; }
       const isGw = e.type === 'goodwill';
+      const isXfer = e.type === 'transfer';
+      const signAdj = isGw || isXfer;   // show magnitudes (stored value is signed)
       const eTotal = PRODUCTS.reduce((s, p) => s + (e.amounts[p] || 0), 0);
       const flavorChips = PRODUCTS.filter(p => e.amounts[p] !== 0)
-        .map(p => `<span class="db-chip">${PRODUCT_ICON[p]} ${p} <span class="n">${isGw ? Math.abs(e.amounts[p]) : e.amounts[p]}</span></span>`)
+        .map(p => `<span class="db-chip">${PRODUCT_ICON[p]} ${p} <span class="n">${signAdj ? Math.abs(e.amounts[p]) : e.amounts[p]}</span></span>`)
         .join('') || `<span class="db-chip" style="color:var(--muted)">No amounts</span>`;
+      let dirChip = '';
+      if (isXfer) {
+        const dir = String(e.note || '').replace(/^Transfer\s*/i, '');   // "→ Stanton" / "← La Mirada"
+        dirChip = `<span class="db-chip" style="background:rgba(124,58,237,0.12);color:#7c3aed">${esc(dir)} · ${eTotal < 0 ? 'out' : 'in'}</span>`;
+      }
       const totalChip = eTotal !== 0
-        ? `<span class="db-chip db-total">${isGw ? Math.abs(eTotal) + ' given out' : eTotal + ' total'}</span>`
+        ? `<span class="db-chip db-total">${signAdj ? Math.abs(eTotal) : eTotal}${isGw ? ' given out' : isXfer ? ' moved' : ' total'}</span>`
         : '';
-      const chips = flavorChips + totalChip;
+      const chips = dirChip + flavorChips + totalChip;
       let footer = '', trash = '';
       if (e.taggedForDeletion) {
         footer = `<div class="db-sync tagged">🏷️ Tagged for deletion</div>`;
@@ -967,7 +1002,7 @@
       html +=
         `<div class="db-entry${e.taggedForDeletion ? ' tagged' : ''}">
            <div class="db-head">
-             <span class="db-type ${e.type}">${e.type==='delivery'?'🚚':(e.type==='goodwill'?'🎁':'📦')} ${cap(e.type)}</span>
+             <span class="db-type ${e.type}">${e.type==='delivery'?'🚚':e.type==='goodwill'?'🎁':e.type==='transfer'?'🔄':'📦'} ${cap(e.type)}</span>
              <span class="db-when">${fmtWhen(e.datetime)}</span>
            </div>
            <div class="db-loc">
@@ -1354,7 +1389,7 @@
       // Count deliveries (and goodwill removals, stored as negatives) logged AFTER
       // the count time (so a same-day, later delivery/removal counts).
       for (const e of entries)
-        if ((e.type === 'delivery' || e.type === 'goodwill') && e.location === loc && !e.taggedForDeletion && ts(e.datetime) > ts(invDT))
+        if ((e.type === 'delivery' || e.type === 'goodwill' || e.type === 'transfer') && e.location === loc && !e.taggedForDeletion && ts(e.datetime) > ts(invDT))
           for (const p of PRODUCTS) deliv[p] += (e.amounts[p] || 0);
       // Sales are daily totals (no time) — only subtract sales dated strictly after the count day.
       for (const s of locSales) if (s.date > invDate) for (const p of PRODUCTS) sold[p] += (s.amounts[p] || 0);
