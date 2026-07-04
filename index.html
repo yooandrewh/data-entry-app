@@ -377,7 +377,7 @@
 </head>
 <body>
 
-<div class="beta-banner">🧪 BETA · estimates · app updated Jul 3, 2026 · 3:02 PM PST</div>
+<div class="beta-banner">🧪 BETA · estimates · app updated Jul 3, 2026 · 11:45 PM PST</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -1367,14 +1367,26 @@
     // not per calendar day — so no-sale/closed days don't dilute sparse data.
     const rate = ZERO();
     const sellingDates = new Set();
+    const firstSeen = {};              // flavor -> earliest window date it actually sold
     for (const s of locSales) {
       if (!latestSale || s.date < winStart || s.date > latestSale) continue;
       let any = false;
-      for (const p of PRODUCTS) { const v = s.amounts[p] || 0; rate[p] += v; if (v > 0) any = true; }
+      for (const p of PRODUCTS) {
+        const v = s.amounts[p] || 0; rate[p] += v;
+        if (v > 0) { any = true; if (!firstSeen[p] || s.date < firstSeen[p]) firstSeen[p] = s.date; }
+      }
       if (any) sellingDates.add(s.date);
     }
-    const sellDays = sellingDates.size || 1;
-    for (const p of PRODUCTS) rate[p] = rate[p] / sellDays;
+    const sellDaysArr = [...sellingDates].sort();
+    const sellDays = sellDaysArr.length || 1;
+    // Per-flavor denominator: only active sales days ON/AFTER that flavor first sold,
+    // so a newly-launched flavor (e.g. Dot) isn't diluted by days before it existed.
+    const sellDaysFor = {};
+    for (const p of PRODUCTS) {
+      const fp = firstSeen[p];
+      sellDaysFor[p] = fp ? (sellDaysArr.filter(d => d >= fp).length || 1) : sellDays;
+      rate[p] = rate[p] / sellDaysFor[p];
+    }
 
     const locDelivs = entries.filter(e => e.type === 'delivery' && e.location === loc && !e.taggedForDeletion);
     const lastDelivery = locDelivs.reduce((m, e) => { const d = String(e.datetime).slice(0, 10); return d > m ? d : m; }, '');
@@ -1398,7 +1410,7 @@
     }
     // Stock estimate is good through the later of the count and the last sales data.
     const asOf = (invDate && invDate > (latestSale || '')) ? invDate : (latestSale || invDate);
-    return { rate, stock, stockTotal, invDate, latestSale, lastDelivery, sellDays, asOf, hasInv: !!latestInv };
+    return { rate, stock, stockTotal, invDate, latestSale, lastDelivery, sellDays, sellDaysFor, asOf, hasInv: !!latestInv };
   }
   function runout(stats, factor) {
     const days = {}; let firstP = null, firstD = Infinity;
@@ -1553,7 +1565,11 @@
       }
       const ro = runout(st, factor);
       const stockChips = PRODUCTS.map(p => `<span class="db-chip">${PRODUCT_ICON[p]} ${st.stock[p]}</span>`).join('');
-      const rateRows = PRODUCTS.map(p => `<div class="proj-row"><span class="k">${PRODUCT_ICON[p]} ${p}</span><span><b>${fmtD(ro.days[p])}</b> · ${st.rate[p].toFixed(1)}/sales day</span></div>`).join('');
+      const rateRows = PRODUCTS.map(p => {
+        const dp = st.sellDaysFor ? st.sellDaysFor[p] : st.sellDays;
+        const span = (dp && dp < st.sellDays) ? ` <span style="color:var(--muted)">(${dp}d)</span>` : '';
+        return `<div class="proj-row"><span class="k">${PRODUCT_ICON[p]} ${p}</span><span><b>${fmtD(ro.days[p])}</b> · ${st.rate[p].toFixed(1)}/sales day${span}</span></div>`;
+      }).join('');
       const freshRows =
         `<div class="proj-row"><span class="k">📈 Last sales</span><span>${fmtAgo(st.latestSale)}</span></div>` +
         `<div class="proj-row"><span class="k">🚚 Last delivery</span><span>${fmtAgo(st.lastDelivery)}</span></div>` +
