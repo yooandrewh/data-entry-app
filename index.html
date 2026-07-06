@@ -392,7 +392,7 @@
 </head>
 <body>
 
-<div class="beta-banner">🧪 BETA · estimates · app updated Jul 5, 2026 · 7:47 PM PST</div>
+<div class="beta-banner">🧪 BETA · estimates · app updated Jul 6, 2026 · 1:14 AM PST</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -562,6 +562,17 @@
   </div>
 </div>
 
+<!-- ===== MADELEINES VIEW (per-store madeleine analytics) ===== -->
+<div class="view" id="view-mads">
+  <div class="wrap">
+    <header>
+      <h1>Madeleines</h1>
+      <div class="sub" id="madsSub">—</div>
+    </header>
+    <div id="madsList"></div>
+  </div>
+</div>
+
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar">
   <button data-tab="home" class="on"><span class="tic">🏠</span><span>Home</span></button>
@@ -569,6 +580,7 @@
   <button data-tab="db"><span class="tic">🗂️</span><span>Data</span></button>
   <button data-tab="proj"><span class="tic">🔮</span><span>Forecast</span></button>
   <button data-tab="stores"><span class="tic">🏪</span><span>Stores</span></button>
+  <button data-tab="mads"><span class="tic">🍩</span><span>Mads</span></button>
 </nav>
 
 <!-- ===== Confirmation sheet ===== -->
@@ -1032,7 +1044,7 @@
   }
 
   // ---- Tab switching ----
-  const VIEWS = { home: 'view-home', entry: 'view-entry', db: 'view-db', proj: 'view-proj', stores: 'view-stores' };
+  const VIEWS = { home: 'view-home', entry: 'view-entry', db: 'view-db', proj: 'view-proj', stores: 'view-stores', mads: 'view-mads' };
   document.querySelector('.tabbar').addEventListener('click', e => {
     const btn = e.target.closest('button'); if (!btn) return;
     const tab = btn.dataset.tab;
@@ -1042,6 +1054,7 @@
     if (tab === 'db') { salesCache = null; renderData(); retryUnsynced(); }
     if (tab === 'proj') { salesCache = null; renderProj(); }
     if (tab === 'stores') { renderStores(); }
+    if (tab === 'mads') { renderMads(); }
     window.scrollTo(0, 0);
   });
 
@@ -1140,7 +1153,7 @@
       return;
     }
     list.dataset.loaded = '1';
-    sub.textContent = 'Weekly growth · whole-store + madeleine analytics';
+    sub.textContent = 'Weekly growth · whole-store performance';
 
     let html = '';
     // ---- Weekly growth overview (both stores combined) ----
@@ -1176,26 +1189,47 @@
         html += growthBlock('Weekly revenue', wkRev, v => usd(Math.round(v)));
       }
 
-      if (s) {
-        const topCur = CUR_FLAVORS.filter(f => s.flavors[f]).sort((a, b) => s.flavors[b] - s.flavors[a])[0];
-        html += `<div class="ssec" style="margin-top:20px">🍩 Madeleines${topCur ? ` · ${PRODUCT_ICON[topCur]} ${topCur}-led` : ''}</div>`;
-        const metrics = [[s.madsPerDay, 'sold / day'], [usd(s.aov), 'avg order'], [s.basket, 'items / order'], [usd(s.madRevenue), 'mad revenue']];
-        html += `<div class="smetrics">${metrics.map(([v, k]) => `<div class="smetric"><div class="v">${v}</div><div class="k">${k}</div></div>`).join('')}</div>`;
-        const total = Object.values(s.flavors).reduce((a, b) => a + b, 0) || 1;
-        const flavKeys = [...CUR_FLAVORS.filter(f => s.flavors[f]), ...Object.keys(s.flavors).filter(f => !CUR_FLAVORS.includes(f) && s.flavors[f])];
-        const fmax = Math.max(1, ...flavKeys.map(f => s.flavors[f]));
-        html += `<div class="ssec">Flavor mix</div>` + flavKeys.map(f => {
-          const v = s.flavors[f], old = !CUR_FLAVORS.includes(f);
-          return `<div class="fbar"><span>${PRODUCT_ICON[f] || ''} ${f}</span><div class="track"><div class="fill${old ? ' old' : ''}" style="width:${Math.round(v / fmax * 100)}%"></div></div><span class="n">${Math.round(v / total * 100)}%</span></div>`;
-        }).join('');
-        const dmax = Math.max(1, ...DOWK.map(d => s.dow[d] || 0));
-        html += `<div class="ssec">Busiest days</div><div class="vbars">` + DOWK.map(d => `<div class="vbar"><div class="col${d === 'Sat' || d === 'Sun' ? ' hot' : ''}" style="height:${Math.round((s.dow[d] || 0) / dmax * 100)}%"></div><span class="lb">${d[0]}</span></div>`).join('') + `</div>`;
-        const hk = Object.keys(s.hours).map(Number).sort((a, b) => a - b);
-        const hmax = Math.max(1, ...hk.map(h => s.hours[h]));
-        const peakH = hk.reduce((m, h) => s.hours[h] > s.hours[m] ? h : m, hk[0]);
-        html += `<div class="ssec">By hour · peak ${hlabel(peakH)}m</div><div class="vbars">` + hk.map(h => `<div class="vbar"><div class="col${h === peakH ? ' hot' : ''}" style="height:${Math.round(s.hours[h] / hmax * 100)}%"></div><span class="lb">${h % 3 === 0 ? hlabel(h) : ''}</span></div>`).join('') + `</div>`;
-        html += `<div class="ssec">Top cashiers</div>` + (s.cashiers || []).map(([n, c]) => `<div class="cashrow"><span>${esc(n)}</span><span class="c-n">${c}</span></div>`).join('');
-      }
+      html += `</div>`;
+    }
+    list.innerHTML = html;
+  }
+
+  // ===== Madeleines tab (per-store madeleine analytics from the OCR pipeline) =====
+  async function renderMads() {
+    const list = document.getElementById('madsList');
+    const sub = document.getElementById('madsSub');
+    if (!list.dataset.loaded) sub.textContent = 'Loading…';
+    let stats;
+    try { stats = await getStoreStats(); }
+    catch (e) { sub.textContent = 'Could not load'; list.innerHTML = `<div class="db-empty"><div class="big">🍩</div>Couldn't load madeleine data.</div>`; return; }
+    if (!stats || !stats.stores) {
+      sub.textContent = 'No data yet';
+      list.innerHTML = `<div class="db-empty"><div class="big">🍩</div>No madeleine analytics yet.<br>Run <b>push_store_stats.py</b> in the OCR pipeline.</div>`;
+      return;
+    }
+    list.dataset.loaded = '1';
+    sub.textContent = `Madeleine sales · ${fmtWhen(stats.range.min)} – ${fmtWhen(stats.range.max)}`;
+    let html = '';
+    for (const [name, s] of Object.entries(stats.stores)) {
+      const topCur = CUR_FLAVORS.filter(f => s.flavors[f]).sort((a, b) => s.flavors[b] - s.flavors[a])[0];
+      html += `<div class="store-card"><h3>📍 ${esc(name)}</h3>`;
+      html += `<div class="store-tag">${topCur ? `${PRODUCT_ICON[topCur]} ${topCur}-led · ` : ''}${s.mads} madeleines · ${s.activeDays} days</div>`;
+      const metrics = [[s.madsPerDay, 'sold / day'], [usd(s.aov), 'avg order'], [s.basket, 'items / order'], [usd(s.madRevenue), 'mad revenue']];
+      html += `<div class="smetrics">${metrics.map(([v, k]) => `<div class="smetric"><div class="v">${v}</div><div class="k">${k}</div></div>`).join('')}</div>`;
+      const total = Object.values(s.flavors).reduce((a, b) => a + b, 0) || 1;
+      const flavKeys = [...CUR_FLAVORS.filter(f => s.flavors[f]), ...Object.keys(s.flavors).filter(f => !CUR_FLAVORS.includes(f) && s.flavors[f])];
+      const fmax = Math.max(1, ...flavKeys.map(f => s.flavors[f]));
+      html += `<div class="ssec">Flavor mix</div>` + flavKeys.map(f => {
+        const v = s.flavors[f], old = !CUR_FLAVORS.includes(f);
+        return `<div class="fbar"><span>${PRODUCT_ICON[f] || ''} ${f}</span><div class="track"><div class="fill${old ? ' old' : ''}" style="width:${Math.round(v / fmax * 100)}%"></div></div><span class="n">${Math.round(v / total * 100)}%</span></div>`;
+      }).join('');
+      const dmax = Math.max(1, ...DOWK.map(d => s.dow[d] || 0));
+      html += `<div class="ssec">Busiest days</div><div class="vbars">` + DOWK.map(d => `<div class="vbar"><div class="col${d === 'Sat' || d === 'Sun' ? ' hot' : ''}" style="height:${Math.round((s.dow[d] || 0) / dmax * 100)}%"></div><span class="lb">${d[0]}</span></div>`).join('') + `</div>`;
+      const hk = Object.keys(s.hours).map(Number).sort((a, b) => a - b);
+      const hmax = Math.max(1, ...hk.map(h => s.hours[h]));
+      const peakH = hk.reduce((m, h) => s.hours[h] > s.hours[m] ? h : m, hk[0]);
+      html += `<div class="ssec">By hour · peak ${hlabel(peakH)}m</div><div class="vbars">` + hk.map(h => `<div class="vbar"><div class="col${h === peakH ? ' hot' : ''}" style="height:${Math.round(s.hours[h] / hmax * 100)}%"></div><span class="lb">${h % 3 === 0 ? hlabel(h) : ''}</span></div>`).join('') + `</div>`;
+      html += `<div class="ssec">Top cashiers</div>` + (s.cashiers || []).map(([n, c]) => `<div class="cashrow"><span>${esc(n)}</span><span class="c-n">${c}</span></div>`).join('');
       html += `</div>`;
     }
     list.innerHTML = html;
