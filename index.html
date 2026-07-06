@@ -203,6 +203,21 @@
   .vbar .col { width: 100%; background: var(--blue); border-radius: 4px 4px 0 0; min-height: 2px; transition: height .2s; }
   .vbar .col.hot { background: var(--orange); }
   .vbar .lb { font-size: 9.5px; color: var(--muted); }
+  /* weekly growth */
+  .growth-block { margin-bottom: 14px; }
+  .growth-block:last-child { margin-bottom: 0; }
+  .growth-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+  .growth-head .gt { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
+  .growth-head .gv { font-size: 20px; font-weight: 800; letter-spacing: -0.3px; }
+  .wow { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
+  .wow.up { color: #16a34a; background: rgba(22,163,74,0.12); }
+  .wow.down { color: var(--red); background: rgba(255,59,48,0.12); }
+  .wow.flat { color: var(--muted); background: var(--field); }
+  .wchart { display: flex; align-items: flex-end; gap: 5px; height: 72px; margin-top: 8px; }
+  .wcol { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; height: 100%; justify-content: flex-end; }
+  .wcol .bar { width: 100%; background: var(--blue); border-radius: 4px 4px 0 0; min-height: 2px; opacity: 0.55; transition: height .2s; }
+  .wcol .bar.last { opacity: 1; background: #16a34a; }
+  .wcol .lb { font-size: 9px; color: var(--muted); }
   .cashrow { display: grid; grid-template-columns: 1fr auto; gap: 8px; font-size: 13px; padding: 4px 0; border-top: 1px solid var(--sep); }
   .cashrow:first-child { border-top: none; }
   .cashrow .c-n { color: var(--muted); font-variant-numeric: tabular-nums; }
@@ -377,7 +392,7 @@
 </head>
 <body>
 
-<div class="beta-banner">🧪 BETA · estimates · app updated Jul 3, 2026 · 11:45 PM PST</div>
+<div class="beta-banner">🧪 BETA · estimates · app updated Jul 5, 2026 · 7:47 PM PST</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -1071,12 +1086,48 @@
     };
   }
 
+  // ---- Weekly buckets (Mon–Sun) for growth charts ----
+  function weeklySeries(rows, key) {
+    const wk = {};
+    for (const r of rows) {
+      if (r[key] == null || !r.date) continue;
+      const w = weekStart(r.date);
+      (wk[w] || (wk[w] = { sum: 0, dates: new Set() }));
+      wk[w].sum += (r[key] || 0); wk[w].dates.add(r.date);
+    }
+    return Object.entries(wk).sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([w, o]) => ({ week: w, val: o.sum, days: o.dates.size }));
+  }
+  function wowBadge(series) {
+    const full = series.filter(s => s.days >= 6);   // only compare complete weeks
+    if (full.length < 2) return '';
+    const last = full[full.length - 1], prev = full[full.length - 2];
+    if (!prev.val) return '';
+    const pct = (last.val - prev.val) / prev.val * 100;
+    const cls = pct > 1 ? 'up' : pct < -1 ? 'down' : 'flat';
+    const arrow = pct > 1 ? '↑' : pct < -1 ? '↓' : '→';
+    return `<span class="wow ${cls}">${arrow} ${Math.abs(pct).toFixed(0)}% WoW</span>`;
+  }
+  function weeklyChart(series) {
+    const max = Math.max(1, ...series.map(s => s.val));
+    return `<div class="wchart">` + series.map((s, i) => {
+      const wl = new Intl.DateTimeFormat('en-US', { month: 'numeric', day: 'numeric' }).format(parseEntryDate(s.week));
+      const partial = s.days < 6 && i === series.length - 1 ? ';opacity:.4' : '';
+      return `<div class="wcol"><div class="bar${i === series.length - 1 ? ' last' : ''}" style="height:${Math.round(s.val / max * 100)}%${partial}"></div><span class="lb">${wl}</span></div>`;
+    }).join('') + `</div>`;
+  }
+  function growthBlock(title, series, fmtVal) {
+    const full = series.filter(s => s.days >= 6);
+    if (!full.length) return '';
+    return `<div class="growth-block"><div class="growth-head"><div><div class="gt">${title}</div><div class="gv">${fmtVal(full[full.length - 1].val)}</div></div>${wowBadge(series)}</div>${weeklyChart(series)}</div>`;
+  }
+
   async function renderStores() {
     const list = document.getElementById('storesList');
     const sub = document.getElementById('storesSub');
     if (!list.dataset.loaded) sub.textContent = 'Loading…';
-    let stats, gsales;
-    try { [stats, gsales] = await Promise.all([getStoreStats(), getStoreSales()]); }
+    let stats, gsales, msales;
+    try { [stats, gsales, msales] = await Promise.all([getStoreStats(), getStoreSales(), getSales().catch(() => [])]); }
     catch (e) { sub.textContent = 'Could not load'; list.innerHTML = `<div class="db-empty"><div class="big">🏪</div>Couldn't load store data.</div>`; return; }
     const madStores = (stats && stats.stores) || {};
     const salesByLoc = {};
@@ -1089,9 +1140,16 @@
       return;
     }
     list.dataset.loaded = '1';
-    sub.textContent = 'Whole-store performance + madeleine analytics';
+    sub.textContent = 'Weekly growth · whole-store + madeleine analytics';
 
     let html = '';
+    // ---- Weekly growth overview (both stores combined) ----
+    const revWeekly = weeklySeries(gsales.filter(r => r.revenue != null), 'revenue').slice(-8);
+    const madWeekly = weeklySeries(msales || [], 'total').slice(-10);
+    const gr = growthBlock('Weekly revenue · all stores', revWeekly, v => usd(Math.round(v)));
+    const gm = growthBlock('Weekly madeleines sold · all stores', madWeekly, v => String(Math.round(v)));
+    if (gr || gm) html += `<div class="store-card"><h3>📈 Weekly Growth</h3>${gr}${gm}<div class="store-note" style="margin-top:12px">Bars are Mon–Sun weeks · WoW compares the last two complete weeks · faded bar = week in progress</div></div>`;
+
     for (const name of names) {
       const ws = wholeStore(salesByLoc[name] || []);
       const s = madStores[name];
@@ -1113,6 +1171,9 @@
           html += `<div class="ssec">Revenue · last ${ws.trend.length} days</div><div class="vbars">` +
             ws.trend.map(r => `<div class="vbar"><div class="col" style="height:${Math.round(r.revenue / tmax * 100)}%"></div></div>`).join('') + `</div>`;
         }
+        // per-store weekly revenue growth
+        const wkRev = weeklySeries((salesByLoc[name] || []).filter(r => r.revenue != null), 'revenue').slice(-8);
+        html += growthBlock('Weekly revenue', wkRev, v => usd(Math.round(v)));
       }
 
       if (s) {
