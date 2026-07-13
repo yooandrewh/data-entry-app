@@ -209,6 +209,11 @@
   .growth-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
   .growth-head .gt { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
   .growth-head .gv { font-size: 20px; font-weight: 800; letter-spacing: -0.3px; }
+  .wbar-p { width: 100%; display: flex; flex-direction: column; justify-content: flex-start; min-height: 2px; }
+  .wbar-ghost { width: 100%; box-sizing: border-box; border: 1.5px dashed var(--blue); border-bottom: none; border-radius: 4px 4px 0 0; opacity: 0.55; }
+  .wbar-act { width: 100%; background: var(--blue); opacity: 0.45; }
+  .growth-proj { font-size: 12px; color: var(--muted); margin-top: 8px; }
+  .growth-proj b { color: var(--blue); font-weight: 700; }
   .growth-range { font-size: 12.5px; font-weight: 700; margin-top: 3px; }
   .growth-range.up { color: #16a34a; }
   .growth-range.down { color: var(--red); }
@@ -403,7 +408,7 @@
 </head>
 <body>
 
-<div class="beta-banner">🧪 BETA · estimates · app updated Jul 13, 2026 · 3:47 PM PST</div>
+<div class="beta-banner">🧪 BETA · estimates · app updated Jul 13, 2026 · 3:52 PM PST</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -1160,12 +1165,25 @@
     const arrow = pct > 1 ? '↑' : pct < -1 ? '↓' : '→';
     return `<span class="wow ${cls}">${arrow} ${Math.abs(pct).toFixed(0)}% WoW</span>`;
   }
+  // For an in-progress (partial) latest week, project the full-week total from the
+  // days so far (straight-line: val / days * 7).
+  function projectPartial(series) {
+    if (!series.length) return null;
+    const last = series[series.length - 1];
+    if (last.days >= 6 || last.days < 1) return null;
+    return { week: last.week, val: last.val, days: last.days, projected: Math.round(last.val / last.days * 7) };
+  }
   function weeklyChart(series) {
-    const max = Math.max(1, ...series.map(s => s.val));
+    const proj = projectPartial(series);
+    const max = Math.max(1, ...series.map((s, i) => (proj && i === series.length - 1) ? proj.projected : s.val));
     return `<div class="wchart">` + series.map((s, i) => {
       const wl = new Intl.DateTimeFormat('en-US', { month: 'numeric', day: 'numeric' }).format(parseEntryDate(s.week));
-      const partial = s.days < 6 && i === series.length - 1 ? ';opacity:.4' : '';
-      return `<div class="wcol"><div class="bar${i === series.length - 1 ? ' last' : ''}" style="height:${Math.round(s.val / max * 100)}%${partial}"></div><span class="lb">${wl}</span></div>`;
+      const isLast = i === series.length - 1;
+      if (proj && isLast) {
+        const actPct = Math.round(s.val / proj.projected * 100);   // actual portion of the projected full week
+        return `<div class="wcol"><div class="wbar-p" style="height:${Math.round(proj.projected / max * 100)}%"><div class="wbar-ghost" style="height:${100 - actPct}%"></div><div class="wbar-act" style="height:${actPct}%"></div></div><span class="lb">${wl}</span></div>`;
+      }
+      return `<div class="wcol"><div class="bar${isLast ? ' last' : ''}" style="height:${Math.round(s.val / max * 100)}%"></div><span class="lb">${wl}</span></div>`;
     }).join('') + `</div>`;
   }
   function growthBlock(title, series, fmtVal) {
@@ -1181,7 +1199,11 @@
       const since = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(parseEntryDate(first.week));
       range = `<div class="growth-range ${cls}">${arrow} ${lbl} since ${since}</div>`;
     }
-    return `<div class="growth-block"><div class="growth-head"><div><div class="gt">${title}</div><div class="gv">${fmtVal(last.val)}</div></div>${wowBadge(series)}</div>${range}${weeklyChart(series)}</div>`;
+    const proj = projectPartial(series);
+    const projLine = proj
+      ? `<div class="growth-proj">wk of ${new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(parseEntryDate(proj.week))}: ${fmtVal(proj.val)} so far · <b>~${fmtVal(proj.projected)} projected</b> (${proj.days}d)</div>`
+      : '';
+    return `<div class="growth-block"><div class="growth-head"><div><div class="gt">${title}</div><div class="gv">${fmtVal(last.val)}</div></div>${wowBadge(series)}</div>${range}${weeklyChart(series)}${projLine}</div>`;
   }
 
   async function renderStores() {
