@@ -297,6 +297,13 @@
     display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   }
   .db-del:active { background: var(--sep); }
+  .db-edit {
+    appearance: none; border: none; cursor: pointer; background: var(--field);
+    color: var(--blue); font-size: 14px; width: 32px; height: 32px; border-radius: 999px;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-right: 6px;
+  }
+  .db-edit:active { background: var(--sep); }
+  .db-tools { display: flex; align-items: center; }
   .db-sync {
     appearance: none; font-family: inherit; border: none; cursor: default;
     margin-top: 10px; font-size: 12px; font-weight: 600;
@@ -392,7 +399,7 @@
 </head>
 <body>
 
-<div class="beta-banner">🧪 BETA · estimates · app updated Jul 6, 2026 · 1:14 AM PST</div>
+<div class="beta-banner">🧪 BETA · estimates · app updated Jul 13, 2026 · 8:49 AM PST</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -606,6 +613,29 @@
     <div class="actions">
       <button class="btn-danger" id="delConfirmBtn">Tag for deletion</button>
       <button class="btn-ghost" id="delCancelBtn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Edit entry ===== -->
+<div class="scrim" id="editScrim">
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="editTitle">
+    <h2 id="editTitle">Edit entry</h2>
+    <div class="warn" id="editWarn">Changes save straight to the sheet.</div>
+    <div class="card">
+      <div class="row"><span class="lbl">Date &amp; time</span><input type="datetime-local" id="editDatetime" /></div>
+      <div class="row"><span class="lbl">Location</span>
+        <div class="pills" id="editLocPills">
+          <button type="button" class="pill" data-loc="La Mirada">La Mirada</button>
+          <button type="button" class="pill" data-loc="Stanton">Stanton</button>
+        </div>
+      </div>
+    </div>
+    <div class="card" id="editAmounts"></div>
+    <div class="alert-err" id="editErr"></div>
+    <div class="actions">
+      <button class="btn-primary" id="editSaveBtn">Save changes</button>
+      <button class="btn-ghost" id="editCancelBtn">Cancel</button>
     </div>
   </div>
 </div>
@@ -1016,11 +1046,15 @@
         ? `<span class="db-chip db-total">${signAdj ? Math.abs(eTotal) : eTotal}${isGw ? ' given out' : isXfer ? ' moved' : ' total'}</span>`
         : '';
       const chips = dirChip + flavorChips + totalChip;
-      let footer = '', trash = '';
+      let footer = '', trash = '', editBtn = '';
       if (e.taggedForDeletion) {
         footer = `<div class="db-sync tagged">🏷️ Tagged for deletion</div>`;
       } else if (e.notionId) {
         footer = `<div class="db-sync ok">✓ Synced to Sheets</div>`;
+        // Editable only for delivery/inventory (goodwill/transfer are signed/paired).
+        if (e.type === 'delivery' || e.type === 'inventory') {
+          editBtn = `<button class="db-edit" data-edit="${esc(e.notionId)}" aria-label="Edit entry" title="Edit">✏️</button>`;
+        }
         trash = `<button class="db-del" data-id="${esc(e.notionId)}" aria-label="Delete entry" title="Delete">🗑️</button>`;
       } else {
         const rid = esc(e.submittedAt || e.datetime);
@@ -1034,7 +1068,7 @@
            </div>
            <div class="db-loc">
              <span class="loc-name">📍 ${esc(e.location)}</span>
-             ${trash}
+             <div class="db-tools">${editBtn}${trash}</div>
            </div>
            <div class="db-amts">${chips}</div>
            ${footer}
@@ -1299,6 +1333,12 @@
   }
 
   document.getElementById('dbList').addEventListener('click', e => {
+    const editB = e.target.closest('.db-edit');
+    if (editB) {
+      const ent = lastEntries.find(x => x.notionId === editB.dataset.edit);
+      if (ent) openEdit(ent);
+      return;
+    }
     const del = e.target.closest('.db-del');
     if (del) {
       pendingDeleteId = del.dataset.id;
@@ -1347,6 +1387,77 @@
     if (navigator.vibrate) navigator.vibrate(15);
     setTimeout(() => toast.classList.remove('show'), 1800);
     renderDB();
+  });
+
+  // ===== Edit entry =====
+  const editScrim = document.getElementById('editScrim');
+  const editErr = document.getElementById('editErr');
+  const editDatetime = document.getElementById('editDatetime');
+  let editingId = null, editLoc = 'La Mirada';
+
+  function openEdit(ent) {
+    editingId = ent.notionId;
+    editErr.textContent = '';
+    const dtVal = String(ent.datetime || '');
+    editDatetime.value = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(dtVal) ? dtVal.slice(0, 16) : nowPST();
+    editLoc = ent.location || 'La Mirada';
+    document.querySelectorAll('#editLocPills .pill').forEach(p => p.classList.toggle('on', p.dataset.loc === editLoc));
+    document.getElementById('editAmounts').innerHTML = PRODUCTS.map(p => `
+      <div class="row">
+        <span class="lbl">${PRODUCT_ICON[p]} ${p}</span>
+        <div class="amt" data-product="${p}">
+          <button type="button" class="step minus">−</button>
+          <input class="val" type="number" inputmode="numeric" value="${ent.amounts[p] || 0}" />
+          <button type="button" class="step plus">+</button>
+        </div>
+      </div>`).join('');
+    editScrim.classList.add('show');
+  }
+  function closeEdit() { editScrim.classList.remove('show'); editingId = null; }
+
+  document.getElementById('editLocPills').addEventListener('click', e => {
+    const p = e.target.closest('.pill'); if (!p) return;
+    document.querySelectorAll('#editLocPills .pill').forEach(x => x.classList.remove('on'));
+    p.classList.add('on'); editLoc = p.dataset.loc;
+  });
+  document.getElementById('editAmounts').addEventListener('click', e => {
+    const btn = e.target.closest('.step'); if (!btn) return;
+    const input = btn.parentElement.querySelector('.val');
+    let v = parseInt(input.value || '0', 10); if (!Number.isFinite(v)) v = 0;
+    input.value = btn.classList.contains('plus') ? v + 1 : v - 1;
+    if (navigator.vibrate) navigator.vibrate(8);
+  });
+  document.getElementById('editAmounts').addEventListener('input', e => {
+    if (e.target.classList.contains('val')) e.target.value = e.target.value.replace(/[^0-9-]/g, '').replace(/(?!^)-/g, '');
+  });
+  document.getElementById('editCancelBtn').addEventListener('click', closeEdit);
+  editScrim.addEventListener('click', e => { if (e.target === editScrim) closeEdit(); });
+
+  document.getElementById('editSaveBtn').addEventListener('click', async () => {
+    if (!editingId) return;
+    const amounts = {};
+    document.querySelectorAll('#editAmounts .amt').forEach(a => amounts[a.dataset.product] = parseInt(a.querySelector('.val').value || '0', 10));
+    const payload = { pageId: editingId, datetime: editDatetime.value, location: editLoc, amounts };
+    const saveBtn = document.getElementById('editSaveBtn');
+    saveBtn.disabled = true; saveBtn.textContent = 'Saving…'; editErr.textContent = '';
+    try {
+      const r = await fetch('/api/update-entry', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+      });
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(data.error || ('HTTP ' + r.status));
+      closeEdit();
+      const toast = document.getElementById('toast');
+      document.getElementById('toastMsg').textContent = 'Entry updated';
+      toast.classList.add('show');
+      if (navigator.vibrate) navigator.vibrate([10, 40, 10]);
+      setTimeout(() => toast.classList.remove('show'), 1800);
+      renderDB();
+    } catch (err) {
+      editErr.textContent = String(err.message || err);
+    } finally {
+      saveBtn.disabled = false; saveBtn.textContent = 'Save changes';
+    }
   });
 
   // ===== Sales tab =====
