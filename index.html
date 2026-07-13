@@ -209,6 +209,10 @@
   .growth-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
   .growth-head .gt { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
   .growth-head .gv { font-size: 20px; font-weight: 800; letter-spacing: -0.3px; }
+  .growth-range { font-size: 12.5px; font-weight: 700; margin-top: 3px; }
+  .growth-range.up { color: #16a34a; }
+  .growth-range.down { color: var(--red); }
+  .growth-range.flat { color: var(--muted); }
   .wow { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
   .wow.up { color: #16a34a; background: rgba(22,163,74,0.12); }
   .wow.down { color: var(--red); background: rgba(255,59,48,0.12); }
@@ -399,7 +403,7 @@
 </head>
 <body>
 
-<div class="beta-banner">🧪 BETA · estimates · app updated Jul 13, 2026 · 8:57 AM PST</div>
+<div class="beta-banner">🧪 BETA · estimates · app updated Jul 13, 2026 · 3:47 PM PST</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -1167,7 +1171,17 @@
   function growthBlock(title, series, fmtVal) {
     const full = series.filter(s => s.days >= 6);
     if (!full.length) return '';
-    return `<div class="growth-block"><div class="growth-head"><div><div class="gt">${title}</div><div class="gv">${fmtVal(full[full.length - 1].val)}</div></div>${wowBadge(series)}</div>${weeklyChart(series)}</div>`;
+    const first = full[0], last = full[full.length - 1];
+    let range = '';
+    if (full.length >= 3 && first.val > 0) {
+      const mult = last.val / first.val, pct = (mult - 1) * 100;
+      const cls = pct > 3 ? 'up' : pct < -3 ? 'down' : 'flat';
+      const arrow = pct > 3 ? '↑' : pct < -3 ? '↓' : '→';
+      const lbl = mult >= 1.6 ? `${mult.toFixed(1)}×` : `${pct >= 0 ? '+' : ''}${pct.toFixed(0)}%`;
+      const since = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(parseEntryDate(first.week));
+      range = `<div class="growth-range ${cls}">${arrow} ${lbl} since ${since}</div>`;
+    }
+    return `<div class="growth-block"><div class="growth-head"><div><div class="gt">${title}</div><div class="gv">${fmtVal(last.val)}</div></div>${wowBadge(series)}</div>${range}${weeklyChart(series)}</div>`;
   }
 
   async function renderStores() {
