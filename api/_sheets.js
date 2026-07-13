@@ -150,3 +150,26 @@ export async function updateCell(tab, header, rowNumber, colName, value) {
     { method: 'PUT', body: JSON.stringify({ values: [[value]] }) },
   );
 }
+
+// Tab title -> numeric sheetId (gid), needed for structural edits. Cached per warm instance.
+let _gids = null;
+async function tabGid(tab) {
+  if (!_gids) {
+    const meta = await api('?fields=sheets.properties(sheetId,title)');
+    _gids = {};
+    for (const sh of (meta.sheets || [])) _gids[sh.properties.title] = sh.properties.sheetId;
+  }
+  return _gids[tab];
+}
+
+// Permanently delete a row (1-based sheet row number) from a tab. Rows below shift up.
+export async function deleteRow(tab, rowNumber) {
+  const gid = await tabGid(tab);
+  if (gid == null) throw new Error(`Unknown tab: ${tab}`);
+  await api(':batchUpdate', {
+    method: 'POST',
+    body: JSON.stringify({
+      requests: [{ deleteDimension: { range: { sheetId: gid, dimension: 'ROWS', startIndex: rowNumber - 1, endIndex: rowNumber } } }],
+    }),
+  });
+}

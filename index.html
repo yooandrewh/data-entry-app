@@ -399,7 +399,7 @@
 </head>
 <body>
 
-<div class="beta-banner">🧪 BETA · estimates · app updated Jul 13, 2026 · 8:49 AM PST</div>
+<div class="beta-banner">🧪 BETA · estimates · app updated Jul 13, 2026 · 8:57 AM PST</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -606,12 +606,12 @@
 <!-- ===== Delete confirmation (password) ===== -->
 <div class="scrim alert" id="delScrim">
   <div class="alert-box" role="dialog" aria-modal="true" aria-labelledby="delTitle">
-    <h2 id="delTitle">Tag for deletion?</h2>
-    <p>This flags the entry for deletion in the sheet — nothing is removed, so it can be reviewed first. Enter the password to confirm.</p>
+    <h2 id="delTitle">Delete this entry?</h2>
+    <p>This permanently removes it from the sheet — it can't be undone. Enter the password to confirm.</p>
     <input type="password" id="delPass" placeholder="Password" autocomplete="off" autocapitalize="off" autocorrect="off" />
     <div class="alert-err" id="delErr"></div>
     <div class="actions">
-      <button class="btn-danger" id="delConfirmBtn">Tag for deletion</button>
+      <button class="btn-danger" id="delConfirmBtn">Delete</button>
       <button class="btn-ghost" id="delCancelBtn">Cancel</button>
     </div>
   </div>
@@ -661,7 +661,8 @@
   // this to your absolute Vercel URL, e.g. 'https://your-project.vercel.app/api/sync'.
   // Leave '' to disable syncing (entries stay only on this device).
   const SYNC_ENDPOINT = '/api/sync';
-  const TAG_DELETE_ENDPOINT = '/api/tag-delete';
+  const TAG_DELETE_ENDPOINT = '/api/tag-delete';   // legacy soft-delete (offline retry of old tags)
+  const DELETE_ENDPOINT = '/api/delete-entry';     // hard delete: removes the row
   const ENTRIES_ENDPOINT = '/api/entries';   // shared read: all entries from Notion
 
   // ---- PST default datetime ----
@@ -1369,24 +1370,31 @@
       return;
     }
     const notionId = pendingDeleteId;
-    closeDel();
-    // Reflect locally too, if this entry originated on this device.
-    const localRec = loadEntries().find(x => x.notionId === notionId);
-    if (localRec) patchEntry(keyOf(localRec), { taggedForDeletion: true });
+    const btn = document.getElementById('delConfirmBtn');
+    btn.disabled = true; btn.textContent = 'Deleting…';
+    const toast = document.getElementById('toast');
     try {
-      const r = await fetch(TAG_DELETE_ENDPOINT, {
+      const r = await fetch(DELETE_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pageId: notionId, tagged: true }),
+        body: JSON.stringify({ pageId: notionId }),
       });
-      if (r.ok && localRec) patchEntry(keyOf(localRec), { tagPushed: true });
-    } catch (e) {}
-    const toast = document.getElementById('toast');
-    document.getElementById('toastMsg').textContent = 'Tagged for deletion';
-    toast.classList.add('show');
-    if (navigator.vibrate) navigator.vibrate(15);
-    setTimeout(() => toast.classList.remove('show'), 1800);
-    renderDB();
+      const data = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(data.error || ('HTTP ' + r.status));
+      // Drop the local copy too, if this device created it.
+      const all = loadEntries().filter(x => x.notionId !== notionId);
+      localStorage.setItem(STORE_KEY, JSON.stringify(all));
+      closeDel();
+      document.getElementById('toastMsg').textContent = 'Entry deleted';
+      toast.classList.add('show');
+      if (navigator.vibrate) navigator.vibrate(15);
+      setTimeout(() => toast.classList.remove('show'), 1800);
+      renderDB();
+    } catch (err) {
+      delErr.textContent = 'Couldn’t delete — ' + String(err.message || err);
+    } finally {
+      btn.disabled = false; btn.textContent = 'Delete';
+    }
   });
 
   // ===== Edit entry =====
