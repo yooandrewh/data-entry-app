@@ -408,7 +408,7 @@
 </head>
 <body>
 
-<div class="beta-banner">🧪 BETA · estimates · app updated Jul 13, 2026 · 6:52 PM PST</div>
+<div class="beta-banner">🧪 BETA · estimates · app updated Jul 13, 2026 · 7:00 PM PST</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -558,6 +558,11 @@
       <button data-loc="La Mirada">La Mirada</button>
       <button data-loc="Stanton">Stanton</button>
     </div>
+    <div class="db-filter" id="projScenario">
+      <button data-scn="bear">🐻 Best</button>
+      <button class="on" data-scn="base">Expected</button>
+      <button data-scn="bull">🐂 Worst</button>
+    </div>
     <div id="projList"></div>
   </div>
 </div>
@@ -570,6 +575,29 @@
       <div class="sub" id="storesSub">—</div>
     </header>
     <div id="storesList"></div>
+  </div>
+</div>
+
+<!-- ===== PLAN VIEW (what-if: how much to bake to last until a date) ===== -->
+<div class="view" id="view-plan">
+  <div class="wrap">
+    <header>
+      <h1>Plan</h1>
+      <div class="sub" id="planSub">How much to bake to last until a date</div>
+    </header>
+    <div class="db-filter" id="planLoc">
+      <button class="on" data-loc="all">All</button>
+      <button data-loc="La Mirada">La Mirada</button>
+      <button data-loc="Stanton">Stanton</button>
+    </div>
+    <div class="card">
+      <div class="row">
+        <span class="lbl">Make it last until</span>
+        <input type="date" id="planDate" />
+      </div>
+    </div>
+    <div class="hint">Forecasts demand day-by-day (weekdays vs weekends) from your recent sales, then subtracts what's on hand.</div>
+    <div id="planList"></div>
   </div>
 </div>
 
@@ -592,6 +620,7 @@
   <button data-tab="proj"><span class="tic">🔮</span><span>Forecast</span></button>
   <button data-tab="stores"><span class="tic">🏪</span><span>Stores</span></button>
   <button data-tab="mads"><span class="tic">🍩</span><span>Mads</span></button>
+  <button data-tab="plan"><span class="tic">📅</span><span>Plan</span></button>
 </nav>
 
 <!-- ===== Confirmation sheet ===== -->
@@ -1083,7 +1112,7 @@
   }
 
   // ---- Tab switching ----
-  const VIEWS = { home: 'view-home', entry: 'view-entry', db: 'view-db', proj: 'view-proj', stores: 'view-stores', mads: 'view-mads' };
+  const VIEWS = { home: 'view-home', entry: 'view-entry', db: 'view-db', proj: 'view-proj', stores: 'view-stores', mads: 'view-mads', plan: 'view-plan' };
   document.querySelector('.tabbar').addEventListener('click', e => {
     const btn = e.target.closest('button'); if (!btn) return;
     const tab = btn.dataset.tab;
@@ -1094,6 +1123,7 @@
     if (tab === 'proj') { salesCache = null; renderProj(); }
     if (tab === 'stores') { renderStores(); }
     if (tab === 'mads') { renderMads(); }
+    if (tab === 'plan') { renderPlan(); }
     window.scrollTo(0, 0);
   });
 
@@ -1609,7 +1639,8 @@
   });
 
   // ===== Shared projection math (used by Home + Projections) =====
-  let projLoc = 'all', homeLoc = 'all';   // independent per-tab location filters
+  let projLoc = 'all', homeLoc = 'all', planLoc = 'all';   // independent per-tab location filters
+  let projScenario = 'base';              // 'bear' (best/slow) | 'base' | 'bull' (worst/busy)
   const RUN_WINDOW = 14;                          // days of sales history for run-rate
   const ZERO = () => Object.fromEntries(PRODUCTS.map(p => [p, 0]));
   const ts = s => { const t = new Date(s).getTime(); return isNaN(t) ? 0 : t; };  // compare real instants
@@ -1847,10 +1878,13 @@
       list.innerHTML = `<div class="db-empty"><div class="big">🔮</div>Couldn't load data.<br>Connect the integration to the Sales database.</div>`;
       return;
     }
-    sub.textContent = 'Run-out range · margin from each store’s own daily swing';
+    const scnLabel = { bear: '🐻 Best case · if sales run slow', base: 'Expected · band from daily swing', bull: '🐂 Worst case · if sales run busy' };
+    sub.textContent = scnLabel[projScenario];
+    const pick = (ro, p) => projScenario === 'bull' ? ro.lo[p] : projScenario === 'bear' ? ro.hi[p] : ro.days[p];
+    const pickFirst = (ro) => projScenario === 'bull' ? ro.firstLo : projScenario === 'bear' ? ro.firstHi : ro.firstD;
 
     const fmtBand = (lo, hi) => {
-      if (lo === Infinity) return '';
+      if (projScenario !== 'base' || lo === Infinity) return '';
       const l = Math.round(lo), h = hi === Infinity ? '∞' : Math.round(hi);
       return l === h ? '' : ` <span style="color:var(--muted);font-weight:500">(${l}–${h}d)</span>`;
     };
@@ -1867,7 +1901,7 @@
       const rateRows = PRODUCTS.map(p => {
         const dp = st.sellDaysFor ? st.sellDaysFor[p] : st.sellDays;
         const span = (dp && dp < st.sellDays) ? ` <span style="color:var(--muted)">(${dp}d)</span>` : '';
-        return `<div class="proj-row"><span class="k">${PRODUCT_ICON[p]} ${p}</span><span><b>${fmtD(ro.days[p])}</b>${fmtBand(ro.lo[p], ro.hi[p])} · ${st.rate[p].toFixed(1)}/day${span}</span></div>`;
+        return `<div class="proj-row"><span class="k">${PRODUCT_ICON[p]} ${p}</span><span><b>${fmtD(pick(ro, p))}</b>${fmtBand(ro.lo[p], ro.hi[p])} · ${st.rate[p].toFixed(1)}/day${span}</span></div>`;
       }).join('');
       const freshRows =
         `<div class="proj-row"><span class="k">📈 Last sales</span><span>${fmtAgo(st.latestSale)}</span></div>` +
@@ -1875,7 +1909,7 @@
         `<div class="proj-row"><span class="k">📦 Last inventory</span><span>${fmtAgo(st.invDate)}</span></div>`;
       const runoutTxt = ro.firstD === Infinity
         ? 'No recent sales — can\'t project'
-        : `Runs out in <span class="big">${fmtD(ro.firstD)}</span>${fmtBand(ro.firstLo, ro.firstHi)} <span style="color:var(--muted);font-weight:600">(${PRODUCT_ICON[ro.firstP]} ${ro.firstP} first)</span>`;
+        : `Runs out in <span class="big">${fmtD(pickFirst(ro))}</span>${fmtBand(ro.firstLo, ro.firstHi)} <span style="color:var(--muted);font-weight:600">(${PRODUCT_ICON[ro.firstP]} ${ro.firstP} first)</span>`;
       html += `<div class="proj-card">
           <h3>📍 ${loc}</h3>
           <div class="proj-sub">${st.stockTotal} on hand · counted ${fmtWhen(st.invDate)} · rate from ${st.sellDays} sales ${st.sellDays === 1 ? 'day' : 'days'} · ±${Math.round(st.dailyCV * 100)}% daily swing</div>
@@ -1892,6 +1926,92 @@
     const b = e.target.closest('button'); if (!b) return;
     projLoc = b.dataset.loc;
     document.querySelectorAll('#projLoc button').forEach(x => x.classList.toggle('on', x === b));
+    renderProj();
+  });
+
+  // ===== Plan tab (what-if: how much to bake to last until a date) =====
+  // Weekday vs weekend per-flavor sales rate from the last N days.
+  function dowRates(sales, loc, days) {
+    const rows = sales.filter(s => s.location === loc && s.date);
+    if (!rows.length) return null;
+    const maxDate = rows.reduce((m, s) => s.date > m ? s.date : m, '');
+    const from = addDays(maxDate, -(days - 1));
+    const wd = ZERO(), we = ZERO(); const wdD = new Set(), weD = new Set();
+    for (const s of rows) {
+      if (s.date < from) continue;
+      const isWe = [0, 6].includes(parseEntryDate(s.date).getDay());
+      let any = false;
+      for (const p of PRODUCTS) { const v = s.amounts[p] || 0; (isWe ? we : wd)[p] += v; if (v) any = true; }
+      if (any) (isWe ? weD : wdD).add(s.date);
+    }
+    const nWd = wdD.size || 1, nWe = weD.size || 1, rate = {};
+    for (const p of PRODUCTS) rate[p] = { wd: wd[p] / nWd, we: we[p] / nWe };
+    return { rate, nWd, nWe };
+  }
+  // Expected demand per flavor from startYmd through targetYmd, day-of-week weighted.
+  function forecastDemand(dowr, startYmd, targetYmd) {
+    const demand = ZERO(); let nDays = 0, nWe = 0;
+    const end = parseEntryDate(targetYmd);
+    for (let d = parseEntryDate(startYmd); d <= end; d.setDate(d.getDate() + 1)) {
+      const isWe = [0, 6].includes(d.getDay());
+      for (const p of PRODUCTS) demand[p] += isWe ? dowr.rate[p].we : dowr.rate[p].wd;
+      nDays++; if (isWe) nWe++;
+    }
+    return { demand, nDays, nWe };
+  }
+
+  async function renderPlan() {
+    const list = document.getElementById('planList');
+    const sub = document.getElementById('planSub');
+    const dateEl = document.getElementById('planDate');
+    const todayYmd = nowPST().slice(0, 10);
+    dateEl.min = addDays(todayYmd, 1);
+    if (!dateEl.value) dateEl.value = addDays(todayYmd, 7);   // default: one week out
+    const target = dateEl.value;
+    if (target <= todayYmd) { sub.textContent = 'Pick a future date'; list.innerHTML = `<div class="db-empty"><div class="big">📅</div>Pick a date in the future.</div>`; return; }
+    sub.textContent = 'Loading…';
+    let sales, entries;
+    try { [sales, entries] = await Promise.all([getSales(), fetchRemoteEntries()]); }
+    catch (e) { sub.textContent = 'Could not load'; list.innerHTML = `<div class="db-empty"><div class="big">📅</div>Couldn't load data.</div>`; return; }
+    sub.textContent = `Bake to last through ${fmtWhen(target)}`;
+    let html = '';
+    for (const loc of LOCATIONS.filter(l => planLoc === 'all' || l === planLoc)) {
+      const st = locStats(loc, sales, entries);
+      const dowr = dowRates(sales, loc, 28);
+      if (!st.hasInv) { html += `<div class="proj-card"><h3>📍 ${loc}</h3><div class="proj-sub">Add an inventory count to plan.</div></div>`; continue; }
+      if (!dowr) { html += `<div class="proj-card"><h3>📍 ${loc}</h3><div class="proj-sub">No recent sales to forecast from.</div></div>`; continue; }
+      const { demand, nDays, nWe } = forecastDemand(dowr, addDays(todayYmd, 1), target);   // tomorrow → target
+      const m = Math.min(0.6, FCAST_Z * (st.dailyCV || 0) / Math.sqrt(Math.max(1, nDays)));
+      let rows = '', bakeSafe = 0, bakeExp = 0;
+      for (const p of PRODUCTS) {
+        const exp = demand[p], safe = Math.max(0, Math.ceil(exp * (1 + m) - st.stock[p]));
+        bakeSafe += safe; bakeExp += Math.max(0, Math.ceil(exp - st.stock[p]));
+        const right = safe > 0
+          ? `<b>bake ${safe}</b>`
+          : `<span style="color:var(--green);font-weight:700">enough</span>`;
+        rows += `<div class="proj-row"><span class="k">${PRODUCT_ICON[p]} ${p}</span><span>${right} <span style="color:var(--muted);font-weight:500">· have ${st.stock[p]} · need ~${Math.round(exp)}</span></span></div>`;
+      }
+      html += `<div class="proj-card">
+          <h3>📍 ${loc}</h3>
+          <div class="proj-sub">${nDays} day${nDays === 1 ? '' : 's'} to go · ${nDays - nWe} weekday / ${nWe} weekend · ${st.stockTotal} on hand now</div>
+          <div class="proj-runout">Bake <span class="big">${bakeSafe}</span> to be safe <span style="color:var(--muted);font-weight:600">(~${bakeExp} expected)</span></div>
+          ${rows}
+        </div>`;
+    }
+    if (!html) html = `<div class="db-empty"><div class="big">📅</div>Nothing to plan.</div>`;
+    list.innerHTML = html;
+  }
+  document.getElementById('planLoc').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    planLoc = b.dataset.loc;
+    document.querySelectorAll('#planLoc button').forEach(x => x.classList.toggle('on', x === b));
+    renderPlan();
+  });
+  document.getElementById('planDate').addEventListener('change', renderPlan);
+  document.getElementById('projScenario').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    projScenario = b.dataset.scn;
+    document.querySelectorAll('#projScenario button').forEach(x => x.classList.toggle('on', x === b));
     renderProj();
   });
   document.getElementById('homeLoc').addEventListener('click', e => {
