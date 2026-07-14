@@ -408,7 +408,7 @@
 </head>
 <body>
 
-<div class="beta-banner">🧪 BETA · estimates · app updated Jul 13, 2026 · 3:52 PM PST</div>
+<div class="beta-banner">🧪 BETA · estimates · app updated Jul 13, 2026 · 6:49 PM PST</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -557,11 +557,6 @@
       <button class="on" data-loc="all">All</button>
       <button data-loc="La Mirada">La Mirada</button>
       <button data-loc="Stanton">Stanton</button>
-    </div>
-    <div class="db-filter" id="projScenario">
-      <button data-scn="bear">🐻 Bear</button>
-      <button class="on" data-scn="base">Base</button>
-      <button data-scn="bull">🐂 Bull</button>
     </div>
     <div id="projList"></div>
   </div>
@@ -1598,10 +1593,8 @@
   });
 
   // ===== Shared projection math (used by Home + Projections) =====
-  let projScenario = 'base';
   let projLoc = 'all', homeLoc = 'all';   // independent per-tab location filters
   const RUN_WINDOW = 14;                          // days of sales history for run-rate
-  const SCN = { bear: 0.75, base: 1, bull: 1.25 };
   const ZERO = () => Object.fromEntries(PRODUCTS.map(p => [p, 0]));
   const ts = s => { const t = new Date(s).getTime(); return isNaN(t) ? 0 : t; };  // compare real instants
   const fmtD = d => d === Infinity ? '∞' : (d < 1 ? '<1 day' : (Math.round(d) === 1 ? '1 day' : Math.round(d) + ' days'));
@@ -1618,14 +1611,23 @@
     const rate = ZERO();
     const sellingDates = new Set();
     const firstSeen = {};              // flavor -> earliest window date it actually sold
+    const dayTotals = [];              // total (stocked flavors) per active day — for variability
     for (const s of locSales) {
       if (!latestSale || s.date < winStart || s.date > latestSale) continue;
-      let any = false;
+      let any = false, dayTot = 0;
       for (const p of PRODUCTS) {
-        const v = s.amounts[p] || 0; rate[p] += v;
+        const v = s.amounts[p] || 0; rate[p] += v; dayTot += v;
         if (v > 0) { any = true; if (!firstSeen[p] || s.date < firstSeen[p]) firstSeen[p] = s.date; }
       }
-      if (any) sellingDates.add(s.date);
+      if (any) { sellingDates.add(s.date); dayTotals.push(dayTot); }
+    }
+    // Day-to-day variability (coefficient of variation) of daily sales — drives the
+    // data-driven forecast margin, replacing the old fixed ±25% band.
+    let dailyCV = 0;
+    if (dayTotals.length >= 3) {
+      const mu = dayTotals.reduce((a, b) => a + b, 0) / dayTotals.length;
+      const varr = dayTotals.reduce((a, b) => a + (b - mu) ** 2, 0) / dayTotals.length;
+      dailyCV = mu > 0 ? Math.sqrt(varr) / mu : 0;
     }
     const sellDaysArr = [...sellingDates].sort();
     const sellDays = sellDaysArr.length || 1;
@@ -1660,7 +1662,7 @@
     }
     // Stock estimate is good through the later of the count and the last sales data.
     const asOf = (invDate && invDate > (latestSale || '')) ? invDate : (latestSale || invDate);
-    return { rate, stock, stockTotal, invDate, latestSale, lastDelivery, sellDays, sellDaysFor, asOf, hasInv: !!latestInv };
+    return { rate, stock, stockTotal, invDate, latestSale, lastDelivery, sellDays, sellDaysFor, dailyCV, asOf, hasInv: !!latestInv };
   }
   function runout(stats, factor) {
     const days = {}; let firstP = null, firstD = Infinity;
@@ -1674,6 +1676,30 @@
       if (days[p] < firstD) { firstD = days[p]; firstP = p; }
     }
     return { days, firstP, firstD };
+  }
+
+  // Data-driven run-out band. Instead of a fixed ±25%, the margin comes from each
+  // store's own daily sales variability (dailyCV), scaled to the run-out horizon
+  // (uncertainty on the average rate over n days shrinks ~1/√n). z≈1.6 → ~90% band.
+  const FCAST_Z = 1.6;
+  function runoutBand(stats) {
+    const days = {}, lo = {}, hi = {};
+    let firstP = null, firstD = Infinity, firstLo = Infinity, firstHi = Infinity;
+    if (!stats.hasInv) return { days, lo, hi, firstP, firstD, firstLo, firstHi };
+    const elapsed = Math.max(0, daysSince(stats.asOf));
+    const cv = stats.dailyCV || 0;
+    for (const p of PRODUCTS) {
+      const r = stats.rate[p];
+      if (!(r > 0)) { days[p] = lo[p] = hi[p] = Infinity; continue; }
+      const base = Math.max(0, stats.stock[p] / r - elapsed);
+      const n = Math.max(1, base || 1);
+      const m = Math.min(0.6, FCAST_Z * cv / Math.sqrt(n));   // relative margin, horizon-scaled + capped
+      days[p] = base;
+      lo[p] = Math.max(0, stats.stock[p] / (r * (1 + m)) - elapsed);   // faster sales → runs out sooner
+      hi[p] = Math.max(0, stats.stock[p] / (r * (1 - m)) - elapsed);   // slower → lasts longer
+      if (base < firstD) { firstD = base; firstP = p; firstLo = lo[p]; firstHi = hi[p]; }
+    }
+    return { days, lo, hi, firstP, firstD, firstLo, firstHi };
   }
   function soldLastDays(loc, sales, n) {
     const from = ymdMinus(n - 1);
@@ -1743,7 +1769,9 @@
     html += `<div class="group-label">By location</div>`;
     for (const loc of LOCATIONS.filter(l => homeLoc === 'all' || l === homeLoc)) {
       const st = locStats(loc, sales, entries);
-      const ro = runout(st, SCN.base);
+      const ro = runoutBand(st);
+      const band = (ro.firstLo === Infinity || Math.round(ro.firstLo) === Math.round(ro.firstHi)) ? ''
+        : ` <span style="color:var(--muted);font-weight:500;font-size:14px">(${Math.round(ro.firstLo)}–${ro.firstHi === Infinity ? '∞' : Math.round(ro.firstHi)}d)</span>`;
       const sold7 = soldLastDays(loc, sales, 7);
       const stockChips = st.hasInv
         ? PRODUCTS.map(p => `<span class="db-chip">${PRODUCT_ICON[p]} ${st.stock[p]}</span>`).join('')
@@ -1751,7 +1779,7 @@
       const runoutLine = !st.hasInv ? ''
         : ro.firstD === Infinity
           ? `<div class="proj-runout" style="font-size:14px">No recent sales — can't project</div>`
-          : `<div class="proj-runout">Runs out in <span class="big">${fmtD(ro.firstD)}</span> <span style="color:var(--muted);font-weight:600">(${PRODUCT_ICON[ro.firstP]} ${ro.firstP})</span></div>`;
+          : `<div class="proj-runout">Runs out in <span class="big">${fmtD(ro.firstD)}</span>${band} <span style="color:var(--muted);font-weight:600">(${PRODUCT_ICON[ro.firstP]} ${ro.firstP})</span></div>`;
       html += `<div class="proj-card">
           <h3>📍 ${loc}</h3>
           <div class="proj-sub">${st.hasInv ? `${st.stockTotal} on hand · counted ${fmtWhen(st.invDate)}` : 'Add an inventory count to project run-out'} · ${sold7} sold last 7d</div>
@@ -1803,8 +1831,13 @@
       list.innerHTML = `<div class="db-empty"><div class="big">🔮</div>Couldn't load data.<br>Connect the integration to the Sales database.</div>`;
       return;
     }
-    const factor = SCN[projScenario];
-    sub.textContent = `${projScenario === 'base' ? 'Base case' : projScenario === 'bull' ? 'Bull · +25% sales' : 'Bear · −25% sales'} · rate = avg per active sales day`;
+    sub.textContent = 'Run-out range · margin from each store’s own daily swing';
+
+    const fmtBand = (lo, hi) => {
+      if (lo === Infinity) return '';
+      const l = Math.round(lo), h = hi === Infinity ? '∞' : Math.round(hi);
+      return l === h ? '' : ` <span style="color:var(--muted);font-weight:500">(${l}–${h}d)</span>`;
+    };
 
     let html = '';
     for (const loc of LOCATIONS.filter(l => projLoc === 'all' || l === projLoc)) {
@@ -1813,12 +1846,12 @@
         html += `<div class="proj-card"><h3>📍 ${loc}</h3><div class="proj-sub">No inventory count logged yet — add an Inventory entry to project run-out.</div></div>`;
         continue;
       }
-      const ro = runout(st, factor);
+      const ro = runoutBand(st);
       const stockChips = PRODUCTS.map(p => `<span class="db-chip">${PRODUCT_ICON[p]} ${st.stock[p]}</span>`).join('');
       const rateRows = PRODUCTS.map(p => {
         const dp = st.sellDaysFor ? st.sellDaysFor[p] : st.sellDays;
         const span = (dp && dp < st.sellDays) ? ` <span style="color:var(--muted)">(${dp}d)</span>` : '';
-        return `<div class="proj-row"><span class="k">${PRODUCT_ICON[p]} ${p}</span><span><b>${fmtD(ro.days[p])}</b> · ${st.rate[p].toFixed(1)}/sales day${span}</span></div>`;
+        return `<div class="proj-row"><span class="k">${PRODUCT_ICON[p]} ${p}</span><span><b>${fmtD(ro.days[p])}</b>${fmtBand(ro.lo[p], ro.hi[p])} · ${st.rate[p].toFixed(1)}/day${span}</span></div>`;
       }).join('');
       const freshRows =
         `<div class="proj-row"><span class="k">📈 Last sales</span><span>${fmtAgo(st.latestSale)}</span></div>` +
@@ -1826,10 +1859,10 @@
         `<div class="proj-row"><span class="k">📦 Last inventory</span><span>${fmtAgo(st.invDate)}</span></div>`;
       const runoutTxt = ro.firstD === Infinity
         ? 'No recent sales — can\'t project'
-        : `Runs out in <span class="big">${fmtD(ro.firstD)}</span> <span style="color:var(--muted);font-weight:600">(${PRODUCT_ICON[ro.firstP]} ${ro.firstP} first)</span>`;
+        : `Runs out in <span class="big">${fmtD(ro.firstD)}</span>${fmtBand(ro.firstLo, ro.firstHi)} <span style="color:var(--muted);font-weight:600">(${PRODUCT_ICON[ro.firstP]} ${ro.firstP} first)</span>`;
       html += `<div class="proj-card">
           <h3>📍 ${loc}</h3>
-          <div class="proj-sub">${st.stockTotal} on hand · counted ${fmtWhen(st.invDate)} · rate from ${st.sellDays} sales ${st.sellDays === 1 ? 'day' : 'days'}</div>
+          <div class="proj-sub">${st.stockTotal} on hand · counted ${fmtWhen(st.invDate)} · rate from ${st.sellDays} sales ${st.sellDays === 1 ? 'day' : 'days'} · ±${Math.round(st.dailyCV * 100)}% daily swing</div>
           ${staleWarn(st)}
           <div class="proj-stock-chips">${stockChips}</div>
           <div class="proj-runout">${runoutTxt}</div>
@@ -1839,12 +1872,6 @@
     }
     list.innerHTML = html;
   }
-  document.getElementById('projScenario').addEventListener('click', e => {
-    const b = e.target.closest('button'); if (!b) return;
-    projScenario = b.dataset.scn;
-    document.querySelectorAll('#projScenario button').forEach(x => x.classList.toggle('on', x === b));
-    renderProj();
-  });
   document.getElementById('projLoc').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
     projLoc = b.dataset.loc;
