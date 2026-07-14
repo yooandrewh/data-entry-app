@@ -426,6 +426,7 @@
   .be-cover { font-size: 12px; font-weight: 500; color: var(--muted); }
   .be-total { font-size: 14px; font-weight: 800; color: var(--blue); margin-left: auto; }
   .be-chips { display: flex; flex-wrap: wrap; gap: 7px; }
+  .be-effort { font-size: 13px; color: var(--muted); font-weight: 600; margin-top: 7px; }
   .be-enough { font-size: 13px; color: var(--green); font-weight: 700; }
   .proj-row {
     display: flex; justify-content: space-between; gap: 10px;
@@ -463,7 +464,7 @@
 <body>
 
 <!-- Version badge — bump on every deploy (v = commit count, time = deploy time PST) -->
-<div class="ver-badge">v58 · Jul 14, 8:31 AM</div>
+<div class="ver-badge">v59 · Jul 14, 9:19 AM</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -653,7 +654,7 @@
         </div>
       </div>
     </div>
-    <div class="hint" id="planHint">Forecasts demand day-by-day (weekdays vs weekends) from your recent sales, then subtracts what's on hand. Pick your bake days to get a per-bake-day schedule.</div>
+    <div class="hint" id="planHint">Forecasts demand day-by-day (weekdays vs weekends) from your recent sales, then subtracts what's on hand. Pick your bake days to get a per-bake-day schedule. Time est: batch = 20 · 20m setup + 15m prep + 14m bake per batch (glaze runs during the bake).</div>
     <div id="planList"></div>
   </div>
 </div>
@@ -2067,6 +2068,21 @@
   }
   const wkShort = ymd => new Intl.DateTimeFormat('en-US', { weekday: 'short' }).format(parseEntryDate(ymd));
 
+  // Baking effort model (per Andrew's process): a batch yields 20; each baking
+  // session costs 20m setup once, then 15m prep + 14m bake per batch (glaze happens
+  // during the bake, so it's free). Sequential single-oven estimate.
+  const BATCH_YIELD = 20, SETUP_MIN = 20, PREP_MIN = 15, BAKE_MIN = 14;
+  function bakeEffort(total) {
+    const batches = Math.ceil(Math.max(0, total) / BATCH_YIELD);
+    return { batches, min: batches ? SETUP_MIN + batches * (PREP_MIN + BAKE_MIN) : 0 };
+  }
+  function fmtDur(min) {
+    if (min <= 0) return '0 min';
+    const h = Math.floor(min / 60), m = min % 60;
+    return h ? (m ? `${h}h ${m}m` : `${h}h`) : `${m} min`;
+  }
+  const batchLabel = b => `${b} batch${b === 1 ? '' : 'es'}`;
+
   async function renderPlan() {
     const list = document.getElementById('planList');
     const sub = document.getElementById('planSub');
@@ -2102,8 +2118,10 @@
           evRows = `<div class="proj-sub">No bake days fall between tomorrow and ${fmtWhen(target)}.</div>`;
         } else {
           evRows = events.map(ev => {
+            const eff = bakeEffort(ev.total);
             const chips = ev.any
-              ? `<div class="be-chips">${PRODUCTS.filter(p => ev.bake[p] > 0).map(p => `<span class="db-chip">${PRODUCT_ICON[p]} ${ev.bake[p]}</span>`).join('')}</div>`
+              ? `<div class="be-chips">${PRODUCTS.filter(p => ev.bake[p] > 0).map(p => `<span class="db-chip">${PRODUCT_ICON[p]} ${ev.bake[p]}</span>`).join('')}</div>
+                 <div class="be-effort">🧺 ${batchLabel(eff.batches)} · ⏱️ ~${fmtDur(eff.min)}</div>`
               : `<div class="be-enough">✓ enough on hand — no bake needed</div>`;
             return `<div class="bake-event">
                 <div class="be-head">🗓️ ${wkShort(ev.ymd)} ${fmtWhen(ev.ymd)} <span class="be-cover">covers thru ${wkShort(ev.coverUntil)} ${fmtWhen(ev.coverUntil)}</span>${ev.any ? `<span class="be-total">${ev.total}</span>` : ''}</div>
@@ -2111,10 +2129,12 @@
               </div>`;
           }).join('');
         }
+        const totBatches = events.reduce((s, ev) => s + bakeEffort(ev.total).batches, 0);
+        const totMin = events.reduce((s, ev) => s + bakeEffort(ev.total).min, 0);
         html += `<div class="proj-card">
             <h3>📍 ${loc}</h3>
             <div class="proj-sub">${st.stockTotal} on hand now · ${events.length} bake day${events.length === 1 ? '' : 's'} to ${fmtWhen(target)}${trendNote(st)}</div>
-            ${grand ? `<div class="proj-runout">Bake <span class="big">${grand}</span> total across ${events.length} day${events.length === 1 ? '' : 's'}</div>` : ''}
+            ${grand ? `<div class="proj-runout">Bake <span class="big">${grand}</span> total · ${batchLabel(totBatches)} · ~${fmtDur(totMin)} across ${events.length} day${events.length === 1 ? '' : 's'}</div>` : ''}
             ${evRows}
           </div>`;
         continue;
@@ -2131,10 +2151,13 @@
           : `<span style="color:var(--green);font-weight:700">enough</span>`;
         rows += `<div class="proj-row"><span class="k">${PRODUCT_ICON[p]} ${p}</span><span>${right} <span style="color:var(--muted);font-weight:500">· have ${st.stock[p]} · need ~${Math.round(exp)}</span></span></div>`;
       }
+      const effLump = bakeEffort(bakeSafe);
+      const effLine = bakeSafe > 0 ? `<div class="be-effort" style="margin:2px 0 12px">🧺 ${batchLabel(effLump.batches)} · ⏱️ ~${fmtDur(effLump.min)}</div>` : '';
       html += `<div class="proj-card">
           <h3>📍 ${loc}</h3>
           <div class="proj-sub">${nDays} day${nDays === 1 ? '' : 's'} to go · ${nDays - nWe} weekday / ${nWe} weekend · ${st.stockTotal} on hand now${trendNote(st)}</div>
           <div class="proj-runout">Bake <span class="big">${bakeSafe}</span> to be safe <span style="color:var(--muted);font-weight:600">(~${bakeExp} expected)</span></div>
+          ${effLine}
           ${rows}
         </div>`;
     }
