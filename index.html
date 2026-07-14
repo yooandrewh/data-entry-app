@@ -182,6 +182,12 @@
   }
   .tabbar button .tic { font-size: 22px; line-height: 1; }
   .tabbar button.on { color: var(--blue); }
+  .tabbar button.tab-entry { color: var(--blue); }
+  .tabbar button.tab-entry .tic {
+    background: rgba(0,122,255,0.14); border: 1.5px solid rgba(0,122,255,0.35);
+    border-radius: 13px; padding: 4px 16px; margin-bottom: 2px;
+  }
+  .tabbar button.tab-entry span:last-child { font-weight: 700; }
 
   /* ---- Stores analytics ---- */
   .store-card { background: var(--card); border-radius: 16px; box-shadow: var(--shadow); padding: 16px; margin-bottom: 18px; }
@@ -408,7 +414,6 @@
 </head>
 <body>
 
-<div class="beta-banner">🧪 BETA · estimates · app updated Jul 13, 2026 · 7:00 PM PST</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -567,17 +572,6 @@
   </div>
 </div>
 
-<!-- ===== STORES VIEW (per-store analytics from OCR) ===== -->
-<div class="view" id="view-stores">
-  <div class="wrap">
-    <header>
-      <h1>Stores</h1>
-      <div class="sub" id="storesSub">—</div>
-    </header>
-    <div id="storesList"></div>
-  </div>
-</div>
-
 <!-- ===== PLAN VIEW (what-if: how much to bake to last until a date) ===== -->
 <div class="view" id="view-plan">
   <div class="wrap">
@@ -601,25 +595,12 @@
   </div>
 </div>
 
-<!-- ===== MADELEINES VIEW (per-store madeleine analytics) ===== -->
-<div class="view" id="view-mads">
-  <div class="wrap">
-    <header>
-      <h1>Madeleines</h1>
-      <div class="sub" id="madsSub">—</div>
-    </header>
-    <div id="madsList"></div>
-  </div>
-</div>
-
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar">
   <button data-tab="home" class="on"><span class="tic">🏠</span><span>Home</span></button>
-  <button data-tab="entry"><span class="tic">➕</span><span>Entry</span></button>
   <button data-tab="db"><span class="tic">🗂️</span><span>Data</span></button>
+  <button data-tab="entry" class="tab-entry"><span class="tic">➕</span><span>Entry</span></button>
   <button data-tab="proj"><span class="tic">🔮</span><span>Forecast</span></button>
-  <button data-tab="stores"><span class="tic">🏪</span><span>Stores</span></button>
-  <button data-tab="mads"><span class="tic">🍩</span><span>Mads</span></button>
   <button data-tab="plan"><span class="tic">📅</span><span>Plan</span></button>
 </nav>
 
@@ -1112,7 +1093,7 @@
   }
 
   // ---- Tab switching ----
-  const VIEWS = { home: 'view-home', entry: 'view-entry', db: 'view-db', proj: 'view-proj', stores: 'view-stores', mads: 'view-mads', plan: 'view-plan' };
+  const VIEWS = { home: 'view-home', entry: 'view-entry', db: 'view-db', proj: 'view-proj', plan: 'view-plan' };
   document.querySelector('.tabbar').addEventListener('click', e => {
     const btn = e.target.closest('button'); if (!btn) return;
     const tab = btn.dataset.tab;
@@ -1121,9 +1102,7 @@
     if (tab === 'home') { salesCache = null; renderHome(); }
     if (tab === 'db') { salesCache = null; renderData(); retryUnsynced(); }
     if (tab === 'proj') { salesCache = null; renderProj(); }
-    if (tab === 'stores') { renderStores(); }
-    if (tab === 'mads') { renderMads(); }
-    if (tab === 'plan') { renderPlan(); }
+    if (tab === 'plan') { salesCache = null; renderPlan(); }
     window.scrollTo(0, 0);
   });
 
@@ -1231,39 +1210,32 @@
     return `<div class="growth-block"><div class="growth-head"><div><div class="gt">${title}</div><div class="gv">${fmtVal(last.val)}</div></div>${wowBadge(series)}</div>${range}${weeklyChart(series)}${projLine}</div>`;
   }
 
-  async function renderStores() {
-    const list = document.getElementById('storesList');
-    const sub = document.getElementById('storesSub');
-    if (!list.dataset.loaded) sub.textContent = 'Loading…';
-    let stats, gsales, msales;
-    try { [stats, gsales, msales] = await Promise.all([getStoreStats(), getStoreSales(), getSales().catch(() => [])]); }
-    catch (e) { sub.textContent = 'Could not load'; list.innerHTML = `<div class="db-empty"><div class="big">🏪</div>Couldn't load store data.</div>`; return; }
+  // Builds the store analytics HTML (weekly growth + per-store whole-store +
+  // madeleine sections) for the Home page, filtered to one location or 'all'.
+  function storeAnalyticsHtml(stats, gsales, msales, locFilter) {
+    gsales = gsales || []; msales = msales || [];
     const madStores = (stats && stats.stores) || {};
     const salesByLoc = {};
     for (const r of gsales) (salesByLoc[r.location] = salesByLoc[r.location] || []).push(r);
-    const names = [...new Set([...LOCATIONS, ...Object.keys(salesByLoc), ...Object.keys(madStores)])]
+    let names = [...new Set([...LOCATIONS, ...Object.keys(salesByLoc), ...Object.keys(madStores)])]
       .filter(n => salesByLoc[n] || madStores[n]);
-    if (!names.length) {
-      sub.textContent = 'No data yet';
-      list.innerHTML = `<div class="db-empty"><div class="big">🏪</div>No store data yet.</div>`;
-      return;
-    }
-    list.dataset.loaded = '1';
-    sub.textContent = 'Weekly growth · whole-store performance';
-
+    if (locFilter && locFilter !== 'all') names = names.filter(n => n === locFilter);
+    if (!names.length) return '';
+    const inScope = r => locFilter === 'all' || r.location === locFilter;
+    const scope = locFilter === 'all' ? 'all stores' : locFilter;
     let html = '';
-    // ---- Weekly growth overview (both stores combined) ----
-    const revWeekly = weeklySeries(gsales.filter(r => r.revenue != null), 'revenue').slice(-8);
-    const madWeekly = weeklySeries(msales || [], 'total').slice(-10);
-    const gr = growthBlock('Weekly revenue · all stores', revWeekly, v => usd(Math.round(v)));
-    const gm = growthBlock('Weekly madeleines sold · all stores', madWeekly, v => String(Math.round(v)));
-    if (gr || gm) html += `<div class="store-card"><h3>📈 Weekly Growth</h3>${gr}${gm}<div class="store-note" style="margin-top:12px">Bars are Mon–Sun weeks · WoW compares the last two complete weeks · faded bar = week in progress</div></div>`;
+
+    // Weekly growth overview
+    const revWeekly = weeklySeries(gsales.filter(r => inScope(r) && r.revenue != null), 'revenue').slice(-8);
+    const madWeekly = weeklySeries(msales.filter(inScope), 'total').slice(-10);
+    const gr = growthBlock('Weekly revenue · ' + scope, revWeekly, v => usd(Math.round(v)));
+    const gm = growthBlock('Weekly madeleines · ' + scope, madWeekly, v => String(Math.round(v)));
+    if (gr || gm) html += `<div class="store-card"><h3>📈 Weekly Growth</h3>${gr}${gm}<div class="store-note" style="margin-top:12px">Mon–Sun weeks · WoW = last two complete weeks · faded bar = in progress</div></div>`;
 
     for (const name of names) {
       const ws = wholeStore(salesByLoc[name] || []);
       const s = madStores[name];
       html += `<div class="store-card"><h3>📍 ${esc(name)}</h3>`;
-
       if (ws) {
         html += `<div class="store-tag">Whole store · ${fmtWhen(ws.from)}–${fmtWhen(ws.to)} · ${ws.days} days</div>`;
         const m = [[usd(Math.round(ws.avgRev)), 'revenue / day']];
@@ -1275,19 +1247,34 @@
         if (ws.madAttach != null) bits.push(`~${ws.madAttach.toFixed(1)}% of orders`);
         if (ws.madRevShare != null) bits.push(`~${ws.madRevShare.toFixed(1)}% of revenue`);
         html += `<div class="store-note">${bits.join(' · ')}</div>`;
-        if (ws.trend.length > 1) {
-          const tmax = Math.max(...ws.trend.map(r => r.revenue));
-          html += `<div class="ssec">Revenue · last ${ws.trend.length} days</div><div class="vbars">` +
-            ws.trend.map(r => `<div class="vbar"><div class="col" style="height:${Math.round(r.revenue / tmax * 100)}%"></div></div>`).join('') + `</div>`;
-        }
-        // per-store weekly revenue growth
         const wkRev = weeklySeries((salesByLoc[name] || []).filter(r => r.revenue != null), 'revenue').slice(-8);
         html += growthBlock('Weekly revenue', wkRev, v => usd(Math.round(v)));
       }
-
+      if (s) {
+        const mix = recentFlavorMix(msales, name, 14) || s.flavors;
+        const recent = mix !== s.flavors;
+        const topCur = CUR_FLAVORS.filter(f => mix[f]).sort((a, b) => mix[b] - mix[a])[0];
+        html += `<div class="ssec" style="margin-top:20px">🍩 Madeleines${topCur ? ` · ${PRODUCT_ICON[topCur]} ${topCur}-led` : ''}</div>`;
+        const metrics = [[s.madsPerDay, 'sold / day'], [usd(s.aov), 'avg order'], [s.basket, 'items / order'], [usd(s.madRevenue), 'mad revenue']];
+        html += `<div class="smetrics">${metrics.map(([v, k]) => `<div class="smetric"><div class="v">${v}</div><div class="k">${k}</div></div>`).join('')}</div>`;
+        const total = Object.values(mix).reduce((a, b) => a + b, 0) || 1;
+        const flavKeys = [...CUR_FLAVORS.filter(f => mix[f]), ...Object.keys(mix).filter(f => !CUR_FLAVORS.includes(f) && mix[f])];
+        const fmax = Math.max(1, ...flavKeys.map(f => mix[f]));
+        html += `<div class="ssec">Flavor mix${recent ? ' · last 14 days' : ''}</div>` + flavKeys.map(f => {
+          const v = mix[f], old = !CUR_FLAVORS.includes(f);
+          return `<div class="fbar"><span>${PRODUCT_ICON[f] || ''} ${f}</span><div class="track"><div class="fill${old ? ' old' : ''}" style="width:${Math.round(v / fmax * 100)}%"></div></div><span class="n">${Math.round(v / total * 100)}%</span></div>`;
+        }).join('');
+        const dmax = Math.max(1, ...DOWK.map(d => s.dow[d] || 0));
+        html += `<div class="ssec">Busiest days</div><div class="vbars">` + DOWK.map(d => `<div class="vbar"><div class="col${d === 'Sat' || d === 'Sun' ? ' hot' : ''}" style="height:${Math.round((s.dow[d] || 0) / dmax * 100)}%"></div><span class="lb">${d[0]}</span></div>`).join('') + `</div>`;
+        const hk = Object.keys(s.hours).map(Number).sort((a, b) => a - b);
+        const hmax = Math.max(1, ...hk.map(h => s.hours[h]));
+        const peakH = hk.reduce((mm, h) => s.hours[h] > s.hours[mm] ? h : mm, hk[0]);
+        html += `<div class="ssec">By hour · peak ${hlabel(peakH)}m</div><div class="vbars">` + hk.map(h => `<div class="vbar"><div class="col${h === peakH ? ' hot' : ''}" style="height:${Math.round(s.hours[h] / hmax * 100)}%"></div><span class="lb">${h % 3 === 0 ? hlabel(h) : ''}</span></div>`).join('') + `</div>`;
+        html += `<div class="ssec">Top cashiers</div>` + (s.cashiers || []).map(([n, c]) => `<div class="cashrow"><span>${esc(n)}</span><span class="c-n">${c}</span></div>`).join('');
+      }
       html += `</div>`;
     }
-    list.innerHTML = html;
+    return html;
   }
 
   // ===== Madeleines tab (per-store madeleine analytics from the OCR pipeline) =====
@@ -1303,48 +1290,6 @@
       for (const f of SALES_FLAVORS) mix[f] = (mix[f] || 0) + (s.amounts[f] || 0);
     }
     return Object.values(mix).some(v => v > 0) ? mix : null;
-  }
-
-  async function renderMads() {
-    const list = document.getElementById('madsList');
-    const sub = document.getElementById('madsSub');
-    if (!list.dataset.loaded) sub.textContent = 'Loading…';
-    let stats, msales;
-    try { [stats, msales] = await Promise.all([getStoreStats(), getSales().catch(() => [])]); }
-    catch (e) { sub.textContent = 'Could not load'; list.innerHTML = `<div class="db-empty"><div class="big">🍩</div>Couldn't load madeleine data.</div>`; return; }
-    if (!stats || !stats.stores) {
-      sub.textContent = 'No data yet';
-      list.innerHTML = `<div class="db-empty"><div class="big">🍩</div>No madeleine analytics yet.<br>Run <b>push_store_stats.py</b> in the OCR pipeline.</div>`;
-      return;
-    }
-    list.dataset.loaded = '1';
-    sub.textContent = `Madeleine sales · ${fmtWhen(stats.range.min)} – ${fmtWhen(stats.range.max)}`;
-    let html = '';
-    for (const [name, s] of Object.entries(stats.stores)) {
-      const mix = recentFlavorMix(msales || [], name, 14) || s.flavors;   // last 14 days; fall back to all-time
-      const recent = mix !== s.flavors;
-      const topCur = CUR_FLAVORS.filter(f => mix[f]).sort((a, b) => mix[b] - mix[a])[0];
-      html += `<div class="store-card"><h3>📍 ${esc(name)}</h3>`;
-      html += `<div class="store-tag">${topCur ? `${PRODUCT_ICON[topCur]} ${topCur}-led · ` : ''}${s.mads} madeleines · ${s.activeDays} days</div>`;
-      const metrics = [[s.madsPerDay, 'sold / day'], [usd(s.aov), 'avg order'], [s.basket, 'items / order'], [usd(s.madRevenue), 'mad revenue']];
-      html += `<div class="smetrics">${metrics.map(([v, k]) => `<div class="smetric"><div class="v">${v}</div><div class="k">${k}</div></div>`).join('')}</div>`;
-      const total = Object.values(mix).reduce((a, b) => a + b, 0) || 1;
-      const flavKeys = [...CUR_FLAVORS.filter(f => mix[f]), ...Object.keys(mix).filter(f => !CUR_FLAVORS.includes(f) && mix[f])];
-      const fmax = Math.max(1, ...flavKeys.map(f => mix[f]));
-      html += `<div class="ssec">Flavor mix${recent ? ' · last 14 days' : ''}</div>` + flavKeys.map(f => {
-        const v = mix[f], old = !CUR_FLAVORS.includes(f);
-        return `<div class="fbar"><span>${PRODUCT_ICON[f] || ''} ${f}</span><div class="track"><div class="fill${old ? ' old' : ''}" style="width:${Math.round(v / fmax * 100)}%"></div></div><span class="n">${Math.round(v / total * 100)}%</span></div>`;
-      }).join('');
-      const dmax = Math.max(1, ...DOWK.map(d => s.dow[d] || 0));
-      html += `<div class="ssec">Busiest days</div><div class="vbars">` + DOWK.map(d => `<div class="vbar"><div class="col${d === 'Sat' || d === 'Sun' ? ' hot' : ''}" style="height:${Math.round((s.dow[d] || 0) / dmax * 100)}%"></div><span class="lb">${d[0]}</span></div>`).join('') + `</div>`;
-      const hk = Object.keys(s.hours).map(Number).sort((a, b) => a - b);
-      const hmax = Math.max(1, ...hk.map(h => s.hours[h]));
-      const peakH = hk.reduce((m, h) => s.hours[h] > s.hours[m] ? h : m, hk[0]);
-      html += `<div class="ssec">By hour · peak ${hlabel(peakH)}m</div><div class="vbars">` + hk.map(h => `<div class="vbar"><div class="col${h === peakH ? ' hot' : ''}" style="height:${Math.round(s.hours[h] / hmax * 100)}%"></div><span class="lb">${h % 3 === 0 ? hlabel(h) : ''}</span></div>`).join('') + `</div>`;
-      html += `<div class="ssec">Top cashiers</div>` + (s.cashiers || []).map(([n, c]) => `<div class="cashrow"><span>${esc(n)}</span><span class="c-n">${c}</span></div>`).join('');
-      html += `</div>`;
-    }
-    list.innerHTML = html;
   }
 
   // ---- Data type filter (Sales / Deliveries / Inventory) ----
@@ -1659,6 +1604,7 @@
     const sellingDates = new Set();
     const firstSeen = {};              // flavor -> earliest window date it actually sold
     const dayTotals = [];              // total (stocked flavors) per active day — for variability
+    let wdSum = 0, weSum = 0, nWdA = 0, nWeA = 0;   // weekday/weekend totals + active-day counts
     for (const s of locSales) {
       if (!latestSale || s.date < winStart || s.date > latestSale) continue;
       let any = false, dayTot = 0;
@@ -1666,7 +1612,10 @@
         const v = s.amounts[p] || 0; rate[p] += v; dayTot += v;
         if (v > 0) { any = true; if (!firstSeen[p] || s.date < firstSeen[p]) firstSeen[p] = s.date; }
       }
-      if (any) { sellingDates.add(s.date); dayTotals.push(dayTot); }
+      if (any) {
+        sellingDates.add(s.date); dayTotals.push(dayTot);
+        if ([0, 6].includes(parseEntryDate(s.date).getDay())) { weSum += dayTot; nWeA++; } else { wdSum += dayTot; nWdA++; }
+      }
     }
     // Day-to-day variability (coefficient of variation) of daily sales — drives the
     // data-driven forecast margin, replacing the old fixed ±25% band.
@@ -1686,6 +1635,13 @@
       sellDaysFor[p] = fp ? (sellDaysArr.filter(d => d >= fp).length || 1) : sellDays;
       rate[p] = rate[p] / sellDaysFor[p];
     }
+    // Weekend-vs-weekday shape: scale each flavor's per-day rate by the store's own
+    // weekday/weekend pattern, so the run-out reflects what day it actually is.
+    const overallAvg = (nWdA + nWeA) ? (wdSum + weSum) / (nWdA + nWeA) : 0;
+    const ratioWd = overallAvg > 0 && nWdA ? (wdSum / nWdA) / overallAvg : 1;
+    const ratioWe = overallAvg > 0 && nWeA ? (weSum / nWeA) / overallAvg : 1;
+    const dowRate = {};
+    for (const p of PRODUCTS) dowRate[p] = { wd: rate[p] * ratioWd, we: rate[p] * ratioWe };
 
     const locDelivs = entries.filter(e => e.type === 'delivery' && e.location === loc && !e.taggedForDeletion);
     const lastDelivery = locDelivs.reduce((m, e) => { const d = String(e.datetime).slice(0, 10); return d > m ? d : m; }, '');
@@ -1709,7 +1665,7 @@
     }
     // Stock estimate is good through the later of the count and the last sales data.
     const asOf = (invDate && invDate > (latestSale || '')) ? invDate : (latestSale || invDate);
-    return { rate, stock, stockTotal, invDate, latestSale, lastDelivery, sellDays, sellDaysFor, dailyCV, asOf, hasInv: !!latestInv };
+    return { rate, dowRate, stock, stockTotal, invDate, latestSale, lastDelivery, sellDays, sellDaysFor, dailyCV, asOf, hasInv: !!latestInv };
   }
   function runout(stats, factor) {
     const days = {}; let firstP = null, firstD = Infinity;
@@ -1729,21 +1685,38 @@
   // store's own daily sales variability (dailyCV), scaled to the run-out horizon
   // (uncertainty on the average rate over n days shrinks ~1/√n). z≈1.6 → ~90% band.
   const FCAST_Z = 1.6;
+  // Days until stockP depletes, consuming each calendar day's weekday/weekend rate
+  // (× mult) from asOfYmd forward — so an imminent weekend burns stock faster — then
+  // minus the days already elapsed since that stock estimate.
+  function depleteDow(stockP, dow, mult, asOfYmd) {
+    const wd = dow.wd * mult, we = dow.we * mult;
+    if (!(wd > 0 || we > 0)) return Infinity;
+    let remaining = stockP, dayIdx = 0;
+    const d = parseEntryDate(asOfYmd || nowPST().slice(0, 10));
+    while (dayIdx < 400) {
+      const r = [0, 6].includes(d.getDay()) ? we : wd;
+      if (r > 0) {
+        if (remaining <= r) { dayIdx += remaining / r; break; }
+        remaining -= r;
+      }
+      dayIdx += 1; d.setDate(d.getDate() + 1);
+    }
+    return Math.max(0, dayIdx - Math.max(0, daysSince(asOfYmd)));
+  }
   function runoutBand(stats) {
     const days = {}, lo = {}, hi = {};
     let firstP = null, firstD = Infinity, firstLo = Infinity, firstHi = Infinity;
     if (!stats.hasInv) return { days, lo, hi, firstP, firstD, firstLo, firstHi };
-    const elapsed = Math.max(0, daysSince(stats.asOf));
     const cv = stats.dailyCV || 0;
     for (const p of PRODUCTS) {
-      const r = stats.rate[p];
-      if (!(r > 0)) { days[p] = lo[p] = hi[p] = Infinity; continue; }
-      const base = Math.max(0, stats.stock[p] / r - elapsed);
-      const n = Math.max(1, base || 1);
-      const m = Math.min(0.6, FCAST_Z * cv / Math.sqrt(n));   // relative margin, horizon-scaled + capped
+      const dr = stats.dowRate[p] || { wd: stats.rate[p], we: stats.rate[p] };
+      if (!(dr.wd > 0 || dr.we > 0)) { days[p] = lo[p] = hi[p] = Infinity; continue; }
+      const base = depleteDow(stats.stock[p], dr, 1, stats.asOf);
+      const n = Math.max(1, base === Infinity ? 1 : (base || 1));
+      const m = Math.min(0.6, FCAST_Z * cv / Math.sqrt(n));
       days[p] = base;
-      lo[p] = Math.max(0, stats.stock[p] / (r * (1 + m)) - elapsed);   // faster sales → runs out sooner
-      hi[p] = Math.max(0, stats.stock[p] / (r * (1 - m)) - elapsed);   // slower → lasts longer
+      lo[p] = depleteDow(stats.stock[p], dr, 1 + m, stats.asOf);   // faster sales → sooner
+      hi[p] = depleteDow(stats.stock[p], dr, 1 - m, stats.asOf);   // slower → later
       if (base < firstD) { firstD = base; firstP = p; firstLo = lo[p]; firstHi = hi[p]; }
     }
     return { days, lo, hi, firstP, firstD, firstLo, firstHi };
@@ -1846,20 +1819,12 @@
         <div class="metric"><div class="m-label">Sold</div><div class="m-val">${qty7}</div><div class="m-sub">madeleines</div></div>
       </div>`;
 
-    // Per-store headline cards — whole-store $/day (Stores tab has the full picture)
+    // Full store + madeleine analytics (weekly growth, whole-store, flavor mix,
+    // busiest days, hourly, cashiers) — follows the Home location toggle.
     try {
       const [ss, gs] = await Promise.all([getStoreStats().catch(() => null), getStoreSales().catch(() => [])]);
-      const byLoc = {}; for (const r of gs) (byLoc[r.location] = byLoc[r.location] || []).push(r);
-      const cards = LOCATIONS.filter(l => homeLoc === 'all' || l === homeLoc).map(l => {
-        const w = wholeStore(byLoc[l] || []);
-        const s = ss && ss.stores && ss.stores[l];
-        if (!w && !s) return '';
-        const big = w ? usd(Math.round(w.avgRev)) : String(s.madsPerDay);
-        const bigSub = w ? '/day' : '/day mad';
-        const sub2 = w ? `${w.madPerDay.toFixed(1)} madeleines/day` : `AOV ${usd(s.aov)}`;
-        return `<div class="hstore"><div class="hs-n">📍 ${esc(l)}</div><div class="hs-big">${big}<span style="font-size:13px;font-weight:600;color:var(--muted)"> ${bigSub}</span></div><div class="hs-sub">${sub2}</div></div>`;
-      }).filter(Boolean).join('');
-      if (cards) html += `<div class="group-label">Stores</div><div class="home-stores">${cards}</div>`;
+      const analytics = storeAnalyticsHtml(ss, gs, sales, homeLoc);
+      if (analytics) html += `<div class="group-label">Store & madeleine analytics</div>${analytics}`;
     } catch (e) { /* store data optional on Home */ }
 
     html += `<div class="home-refreshed">↻ Refreshed ${nowLabel()} PST</div>`;
