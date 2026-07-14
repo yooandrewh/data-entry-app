@@ -408,7 +408,7 @@
 </head>
 <body>
 
-<div class="beta-banner">🧪 BETA · estimates · app updated Jul 13, 2026 · 6:49 PM PST</div>
+<div class="beta-banner">🧪 BETA · estimates · app updated Jul 13, 2026 · 6:52 PM PST</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -1261,12 +1261,26 @@
   }
 
   // ===== Madeleines tab (per-store madeleine analytics from the OCR pipeline) =====
+  // Flavor mix over the last N calendar days of live sales (per store).
+  function recentFlavorMix(sales, loc, days) {
+    const rows = sales.filter(s => s.location === loc && s.date);
+    if (!rows.length) return null;
+    const maxDate = rows.reduce((m, s) => s.date > m ? s.date : m, '');
+    const from = addDays(maxDate, -(days - 1));
+    const mix = {};
+    for (const s of rows) {
+      if (s.date < from) continue;
+      for (const f of SALES_FLAVORS) mix[f] = (mix[f] || 0) + (s.amounts[f] || 0);
+    }
+    return Object.values(mix).some(v => v > 0) ? mix : null;
+  }
+
   async function renderMads() {
     const list = document.getElementById('madsList');
     const sub = document.getElementById('madsSub');
     if (!list.dataset.loaded) sub.textContent = 'Loading…';
-    let stats;
-    try { stats = await getStoreStats(); }
+    let stats, msales;
+    try { [stats, msales] = await Promise.all([getStoreStats(), getSales().catch(() => [])]); }
     catch (e) { sub.textContent = 'Could not load'; list.innerHTML = `<div class="db-empty"><div class="big">🍩</div>Couldn't load madeleine data.</div>`; return; }
     if (!stats || !stats.stores) {
       sub.textContent = 'No data yet';
@@ -1277,16 +1291,18 @@
     sub.textContent = `Madeleine sales · ${fmtWhen(stats.range.min)} – ${fmtWhen(stats.range.max)}`;
     let html = '';
     for (const [name, s] of Object.entries(stats.stores)) {
-      const topCur = CUR_FLAVORS.filter(f => s.flavors[f]).sort((a, b) => s.flavors[b] - s.flavors[a])[0];
+      const mix = recentFlavorMix(msales || [], name, 14) || s.flavors;   // last 14 days; fall back to all-time
+      const recent = mix !== s.flavors;
+      const topCur = CUR_FLAVORS.filter(f => mix[f]).sort((a, b) => mix[b] - mix[a])[0];
       html += `<div class="store-card"><h3>📍 ${esc(name)}</h3>`;
       html += `<div class="store-tag">${topCur ? `${PRODUCT_ICON[topCur]} ${topCur}-led · ` : ''}${s.mads} madeleines · ${s.activeDays} days</div>`;
       const metrics = [[s.madsPerDay, 'sold / day'], [usd(s.aov), 'avg order'], [s.basket, 'items / order'], [usd(s.madRevenue), 'mad revenue']];
       html += `<div class="smetrics">${metrics.map(([v, k]) => `<div class="smetric"><div class="v">${v}</div><div class="k">${k}</div></div>`).join('')}</div>`;
-      const total = Object.values(s.flavors).reduce((a, b) => a + b, 0) || 1;
-      const flavKeys = [...CUR_FLAVORS.filter(f => s.flavors[f]), ...Object.keys(s.flavors).filter(f => !CUR_FLAVORS.includes(f) && s.flavors[f])];
-      const fmax = Math.max(1, ...flavKeys.map(f => s.flavors[f]));
-      html += `<div class="ssec">Flavor mix</div>` + flavKeys.map(f => {
-        const v = s.flavors[f], old = !CUR_FLAVORS.includes(f);
+      const total = Object.values(mix).reduce((a, b) => a + b, 0) || 1;
+      const flavKeys = [...CUR_FLAVORS.filter(f => mix[f]), ...Object.keys(mix).filter(f => !CUR_FLAVORS.includes(f) && mix[f])];
+      const fmax = Math.max(1, ...flavKeys.map(f => mix[f]));
+      html += `<div class="ssec">Flavor mix${recent ? ' · last 14 days' : ''}</div>` + flavKeys.map(f => {
+        const v = mix[f], old = !CUR_FLAVORS.includes(f);
         return `<div class="fbar"><span>${PRODUCT_ICON[f] || ''} ${f}</span><div class="track"><div class="fill${old ? ' old' : ''}" style="width:${Math.round(v / fmax * 100)}%"></div></div><span class="n">${Math.round(v / total * 100)}%</span></div>`;
       }).join('');
       const dmax = Math.max(1, ...DOWK.map(d => s.dow[d] || 0));
