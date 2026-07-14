@@ -160,8 +160,33 @@
   .db-empty { text-align: center; color: var(--muted); padding: 60px 20px; }
   .db-empty .big { font-size: 44px; margin-bottom: 12px; }
   .db-day { font-size: 13px; color: var(--muted); font-weight: 600;
-    text-transform: uppercase; letter-spacing: 0.4px; margin: 18px 4px 10px; }
-  .db-day:first-child { margin-top: 4px; }
+    text-transform: uppercase; letter-spacing: 0.4px; margin: 14px 0 8px;
+    position: sticky; top: var(--safe-top); z-index: 5;
+    padding: 8px 4px 6px; background: linear-gradient(var(--bg) 75%, transparent); }
+  .db-day:first-child { margin-top: 0; }
+
+  /* Scrollable chip row (Data tab type selector) */
+  .chip-row {
+    display: flex; gap: 8px; overflow-x: auto; margin-bottom: 12px;
+    -webkit-overflow-scrolling: touch; scrollbar-width: none; padding: 2px;
+  }
+  .chip-row::-webkit-scrollbar { display: none; }
+  .chip-row button {
+    appearance: none; border: none; cursor: pointer; font-family: inherit;
+    white-space: nowrap; flex-shrink: 0; background: var(--card); color: var(--text);
+    font-size: 14px; font-weight: 600; padding: 9px 15px; border-radius: 999px;
+    box-shadow: var(--shadow); transition: background .15s ease, color .15s ease;
+  }
+  .chip-row button.on { background: var(--blue); color: #fff; }
+  .db-dates[hidden] { display: none; }
+
+  /* Version badge (top right, all tabs) */
+  .ver-badge {
+    position: fixed; top: calc(var(--safe-top) + 10px); right: 12px; z-index: 55;
+    font-size: 10px; font-weight: 600; color: var(--muted);
+    background: var(--field); padding: 3px 9px; border-radius: 999px;
+    pointer-events: none; opacity: 0.9;
+  }
 
   /* ---- Tab bar ---- */
   .tabbar {
@@ -414,6 +439,8 @@
 </head>
 <body>
 
+<!-- Version badge — bump on every deploy (v = commit count, time = deploy time PST) -->
+<div class="ver-badge">v56 · Jul 13, 7:22 PM</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -520,7 +547,7 @@
       <h1>Data</h1>
       <div class="sub" id="dbCount">—</div>
     </header>
-    <div class="db-filter" id="dbFilter">
+    <div class="chip-row" id="dbFilter">
       <button class="on" data-filter="sales">📈 Sales</button>
       <button data-filter="delivery">🚚 Deliveries</button>
       <button data-filter="inventory">📦 Inventory</button>
@@ -540,8 +567,9 @@
       <button type="button" data-days="0">Today</button>
       <button type="button" data-days="6">7 days</button>
       <button type="button" data-days="29">30 days</button>
+      <button type="button" id="dateRangeToggle" data-toggle="1">📆 Custom</button>
     </div>
-    <div class="db-dates">
+    <div class="db-dates" id="dbDates" hidden>
       <input type="date" id="dateFrom" aria-label="From date" />
       <span class="db-dates-sep">–</span>
       <input type="date" id="dateTo" aria-label="To date" />
@@ -564,9 +592,9 @@
       <button data-loc="Stanton">Stanton</button>
     </div>
     <div class="db-filter" id="projScenario">
-      <button data-scn="bear">🐻 Best</button>
+      <button data-scn="bear">🐻 Bear</button>
       <button class="on" data-scn="base">Expected</button>
-      <button data-scn="bull">🐂 Worst</button>
+      <button data-scn="bull">🐂 Bull</button>
     </div>
     <div id="projList"></div>
   </div>
@@ -1333,6 +1361,12 @@
 
   document.getElementById('dbPresets').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.toggle) {                    // 📆 Custom — show/hide the From–To row
+      const dd = document.getElementById('dbDates');
+      dd.hidden = !dd.hidden;
+      b.classList.toggle('on', !dd.hidden);
+      return;
+    }
     dateFrom = ymdMinus(Number(b.dataset.days)); dateTo = ymdMinus(0);
     clearPresets(); b.classList.add('on');
     applyDateRange();
@@ -1665,7 +1699,8 @@
     }
     // Stock estimate is good through the later of the count and the last sales data.
     const asOf = (invDate && invDate > (latestSale || '')) ? invDate : (latestSale || invDate);
-    return { rate, dowRate, stock, stockTotal, invDate, latestSale, lastDelivery, sellDays, sellDaysFor, dailyCV, asOf, hasInv: !!latestInv };
+    const growth = weeklyGrowth(locSales);
+    return { rate, dowRate, growth, stock, stockTotal, invDate, latestSale, lastDelivery, sellDays, sellDaysFor, dailyCV, asOf, hasInv: !!latestInv };
   }
   function runout(stats, factor) {
     const days = {}; let firstP = null, firstD = Infinity;
@@ -1688,13 +1723,14 @@
   // Days until stockP depletes, consuming each calendar day's weekday/weekend rate
   // (× mult) from asOfYmd forward — so an imminent weekend burns stock faster — then
   // minus the days already elapsed since that stock estimate.
-  function depleteDow(stockP, dow, mult, asOfYmd) {
-    const wd = dow.wd * mult, we = dow.we * mult;
+  function depleteDow(stockP, dow, mult, asOfYmd, growth) {
+    const wd = dow.wd * mult, we = dow.we * mult, g = growth || 1;
     if (!(wd > 0 || we > 0)) return Infinity;
     let remaining = stockP, dayIdx = 0;
     const d = parseEntryDate(asOfYmd || nowPST().slice(0, 10));
     while (dayIdx < 400) {
-      const r = [0, 6].includes(d.getDay()) ? we : wd;
+      // Compound the store's weekly sales trend day-by-day (g^(days/7)).
+      const r = ([0, 6].includes(d.getDay()) ? we : wd) * Math.pow(g, dayIdx / 7);
       if (r > 0) {
         if (remaining <= r) { dayIdx += remaining / r; break; }
         remaining -= r;
@@ -1711,12 +1747,12 @@
     for (const p of PRODUCTS) {
       const dr = stats.dowRate[p] || { wd: stats.rate[p], we: stats.rate[p] };
       if (!(dr.wd > 0 || dr.we > 0)) { days[p] = lo[p] = hi[p] = Infinity; continue; }
-      const base = depleteDow(stats.stock[p], dr, 1, stats.asOf);
+      const base = depleteDow(stats.stock[p], dr, 1, stats.asOf, stats.growth);
       const n = Math.max(1, base === Infinity ? 1 : (base || 1));
       const m = Math.min(0.6, FCAST_Z * cv / Math.sqrt(n));
       days[p] = base;
-      lo[p] = depleteDow(stats.stock[p], dr, 1 + m, stats.asOf);   // faster sales → sooner
-      hi[p] = depleteDow(stats.stock[p], dr, 1 - m, stats.asOf);   // slower → later
+      lo[p] = depleteDow(stats.stock[p], dr, 1 + m, stats.asOf, stats.growth);   // faster sales → sooner
+      hi[p] = depleteDow(stats.stock[p], dr, 1 - m, stats.asOf, stats.growth);   // slower → later
       if (base < firstD) { firstD = base; firstP = p; firstLo = lo[p]; firstHi = hi[p]; }
     }
     return { days, lo, hi, firstP, firstD, firstLo, firstHi };
@@ -1727,6 +1763,22 @@
     for (const s of sales) if (s.location === loc && s.date >= from)
       t += (typeof s.total === 'number' ? s.total : PRODUCTS.reduce((x, p) => x + (s.amounts[p] || 0), 0));
     return t;
+  }
+  // Sales momentum: geometric-mean week-over-week growth of this store's madeleine
+  // totals over the last 4 complete weeks. Damped 50% (trends fade) and clamped to
+  // ±25%/wk so one hot week can't run away with the forecast. Returns a weekly
+  // multiplier (1 = flat) that Forecast/Plan compound day-by-day.
+  function weeklyGrowth(locSales) {
+    const wk = weeklySeries(locSales.map(s => ({
+      date: s.date,
+      total: typeof s.total === 'number' ? s.total : PRODUCTS.reduce((t, p) => t + (s.amounts[p] || 0), 0),
+    })), 'total').filter(w => w.days >= 6).slice(-4);
+    if (wk.length < 2) return 1;
+    const ratios = [];
+    for (let i = 1; i < wk.length; i++) if (wk[i - 1].val > 0) ratios.push(wk[i].val / wk[i - 1].val);
+    if (!ratios.length) return 1;
+    const g = Math.pow(ratios.reduce((a, b) => a * b, 1), 1 / ratios.length);
+    return Math.min(1.25, Math.max(0.8, 1 + (g - 1) * 0.5));
   }
   function nowLabel() {
     return new Intl.DateTimeFormat('en-US', {
@@ -1843,7 +1895,7 @@
       list.innerHTML = `<div class="db-empty"><div class="big">🔮</div>Couldn't load data.<br>Connect the integration to the Sales database.</div>`;
       return;
     }
-    const scnLabel = { bear: '🐻 Best case · if sales run slow', base: 'Expected · band from daily swing', bull: '🐂 Worst case · if sales run busy' };
+    const scnLabel = { bear: '🐻 Bear · sales run slow — stock lasts longer', base: 'Expected · band from daily swing', bull: '🐂 Bull · sales run hot — runs out sooner' };
     sub.textContent = scnLabel[projScenario];
     const pick = (ro, p) => projScenario === 'bull' ? ro.lo[p] : projScenario === 'bear' ? ro.hi[p] : ro.days[p];
     const pickFirst = (ro) => projScenario === 'bull' ? ro.firstLo : projScenario === 'bear' ? ro.firstHi : ro.firstD;
@@ -1877,7 +1929,7 @@
         : `Runs out in <span class="big">${fmtD(pickFirst(ro))}</span>${fmtBand(ro.firstLo, ro.firstHi)} <span style="color:var(--muted);font-weight:600">(${PRODUCT_ICON[ro.firstP]} ${ro.firstP} first)</span>`;
       html += `<div class="proj-card">
           <h3>📍 ${loc}</h3>
-          <div class="proj-sub">${st.stockTotal} on hand · counted ${fmtWhen(st.invDate)} · rate from ${st.sellDays} sales ${st.sellDays === 1 ? 'day' : 'days'} · ±${Math.round(st.dailyCV * 100)}% daily swing</div>
+          <div class="proj-sub">${st.stockTotal} on hand · counted ${fmtWhen(st.invDate)} · rate from ${st.sellDays} sales ${st.sellDays === 1 ? 'day' : 'days'} · ±${Math.round(st.dailyCV * 100)}% daily swing${trendNote(st)}</div>
           ${staleWarn(st)}
           <div class="proj-stock-chips">${stockChips}</div>
           <div class="proj-runout">${runoutTxt}</div>
@@ -1914,15 +1966,21 @@
     return { rate, nWd, nWe };
   }
   // Expected demand per flavor from startYmd through targetYmd, day-of-week weighted.
-  function forecastDemand(dowr, startYmd, targetYmd) {
-    const demand = ZERO(); let nDays = 0, nWe = 0;
+  function forecastDemand(dowr, startYmd, targetYmd, growth) {
+    const demand = ZERO(); let nDays = 0, nWe = 0; const g = growth || 1;
     const end = parseEntryDate(targetYmd);
     for (let d = parseEntryDate(startYmd); d <= end; d.setDate(d.getDate() + 1)) {
       const isWe = [0, 6].includes(d.getDay());
-      for (const p of PRODUCTS) demand[p] += isWe ? dowr.rate[p].we : dowr.rate[p].wd;
+      const f = Math.pow(g, nDays / 7);   // compound the weekly sales trend
+      for (const p of PRODUCTS) demand[p] += (isWe ? dowr.rate[p].we : dowr.rate[p].wd) * f;
       nDays++; if (isWe) nWe++;
     }
     return { demand, nDays, nWe };
+  }
+  // "· trend +9%/wk" note when a store's sales momentum is being folded in.
+  function trendNote(st) {
+    const pct = Math.round(((st.growth || 1) - 1) * 100);
+    return pct ? ` · trend ${pct > 0 ? '+' : ''}${pct}%/wk` : '';
   }
 
   async function renderPlan() {
@@ -1945,7 +2003,7 @@
       const dowr = dowRates(sales, loc, 28);
       if (!st.hasInv) { html += `<div class="proj-card"><h3>📍 ${loc}</h3><div class="proj-sub">Add an inventory count to plan.</div></div>`; continue; }
       if (!dowr) { html += `<div class="proj-card"><h3>📍 ${loc}</h3><div class="proj-sub">No recent sales to forecast from.</div></div>`; continue; }
-      const { demand, nDays, nWe } = forecastDemand(dowr, addDays(todayYmd, 1), target);   // tomorrow → target
+      const { demand, nDays, nWe } = forecastDemand(dowr, addDays(todayYmd, 1), target, st.growth);   // tomorrow → target
       const m = Math.min(0.6, FCAST_Z * (st.dailyCV || 0) / Math.sqrt(Math.max(1, nDays)));
       let rows = '', bakeSafe = 0, bakeExp = 0;
       for (const p of PRODUCTS) {
@@ -1958,7 +2016,7 @@
       }
       html += `<div class="proj-card">
           <h3>📍 ${loc}</h3>
-          <div class="proj-sub">${nDays} day${nDays === 1 ? '' : 's'} to go · ${nDays - nWe} weekday / ${nWe} weekend · ${st.stockTotal} on hand now</div>
+          <div class="proj-sub">${nDays} day${nDays === 1 ? '' : 's'} to go · ${nDays - nWe} weekday / ${nWe} weekend · ${st.stockTotal} on hand now${trendNote(st)}</div>
           <div class="proj-runout">Bake <span class="big">${bakeSafe}</span> to be safe <span style="color:var(--muted);font-weight:600">(~${bakeExp} expected)</span></div>
           ${rows}
         </div>`;
