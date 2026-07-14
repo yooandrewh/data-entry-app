@@ -215,6 +215,13 @@
   /* ---- Stores analytics ---- */
   .store-card { background: var(--card); border-radius: 16px; box-shadow: var(--shadow); padding: 16px; margin-bottom: 18px; }
   .store-card h3 { margin: 0; font-size: 19px; }
+  /* Collapsible analytics cards (Home) */
+  .sc-toggle { cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 8px; -webkit-tap-highlight-color: transparent; }
+  .sc-toggle .chev { color: var(--muted); font-size: 15px; transition: transform .2s ease; flex-shrink: 0; }
+  .store-card:not(.collapsed) .sc-toggle .chev { transform: rotate(90deg); }
+  .sc-toggle .sc-peek { font-size: 12px; color: var(--muted); font-weight: 500; margin-left: auto; }
+  .store-card.collapsed .sc-body { display: none; }
+  .store-card.collapsed { padding-bottom: 14px; }
   .store-tag { font-size: 13px; color: var(--muted); margin: 2px 0 14px; }
   .smetrics { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .smetric { background: var(--field); border-radius: 12px; padding: 10px 12px; }
@@ -402,6 +409,24 @@
   .proj-stock-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
   .proj-runout { font-size: 15px; font-weight: 700; margin-bottom: 10px; }
   .proj-runout .big { font-size: 26px; }
+  /* Bake-days selector (Plan) */
+  .row-stack { flex-direction: column; align-items: flex-start; gap: 10px; }
+  .row-stack .bakedays { width: 100%; justify-content: space-between; }
+  .bakedays { display: flex; gap: 5px; }
+  .bakedays button {
+    width: 32px; height: 32px; border-radius: 999px; appearance: none; border: none;
+    background: var(--field); color: var(--muted); font-weight: 700; font-size: 13px;
+    cursor: pointer; font-family: inherit; transition: background .15s ease, color .15s ease;
+  }
+  .bakedays button.on { background: var(--blue); color: #fff; }
+  /* Per-bake-day schedule (Plan) */
+  .bake-event { border-top: 1px solid var(--sep); padding: 11px 0 4px; }
+  .bake-event:first-child { border-top: none; }
+  .be-head { font-size: 14px; font-weight: 700; margin-bottom: 8px; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+  .be-cover { font-size: 12px; font-weight: 500; color: var(--muted); }
+  .be-total { font-size: 14px; font-weight: 800; color: var(--blue); margin-left: auto; }
+  .be-chips { display: flex; flex-wrap: wrap; gap: 7px; }
+  .be-enough { font-size: 13px; color: var(--green); font-weight: 700; }
   .proj-row {
     display: flex; justify-content: space-between; gap: 10px;
     font-size: 13px; padding: 7px 0; border-bottom: 1px solid var(--sep);
@@ -438,7 +463,7 @@
 <body>
 
 <!-- Version badge — bump on every deploy (v = commit count, time = deploy time PST) -->
-<div class="ver-badge">v57 · Jul 13, 7:27 PM</div>
+<div class="ver-badge">v58 · Jul 14, 8:31 AM</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -615,8 +640,20 @@
         <span class="lbl">Make it last until</span>
         <input type="date" id="planDate" />
       </div>
+      <div class="row row-stack">
+        <span class="lbl">Bake days</span>
+        <div class="bakedays" id="bakeDays">
+          <button type="button" data-dow="1">M</button>
+          <button type="button" data-dow="2">T</button>
+          <button type="button" data-dow="3">W</button>
+          <button type="button" data-dow="4">T</button>
+          <button type="button" data-dow="5">F</button>
+          <button type="button" data-dow="6">S</button>
+          <button type="button" data-dow="0">S</button>
+        </div>
+      </div>
     </div>
-    <div class="hint">Forecasts demand day-by-day (weekdays vs weekends) from your recent sales, then subtracts what's on hand.</div>
+    <div class="hint" id="planHint">Forecasts demand day-by-day (weekdays vs weekends) from your recent sales, then subtracts what's on hand. Pick your bake days to get a per-bake-day schedule.</div>
     <div id="planList"></div>
   </div>
 </div>
@@ -1249,6 +1286,9 @@
     if (!names.length) return '';
     const inScope = r => locFilter === 'all' || r.location === locFilter;
     const scope = locFilter === 'all' ? 'all stores' : locFilter;
+    // Collapsible card shell — Home opens to just the header + a one-line peek.
+    const wrap = (title, body, peek) =>
+      `<div class="store-card collapsed"><h3 class="sc-toggle">${title}${peek ? `<span class="sc-peek">${peek}</span>` : ''}<span class="chev">▸</span></h3><div class="sc-body">${body}</div></div>`;
     let html = '';
 
     // Weekly growth overview
@@ -1256,49 +1296,54 @@
     const madWeekly = weeklySeries(msales.filter(inScope), 'total').slice(-10);
     const gr = growthBlock('Weekly revenue · ' + scope, revWeekly, v => usd(Math.round(v)));
     const gm = growthBlock('Weekly madeleines · ' + scope, madWeekly, v => String(Math.round(v)));
-    if (gr || gm) html += `<div class="store-card"><h3>📈 Weekly Growth</h3>${gr}${gm}<div class="store-note" style="margin-top:12px">Mon–Sun weeks · WoW = last two complete weeks · faded bar = in progress</div></div>`;
+    if (gr || gm) {
+      const wowPeek = (wowBadge(revWeekly) || wowBadge(madWeekly)).replace(/<[^>]+>/g, '') || 'revenue & madeleines';
+      html += wrap('📈 Weekly Growth', `${gr}${gm}<div class="store-note" style="margin-top:12px">Mon–Sun weeks · WoW = last two complete weeks · faded bar = in progress</div>`, wowPeek);
+    }
 
     for (const name of names) {
       const ws = wholeStore(salesByLoc[name] || []);
       const s = madStores[name];
-      html += `<div class="store-card"><h3>📍 ${esc(name)}</h3>`;
+      let body = '';
       if (ws) {
-        html += `<div class="store-tag">Whole store · ${fmtWhen(ws.from)}–${fmtWhen(ws.to)} · ${ws.days} days</div>`;
+        body += `<div class="store-tag">Whole store · ${fmtWhen(ws.from)}–${fmtWhen(ws.to)} · ${ws.days} days</div>`;
         const m = [[usd(Math.round(ws.avgRev)), 'revenue / day']];
         if (ws.txnsPerDay != null) m.push([Math.round(ws.txnsPerDay), 'orders / day']);
         if (ws.avgTicket != null) m.push([usd(ws.avgTicket), 'avg ticket']);
         m.push([usd(Math.round(ws.totalRev)), `total · ${ws.days}d`]);
-        html += `<div class="smetrics">${m.map(([v, k]) => `<div class="smetric"><div class="v">${v}</div><div class="k">${k}</div></div>`).join('')}</div>`;
+        body += `<div class="smetrics">${m.map(([v, k]) => `<div class="smetric"><div class="v">${v}</div><div class="k">${k}</div></div>`).join('')}</div>`;
         const bits = [`🍩 ${ws.madPerDay.toFixed(1)} madeleines/day`];
         if (ws.madAttach != null) bits.push(`~${ws.madAttach.toFixed(1)}% of orders`);
         if (ws.madRevShare != null) bits.push(`~${ws.madRevShare.toFixed(1)}% of revenue`);
-        html += `<div class="store-note">${bits.join(' · ')}</div>`;
+        body += `<div class="store-note">${bits.join(' · ')}</div>`;
         const wkRev = weeklySeries((salesByLoc[name] || []).filter(r => r.revenue != null), 'revenue').slice(-8);
-        html += growthBlock('Weekly revenue', wkRev, v => usd(Math.round(v)));
+        body += growthBlock('Weekly revenue', wkRev, v => usd(Math.round(v)));
       }
       if (s) {
         const mix = recentFlavorMix(msales, name, 14) || s.flavors;
         const recent = mix !== s.flavors;
         const topCur = CUR_FLAVORS.filter(f => mix[f]).sort((a, b) => mix[b] - mix[a])[0];
-        html += `<div class="ssec" style="margin-top:20px">🍩 Madeleines${topCur ? ` · ${PRODUCT_ICON[topCur]} ${topCur}-led` : ''}</div>`;
+        body += `<div class="ssec" style="margin-top:20px">🍩 Madeleines${topCur ? ` · ${PRODUCT_ICON[topCur]} ${topCur}-led` : ''}</div>`;
         const metrics = [[s.madsPerDay, 'sold / day'], [usd(s.aov), 'avg order'], [s.basket, 'items / order'], [usd(s.madRevenue), 'mad revenue']];
-        html += `<div class="smetrics">${metrics.map(([v, k]) => `<div class="smetric"><div class="v">${v}</div><div class="k">${k}</div></div>`).join('')}</div>`;
+        body += `<div class="smetrics">${metrics.map(([v, k]) => `<div class="smetric"><div class="v">${v}</div><div class="k">${k}</div></div>`).join('')}</div>`;
         const total = Object.values(mix).reduce((a, b) => a + b, 0) || 1;
         const flavKeys = [...CUR_FLAVORS.filter(f => mix[f]), ...Object.keys(mix).filter(f => !CUR_FLAVORS.includes(f) && mix[f])];
         const fmax = Math.max(1, ...flavKeys.map(f => mix[f]));
-        html += `<div class="ssec">Flavor mix${recent ? ' · last 14 days' : ''}</div>` + flavKeys.map(f => {
+        body += `<div class="ssec">Flavor mix${recent ? ' · last 14 days' : ''}</div>` + flavKeys.map(f => {
           const v = mix[f], old = !CUR_FLAVORS.includes(f);
           return `<div class="fbar"><span>${PRODUCT_ICON[f] || ''} ${f}</span><div class="track"><div class="fill${old ? ' old' : ''}" style="width:${Math.round(v / fmax * 100)}%"></div></div><span class="n">${Math.round(v / total * 100)}%</span></div>`;
         }).join('');
         const dmax = Math.max(1, ...DOWK.map(d => s.dow[d] || 0));
-        html += `<div class="ssec">Busiest days</div><div class="vbars">` + DOWK.map(d => `<div class="vbar"><div class="col${d === 'Sat' || d === 'Sun' ? ' hot' : ''}" style="height:${Math.round((s.dow[d] || 0) / dmax * 100)}%"></div><span class="lb">${d[0]}</span></div>`).join('') + `</div>`;
+        body += `<div class="ssec">Busiest days</div><div class="vbars">` + DOWK.map(d => `<div class="vbar"><div class="col${d === 'Sat' || d === 'Sun' ? ' hot' : ''}" style="height:${Math.round((s.dow[d] || 0) / dmax * 100)}%"></div><span class="lb">${d[0]}</span></div>`).join('') + `</div>`;
         const hk = Object.keys(s.hours).map(Number).sort((a, b) => a - b);
         const hmax = Math.max(1, ...hk.map(h => s.hours[h]));
         const peakH = hk.reduce((mm, h) => s.hours[h] > s.hours[mm] ? h : mm, hk[0]);
-        html += `<div class="ssec">By hour · peak ${hlabel(peakH)}m</div><div class="vbars">` + hk.map(h => `<div class="vbar"><div class="col${h === peakH ? ' hot' : ''}" style="height:${Math.round(s.hours[h] / hmax * 100)}%"></div><span class="lb">${h % 3 === 0 ? hlabel(h) : ''}</span></div>`).join('') + `</div>`;
-        html += `<div class="ssec">Top cashiers</div>` + (s.cashiers || []).map(([n, c]) => `<div class="cashrow"><span>${esc(n)}</span><span class="c-n">${c}</span></div>`).join('');
+        body += `<div class="ssec">By hour · peak ${hlabel(peakH)}m</div><div class="vbars">` + hk.map(h => `<div class="vbar"><div class="col${h === peakH ? ' hot' : ''}" style="height:${Math.round(s.hours[h] / hmax * 100)}%"></div><span class="lb">${h % 3 === 0 ? hlabel(h) : ''}</span></div>`).join('') + `</div>`;
+        body += `<div class="ssec">Top cashiers</div>` + (s.cashiers || []).map(([n, c]) => `<div class="cashrow"><span>${esc(n)}</span><span class="c-n">${c}</span></div>`).join('');
       }
-      html += `</div>`;
+      if (!body) continue;
+      const peek = [ws ? `${usd(Math.round(ws.avgRev))}/day` : null, s ? `🍩 ${s.madsPerDay}/day` : null].filter(Boolean).join(' · ');
+      html += wrap(`📍 ${esc(name)}`, body, peek);
     }
     return html;
   }
@@ -1617,6 +1662,8 @@
 
   // ===== Shared projection math (used by Home + Projections) =====
   let projLoc = 'all', homeLoc = 'all', planLoc = 'all';   // independent per-tab location filters
+  let planBakeDays = [];   // weekday ints (0=Sun..6=Sat) the user bakes on; empty = lump-sum mode
+  try { const b = JSON.parse(localStorage.getItem('planBakeDays') || '[]'); if (Array.isArray(b)) planBakeDays = b; } catch (e) {}
   let projScenario = 'base';              // 'bear' (best/slow) | 'base' | 'bull' (worst/busy)
   const RUN_WINDOW = 14;                          // days of sales history for run-rate
   const ZERO = () => Object.fromEntries(PRODUCTS.map(p => [p, 0]));
@@ -1980,11 +2027,51 @@
     const pct = Math.round(((st.growth || 1) - 1) * 100);
     return pct ? ` · trend ${pct > 0 ? '+' : ''}${pct}%/wk` : '';
   }
+  // Per-bake-day schedule: simulate stock forward from tomorrow → target, and on each
+  // bake day bake enough (per flavor, +CV buffer) to cover demand until the NEXT bake
+  // day. Returns [{ymd, bake:{p:n}, coverUntil, total, any}].
+  function bakeSchedule(st, dowr, startYmd, targetYmd, bakeSet, growth) {
+    const g = growth || 1;
+    const pad = n => String(n).padStart(2, '0');
+    const ymdOf = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    const days = [];
+    const end = parseEntryDate(targetYmd);
+    for (let d = parseEntryDate(startYmd); d <= end; d.setDate(d.getDate() + 1))
+      days.push({ ymd: ymdOf(d), dow: d.getDay(), we: [0, 6].includes(d.getDay()) });
+    const demandOf = (day, idx) => {
+      const f = Math.pow(g, idx / 7);
+      const out = ZERO();
+      for (const p of PRODUCTS) out[p] = (day.we ? dowr.rate[p].we : dowr.rate[p].wd) * f;
+      return out;
+    };
+    const m = Math.min(0.6, FCAST_Z * (st.dailyCV || 0) / Math.sqrt(Math.max(1, days.length)));
+    const stock = { ...st.stock };
+    const events = [];
+    for (let i = 0; i < days.length; i++) {
+      if (bakeSet.has(days[i].dow)) {
+        let j = i + 1;
+        while (j < days.length && !bakeSet.has(days[j].dow)) j++;   // next bake day (exclusive window end)
+        const need = ZERO();
+        for (let k = i; k < j; k++) { const dem = demandOf(days[k], k); for (const p of PRODUCTS) need[p] += dem[p]; }
+        const bake = {}; let any = false, total = 0;
+        for (const p of PRODUCTS) {
+          const b = Math.max(0, Math.ceil(need[p] * (1 + m) - stock[p]));
+          bake[p] = b; if (b) any = true; total += b; stock[p] += b;
+        }
+        events.push({ ymd: days[i].ymd, bake, total, any, coverUntil: days[j - 1].ymd });
+      }
+      const dem = demandOf(days[i], i);
+      for (const p of PRODUCTS) stock[p] = Math.max(0, stock[p] - dem[p]);
+    }
+    return events;
+  }
+  const wkShort = ymd => new Intl.DateTimeFormat('en-US', { weekday: 'short' }).format(parseEntryDate(ymd));
 
   async function renderPlan() {
     const list = document.getElementById('planList');
     const sub = document.getElementById('planSub');
     const dateEl = document.getElementById('planDate');
+    initBakeDays();
     const todayYmd = nowPST().slice(0, 10);
     dateEl.min = addDays(todayYmd, 1);
     if (!dateEl.value) dateEl.value = addDays(todayYmd, 7);   // default: one week out
@@ -1994,7 +2081,10 @@
     let sales, entries;
     try { [sales, entries] = await Promise.all([getSales(), fetchRemoteEntries()]); }
     catch (e) { sub.textContent = 'Could not load'; list.innerHTML = `<div class="db-empty"><div class="big">📅</div>Couldn't load data.</div>`; return; }
-    sub.textContent = `Bake to last through ${fmtWhen(target)}`;
+    const bakeSet = new Set(planBakeDays);
+    sub.textContent = bakeSet.size
+      ? `Bake-day schedule through ${fmtWhen(target)}`
+      : `Bake to last through ${fmtWhen(target)}`;
     let html = '';
     for (const loc of LOCATIONS.filter(l => planLoc === 'all' || l === planLoc)) {
       const st = locStats(loc, sales, entries);
@@ -2002,6 +2092,35 @@
       if (!st.hasInv) { html += `<div class="proj-card"><h3>📍 ${loc}</h3><div class="proj-sub">Add an inventory count to plan.</div></div>`; continue; }
       if (!dowr) { html += `<div class="proj-card"><h3>📍 ${loc}</h3><div class="proj-sub">No recent sales to forecast from.</div></div>`; continue; }
       const { demand, nDays, nWe } = forecastDemand(dowr, addDays(todayYmd, 1), target, st.growth);   // tomorrow → target
+
+      if (bakeSet.size) {
+        // Per-bake-day schedule: one row per bake day, each covering until the next bake.
+        const events = bakeSchedule(st, dowr, addDays(todayYmd, 1), target, bakeSet, st.growth);
+        const grand = events.reduce((s, ev) => s + ev.total, 0);
+        let evRows;
+        if (!events.length) {
+          evRows = `<div class="proj-sub">No bake days fall between tomorrow and ${fmtWhen(target)}.</div>`;
+        } else {
+          evRows = events.map(ev => {
+            const chips = ev.any
+              ? `<div class="be-chips">${PRODUCTS.filter(p => ev.bake[p] > 0).map(p => `<span class="db-chip">${PRODUCT_ICON[p]} ${ev.bake[p]}</span>`).join('')}</div>`
+              : `<div class="be-enough">✓ enough on hand — no bake needed</div>`;
+            return `<div class="bake-event">
+                <div class="be-head">🗓️ ${wkShort(ev.ymd)} ${fmtWhen(ev.ymd)} <span class="be-cover">covers thru ${wkShort(ev.coverUntil)} ${fmtWhen(ev.coverUntil)}</span>${ev.any ? `<span class="be-total">${ev.total}</span>` : ''}</div>
+                ${chips}
+              </div>`;
+          }).join('');
+        }
+        html += `<div class="proj-card">
+            <h3>📍 ${loc}</h3>
+            <div class="proj-sub">${st.stockTotal} on hand now · ${events.length} bake day${events.length === 1 ? '' : 's'} to ${fmtWhen(target)}${trendNote(st)}</div>
+            ${grand ? `<div class="proj-runout">Bake <span class="big">${grand}</span> total across ${events.length} day${events.length === 1 ? '' : 's'}</div>` : ''}
+            ${evRows}
+          </div>`;
+        continue;
+      }
+
+      // Lump-sum mode (no bake days picked): one total to last the whole window.
       const m = Math.min(0.6, FCAST_Z * (st.dailyCV || 0) / Math.sqrt(Math.max(1, nDays)));
       let rows = '', bakeSafe = 0, bakeExp = 0;
       for (const p of PRODUCTS) {
@@ -2022,6 +2141,19 @@
     if (!html) html = `<div class="db-empty"><div class="big">📅</div>Nothing to plan.</div>`;
     list.innerHTML = html;
   }
+  // Bake-days selector: toggle a weekday, persist, re-plan.
+  function initBakeDays() {
+    document.querySelectorAll('#bakeDays button').forEach(b =>
+      b.classList.toggle('on', planBakeDays.includes(Number(b.dataset.dow))));
+  }
+  document.getElementById('bakeDays').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    const dow = Number(b.dataset.dow);
+    planBakeDays = planBakeDays.includes(dow) ? planBakeDays.filter(d => d !== dow) : [...planBakeDays, dow];
+    try { localStorage.setItem('planBakeDays', JSON.stringify(planBakeDays)); } catch (e) {}
+    b.classList.toggle('on');
+    renderPlan();
+  });
   document.getElementById('planLoc').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
     planLoc = b.dataset.loc;
@@ -2040,6 +2172,11 @@
     homeLoc = b.dataset.loc;
     document.querySelectorAll('#homeLoc button').forEach(x => x.classList.toggle('on', x === b));
     renderHome();
+  });
+  // Tap an analytics card header to expand/collapse it.
+  document.getElementById('homeContent').addEventListener('click', e => {
+    const t = e.target.closest('.sc-toggle'); if (!t) return;
+    t.closest('.store-card').classList.toggle('collapsed');
   });
 
   // Pull fresh data for whatever tab is showing (skips while a dialog is open).
