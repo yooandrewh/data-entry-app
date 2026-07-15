@@ -420,6 +420,21 @@
   }
   .bakedays button.on { background: var(--blue); color: #fff; }
   /* ---- Recipes tab ---- */
+  .beta-pill {
+    display: inline-block; vertical-align: middle; margin-left: 9px;
+    background: var(--orange); color: #fff; font-size: 11px; font-weight: 800;
+    letter-spacing: 0.06em; padding: 3px 9px; border-radius: 999px;
+  }
+  .rec-beta-note {
+    background: rgba(255,149,0,0.12); color: #8a4b00; border-radius: 12px;
+    padding: 10px 13px; margin-bottom: 14px; font-size: 13px; font-weight: 600; line-height: 1.45;
+  }
+  .tabbar button[data-tab="recipes"] .tic { position: relative; }
+  .tabbar button[data-tab="recipes"] .tic::after {
+    content: "β"; position: absolute; top: -3px; right: -9px;
+    background: var(--orange); color: #fff; font-size: 9px; font-weight: 800;
+    width: 13px; height: 13px; line-height: 13px; text-align: center; border-radius: 999px;
+  }
   .rec-scale { display: flex; gap: 8px; margin: 2px 0 12px; flex-wrap: wrap; }
   .rec-scale button {
     appearance: none; border: none; cursor: pointer; font-family: inherit;
@@ -492,7 +507,7 @@
 <body>
 
 <!-- Version badge — bump on every deploy (v = commit count, time = deploy time PST) -->
-<div class="ver-badge">v61 · Jul 14, 9:00 PM</div>
+<div class="ver-badge">v62 · Jul 14, 9:13 PM</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -691,9 +706,10 @@
 <div class="view" id="view-recipes">
   <div class="wrap">
     <header>
-      <h1>Recipes</h1>
+      <h1>Recipes<span class="beta-pill">BETA</span></h1>
       <div class="sub" id="recSub">Amounts scale with batches · type any amount to rescale</div>
     </header>
+    <div class="rec-beta-note">🧪 Beta — double-check amounts against your own recipes before baking. Costing isn't included yet.</div>
     <div class="db-filter" id="recSection">
       <button class="on" data-sec="mad">🍰 Mads</button>
       <button data-sec="fill">🍮 Fillings</button>
