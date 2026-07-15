@@ -419,6 +419,34 @@
     cursor: pointer; font-family: inherit; transition: background .15s ease, color .15s ease;
   }
   .bakedays button.on { background: var(--blue); color: #fff; }
+  /* ---- Recipes tab ---- */
+  .rec-scale { display: flex; gap: 8px; margin: 2px 0 12px; flex-wrap: wrap; }
+  .rec-scale button {
+    appearance: none; border: none; cursor: pointer; font-family: inherit;
+    background: var(--field); color: var(--text); font-size: 13px; font-weight: 600;
+    padding: 7px 14px; border-radius: 999px;
+  }
+  .rec-scale button.on { background: var(--blue); color: #fff; }
+  .rec-scale .lbl { font-size: 12px; color: var(--muted); font-weight: 600; align-self: center; margin-right: 2px; }
+  .rec-qty {
+    width: 4.2em; text-align: right; border: none; border-bottom: 1.5px dashed var(--blue);
+    background: transparent; font-weight: 600; color: var(--blue);
+    font-family: inherit; font-size: 14px; padding: 0 1px 1px; -moz-appearance: textfield;
+  }
+  .rec-qty::-webkit-outer-spin-button, .rec-qty::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+  .rec-qty:focus { outline: none; border-bottom-style: solid; }
+  .rec-box { background: var(--field); border-radius: 10px; padding: 10px 12px; margin-top: 12px; font-size: 13px; line-height: 1.5; }
+  .rec-box b { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 4px; }
+  .rec-box .gl { display: flex; justify-content: space-between; gap: 10px; padding: 2px 0; }
+  .rec-box .gl span:last-child { font-weight: 600; }
+  .rec-box .fr-title { font-weight: 700; color: var(--blue); margin: 6px 0 2px; font-size: 12px; }
+  .rec-box p { margin: 6px 0 0; }
+  .rec-conv { font-size: 11px; color: var(--muted); font-weight: 400; }
+  .rec-addin { font-style: italic; }
+  .rec-ratio { font-size: 24px; text-align: center; padding: 8px 0 2px; color: var(--blue); font-weight: 700; }
+  .rec-ratio-lbl { text-align: center; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
+  .rec-link { display: block; margin-top: 12px; font-size: 13px; font-weight: 600; color: var(--blue); text-decoration: none; }
+
   /* Per-bake-day schedule (Plan) */
   .bake-event { border-top: 1px solid var(--sep); padding: 11px 0 4px; }
   .bake-event:first-child { border-top: none; }
@@ -464,7 +492,7 @@
 <body>
 
 <!-- Version badge — bump on every deploy (v = commit count, time = deploy time PST) -->
-<div class="ver-badge">v60 · Jul 14, 8:53 PM</div>
+<div class="ver-badge">v61 · Jul 14, 9:00 PM</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -659,6 +687,24 @@
   </div>
 </div>
 
+<!-- ===== RECIPES VIEW ===== -->
+<div class="view" id="view-recipes">
+  <div class="wrap">
+    <header>
+      <h1>Recipes</h1>
+      <div class="sub" id="recSub">Amounts scale with batches · type any amount to rescale</div>
+    </header>
+    <div class="db-filter" id="recSection">
+      <button class="on" data-sec="mad">🍰 Mads</button>
+      <button data-sec="fill">🍮 Fillings</button>
+      <button data-sec="scone">🥐 Scones</button>
+      <button data-sec="other">🧁 Other</button>
+    </div>
+    <div class="chip-row" id="recChips"></div>
+    <div id="recCard"></div>
+  </div>
+</div>
+
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar">
   <button data-tab="home" class="on"><span class="tic">🏠</span><span>Home</span></button>
@@ -666,6 +712,7 @@
   <button data-tab="entry" class="tab-entry"><span class="tic">➕</span><span>Entry</span></button>
   <button data-tab="proj"><span class="tic">🔮</span><span>Forecast</span></button>
   <button data-tab="plan"><span class="tic">📅</span><span>Plan</span></button>
+  <button data-tab="recipes"><span class="tic">📖</span><span>Recipes</span></button>
 </nav>
 
 <!-- ===== Confirmation sheet ===== -->
@@ -1157,7 +1204,7 @@
   }
 
   // ---- Tab switching ----
-  const VIEWS = { home: 'view-home', entry: 'view-entry', db: 'view-db', proj: 'view-proj', plan: 'view-plan' };
+  const VIEWS = { home: 'view-home', entry: 'view-entry', db: 'view-db', proj: 'view-proj', plan: 'view-plan', recipes: 'view-recipes' };
   document.querySelector('.tabbar').addEventListener('click', e => {
     const btn = e.target.closest('button'); if (!btn) return;
     const tab = btn.dataset.tab;
@@ -1167,6 +1214,7 @@
     if (tab === 'db') { salesCache = null; renderData(); retryUnsynced(); }
     if (tab === 'proj') { salesCache = null; renderProj(); }
     if (tab === 'plan') { salesCache = null; renderPlan(); }
+    if (tab === 'recipes') renderRecipes();
     window.scrollTo(0, 0);
   });
 
@@ -2237,6 +2285,258 @@
   document.getElementById('homeContent').addEventListener('click', e => {
     const t = e.target.closest('.sc-toggle'); if (!t) return;
     t.closest('.store-card').classList.toggle('collapsed');
+  });
+
+  // ===== Recipes tab (ported from the standalone Kairos Baking recipe page) =====
+  const REC_MAD_BASE = { 'Baking Powder': 6, 'Salt': 2, 'Eggs': 200, 'Sugar': 140, 'Vanilla Extract': 5, 'Unsalted Butter': 200 };
+  const REC_MAD_NOTES = 'Bake at 374°F (190°C) for 13 minutes.<br><br>1. Melt the butter to 50–55°F (10–13°C); cool it down if it goes over 60°F (16°C).<br>2. Whisk together the eggs, sugar, vanilla extract, and flavoring, if using.<br>3. Sift the dry ingredients into the egg mixture and fold to combine.<br>4. Fold in the butter.';
+  const REC_MADS = [
+    { name: 'Classic',
+      versions: [
+        { label: 'Original', rows: [['Cake Flour', 174], ['Baking Powder', 6], ['Salt', 2], ['Eggs', 200], ['Sugar', 140], ['Vanilla Extract', 5], ['Unsalted Butter', 200]] },
+        { label: 'Ver B', rows: [['Cake Flour', 174], ['Baking Powder', 6], ['Salt', 2], ['Eggs', 200], ['Sugar', 140], ['Honey', 20], ['Vanilla Extract', 5], ['Unsalted Butter', 200]] },
+      ] },
+    { name: 'Peach Crumble', flour: 174, salt: 2,
+      fillingRefs: ['Cream Cheese Frosting'],
+      fillingNote: 'Plus a spoonful of peach jam, about 10g per madeleine. Same frosting batch as Dot Cake — 3lb cream cheese base makes enough for about 200 madeleines.' },
+    { name: 'Dot Cake', flour: 174, salt: 2,
+      fillingRefs: ['Cream Cheese Frosting'],
+      fillingNote: 'Topped with a layer of nonpareil sprinkles. 3lb cream cheese base makes enough frosting for about 200 madeleines; a 2.2lb bag of sprinkles tops about 100.' },
+    { name: 'Earl Grey', title: 'Earl Grey Madeleine', link: 'https://www.youtube.com/watch?v=M4BGif3Ga-Q',
+      versions: [
+        { label: 'Ver A', rows: [['Unsalted Butter', 207], ['Eggs', 200], ['Sugar', 120], ['Honey', 25], ['Cake Flour', 175], ['Baking Powder', 6], ['Earl Grey Tea Leaves', 5], ['Heavy Cream', 24], ['Salt', 2]] },
+        { label: 'Ver B', rows: [['All-Purpose Flour', 191], ['Cornstarch', 14], ['Unsalted Butter', 207], ['Eggs', 200], ['Sugar', 160], ['Honey', 24], ['Baking Powder', 6], ['Earl Grey Tea Leaves', 5], ['Heavy Cream', 24], ['Salt', 2]] },
+      ],
+      glaze: [['Earl Grey Tea Leaves', '2g'], ['Water', '20g'], ['Powdered Sugar', '80g']],
+      fillingRefs: ['Anglesie Buttercream', 'Earl Grey Paste'],
+      fillingNote: 'Combine the Anglesie Buttercream base with Earl Grey Paste to taste.' },
+    { name: 'Ube', flour: 134, salt: 2, note: '20g ube powder + 1/2 tsp ube extract',
+      glaze: [['Powdered Sugar', '100g'], ['Coconut Milk', '50g'], ['Ube Extract', '1g']],
+      fillingNote: 'Top the glaze with a scatter of coconut flakes — a 1lb bag covers about 150 madeleines.' },
+    { name: 'Lemon Poppy', flour: 174, salt: 2, note: '4g lemon extract + 6g lemon poppy seed',
+      glaze: [['Powdered Sugar', '100g'], ['Lemon Juice', '25g'], ['Unsalted Butter', '4g']] },
+    { name: 'Double Choco', flour: 146, salt: 3, note: '28g cocoa powder' },
+    { name: 'Matcha', flour: 156, salt: 2, note: '14g matcha powder' },
+    { name: 'Mugwort', title: 'Mugwort Madeleine', link: 'https://www.youtube.com/watch?v=vZBX4NI951A',
+      custom: [['All Purpose Flour', 40], ['Cake Flour', 65], ['Baking Powder', 5], ['Baking Soda', 1], ['White Sugar', 25], ['Brown Sugar', 35], ['Unsalted Butter', 110], ['Eggs', 72], ['Salt', 1], ['White Chocolate', 120], ['Skim Milk Powder', 5], ['Milk', 25], ['Honey', 20], ['Mugwort Powder', 15]] },
+  ];
+  const REC_FILLINGS = [
+    { name: 'Lemon Curd', type: 'single', rows: [['Eggs', '100g'], ['Sugar', '60g'], ['Lemon Juice', '40g'], ['Unsalted Butter', '60g']] },
+    { name: 'Cream Cheese Frosting', type: 'single', rows: [['Unsalted Butter', '113g'], ['Cream Cheese', '225g'], ['Powdered Sugar', '70g']] },
+    { name: 'Anglesie Buttercream', type: 'twocol', cols: ['Base', '1lb Butter'],
+      rows: [['Milk', 50, 232], ['Unsalted Butter', 100, 464], ['Sugar', 30, 135], ['Egg Yolk', 40, 186]] },
+    { name: 'Earl Grey Paste', type: 'single', rows: [['Milk', '150ml'], ['Heavy Cream', '80ml'], ['Sugar', '35g'], ['Tea Bags', '2']] },
+    { name: 'Chocolate Ganache', type: 'single', rows: [['Dark Chocolate (Callebaut)', '100g'], ['Unsalted Butter', '20g'], ['Heavy Cream*', '100g']],
+      notes: '*Adjust heavy cream slightly to taste for desired firmness.' },
+    { name: 'Caramel', type: 'ratio', ratio: '200g : 150g', label: 'sugar : heavy cream' },
+    { name: 'Mascarpone Cream', type: 'single', rows: [['Heavy Cream', '140g'], ['Sugar', '20g'], ['Mascarpone Cheese', '100g']] },
+    { name: 'Milk Cream', type: 'single', rows: [['Mascarpone Cheese', '60g'], ['Sugar', '5g'], ['Condensed Milk', '30g'], ['Heavy Cream', '100g']] },
+  ];
+  const REC_SABLE = {
+    types: [
+      { key: 'base', label: 'Original',
+        rows: [['Unsalted Butter', 240], ['Powdered Sugar', 120], ['Salt', 3], ['Egg Yolk', 35], ['Vanilla Extract', 5], ['Cake Flour', 280], ['Almond Flour', 150]],
+        addins: [['Cranberry', 120]] },
+      { key: 'flavored', label: 'Flavored',
+        rows: [['Unsalted Butter', 240], ['Powdered Sugar', 120], ['Salt', 3], ['Egg Yolk', 35], ['Vanilla Extract', 5], ['Cake Flour', 240], ['Almond Flour', 150]],
+        flavors: [
+          { name: 'Matcha', addins: [['Matcha Powder', 30]] },
+          { name: 'Chocolate Chip', addins: [['Cocoa Powder', 30], ['Chocolate Chips', 120]] },
+        ] },
+    ],
+    notes: 'Bake at 338°F (170°C) for 15 mins.<br><br>1. Soften the butter.<br>2. Cream in the powdered sugar and salt.<br>3. Mix in the egg yolk and vanilla extract.<br>4. Sift in the flours, then fold in any mix-ins.',
+  };
+  const REC_OTHER = [
+    { key: 'glutenfree', name: 'Gluten Free Cake', type: 'glutenfree', link: 'https://www.youtube.com/watch?v=W6Z2X49gHHU&t=13s',
+      notes: '1. Whip the Swiss meringue at 122–140°F (50–60°C).<br>2. Mix in the egg yolk and 2g vanilla extract.<br>3. Sift in the almond flour.<br>4. Mix slowly.<br><br>Bake at 350°F (177°C) for 50–55 mins.',
+      sizes: [
+        { label: '6 inch', yieldText: '~384g batter', rows: [['Egg White', 100], ['Egg Yolk', 70], ['Sugar', 70], ['Almond Flour', 150]] },
+        { label: '8 inch', yieldText: '', rows: [['Egg White', 150], ['Egg Yolk', 105], ['Sugar', 105], ['Almond Flour', 225]] },
+      ] },
+    { key: 'sable', name: 'Sable', type: 'sable' },
+    { key: 'macaron', name: 'Macarons', type: 'macaron',
+      notes: 'Swiss meringue whipped at 131°F (55°C).<br>Bake at 302°F (150°C) for 15 mins.',
+      scales: [{ label: '0.5x', mult: 0.5 }, { label: 'Base', mult: 1 }, { label: 'x2', mult: 2 }, { label: 'x2.5', mult: 2.5 }],
+      base: [['Almond Flour', 46], ['Powdered Sugar', 42], ['Egg Whites', 35], ['Sugar', 33], ['Flavor Powder', 2]] },
+    { key: 'saltbread', name: 'Salt Bread', type: 'simple', link: 'https://www.youtube.com/watch?v=AbjqzR3nyqU', yieldText: 'makes about 14 rolls (66g each)',
+      rows: [['Bread Flour', 400], ['Cake Flour', 100], ['White Sugar', 30], ['Unsalted Butter', 180], ['Salt', 10], ['Yeast', 6], ['Skim Milk Powder', 30]] },
+    { key: 'vegandonut', name: 'Vegan Donut', type: 'simple', link: 'https://makeitdairyfree.com/glazed-vegan-donuts/', yieldText: 'makes about 10 donuts',
+      rows: [['Wheat Flour', 170], ['Baking Powder', 5], ['Brown Sugar', 80], ['Salt', 2], ['Milk', 100], ['Apple Sauce', 32], ['Coconut Oil', 30]] },
+    { key: 'apricotricotta', name: 'Apricot Ricotta Cake', type: 'simple', link: 'https://www.youtube.com/watch?v=VY8Loi67xDM',
+      rows: [['Cake Flour', 120], ['Baking Powder', 2], ['White Sugar', 80], ['Unsalted Butter', 110], ['Eggs', 100], ['Vanilla Extract', 3], ['Ricotta Cheese', 125], ['Apricot', 2]] },
+    { key: 'earlgreyfigcake', name: 'Earl Grey Fig Cake', type: 'simple', link: 'https://www.youtube.com/watch?v=f-rtq3rZe1I', yieldText: '6 inch cake',
+      rows: [['All Purpose Flour', 160], ['Almond Flour', 20], ['Baking Powder', 4], ['Brown Sugar', 110], ['Unsalted Butter', 150], ['Eggs', 130], ['Salt', 2], ['Heavy Cream', 90]],
+      soak: [['Earl Grey', 4], ['Dried Fig', 100], ['Wine', 60]] },
+  ];
+  const REC_SCONES = [
+    { key: 'plainscone', name: 'Plain Scone', type: 'simple', link: 'https://www.youtube.com/watch?v=KpWso8VrUn8', yieldText: '5.5cm scoop · makes 10',
+      rows: [['Unsalted Butter', 114], ['All-Purpose Flour', 345], ['Baking Powder', 10], ['Sugar', 69], ['Salt', 3], ['Eggs', 59], ['Heavy Cream', 193], ['Vanilla Extract', 4]],
+      notes: 'Preheat to 392°F (200°C) for 20 mins, then bake at 374°F (190°C) for 20 mins.<br>Home oven: 392°F (200°C) for 20–25 mins. Go by color — bake until deeply golden all over.<br><br>1. Pulse flour, baking powder, sugar, and salt in a food processor.<br>2. Add cold diced butter; pulse to rice-grain size.<br>3. Add egg, heavy cream, and vanilla; pulse until just combined.<br>4. Portion with an ice cream scoop.<br>5. Chill 1–2 hours, until cold.<br>6. Flatten, place the frozen cream cheese filling on top, wrap the dough around it.<br>7. If warm/sticky after shaping, chill 1 more hour before baking.<br>8. Bake fully preheated until deeply golden brown.' },
+    { key: 'strawberrycc', name: 'Strawberry Cream Cheese', type: 'simple', yieldText: '5.5cm scoop · makes 10',
+      rows: [['Cream Cheese', 550], ['Powdered Sugar', 100], ['Salt', 3], ['Frozen Strawberry', 550], ['Sugar', 150], ['Lemon Juice', 15]],
+      notes: 'Freeze completely solid before wrapping into the scone dough.' },
+    { key: 'blueberrycc', name: 'Blueberry Cream Cheese', type: 'simple', yieldText: '5.5cm scoop · makes 16',
+      rows: [['Cream Cheese', 550], ['Blueberry', 550], ['Powdered Sugar', 65], ['Salt', 3]],
+      notes: 'Freeze completely solid before wrapping into the scone dough.' },
+  ];
+  const REC_ICON = { 'Classic': '🧈', 'Peach Crumble': '🍑', 'Dot Cake': '🍰', 'Earl Grey': '🫖', 'Ube': '💜', 'Lemon Poppy': '🍋', 'Double Choco': '🍫', 'Matcha': '🍵', 'Mugwort': '🌿', 'Lemon Curd': '🍋', 'Cream Cheese Frosting': '🧀', 'Anglesie Buttercream': '🧈', 'Earl Grey Paste': '🫖', 'Chocolate Ganache': '🍫', 'Caramel': '🍯', 'Mascarpone Cream': '🥛', 'Milk Cream': '🥛', 'Plain Scone': '🥐', 'Strawberry Cream Cheese': '🍓', 'Blueberry Cream Cheese': '🫐', 'Gluten Free Cake': '🎂', 'Sable': '🍪', 'Macarons': '🌈', 'Salt Bread': '🥖', 'Vegan Donut': '🍩', 'Apricot Ricotta Cake': '🍑', 'Earl Grey Fig Cake': '🍰' };
+
+  const recState = { sec: 'mad', idx: 0, batches: 1, madVer: 0, sableType: 0, sableFlav: 0, macScale: 1, macCustom: null, gfSize: 0 };
+  function recResetVariants() { recState.batches = 1; recState.madVer = 0; recState.sableType = 0; recState.sableFlav = 0; recState.macScale = 1; recState.macCustom = null; recState.gfSize = 0; }
+  function recList() { return recState.sec === 'mad' ? REC_MADS : recState.sec === 'fill' ? REC_FILLINGS : recState.sec === 'scone' ? REC_SCONES : REC_OTHER; }
+  const rFmt = n => typeof n === 'string' ? n : String(Math.round(n * 10) / 10);
+  // Scale the FIRST number in a string (glaze amounts, ratios).
+  const rScaleStr = (str, m) => (!m || m === 1) ? str : String(str).replace(/(\d+(?:\.\d+)?)/, (x, num) => rFmt(parseFloat(num) * m));
+  // Scale every "Ng" amount in a note ("20g ube powder" → "40g ube powder"), leaving non-gram numbers alone.
+  const rScaleNote = (str, m) => (!m || m === 1) ? str : String(str).replace(/(\d+(?:\.\d+)?)g/g, (x, num) => `${rFmt(parseFloat(num) * m)}g`);
+  const recFlourConv = amt => ` <span class="rec-conv">(= AP ${Math.round(amt * 436 / 500)}g + cornstarch ${Math.round(amt * 64 / 500)}g)</span>`;
+  function recIngRows(rows, mult, ctx, addin) {
+    return rows.map(r => {
+      const cls = addin ? ' rec-addin' : '';
+      if (typeof r[1] !== 'number') return `<div class="proj-row"><span class="k${cls}">${r[0]}</span><span><b>${r[1]}</b></span></div>`;
+      const conv = r[0] === 'Cake Flour' ? recFlourConv(r[1] * (mult || 1)) : '';
+      return `<div class="proj-row"><span class="k${cls}">${r[0]}${conv}</span><span><input class="rec-qty" type="number" inputmode="decimal" step="any" value="${rFmt(r[1] * (mult || 1))}" data-base="${r[1]}" data-ctx="${ctx || 'batches'}">g</span></div>`;
+    }).join('');
+  }
+  function recBatchRow() {
+    return `<div class="rec-scale"><span class="lbl">Batches</span>${[0.5, 1, 2, 3].map(n => `<button data-rbatch="${n}" class="${recState.batches === n ? 'on' : ''}">${n === 0.5 ? '½' : n}×</button>`).join('')}</div>`;
+  }
+  function recFillingRef(name) {
+    const f = REC_FILLINGS.find(x => x.name === name); if (!f) return '';
+    let rows = '';
+    if (f.type === 'twocol') rows = f.rows.map(r => `<div class="gl"><span>${r[0]}</span><span>${r[1]}g</span></div>`).join('');
+    else if (f.type === 'ratio') rows = `<div class="gl"><span>${f.label}</span><span>${f.ratio}</span></div>`;
+    else rows = f.rows.map(r => `<div class="gl"><span>${r[0]}</span><span>${r[1]}</span></div>`).join('');
+    return `<div class="fr-title">${name}</div>${rows}`;
+  }
+  const recLink = url => url ? `<a class="rec-link" href="${url}" target="_blank" rel="noopener noreferrer">Reference recipe ↗</a>` : '';
+  function recMadCard(item) {
+    let rows, verChips = '', verLbl = '';
+    if (item.versions) {
+      const v = item.versions[recState.madVer];
+      rows = v.rows; verLbl = ` · ${v.label}`;
+      verChips = `<div class="rec-scale">${item.versions.map((vv, i) => `<button data-rmadver="${i}" class="${recState.madVer === i ? 'on' : ''}">${vv.label}</button>`).join('')}</div>`;
+    } else if (item.custom) rows = item.custom;
+    else rows = [['Cake Flour', item.flour], ['Baking Powder', REC_MAD_BASE['Baking Powder']], ['Salt', item.salt], ['Eggs', REC_MAD_BASE['Eggs']], ['Sugar', REC_MAD_BASE['Sugar']], ['Vanilla Extract', REC_MAD_BASE['Vanilla Extract']], ['Unsalted Butter', REC_MAD_BASE['Unsalted Butter']]];
+    const b = recState.batches;
+    return `<div class="proj-card">
+        <h3>${REC_ICON[item.name] || '🍰'} ${item.title || item.name + ' Madeleine'}</h3>
+        <div class="proj-sub">1 batch ≈ ${BATCH_YIELD} madeleines${verLbl}${b !== 1 ? ` · scaled ${rFmt(b)}×` : ''}</div>
+        ${verChips}${recBatchRow()}
+        ${recIngRows(rows, b)}
+        ${item.note ? `<div class="rec-box"><b>Flavoring</b>${rScaleNote(item.note, b)}</div>` : ''}
+        ${item.glaze ? `<div class="rec-box"><b>Glaze</b>${item.glaze.map(g => `<div class="gl"><span>${g[0]}</span><span>${rScaleStr(g[1], b)}</span></div>`).join('')}</div>` : ''}
+        ${(item.fillingRefs || item.fillingNote) ? `<div class="rec-box"><b>Filling & Topping</b>${(item.fillingRefs || []).map(recFillingRef).join('')}${item.fillingNote ? `<p>${item.fillingNote}</p>` : ''}</div>` : ''}
+        <div class="rec-box"><b>Notes</b>${REC_MAD_NOTES}</div>
+        ${recLink(item.link)}
+      </div>`;
+  }
+  function recFillCard(item) {
+    const b = recState.batches;
+    let body = '';
+    if (item.type === 'twocol') {
+      body = item.rows.map(r => `<div class="proj-row"><span class="k">${r[0]}</span><span style="display:flex;gap:24px"><b style="min-width:58px;text-align:right">${rFmt(r[1] * b)}g</b><b style="min-width:58px;text-align:right">${rFmt(r[2] * b)}g</b></span></div>`).join('');
+      body = `<div class="proj-row" style="border-bottom:none;padding-bottom:0"><span class="k"></span><span style="display:flex;gap:24px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em"><span style="min-width:58px;text-align:right">${item.cols[0]}</span><span style="min-width:58px;text-align:right">${item.cols[1]}</span></span></div>` + body;
+    } else if (item.type === 'ratio') {
+      body = `<div class="rec-ratio">${item.ratio.split(':').map(p => rScaleStr(p.trim(), b)).join(' : ')}</div><div class="rec-ratio-lbl">${item.label}</div>`;
+    } else {
+      body = item.rows.map(r => `<div class="proj-row"><span class="k">${r[0]}</span><span><b>${rScaleStr(r[1], b)}</b></span></div>`).join('');
+    }
+    return `<div class="proj-card">
+        <h3>${REC_ICON[item.name] || '🍮'} ${item.name}</h3>
+        <div class="proj-sub">${item.type === 'ratio' ? 'wet caramel base' : item.type === 'twocol' ? 'two ways to portion it' : 'filling recipe'}${b !== 1 ? ` · scaled ${rFmt(b)}×` : ''}</div>
+        ${recBatchRow()}${body}
+        ${item.notes ? `<div class="rec-box"><b>Notes</b>${item.notes}</div>` : ''}
+      </div>`;
+  }
+  function recSimpleCard(item) {
+    const b = recState.batches;
+    return `<div class="proj-card">
+        <h3>${REC_ICON[item.name] || '🧁'} ${item.name}</h3>
+        <div class="proj-sub">${item.yieldText || 'base recipe'}${b !== 1 ? ` · scaled ${rFmt(b)}×` : ''}</div>
+        ${recBatchRow()}
+        ${recIngRows(item.rows, b)}
+        ${item.soak ? `<div class="rec-box"><b>Soak (2+ hrs)</b>${item.soak.map(s => `<div class="gl"><span>${s[0]}</span><span>${rFmt(s[1] * b)}g</span></div>`).join('')}</div>` : ''}
+        ${item.notes ? `<div class="rec-box"><b>Notes</b>${item.notes}</div>` : ''}
+        ${recLink(item.link)}
+      </div>`;
+  }
+  function recSableCard() {
+    const t = REC_SABLE.types[recState.sableType], b = recState.batches;
+    let extra, sub;
+    if (t.key === 'base') { extra = t.addins; sub = 'original · 280g cake flour base'; }
+    else { const fl = t.flavors[recState.sableFlav]; extra = fl.addins; sub = `flavored · 240g cake flour base · ${fl.name}`; }
+    const typeChips = `<div class="rec-scale">${REC_SABLE.types.map((tt, i) => `<button data-rsabletype="${i}" class="${recState.sableType === i ? 'on' : ''}">${tt.label}</button>`).join('')}</div>`;
+    const flavChips = t.key === 'flavored' ? `<div class="rec-scale">${t.flavors.map((fl, i) => `<button data-rsableflav="${i}" class="${recState.sableFlav === i ? 'on' : ''}">${fl.name}</button>`).join('')}</div>` : '';
+    return `<div class="proj-card">
+        <h3>🍪 Sable Cookies</h3>
+        <div class="proj-sub">${sub}${b !== 1 ? ` · scaled ${rFmt(b)}×` : ''}</div>
+        ${typeChips}${flavChips}${recBatchRow()}
+        ${recIngRows(t.rows, b)}${recIngRows(extra, b, 'batches', true)}
+        <div class="rec-box"><b>Notes</b>${REC_SABLE.notes}</div>
+      </div>`;
+  }
+  function recMacCard(item) {
+    const mult = recState.macCustom != null ? recState.macCustom : item.scales[recState.macScale].mult;
+    return `<div class="proj-card">
+        <h3>${REC_ICON[item.name] || '🌈'} ${item.name}</h3>
+        <div class="proj-sub">swiss meringue method${mult !== 1 ? ` · scaled ${rFmt(mult)}×` : ''}</div>
+        <div class="rec-scale"><span class="lbl">Scale</span>${item.scales.map((s, i) => `<button data-rmacscale="${i}" class="${recState.macCustom == null && recState.macScale === i ? 'on' : ''}">${s.label}</button>`).join('')}</div>
+        ${recIngRows(item.base, mult, 'macaron')}
+        <div class="rec-box"><b>Notes</b>${item.notes}</div>
+        ${recLink(item.link)}
+      </div>`;
+  }
+  function recGfCard(item) {
+    const sz = item.sizes[recState.gfSize], b = recState.batches;
+    return `<div class="proj-card">
+        <h3>🎂 ${item.name}</h3>
+        <div class="proj-sub">${sz.yieldText || 'base recipe'}${b !== 1 ? ` · scaled ${rFmt(b)}×` : ''}</div>
+        <div class="rec-scale">${item.sizes.map((s, i) => `<button data-rgfsize="${i}" class="${recState.gfSize === i ? 'on' : ''}">${s.label}</button>`).join('')}</div>
+        ${recBatchRow()}
+        ${recIngRows(sz.rows, b)}
+        <div class="rec-box"><b>Notes</b>${item.notes}</div>
+        ${recLink(item.link)}
+      </div>`;
+  }
+  function renderRecipes() {
+    document.querySelectorAll('#recSection button').forEach(x => x.classList.toggle('on', x.dataset.sec === recState.sec));
+    const list = recList();
+    if (recState.idx >= list.length) recState.idx = 0;
+    document.getElementById('recChips').innerHTML = list.map((it, i) =>
+      `<button data-rchip="${i}" class="${i === recState.idx ? 'on' : ''}">${REC_ICON[it.name] || '📖'} ${it.name}</button>`).join('');
+    const item = list[recState.idx];
+    let html;
+    if (recState.sec === 'mad') html = recMadCard(item);
+    else if (recState.sec === 'fill') html = recFillCard(item);
+    else if (item.type === 'sable') html = recSableCard();
+    else if (item.type === 'macaron') html = recMacCard(item);
+    else if (item.type === 'glutenfree') html = recGfCard(item);
+    else html = recSimpleCard(item);
+    document.getElementById('recCard').innerHTML = html;
+  }
+  document.getElementById('view-recipes').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    const d = b.dataset;
+    if (d.sec) { recState.sec = d.sec; recState.idx = 0; recResetVariants(); }
+    else if (d.rchip != null) { recState.idx = Number(d.rchip); recResetVariants(); }
+    else if (d.rbatch != null) recState.batches = Number(d.rbatch);
+    else if (d.rmadver != null) recState.madVer = Number(d.rmadver);
+    else if (d.rsabletype != null) { recState.sableType = Number(d.rsabletype); recState.sableFlav = 0; }
+    else if (d.rsableflav != null) recState.sableFlav = Number(d.rsableflav);
+    else if (d.rmacscale != null) { recState.macScale = Number(d.rmacscale); recState.macCustom = null; }
+    else if (d.rgfsize != null) recState.gfSize = Number(d.rgfsize);
+    else return;
+    renderRecipes();
+  });
+  // Type any amount over a dashed number to rescale the whole recipe from it.
+  document.getElementById('recCard').addEventListener('change', e => {
+    const inp = e.target.closest('.rec-qty'); if (!inp) return;
+    const n = parseFloat(inp.value), base = parseFloat(inp.dataset.base);
+    if (isNaN(n) || n <= 0 || !base) { renderRecipes(); return; }
+    const f = Math.round(n / base * 1000) / 1000;
+    if (inp.dataset.ctx === 'macaron') recState.macCustom = f; else recState.batches = f;
+    renderRecipes();
   });
 
   // Pull fresh data for whatever tab is showing (skips while a dialog is open).
