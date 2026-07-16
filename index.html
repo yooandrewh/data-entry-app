@@ -419,6 +419,32 @@
     cursor: pointer; font-family: inherit; transition: background .15s ease, color .15s ease;
   }
   .bakedays button.on { background: var(--blue); color: #fff; }
+  .bakedate-add { display: flex; gap: 8px; width: 100%; margin-top: 2px; }
+  .bakedate-add input[type="date"] {
+    flex: 1; min-width: 0; appearance: none; border: 1px solid var(--sep);
+    background: var(--card); color: var(--text); font-family: inherit; font-size: 14px;
+    padding: 8px 10px; border-radius: 10px;
+  }
+  .bakedate-add button {
+    appearance: none; border: none; cursor: pointer; font-family: inherit;
+    background: var(--field); color: var(--blue); font-weight: 700; font-size: 13px;
+    padding: 8px 14px; border-radius: 10px; white-space: nowrap;
+  }
+  .bakedate-chips { display: flex; flex-wrap: wrap; gap: 7px; width: 100%; }
+  .bakedate-chips:empty { display: none; }
+  .bakedate-chip {
+    display: inline-flex; align-items: center; gap: 7px; background: rgba(0,122,255,0.12);
+    color: var(--blue); font-weight: 700; font-size: 13px; padding: 6px 6px 6px 12px; border-radius: 999px;
+  }
+  .bakedate-chip button {
+    appearance: none; border: none; background: rgba(0,122,255,0.2); color: var(--blue);
+    width: 20px; height: 20px; border-radius: 999px; font-size: 12px; line-height: 1;
+    cursor: pointer; font-family: inherit; padding: 0;
+  }
+  .be-section-label {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--muted); font-weight: 700; margin: 15px 0 4px;
+  }
   /* ---- Recipes tab ---- */
   .beta-pill {
     display: inline-block; vertical-align: middle; margin-left: 9px;
@@ -507,7 +533,7 @@
 <body>
 
 <!-- Version badge — bump on every deploy (v = commit count, time = deploy time PST) -->
-<div class="ver-badge">v63 · Jul 14, 9:14 PM</div>
+<div class="ver-badge">v64 · Jul 15, 7:16 PM</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -685,7 +711,7 @@
         <input type="date" id="planDate" />
       </div>
       <div class="row row-stack">
-        <span class="lbl">Bake days</span>
+        <span class="lbl">Bake days <span style="font-weight:400;color:var(--muted);font-size:12px">— tap weekdays, or add a specific date</span></span>
         <div class="bakedays" id="bakeDays">
           <button type="button" data-dow="1">M</button>
           <button type="button" data-dow="2">T</button>
@@ -695,9 +721,14 @@
           <button type="button" data-dow="6">S</button>
           <button type="button" data-dow="0">S</button>
         </div>
+        <div class="bakedate-add">
+          <input type="date" id="bakeDateInput" aria-label="Add a bake date" />
+          <button type="button" id="bakeDateAddBtn">➕ Add date</button>
+        </div>
+        <div class="bakedate-chips" id="bakeDateChips"></div>
       </div>
     </div>
-    <div class="hint" id="planHint">Forecasts demand day-by-day (weekdays vs weekends) from your recent sales, then subtracts what's on hand. Pick your bake days to get a per-bake-day schedule. Time est: batch = 20 · 20m setup + 15m prep + 14m bake per batch (glaze runs during the bake).</div>
+    <div class="hint" id="planHint">Pick the exact days you'll bake (they can vary week to week — only bake this week? just add this week's dates and the last one covers the rest). Leave empty for a single total. Time est: batch = 20 · 20m setup + 15m prep + 14m bake per batch (glaze runs during the bake).</div>
     <div id="planList"></div>
   </div>
 </div>
@@ -1461,6 +1492,7 @@
     const p = n => String(n).padStart(2, '0');
     return `${dt.getFullYear()}-${p(dt.getMonth() + 1)}-${p(dt.getDate())}`;
   }
+  const ymdOf = dt => { const p = n => String(n).padStart(2, '0'); return `${dt.getFullYear()}-${p(dt.getMonth() + 1)}-${p(dt.getDate())}`; };
   function applyDateRange() {
     fromEl.value = dateFrom; toEl.value = dateTo;
     dateClearBtn.hidden = !(dateFrom || dateTo);
@@ -1727,8 +1759,16 @@
 
   // ===== Shared projection math (used by Home + Projections) =====
   let projLoc = 'all', homeLoc = 'all', planLoc = 'all';   // independent per-tab location filters
-  let planBakeDays = [];   // weekday ints (0=Sun..6=Sat) the user bakes on; empty = lump-sum mode
-  try { const b = JSON.parse(localStorage.getItem('planBakeDays') || '[]'); if (Array.isArray(b)) planBakeDays = b; } catch (e) {}
+  let planBakeDates = [];   // specific 'YYYY-MM-DD' bake dates (vary week to week); empty = lump-sum mode
+  try { const b = JSON.parse(localStorage.getItem('planBakeDates') || '[]'); if (Array.isArray(b)) planBakeDates = b.filter(x => typeof x === 'string'); } catch (e) {}
+  const saveBakeDates = () => { try { localStorage.setItem('planBakeDates', JSON.stringify(planBakeDates)); } catch (e) {} };
+  // Every date of a given weekday within [startYmd, endYmd] inclusive.
+  function datesOfWeekdayInWindow(dow, startYmd, endYmd) {
+    const out = []; const end = parseEntryDate(endYmd);
+    for (let d = parseEntryDate(startYmd); d <= end; d.setDate(d.getDate() + 1))
+      if (d.getDay() === dow) out.push(ymdOf(d));
+    return out;
+  }
   let projScenario = 'base';              // 'bear' (best/slow) | 'base' | 'bull' (worst/busy)
   const RUN_WINDOW = 14;                          // days of sales history for run-rate
   const ZERO = () => Object.fromEntries(PRODUCTS.map(p => [p, 0]));
@@ -2132,10 +2172,8 @@
   // Per-bake-day schedule: simulate stock forward from tomorrow → target, and on each
   // bake day bake enough (per flavor, +CV buffer) to cover demand until the NEXT bake
   // day. Returns [{ymd, bake:{p:n}, coverUntil, total, any}].
-  function bakeSchedule(st, dowr, startYmd, targetYmd, bakeSet, growth) {
+  function bakeSchedule(st, dowr, startYmd, targetYmd, bakeDateSet, growth) {
     const g = growth || 1;
-    const pad = n => String(n).padStart(2, '0');
-    const ymdOf = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
     const days = [];
     const end = parseEntryDate(targetYmd);
     for (let d = parseEntryDate(startYmd); d <= end; d.setDate(d.getDate() + 1))
@@ -2150,9 +2188,9 @@
     const stock = { ...st.stock };
     const events = [];
     for (let i = 0; i < days.length; i++) {
-      if (bakeSet.has(days[i].dow)) {
+      if (bakeDateSet.has(days[i].ymd)) {
         let j = i + 1;
-        while (j < days.length && !bakeSet.has(days[j].dow)) j++;   // next bake day (exclusive window end)
+        while (j < days.length && !bakeDateSet.has(days[j].ymd)) j++;   // next bake date (exclusive window end)
         const need = ZERO();
         for (let k = i; k < j; k++) { const dem = demandOf(days[k], k); for (const p of PRODUCTS) need[p] += dem[p]; }
         const bake = {}; let any = false, total = 0;
@@ -2169,12 +2207,16 @@
   }
   const wkShort = ymd => new Intl.DateTimeFormat('en-US', { weekday: 'short' }).format(parseEntryDate(ymd));
 
-  // Baking effort model (per Andrew's process): a batch yields 20; each baking
-  // session costs 20m setup once, then 15m prep + 14m bake per batch (glaze happens
-  // during the bake, so it's free). Sequential single-oven estimate.
+  // Baking effort model (per Andrew's process): a batch yields 20 of ONE flavor;
+  // each baking session costs 20m setup once, then 15m prep + 14m bake per batch
+  // (glaze happens during the bake, so it's free). Batches are counted per flavor
+  // (you can't mix flavors in a batch). Sequential single-oven estimate.
   const BATCH_YIELD = 20, SETUP_MIN = 20, PREP_MIN = 15, BAKE_MIN = 14;
-  function bakeEffort(total) {
-    const batches = Math.ceil(Math.max(0, total) / BATCH_YIELD);
+  const flavorBatches = n => Math.ceil(Math.max(0, n) / BATCH_YIELD);
+  // Effort for a whole bake session given a {flavor: qty} map — batches summed per flavor.
+  function bakeEffort(bake) {
+    let batches = 0;
+    for (const p of PRODUCTS) batches += flavorBatches(bake[p] || 0);
     return { batches, min: batches ? SETUP_MIN + batches * (PREP_MIN + BAKE_MIN) : 0 };
   }
   function fmtDur(min) {
@@ -2188,19 +2230,21 @@
     const list = document.getElementById('planList');
     const sub = document.getElementById('planSub');
     const dateEl = document.getElementById('planDate');
-    initBakeDays();
     const todayYmd = nowPST().slice(0, 10);
     dateEl.min = addDays(todayYmd, 1);
     if (!dateEl.value) dateEl.value = addDays(todayYmd, 7);   // default: one week out
     const target = dateEl.value;
+    syncBakeUI();
     if (target <= todayYmd) { sub.textContent = 'Pick a future date'; list.innerHTML = `<div class="db-empty"><div class="big">📅</div>Pick a date in the future.</div>`; return; }
     sub.textContent = 'Loading…';
     let sales, entries;
     try { [sales, entries] = await Promise.all([getSales(), fetchRemoteEntries()]); }
     catch (e) { sub.textContent = 'Could not load'; list.innerHTML = `<div class="db-empty"><div class="big">📅</div>Couldn't load data.</div>`; return; }
-    const bakeSet = new Set(planBakeDays);
-    sub.textContent = bakeSet.size
-      ? `Bake-day schedule through ${fmtWhen(target)}`
+    // Only bake dates strictly after today and on/before the target matter.
+    const activeDates = planBakeDates.filter(d => d > todayYmd && d <= target).sort();
+    const bakeDateSet = new Set(activeDates);
+    sub.textContent = bakeDateSet.size
+      ? `Bake plan · ${activeDates.length} day${activeDates.length === 1 ? '' : 's'} through ${fmtWhen(target)}`
       : `Bake to last through ${fmtWhen(target)}`;
     let html = '';
     for (const loc of LOCATIONS.filter(l => planLoc === 'all' || l === planLoc)) {
@@ -2210,54 +2254,66 @@
       if (!dowr) { html += `<div class="proj-card"><h3>📍 ${loc}</h3><div class="proj-sub">No recent sales to forecast from.</div></div>`; continue; }
       const { demand, nDays, nWe } = forecastDemand(dowr, addDays(todayYmd, 1), target, st.growth);   // tomorrow → target
 
-      if (bakeSet.size) {
-        // Per-bake-day schedule: one row per bake day, each covering until the next bake.
-        const events = bakeSchedule(st, dowr, addDays(todayYmd, 1), target, bakeSet, st.growth);
-        const grand = events.reduce((s, ev) => s + ev.total, 0);
-        let evRows;
-        if (!events.length) {
-          evRows = `<div class="proj-sub">No bake days fall between tomorrow and ${fmtWhen(target)}.</div>`;
-        } else {
-          evRows = events.map(ev => {
-            const eff = bakeEffort(ev.total);
-            const chips = ev.any
-              ? `<div class="be-chips">${PRODUCTS.filter(p => ev.bake[p] > 0).map(p => `<span class="db-chip">${PRODUCT_ICON[p]} ${ev.bake[p]}</span>`).join('')}</div>
-                 <div class="be-effort">🧺 ${batchLabel(eff.batches)} · ⏱️ ~${fmtDur(eff.min)}</div>`
-              : `<div class="be-enough">✓ enough on hand — no bake needed</div>`;
-            return `<div class="bake-event">
-                <div class="be-head">🗓️ ${wkShort(ev.ymd)} ${fmtWhen(ev.ymd)} <span class="be-cover">covers thru ${wkShort(ev.coverUntil)} ${fmtWhen(ev.coverUntil)}</span>${ev.any ? `<span class="be-total">${ev.total}</span>` : ''}</div>
-                ${chips}
-              </div>`;
-          }).join('');
+      if (bakeDateSet.size) {
+        // Per-bake-date schedule: each chosen date covers demand until the next chosen
+        // date (the last one crams everything through the target).
+        const events = bakeSchedule(st, dowr, addDays(todayYmd, 1), target, bakeDateSet, st.growth);
+        // Totals + per-flavor rollup (batches counted per flavor, per session).
+        const perFlavor = ZERO(), perFlavorB = ZERO();
+        let totNeed = 0, totBatches = 0, totMin = 0;
+        for (const ev of events) {
+          totMin += bakeEffort(ev.bake).min;
+          for (const p of PRODUCTS) if (ev.bake[p] > 0) {
+            perFlavor[p] += ev.bake[p]; perFlavorB[p] += flavorBatches(ev.bake[p]);
+            totNeed += ev.bake[p]; totBatches += flavorBatches(ev.bake[p]);
+          }
         }
-        const totBatches = events.reduce((s, ev) => s + bakeEffort(ev.total).batches, 0);
-        const totMin = events.reduce((s, ev) => s + bakeEffort(ev.total).min, 0);
+        const flavorRows = totNeed > 0
+          ? `<div class="be-section-label">Per flavor · whole plan</div>` +
+            PRODUCTS.filter(p => perFlavor[p] > 0).map(p =>
+              `<div class="proj-row"><span class="k">${PRODUCT_ICON[p]} ${p}</span><span><b>${perFlavor[p]}</b> madeleines · ${batchLabel(perFlavorB[p])}</span></div>`).join('')
+          : '';
+        const evRows = `<div class="be-section-label">By bake day</div>` + events.map(ev => {
+          const eff = bakeEffort(ev.bake);
+          const chips = ev.any
+            ? `<div class="be-chips">${PRODUCTS.filter(p => ev.bake[p] > 0).map(p => `<span class="db-chip">${PRODUCT_ICON[p]} ${ev.bake[p]}<span style="color:var(--muted);font-weight:500"> · ${flavorBatches(ev.bake[p])}b</span></span>`).join('')}</div>
+               <div class="be-effort">🧺 ${batchLabel(eff.batches)} · ⏱️ ~${fmtDur(eff.min)}</div>`
+            : `<div class="be-enough">✓ enough on hand — no bake needed</div>`;
+          return `<div class="bake-event">
+              <div class="be-head">🗓️ ${wkShort(ev.ymd)} ${fmtWhen(ev.ymd)} <span class="be-cover">covers thru ${wkShort(ev.coverUntil)} ${fmtWhen(ev.coverUntil)}</span>${ev.any ? `<span class="be-total">${ev.total}</span>` : ''}</div>
+              ${chips}
+            </div>`;
+        }).join('');
         html += `<div class="proj-card">
             <h3>📍 ${loc}</h3>
-            <div class="proj-sub">${st.stockTotal} on hand now · ${events.length} bake day${events.length === 1 ? '' : 's'} to ${fmtWhen(target)}${trendNote(st)}</div>
-            ${grand ? `<div class="proj-runout">Bake <span class="big">${grand}</span> total · ${batchLabel(totBatches)} · ~${fmtDur(totMin)} across ${events.length} day${events.length === 1 ? '' : 's'}</div>` : ''}
+            <div class="proj-sub">${st.stockTotal} on hand now · ${activeDates.length} bake day${activeDates.length === 1 ? '' : 's'} to ${fmtWhen(target)}${trendNote(st)}</div>
+            ${totNeed
+              ? `<div class="proj-runout">Make <span class="big">${totNeed}</span> madeleines · ${batchLabel(totBatches)} · ~${fmtDur(totMin)}</div>`
+              : `<div class="proj-runout" style="color:var(--green)">✓ On hand covers you through ${fmtWhen(target)}</div>`}
+            ${flavorRows}
             ${evRows}
           </div>`;
         continue;
       }
 
-      // Lump-sum mode (no bake days picked): one total to last the whole window.
+      // Lump-sum mode (no bake dates picked): one total to last the whole window.
       const m = Math.min(0.6, FCAST_Z * (st.dailyCV || 0) / Math.sqrt(Math.max(1, nDays)));
+      const bakeMap = ZERO();
       let rows = '', bakeSafe = 0, bakeExp = 0;
       for (const p of PRODUCTS) {
         const exp = demand[p], safe = Math.max(0, Math.ceil(exp * (1 + m) - st.stock[p]));
-        bakeSafe += safe; bakeExp += Math.max(0, Math.ceil(exp - st.stock[p]));
+        bakeMap[p] = safe; bakeSafe += safe; bakeExp += Math.max(0, Math.ceil(exp - st.stock[p]));
         const right = safe > 0
-          ? `<b>bake ${safe}</b>`
+          ? `<b>bake ${safe}</b> <span style="color:var(--muted);font-weight:500">· ${batchLabel(flavorBatches(safe))}</span>`
           : `<span style="color:var(--green);font-weight:700">enough</span>`;
-        rows += `<div class="proj-row"><span class="k">${PRODUCT_ICON[p]} ${p}</span><span>${right} <span style="color:var(--muted);font-weight:500">· have ${st.stock[p]} · need ~${Math.round(exp)}</span></span></div>`;
+        rows += `<div class="proj-row"><span class="k">${PRODUCT_ICON[p]} ${p}</span><span>${right} <span style="color:var(--muted);font-weight:500">· have ${st.stock[p]}</span></span></div>`;
       }
-      const effLump = bakeEffort(bakeSafe);
-      const effLine = bakeSafe > 0 ? `<div class="be-effort" style="margin:2px 0 12px">🧺 ${batchLabel(effLump.batches)} · ⏱️ ~${fmtDur(effLump.min)}</div>` : '';
+      const effLump = bakeEffort(bakeMap);
+      const effLine = bakeSafe > 0 ? `<div class="be-effort" style="margin:2px 0 12px">🧺 ${batchLabel(effLump.batches)} total · ⏱️ ~${fmtDur(effLump.min)}</div>` : '';
       html += `<div class="proj-card">
           <h3>📍 ${loc}</h3>
           <div class="proj-sub">${nDays} day${nDays === 1 ? '' : 's'} to go · ${nDays - nWe} weekday / ${nWe} weekend · ${st.stockTotal} on hand now${trendNote(st)}</div>
-          <div class="proj-runout">Bake <span class="big">${bakeSafe}</span> to be safe <span style="color:var(--muted);font-weight:600">(~${bakeExp} expected)</span></div>
+          <div class="proj-runout">Make <span class="big">${bakeSafe}</span> to be safe <span style="color:var(--muted);font-weight:600">(~${bakeExp} expected)</span></div>
           ${effLine}
           ${rows}
         </div>`;
@@ -2265,17 +2321,46 @@
     if (!html) html = `<div class="db-empty"><div class="big">📅</div>Nothing to plan.</div>`;
     list.innerHTML = html;
   }
-  // Bake-days selector: toggle a weekday, persist, re-plan.
-  function initBakeDays() {
-    document.querySelectorAll('#bakeDays button').forEach(b =>
-      b.classList.toggle('on', planBakeDays.includes(Number(b.dataset.dow))));
+  // Sync the bake-day controls to state: weekday chips light up when every matching
+  // date in the current window is selected; render removable date chips.
+  function syncBakeUI() {
+    const today = nowPST().slice(0, 10);
+    const start = addDays(today, 1);
+    const target = document.getElementById('planDate').value || addDays(today, 7);
+    document.querySelectorAll('#bakeDays button').forEach(b => {
+      const win = datesOfWeekdayInWindow(Number(b.dataset.dow), start, target);
+      b.classList.toggle('on', win.length > 0 && win.every(d => planBakeDates.includes(d)));
+    });
+    const shown = planBakeDates.filter(d => d >= start && d <= target).sort();
+    document.getElementById('bakeDateChips').innerHTML = shown.map(d =>
+      `<span class="bakedate-chip">${wkShort(d)} ${fmtWhen(d)}<button data-rm="${d}" aria-label="Remove ${d}">✕</button></span>`).join('');
+    const inp = document.getElementById('bakeDateInput');
+    inp.min = start; inp.max = target;
   }
+  // Weekday chip: add/remove every date of that weekday in the current window.
   document.getElementById('bakeDays').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
-    const dow = Number(b.dataset.dow);
-    planBakeDays = planBakeDays.includes(dow) ? planBakeDays.filter(d => d !== dow) : [...planBakeDays, dow];
-    try { localStorage.setItem('planBakeDays', JSON.stringify(planBakeDays)); } catch (e) {}
-    b.classList.toggle('on');
+    const today = nowPST().slice(0, 10);
+    const start = addDays(today, 1);
+    const target = document.getElementById('planDate').value || addDays(today, 7);
+    const win = datesOfWeekdayInWindow(Number(b.dataset.dow), start, target);
+    if (!win.length) return;
+    const allSel = win.every(d => planBakeDates.includes(d));
+    if (allSel) planBakeDates = planBakeDates.filter(d => !win.includes(d));
+    else win.forEach(d => { if (!planBakeDates.includes(d)) planBakeDates.push(d); });
+    planBakeDates.sort(); saveBakeDates();
+    renderPlan();
+  });
+  // "Add date" — a one-off specific bake day.
+  document.getElementById('bakeDateAddBtn').addEventListener('click', () => {
+    const inp = document.getElementById('bakeDateInput');
+    const v = inp.value, today = nowPST().slice(0, 10);
+    if (v && v > today && !planBakeDates.includes(v)) { planBakeDates.push(v); planBakeDates.sort(); saveBakeDates(); inp.value = ''; renderPlan(); }
+  });
+  // Remove a date chip.
+  document.getElementById('bakeDateChips').addEventListener('click', e => {
+    const b = e.target.closest('button[data-rm]'); if (!b) return;
+    planBakeDates = planBakeDates.filter(d => d !== b.dataset.rm); saveBakeDates();
     renderPlan();
   });
   document.getElementById('planLoc').addEventListener('click', e => {
