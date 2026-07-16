@@ -444,6 +444,13 @@
     font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em;
     color: var(--muted); font-weight: 700; margin: 15px 0 4px;
   }
+  .split-card .lbl { font-weight: 600; display: block; margin-bottom: 4px; }
+  .split-card input[type="range"] {
+    width: 100%; margin: 10px 0 8px; accent-color: var(--blue); height: 24px;
+  }
+  .split-vals { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; color: var(--muted); }
+  .split-vals b { color: var(--blue); font-size: 17px; font-weight: 800; margin-right: 3px; }
+  .split-vals span:last-child { text-align: right; }
   /* ---- Recipes tab ---- */
   .beta-pill {
     display: inline-block; vertical-align: middle; margin-left: 9px;
@@ -532,7 +539,7 @@
 <body>
 
 <!-- Version badge — bump on every deploy (v = commit count, time = deploy time PST) -->
-<div class="ver-badge">v66 · Jul 15, 7:52 PM</div>
+<div class="ver-badge">v67 · Jul 15, 7:59 PM</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -727,6 +734,7 @@
         <div class="bakedate-chips" id="bakeDateChips"></div>
       </div>
     </div>
+    <div id="planSplitWrap"></div>
     <div id="planList"></div>
   </div>
 </div>
@@ -1757,6 +1765,8 @@
 
   // ===== Shared projection math (used by Home + Projections) =====
   let projLoc = 'all', homeLoc = 'all', planLoc = 'all';   // independent per-tab location filters
+  let planSplit = 0;        // 0..1 — front-load fraction shifted onto the earlier of two bake dates
+  let lastPlanSales = null, lastPlanEntries = null;   // cached for live slider re-paint
   let planBakeDates = [];   // specific 'YYYY-MM-DD' bake dates (vary week to week); empty = lump-sum mode
   try { const b = JSON.parse(localStorage.getItem('planBakeDates') || '[]'); if (Array.isArray(b)) planBakeDates = b.filter(x => typeof x === 'string'); } catch (e) {}
   const saveBakeDates = () => { try { localStorage.setItem('planBakeDates', JSON.stringify(planBakeDates)); } catch (e) {} };
@@ -2293,50 +2303,82 @@
       </div>`;
   }
 
+  // Redistribute a 2-date schedule: shift a fraction r of the later day's load onto
+  // the earlier day (r=0 → bake as-needed; r=1 → bake it all on the first day). Every
+  // position stays safe — the total per flavor is unchanged, only WHEN it's baked.
+  function applySplit(events, r) {
+    if (events.length !== 2 || !(r > 0)) return events;
+    const [e1, e2] = events;
+    const b1 = ZERO(), b2 = ZERO(); let t1 = 0, t2 = 0;
+    for (const p of PRODUCTS) {
+      const total = e1.bake[p] + e2.bake[p];
+      b1[p] = e1.bake[p] + Math.round(r * e2.bake[p]);
+      b2[p] = total - b1[p];
+      t1 += b1[p]; t2 += b2[p];
+    }
+    return [{ ...e1, bake: b1, total: t1, any: t1 > 0 }, { ...e2, bake: b2, total: t2, any: t2 > 0 }];
+  }
+
   async function renderPlan() {
-    const list = document.getElementById('planList');
     const sub = document.getElementById('planSub');
+    const list = document.getElementById('planList');
     const dateEl = document.getElementById('planDate');
     const todayYmd = nowPST().slice(0, 10);
     dateEl.min = addDays(todayYmd, 1);
     if (!dateEl.value) dateEl.value = addDays(todayYmd, 7);   // default: one week out
-    const target = dateEl.value;
     syncBakeUI();
-    if (target <= todayYmd) { sub.textContent = 'Pick a future date'; list.innerHTML = `<div class="db-empty"><div class="big">📅</div>Pick a date in the future.</div>`; return; }
+    if (dateEl.value <= todayYmd) { sub.textContent = 'Pick a future date'; document.getElementById('planSplitWrap').innerHTML = ''; list.innerHTML = `<div class="db-empty"><div class="big">📅</div>Pick a date in the future.</div>`; return; }
     sub.textContent = 'Loading…';
     let sales, entries;
     try { [sales, entries] = await Promise.all([getSales(), fetchRemoteEntries()]); }
     catch (e) { sub.textContent = 'Could not load'; list.innerHTML = `<div class="db-empty"><div class="big">📅</div>Couldn't load data.</div>`; return; }
-    // Only bake dates strictly after today and on/before the target matter.
+    lastPlanSales = sales; lastPlanEntries = entries;
+    paintPlan(true);
+  }
+  // Build the plan (cards + optional split slider) from the last-loaded data and the
+  // current planSplit. fullSlider=true rebuilds the slider element; false leaves the
+  // slider input untouched (so a live drag isn't interrupted) and only updates its numbers.
+  function paintPlan(fullSlider) {
+    const sales = lastPlanSales, entries = lastPlanEntries;
+    if (!sales) return;
+    const sub = document.getElementById('planSub');
+    const todayYmd = nowPST().slice(0, 10);
+    const target = document.getElementById('planDate').value;
     const activeDates = planBakeDates.filter(d => d > todayYmd && d <= target).sort();
     const bakeDateSet = new Set(activeDates);
     sub.textContent = bakeDateSet.size
       ? `Bake plan · ${activeDates.length} day${activeDates.length === 1 ? '' : 's'} through ${fmtWhen(target)}`
       : `Bake to last through ${fmtWhen(target)}`;
+
     let html = '';
     const locs = LOCATIONS.filter(l => planLoc === 'all' || l === planLoc);
     const combined = planLoc === 'all' && locs.length > 1;
     const computed = locs.map(loc => ({ loc, st: locStats(loc, sales, entries), dowr: dowRates(sales, loc, 28) }));
     const usable = computed.filter(c => c.st.hasInv && c.dowr);
     const skipped = computed.filter(c => !(c.st.hasInv && c.dowr));
+    // Slider only makes sense for exactly two bake dates.
+    const splitOn = bakeDateSet.size && activeDates.length === 2;
+    let agg1 = 0, agg2 = 0;
+    const tally = evs => { for (const ev of evs) { if (ev.ymd === activeDates[0]) agg1 += ev.total; else if (ev.ymd === activeDates[1]) agg2 += ev.total; } };
 
     if (bakeDateSet.size) {
-      // Per-bake-date schedule: each chosen date covers demand until the next chosen
-      // date (the last one crams everything through the target).
       const withEvents = usable.map(c => ({ ...c, events: bakeSchedule(c.st, c.dowr, addDays(todayYmd, 1), target, bakeDateSet, c.st.growth) }));
       const dayWord = `${activeDates.length} bake day${activeDates.length === 1 ? '' : 's'} to ${fmtWhen(target)}`;
       if (combined) {
         if (withEvents.length) {
-          const merged = mergeEvents(withEvents.map(w => w.events));
+          const merged = applySplit(mergeEvents(withEvents.map(w => w.events)), planSplit);
+          tally(merged);
           const stockTotal = withEvents.reduce((s, w) => s + w.st.stockTotal, 0);
           html += scheduleCardHtml('Both stores · combined', `${stockTotal} on hand across ${withEvents.length === 1 ? 'store' : 'both stores'} · ${dayWord}`, merged, target);
         }
       } else {
-        for (const w of withEvents)
-          html += scheduleCardHtml(`📍 ${w.loc}`, `${w.st.stockTotal} on hand now · ${dayWord}${trendNote(w.st)}`, w.events, target);
+        for (const w of withEvents) {
+          const evs = applySplit(w.events, planSplit);
+          tally(evs);
+          html += scheduleCardHtml(`📍 ${w.loc}`, `${w.st.stockTotal} on hand now · ${dayWord}${trendNote(w.st)}`, evs, target);
+        }
       }
     } else {
-      // Lump-sum mode (no bake dates picked): one total to last the whole window.
       const withMaps = usable.map(c => {
         const { demand, nDays, nWe } = forecastDemand(c.dowr, addDays(todayYmd, 1), target, c.st.growth);
         const m = Math.min(0.6, FCAST_Z * (c.st.dailyCV || 0) / Math.sqrt(Math.max(1, nDays)));
@@ -2357,12 +2399,30 @@
           html += lumpCardHtml(`📍 ${w.loc}`, `${w.nDays} day${w.nDays === 1 ? '' : 's'} to go · ${w.nDays - w.nWe} weekday / ${w.nWe} weekend · ${w.st.stockTotal} on hand now${trendNote(w.st)}`, w.bakeMap, w.haveMap, w.expMap);
       }
     }
-    // Note any store that couldn't be planned (so a combined total isn't silently short).
     for (const c of skipped)
       html += `<div class="proj-card"><h3>📍 ${c.loc}</h3><div class="proj-sub">${c.st.hasInv ? 'No recent sales to forecast from.' : 'Add an inventory count to include this store.'}</div></div>`;
-
     if (!html) html = `<div class="db-empty"><div class="big">📅</div>Nothing to plan.</div>`;
-    list.innerHTML = html;
+    document.getElementById('planList').innerHTML = html;
+
+    // Split slider (two dates only).
+    const wrap = document.getElementById('planSplitWrap');
+    if (splitOn && (agg1 + agg2) > 0) {
+      if (fullSlider) {
+        wrap.innerHTML = `<div class="card split-card">
+            <div class="lbl">Split across the two days <span style="font-weight:400;color:var(--muted);font-size:12px">— drag to bake more upfront</span></div>
+            <input type="range" id="planSplitRange" min="0" max="100" step="5" value="${Math.round(planSplit * 100)}" />
+            <div class="split-vals">
+              <span><b id="splitVal1">${agg1}</b> · ${fmtWhen(activeDates[0])}</span>
+              <span><b id="splitVal2">${agg2}</b> · ${fmtWhen(activeDates[1])}</span>
+            </div>
+          </div>`;
+      } else {
+        const v1 = document.getElementById('splitVal1'), v2 = document.getElementById('splitVal2');
+        if (v1) v1.textContent = agg1; if (v2) v2.textContent = agg2;
+      }
+    } else {
+      wrap.innerHTML = '';
+    }
   }
   // Sync the bake-day controls to state: weekday chips light up when every matching
   // date in the current window is selected; render removable date chips.
@@ -2413,6 +2473,12 @@
     renderPlan();
   });
   document.getElementById('planDate').addEventListener('change', renderPlan);
+  // Live split slider — re-paint cards without touching the slider element mid-drag.
+  document.getElementById('planSplitWrap').addEventListener('input', e => {
+    if (e.target.id !== 'planSplitRange') return;
+    planSplit = Number(e.target.value) / 100;
+    paintPlan(false);
+  });
   document.getElementById('projScenario').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
     projScenario = b.dataset.scn;
