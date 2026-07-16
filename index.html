@@ -200,17 +200,16 @@
   .tabbar button {
     flex: 1; appearance: none; border: none; background: none; cursor: pointer;
     color: var(--muted); font-family: inherit;
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px;
-    font-size: 11px; font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600;
   }
-  .tabbar button .tic { font-size: 22px; line-height: 1; }
-  .tabbar button.on { color: var(--blue); }
+  .tabbar button .tlabel { padding: 6px 4px; border-radius: 12px; line-height: 1; }
+  .tabbar button.on { color: var(--blue); font-weight: 700; }
   .tabbar button.tab-entry { color: var(--blue); }
-  .tabbar button.tab-entry .tic {
+  .tabbar button.tab-entry .tlabel {
     background: rgba(0,122,255,0.14); border: 1.5px solid rgba(0,122,255,0.35);
-    border-radius: 13px; padding: 4px 16px; margin-bottom: 2px;
+    padding: 6px 18px; font-weight: 700;
   }
-  .tabbar button.tab-entry span:last-child { font-weight: 700; }
 
   /* ---- Stores analytics ---- */
   .store-card { background: var(--card); border-radius: 16px; box-shadow: var(--shadow); padding: 16px; margin-bottom: 18px; }
@@ -455,9 +454,9 @@
     background: rgba(255,149,0,0.12); color: #8a4b00; border-radius: 12px;
     padding: 10px 13px; margin-bottom: 14px; font-size: 13px; font-weight: 600; line-height: 1.45;
   }
-  .tabbar button[data-tab="recipes"] .tic { position: relative; }
-  .tabbar button[data-tab="recipes"] .tic::after {
-    content: "β"; position: absolute; top: -3px; right: -9px;
+  .tabbar button[data-tab="recipes"] .tlabel { position: relative; }
+  .tabbar button[data-tab="recipes"] .tlabel::after {
+    content: "β"; position: absolute; top: -5px; right: -11px;
     background: var(--orange); color: #fff; font-size: 9px; font-weight: 800;
     width: 13px; height: 13px; line-height: 13px; text-align: center; border-radius: 999px;
   }
@@ -533,7 +532,7 @@
 <body>
 
 <!-- Version badge — bump on every deploy (v = commit count, time = deploy time PST) -->
-<div class="ver-badge">v65 · Jul 15, 7:17 PM</div>
+<div class="ver-badge">v66 · Jul 15, 7:52 PM</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -698,7 +697,7 @@
   <div class="wrap">
     <header>
       <h1>Plan</h1>
-      <div class="sub" id="planSub">How much to bake to last until a date</div>
+      <div class="sub" id="planSub"></div>
     </header>
     <div class="db-filter" id="planLoc">
       <button class="on" data-loc="all">All</button>
@@ -728,7 +727,6 @@
         <div class="bakedate-chips" id="bakeDateChips"></div>
       </div>
     </div>
-    <div class="hint" id="planHint">Pick the exact days you'll bake (they can vary week to week — only bake this week? just add this week's dates and the last one covers the rest). Leave empty for a single total. Time est: batch = 20 · 20m setup + 15m prep + 14m bake per batch (glaze runs during the bake).</div>
     <div id="planList"></div>
   </div>
 </div>
@@ -754,12 +752,12 @@
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar">
-  <button data-tab="home" class="on"><span class="tic">🏠</span><span>Home</span></button>
-  <button data-tab="db"><span class="tic">🗂️</span><span>Data</span></button>
-  <button data-tab="proj"><span class="tic">🔮</span><span>Forecast</span></button>
-  <button data-tab="plan"><span class="tic">📅</span><span>Plan</span></button>
-  <button data-tab="recipes"><span class="tic">📖</span><span>Recipes</span></button>
-  <button data-tab="entry" class="tab-entry"><span class="tic">➕</span><span>Entry</span></button>
+  <button data-tab="home" class="on"><span class="tlabel">Home</span></button>
+  <button data-tab="db"><span class="tlabel">Data</span></button>
+  <button data-tab="proj"><span class="tlabel">Forecast</span></button>
+  <button data-tab="plan"><span class="tlabel">Plan</span></button>
+  <button data-tab="recipes"><span class="tlabel">Recipes</span></button>
+  <button data-tab="entry" class="tab-entry"><span class="tlabel">Entry</span></button>
 </nav>
 
 <!-- ===== Confirmation sheet ===== -->
@@ -2226,6 +2224,75 @@
   }
   const batchLabel = b => `${b} batch${b === 1 ? '' : 'es'}`;
 
+  // Merge several stores' bake-date schedules into one combined schedule (sum each
+  // date's per-flavor amounts) — so "All" shows the total she bakes, then splits.
+  function mergeEvents(eventArrays) {
+    const byDate = {};
+    for (const events of eventArrays) for (const ev of events) {
+      const s = byDate[ev.ymd] || (byDate[ev.ymd] = { ymd: ev.ymd, bake: ZERO(), total: 0, coverUntil: ev.coverUntil });
+      for (const p of PRODUCTS) { s.bake[p] += ev.bake[p]; s.total += ev.bake[p]; }
+    }
+    return Object.values(byDate).sort((a, b) => a.ymd.localeCompare(b.ymd)).map(s => ({ ...s, any: s.total > 0 }));
+  }
+  // A per-bake-date schedule card (used for a single store OR the combined view).
+  function scheduleCardHtml(title, subLine, events, target) {
+    const perFlavor = ZERO(), perFlavorB = ZERO();
+    let totNeed = 0, totBatches = 0, totMin = 0;
+    for (const ev of events) {
+      totMin += bakeEffort(ev.bake).min;
+      for (const p of PRODUCTS) if (ev.bake[p] > 0) {
+        perFlavor[p] += ev.bake[p]; perFlavorB[p] += flavorBatches(ev.bake[p]);
+        totNeed += ev.bake[p]; totBatches += flavorBatches(ev.bake[p]);
+      }
+    }
+    const flavorRows = totNeed > 0
+      ? `<div class="be-section-label">Per flavor · whole plan</div>` +
+        PRODUCTS.filter(p => perFlavor[p] > 0).map(p =>
+          `<div class="proj-row"><span class="k">${PRODUCT_ICON[p]} ${p}</span><span><b>${perFlavor[p]}</b> madeleines · ${batchLabel(perFlavorB[p])}</span></div>`).join('')
+      : '';
+    const evRows = `<div class="be-section-label">By bake day</div>` + events.map(ev => {
+      const eff = bakeEffort(ev.bake);
+      const chips = ev.any
+        ? `<div class="be-chips">${PRODUCTS.filter(p => ev.bake[p] > 0).map(p => `<span class="db-chip">${PRODUCT_ICON[p]} ${ev.bake[p]}<span style="color:var(--muted);font-weight:500"> · ${flavorBatches(ev.bake[p])}b</span></span>`).join('')}</div>
+             <div class="be-effort">${batchLabel(eff.batches)} · ~${fmtDur(eff.min)}</div>`
+        : `<div class="be-enough">enough on hand — no bake needed</div>`;
+      return `<div class="bake-event">
+          <div class="be-head">${wkShort(ev.ymd)} ${fmtWhen(ev.ymd)} <span class="be-cover">covers thru ${wkShort(ev.coverUntil)} ${fmtWhen(ev.coverUntil)}</span>${ev.any ? `<span class="be-total">${ev.total}</span>` : ''}</div>
+          ${chips}
+        </div>`;
+    }).join('');
+    return `<div class="proj-card">
+        <h3>${title}</h3>
+        <div class="proj-sub">${subLine}</div>
+        ${totNeed
+          ? `<div class="proj-runout">Make <span class="big">${totNeed}</span> madeleines · ${batchLabel(totBatches)} · ~${fmtDur(totMin)}</div>`
+          : `<div class="proj-runout" style="color:var(--green)">On hand covers you through ${fmtWhen(target)}</div>`}
+        ${flavorRows}
+        ${evRows}
+      </div>`;
+  }
+  // A lump-sum card (no bake dates picked) — single store OR combined.
+  function lumpCardHtml(title, subLine, bakeMap, haveMap, expMap) {
+    let rows = '', bakeSafe = 0, bakeExp = 0;
+    for (const p of PRODUCTS) {
+      const safe = bakeMap[p];
+      bakeSafe += safe; bakeExp += Math.max(0, Math.ceil(expMap[p] - haveMap[p]));
+      const right = safe > 0
+        ? `<b>bake ${safe}</b> <span style="color:var(--muted);font-weight:500">· ${batchLabel(flavorBatches(safe))}</span>`
+        : `<span style="color:var(--green);font-weight:700">enough</span>`;
+      rows += `<div class="proj-row"><span class="k">${PRODUCT_ICON[p]} ${p}</span><span>${right} <span style="color:var(--muted);font-weight:500">· have ${haveMap[p]}</span></span></div>`;
+    }
+    const eff = bakeEffort(bakeMap);
+    const effLine = bakeSafe > 0 ? `<div class="be-effort" style="margin:2px 0 12px">${batchLabel(eff.batches)} total · ~${fmtDur(eff.min)}</div>` : '';
+    return `<div class="proj-card">
+        <h3>${title}</h3>
+        <div class="proj-sub">${subLine}</div>
+        <div class="proj-runout">Make <span class="big">${bakeSafe}</span> to be safe <span style="color:var(--muted);font-weight:600">(~${bakeExp} expected)</span></div>
+        ${effLine}
+        ${rows}
+      </div>`;
+  }
+
   async function renderPlan() {
     const list = document.getElementById('planList');
     const sub = document.getElementById('planSub');
@@ -2247,77 +2314,53 @@
       ? `Bake plan · ${activeDates.length} day${activeDates.length === 1 ? '' : 's'} through ${fmtWhen(target)}`
       : `Bake to last through ${fmtWhen(target)}`;
     let html = '';
-    for (const loc of LOCATIONS.filter(l => planLoc === 'all' || l === planLoc)) {
-      const st = locStats(loc, sales, entries);
-      const dowr = dowRates(sales, loc, 28);
-      if (!st.hasInv) { html += `<div class="proj-card"><h3>📍 ${loc}</h3><div class="proj-sub">Add an inventory count to plan.</div></div>`; continue; }
-      if (!dowr) { html += `<div class="proj-card"><h3>📍 ${loc}</h3><div class="proj-sub">No recent sales to forecast from.</div></div>`; continue; }
-      const { demand, nDays, nWe } = forecastDemand(dowr, addDays(todayYmd, 1), target, st.growth);   // tomorrow → target
+    const locs = LOCATIONS.filter(l => planLoc === 'all' || l === planLoc);
+    const combined = planLoc === 'all' && locs.length > 1;
+    const computed = locs.map(loc => ({ loc, st: locStats(loc, sales, entries), dowr: dowRates(sales, loc, 28) }));
+    const usable = computed.filter(c => c.st.hasInv && c.dowr);
+    const skipped = computed.filter(c => !(c.st.hasInv && c.dowr));
 
-      if (bakeDateSet.size) {
-        // Per-bake-date schedule: each chosen date covers demand until the next chosen
-        // date (the last one crams everything through the target).
-        const events = bakeSchedule(st, dowr, addDays(todayYmd, 1), target, bakeDateSet, st.growth);
-        // Totals + per-flavor rollup (batches counted per flavor, per session).
-        const perFlavor = ZERO(), perFlavorB = ZERO();
-        let totNeed = 0, totBatches = 0, totMin = 0;
-        for (const ev of events) {
-          totMin += bakeEffort(ev.bake).min;
-          for (const p of PRODUCTS) if (ev.bake[p] > 0) {
-            perFlavor[p] += ev.bake[p]; perFlavorB[p] += flavorBatches(ev.bake[p]);
-            totNeed += ev.bake[p]; totBatches += flavorBatches(ev.bake[p]);
-          }
+    if (bakeDateSet.size) {
+      // Per-bake-date schedule: each chosen date covers demand until the next chosen
+      // date (the last one crams everything through the target).
+      const withEvents = usable.map(c => ({ ...c, events: bakeSchedule(c.st, c.dowr, addDays(todayYmd, 1), target, bakeDateSet, c.st.growth) }));
+      const dayWord = `${activeDates.length} bake day${activeDates.length === 1 ? '' : 's'} to ${fmtWhen(target)}`;
+      if (combined) {
+        if (withEvents.length) {
+          const merged = mergeEvents(withEvents.map(w => w.events));
+          const stockTotal = withEvents.reduce((s, w) => s + w.st.stockTotal, 0);
+          html += scheduleCardHtml('Both stores · combined', `${stockTotal} on hand across ${withEvents.length === 1 ? 'store' : 'both stores'} · ${dayWord}`, merged, target);
         }
-        const flavorRows = totNeed > 0
-          ? `<div class="be-section-label">Per flavor · whole plan</div>` +
-            PRODUCTS.filter(p => perFlavor[p] > 0).map(p =>
-              `<div class="proj-row"><span class="k">${PRODUCT_ICON[p]} ${p}</span><span><b>${perFlavor[p]}</b> madeleines · ${batchLabel(perFlavorB[p])}</span></div>`).join('')
-          : '';
-        const evRows = `<div class="be-section-label">By bake day</div>` + events.map(ev => {
-          const eff = bakeEffort(ev.bake);
-          const chips = ev.any
-            ? `<div class="be-chips">${PRODUCTS.filter(p => ev.bake[p] > 0).map(p => `<span class="db-chip">${PRODUCT_ICON[p]} ${ev.bake[p]}<span style="color:var(--muted);font-weight:500"> · ${flavorBatches(ev.bake[p])}b</span></span>`).join('')}</div>
-               <div class="be-effort">🧺 ${batchLabel(eff.batches)} · ⏱️ ~${fmtDur(eff.min)}</div>`
-            : `<div class="be-enough">✓ enough on hand — no bake needed</div>`;
-          return `<div class="bake-event">
-              <div class="be-head">🗓️ ${wkShort(ev.ymd)} ${fmtWhen(ev.ymd)} <span class="be-cover">covers thru ${wkShort(ev.coverUntil)} ${fmtWhen(ev.coverUntil)}</span>${ev.any ? `<span class="be-total">${ev.total}</span>` : ''}</div>
-              ${chips}
-            </div>`;
-        }).join('');
-        html += `<div class="proj-card">
-            <h3>📍 ${loc}</h3>
-            <div class="proj-sub">${st.stockTotal} on hand now · ${activeDates.length} bake day${activeDates.length === 1 ? '' : 's'} to ${fmtWhen(target)}${trendNote(st)}</div>
-            ${totNeed
-              ? `<div class="proj-runout">Make <span class="big">${totNeed}</span> madeleines · ${batchLabel(totBatches)} · ~${fmtDur(totMin)}</div>`
-              : `<div class="proj-runout" style="color:var(--green)">✓ On hand covers you through ${fmtWhen(target)}</div>`}
-            ${flavorRows}
-            ${evRows}
-          </div>`;
-        continue;
+      } else {
+        for (const w of withEvents)
+          html += scheduleCardHtml(`📍 ${w.loc}`, `${w.st.stockTotal} on hand now · ${dayWord}${trendNote(w.st)}`, w.events, target);
       }
-
+    } else {
       // Lump-sum mode (no bake dates picked): one total to last the whole window.
-      const m = Math.min(0.6, FCAST_Z * (st.dailyCV || 0) / Math.sqrt(Math.max(1, nDays)));
-      const bakeMap = ZERO();
-      let rows = '', bakeSafe = 0, bakeExp = 0;
-      for (const p of PRODUCTS) {
-        const exp = demand[p], safe = Math.max(0, Math.ceil(exp * (1 + m) - st.stock[p]));
-        bakeMap[p] = safe; bakeSafe += safe; bakeExp += Math.max(0, Math.ceil(exp - st.stock[p]));
-        const right = safe > 0
-          ? `<b>bake ${safe}</b> <span style="color:var(--muted);font-weight:500">· ${batchLabel(flavorBatches(safe))}</span>`
-          : `<span style="color:var(--green);font-weight:700">enough</span>`;
-        rows += `<div class="proj-row"><span class="k">${PRODUCT_ICON[p]} ${p}</span><span>${right} <span style="color:var(--muted);font-weight:500">· have ${st.stock[p]}</span></span></div>`;
+      const withMaps = usable.map(c => {
+        const { demand, nDays, nWe } = forecastDemand(c.dowr, addDays(todayYmd, 1), target, c.st.growth);
+        const m = Math.min(0.6, FCAST_Z * (c.st.dailyCV || 0) / Math.sqrt(Math.max(1, nDays)));
+        const bakeMap = ZERO(), haveMap = ZERO(), expMap = ZERO();
+        for (const p of PRODUCTS) { bakeMap[p] = Math.max(0, Math.ceil(demand[p] * (1 + m) - c.st.stock[p])); haveMap[p] = c.st.stock[p]; expMap[p] = demand[p]; }
+        return { ...c, bakeMap, haveMap, expMap, nDays, nWe };
+      });
+      if (combined) {
+        if (withMaps.length) {
+          const bakeMap = ZERO(), haveMap = ZERO(), expMap = ZERO();
+          for (const w of withMaps) for (const p of PRODUCTS) { bakeMap[p] += w.bakeMap[p]; haveMap[p] += w.haveMap[p]; expMap[p] += w.expMap[p]; }
+          const stockTotal = withMaps.reduce((s, w) => s + w.st.stockTotal, 0);
+          const nDays = withMaps[0].nDays;
+          html += lumpCardHtml('Both stores · combined', `${nDays} day${nDays === 1 ? '' : 's'} to go · ${stockTotal} on hand across ${withMaps.length === 1 ? 'store' : 'both stores'}`, bakeMap, haveMap, expMap);
+        }
+      } else {
+        for (const w of withMaps)
+          html += lumpCardHtml(`📍 ${w.loc}`, `${w.nDays} day${w.nDays === 1 ? '' : 's'} to go · ${w.nDays - w.nWe} weekday / ${w.nWe} weekend · ${w.st.stockTotal} on hand now${trendNote(w.st)}`, w.bakeMap, w.haveMap, w.expMap);
       }
-      const effLump = bakeEffort(bakeMap);
-      const effLine = bakeSafe > 0 ? `<div class="be-effort" style="margin:2px 0 12px">🧺 ${batchLabel(effLump.batches)} total · ⏱️ ~${fmtDur(effLump.min)}</div>` : '';
-      html += `<div class="proj-card">
-          <h3>📍 ${loc}</h3>
-          <div class="proj-sub">${nDays} day${nDays === 1 ? '' : 's'} to go · ${nDays - nWe} weekday / ${nWe} weekend · ${st.stockTotal} on hand now${trendNote(st)}</div>
-          <div class="proj-runout">Make <span class="big">${bakeSafe}</span> to be safe <span style="color:var(--muted);font-weight:600">(~${bakeExp} expected)</span></div>
-          ${effLine}
-          ${rows}
-        </div>`;
     }
+    // Note any store that couldn't be planned (so a combined total isn't silently short).
+    for (const c of skipped)
+      html += `<div class="proj-card"><h3>📍 ${c.loc}</h3><div class="proj-sub">${c.st.hasInv ? 'No recent sales to forecast from.' : 'Add an inventory count to include this store.'}</div></div>`;
+
     if (!html) html = `<div class="db-empty"><div class="big">📅</div>Nothing to plan.</div>`;
     list.innerHTML = html;
   }
