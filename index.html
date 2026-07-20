@@ -200,16 +200,20 @@
   .tabbar button {
     flex: 1; appearance: none; border: none; background: none; cursor: pointer;
     color: var(--muted); font-family: inherit;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 13px; font-weight: 600;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+    font-size: 10px; font-weight: 600; padding: 0 2px;
   }
-  .tabbar button .tlabel { padding: 6px 4px; border-radius: 12px; line-height: 1; }
+  /* Icon carries the tap target — the whole button is tappable, the icon just makes
+     it obvious. Labels stay small so six tabs don't crowd on a narrow phone. */
+  .tabbar button .tic { font-size: 21px; line-height: 1; }
+  .tabbar button .tlabel { line-height: 1; white-space: nowrap; }
   .tabbar button.on { color: var(--blue); font-weight: 700; }
   .tabbar button.tab-entry { color: var(--blue); }
-  .tabbar button.tab-entry .tlabel {
+  .tabbar button.tab-entry .tic {
     background: rgba(0,122,255,0.14); border: 1.5px solid rgba(0,122,255,0.35);
-    padding: 6px 18px; font-weight: 700;
+    border-radius: 13px; padding: 2px 14px; line-height: 1.15;
   }
+  .tabbar button.tab-entry .tlabel { font-weight: 700; }
 
   /* ---- Stores analytics ---- */
   .store-card { background: var(--card); border-radius: 16px; box-shadow: var(--shadow); padding: 16px; margin-bottom: 18px; }
@@ -461,9 +465,9 @@
     background: rgba(255,149,0,0.12); color: #8a4b00; border-radius: 12px;
     padding: 10px 13px; margin-bottom: 14px; font-size: 13px; font-weight: 600; line-height: 1.45;
   }
-  .tabbar button[data-tab="recipes"] .tlabel { position: relative; }
-  .tabbar button[data-tab="recipes"] .tlabel::after {
-    content: "β"; position: absolute; top: -5px; right: -11px;
+  .tabbar button[data-tab="recipes"] .tic { position: relative; }
+  .tabbar button[data-tab="recipes"] .tic::after {
+    content: "β"; position: absolute; top: -2px; right: -10px;
     background: var(--orange); color: #fff; font-size: 9px; font-weight: 800;
     width: 13px; height: 13px; line-height: 13px; text-align: center; border-radius: 999px;
   }
@@ -539,7 +543,7 @@
 <body>
 
 <!-- Version badge — bump on every deploy (v = commit count, time = deploy time PST) -->
-<div class="ver-badge">v67 · Jul 15, 7:59 PM</div>
+<div class="ver-badge">v68 · Jul 20, 3:50 AM</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -760,12 +764,12 @@
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar">
-  <button data-tab="home" class="on"><span class="tlabel">Home</span></button>
-  <button data-tab="db"><span class="tlabel">Data</span></button>
-  <button data-tab="proj"><span class="tlabel">Forecast</span></button>
-  <button data-tab="plan"><span class="tlabel">Plan</span></button>
-  <button data-tab="recipes"><span class="tlabel">Recipes</span></button>
-  <button data-tab="entry" class="tab-entry"><span class="tlabel">Entry</span></button>
+  <button data-tab="home" class="on"><span class="tic">🏠</span><span class="tlabel">Home</span></button>
+  <button data-tab="db"><span class="tic">🗂️</span><span class="tlabel">Data</span></button>
+  <button data-tab="proj"><span class="tic">🔮</span><span class="tlabel">Forecast</span></button>
+  <button data-tab="plan"><span class="tic">📅</span><span class="tlabel">Plan</span></button>
+  <button data-tab="recipes"><span class="tic">📖</span><span class="tlabel">Recipes</span></button>
+  <button data-tab="entry" class="tab-entry"><span class="tic">➕</span><span class="tlabel">Entry</span></button>
 </nav>
 
 <!-- ===== Confirmation sheet ===== -->
