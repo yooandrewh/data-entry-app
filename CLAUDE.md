@@ -41,12 +41,21 @@ Steppers and the backend accept negatives generally.
 
 ## Tabs
 
-Home · Data · Forecast · Plan · Recipes · **Entry** (last, boxed blue via `.tab-entry` — it's the
-primary action). Nav is text-only; emoji icons were removed as distracting.
+Home · Data · **Entry** (center, boxed blue via `.tab-entry` — it's the primary action) ·
+Forecast · **Baking**. Five tabs; nav shows emoji icon + label.
 
-Analytics live at the bottom of Home (`storeAnalyticsHtml()`), collapsed by default, filtered by
-Home's all/LM/Stanton toggle. Madeleines are only ~4% of orders and under 1.5% of revenue —
-the stores are mostly drinks.
+**Baking** merges the old Plan + Recipes into one tab with a `#bakingMode` segment toggle
+(`📅 Plan` / `📖 Recipes`) — `renderBaking()` shows `#bakingPlan` or `#bakingRecipes` and calls
+`renderPlan()` / `renderRecipes()`. There is no separate Recipes tab/view anymore.
+
+**Stanton is paused (~mid-July 2026), so it's gone from all forward-looking views** — Home,
+Forecast, and Baking have no location toggle and default to La Mirada (`homeLoc`/`projLoc`/`planLoc`
+= `'La Mirada'`). Stanton's **historical** data still shows in the **Data** tab (its `dataLoc`
+filter keeps All/LM/Stanton). Don't delete stored Stanton data — it's history.
+
+Analytics live at the bottom of Home (`storeAnalyticsHtml()`), collapsed by default (La Mirada
+only now). Madeleines are only ~4% of orders and under 1.5% of revenue — the stores are mostly
+drinks.
 
 ## Forecasting model
 
