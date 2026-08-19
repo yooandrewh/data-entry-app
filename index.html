@@ -465,12 +465,6 @@
     background: rgba(255,149,0,0.12); color: #8a4b00; border-radius: 12px;
     padding: 10px 13px; margin-bottom: 14px; font-size: 13px; font-weight: 600; line-height: 1.45;
   }
-  .tabbar button[data-tab="recipes"] .tic { position: relative; }
-  .tabbar button[data-tab="recipes"] .tic::after {
-    content: "β"; position: absolute; top: -2px; right: -10px;
-    background: var(--orange); color: #fff; font-size: 9px; font-weight: 800;
-    width: 13px; height: 13px; line-height: 13px; text-align: center; border-radius: 999px;
-  }
   .rec-scale { display: flex; gap: 8px; margin: 2px 0 12px; flex-wrap: wrap; }
   .rec-scale button {
     appearance: none; border: none; cursor: pointer; font-family: inherit;
@@ -543,7 +537,7 @@
 <body>
 
 <!-- Version badge — bump on every deploy (v = commit count, time = deploy time PST) -->
-<div class="ver-badge">v68 · Jul 20, 3:50 AM</div>
+<div class="ver-badge">v70 · Aug 19, 10:50 AM</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -552,11 +546,6 @@
       <h1>Kairos</h1>
       <div class="sub" id="homeSub">—</div>
     </header>
-    <div class="db-filter" id="homeLoc">
-      <button class="on" data-loc="all">All</button>
-      <button data-loc="La Mirada">La Mirada</button>
-      <button data-loc="Stanton">Stanton</button>
-    </div>
     <div id="homeContent"></div>
   </div>
 </div>
@@ -689,11 +678,6 @@
       <h1>Projections</h1>
       <div class="sub" id="projSub">—</div>
     </header>
-    <div class="db-filter" id="projLoc">
-      <button class="on" data-loc="all">All</button>
-      <button data-loc="La Mirada">La Mirada</button>
-      <button data-loc="Stanton">Stanton</button>
-    </div>
     <div class="db-filter" id="projScenario">
       <button data-scn="bear">🐻 Bear</button>
       <button class="on" data-scn="base">Expected</button>
@@ -707,58 +691,55 @@
 <div class="view" id="view-plan">
   <div class="wrap">
     <header>
-      <h1>Plan</h1>
+      <h1>Baking</h1>
       <div class="sub" id="planSub"></div>
     </header>
-    <div class="db-filter" id="planLoc">
-      <button class="on" data-loc="all">All</button>
-      <button data-loc="La Mirada">La Mirada</button>
-      <button data-loc="Stanton">Stanton</button>
+    <div class="db-filter" id="bakingMode">
+      <button class="on" data-mode="plan">📅 Plan</button>
+      <button data-mode="recipes">📖 Recipes</button>
     </div>
-    <div class="card">
-      <div class="row">
-        <span class="lbl">Make it last until</span>
-        <input type="date" id="planDate" />
-      </div>
-      <div class="row row-stack">
-        <span class="lbl">Bake days <span style="font-weight:400;color:var(--muted);font-size:12px">— tap weekdays, or add a specific date</span></span>
-        <div class="bakedays" id="bakeDays">
-          <button type="button" data-dow="1">M</button>
-          <button type="button" data-dow="2">T</button>
-          <button type="button" data-dow="3">W</button>
-          <button type="button" data-dow="4">T</button>
-          <button type="button" data-dow="5">F</button>
-          <button type="button" data-dow="6">S</button>
-          <button type="button" data-dow="0">S</button>
-        </div>
-        <div class="bakedate-add">
-          <input type="date" id="bakeDateInput" aria-label="Add a bake date" />
-          <button type="button" id="bakeDateAddBtn">➕ Add date</button>
-        </div>
-        <div class="bakedate-chips" id="bakeDateChips"></div>
-      </div>
-    </div>
-    <div id="planSplitWrap"></div>
-    <div id="planList"></div>
-  </div>
-</div>
 
-<!-- ===== RECIPES VIEW ===== -->
-<div class="view" id="view-recipes">
-  <div class="wrap">
-    <header>
-      <h1>Recipes<span class="beta-pill">BETA</span></h1>
-      <div class="sub" id="recSub">Amounts scale with batches · type any amount to rescale</div>
-    </header>
-    <div class="rec-beta-note">🧪 Beta — double-check amounts against your own recipes before baking. Costing isn't included yet.</div>
-    <div class="db-filter" id="recSection">
-      <button class="on" data-sec="mad">🍰 Mads</button>
-      <button data-sec="fill">🍮 Fillings</button>
-      <button data-sec="scone">🥐 Scones</button>
-      <button data-sec="other">🧁 Other</button>
+    <!-- Plan mode -->
+    <div id="bakingPlan">
+      <div class="card">
+        <div class="row">
+          <span class="lbl">Make it last until</span>
+          <input type="date" id="planDate" />
+        </div>
+        <div class="row row-stack">
+          <span class="lbl">Bake days <span style="font-weight:400;color:var(--muted);font-size:12px">— tap weekdays, or add a specific date</span></span>
+          <div class="bakedays" id="bakeDays">
+            <button type="button" data-dow="1">M</button>
+            <button type="button" data-dow="2">T</button>
+            <button type="button" data-dow="3">W</button>
+            <button type="button" data-dow="4">T</button>
+            <button type="button" data-dow="5">F</button>
+            <button type="button" data-dow="6">S</button>
+            <button type="button" data-dow="0">S</button>
+          </div>
+          <div class="bakedate-add">
+            <input type="date" id="bakeDateInput" aria-label="Add a bake date" />
+            <button type="button" id="bakeDateAddBtn">➕ Add date</button>
+          </div>
+          <div class="bakedate-chips" id="bakeDateChips"></div>
+        </div>
+      </div>
+      <div id="planSplitWrap"></div>
+      <div id="planList"></div>
     </div>
-    <div class="chip-row" id="recChips"></div>
-    <div id="recCard"></div>
+
+    <!-- Recipes mode -->
+    <div id="bakingRecipes" hidden>
+      <div class="rec-beta-note">🧪 Beta — double-check amounts against your own recipes before baking.</div>
+      <div class="db-filter" id="recSection">
+        <button class="on" data-sec="mad">🍰 Mads</button>
+        <button data-sec="fill">🍮 Fillings</button>
+        <button data-sec="scone">🥐 Scones</button>
+        <button data-sec="other">🧁 Other</button>
+      </div>
+      <div class="chip-row" id="recChips"></div>
+      <div id="recCard"></div>
+    </div>
   </div>
 </div>
 
@@ -766,10 +747,9 @@
 <nav class="tabbar">
   <button data-tab="home" class="on"><span class="tic">🏠</span><span class="tlabel">Home</span></button>
   <button data-tab="db"><span class="tic">🗂️</span><span class="tlabel">Data</span></button>
-  <button data-tab="proj"><span class="tic">🔮</span><span class="tlabel">Forecast</span></button>
-  <button data-tab="plan"><span class="tic">📅</span><span class="tlabel">Plan</span></button>
-  <button data-tab="recipes"><span class="tic">📖</span><span class="tlabel">Recipes</span></button>
   <button data-tab="entry" class="tab-entry"><span class="tic">➕</span><span class="tlabel">Entry</span></button>
+  <button data-tab="proj"><span class="tic">🔮</span><span class="tlabel">Forecast</span></button>
+  <button data-tab="plan"><span class="tic">🥐</span><span class="tlabel">Baking</span></button>
 </nav>
 
 <!-- ===== Confirmation sheet ===== -->
@@ -1261,7 +1241,7 @@
   }
 
   // ---- Tab switching ----
-  const VIEWS = { home: 'view-home', entry: 'view-entry', db: 'view-db', proj: 'view-proj', plan: 'view-plan', recipes: 'view-recipes' };
+  const VIEWS = { home: 'view-home', entry: 'view-entry', db: 'view-db', proj: 'view-proj', plan: 'view-plan' };
   document.querySelector('.tabbar').addEventListener('click', e => {
     const btn = e.target.closest('button'); if (!btn) return;
     const tab = btn.dataset.tab;
@@ -1270,9 +1250,22 @@
     if (tab === 'home') { salesCache = null; renderHome(); }
     if (tab === 'db') { salesCache = null; renderData(); retryUnsynced(); }
     if (tab === 'proj') { salesCache = null; renderProj(); }
-    if (tab === 'plan') { salesCache = null; renderPlan(); }
-    if (tab === 'recipes') renderRecipes();
+    if (tab === 'plan') { salesCache = null; renderBaking(); }
     window.scrollTo(0, 0);
+  });
+  // Baking tab has two modes (Plan / Recipes) toggled by a segment control.
+  function renderBaking() {
+    const planOn = bakingMode === 'plan';
+    document.getElementById('bakingPlan').hidden = !planOn;
+    document.getElementById('bakingRecipes').hidden = planOn;
+    document.querySelectorAll('#bakingMode button').forEach(x => x.classList.toggle('on', x.dataset.mode === bakingMode));
+    if (planOn) { renderPlan(); }
+    else { document.getElementById('planSub').textContent = 'Recipes · amounts scale with batches'; renderRecipes(); }
+  }
+  document.getElementById('bakingMode').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    bakingMode = b.dataset.mode;
+    renderBaking();
   });
 
   // ===== Stores tab (whole-store performance + per-store madeleine analytics) =====
@@ -1768,7 +1761,8 @@
   });
 
   // ===== Shared projection math (used by Home + Projections) =====
-  let projLoc = 'all', homeLoc = 'all', planLoc = 'all';   // independent per-tab location filters
+  let projLoc = 'La Mirada', homeLoc = 'La Mirada', planLoc = 'La Mirada';   // Stanton paused — La Mirada only (historical Stanton still in Data)
+  let bakingMode = 'plan';   // Baking tab sub-view: 'plan' | 'recipes'
   let planSplit = 0;        // 0..1 — front-load fraction shifted onto the earlier of two bake dates
   let lastPlanSales = null, lastPlanEntries = null;   // cached for live slider re-paint
   let planBakeDates = [];   // specific 'YYYY-MM-DD' bake dates (vary week to week); empty = lump-sum mode
@@ -2138,12 +2132,6 @@
     }
     list.innerHTML = html;
   }
-  document.getElementById('projLoc').addEventListener('click', e => {
-    const b = e.target.closest('button'); if (!b) return;
-    projLoc = b.dataset.loc;
-    document.querySelectorAll('#projLoc button').forEach(x => x.classList.toggle('on', x === b));
-    renderProj();
-  });
 
   // ===== Plan tab (what-if: how much to bake to last until a date) =====
   // Weekday vs weekend per-flavor sales rate from the last N days.
@@ -2470,12 +2458,6 @@
     planBakeDates = planBakeDates.filter(d => d !== b.dataset.rm); saveBakeDates();
     renderPlan();
   });
-  document.getElementById('planLoc').addEventListener('click', e => {
-    const b = e.target.closest('button'); if (!b) return;
-    planLoc = b.dataset.loc;
-    document.querySelectorAll('#planLoc button').forEach(x => x.classList.toggle('on', x === b));
-    renderPlan();
-  });
   document.getElementById('planDate').addEventListener('change', renderPlan);
   // Live split slider — re-paint cards without touching the slider element mid-drag.
   document.getElementById('planSplitWrap').addEventListener('input', e => {
@@ -2488,12 +2470,6 @@
     projScenario = b.dataset.scn;
     document.querySelectorAll('#projScenario button').forEach(x => x.classList.toggle('on', x === b));
     renderProj();
-  });
-  document.getElementById('homeLoc').addEventListener('click', e => {
-    const b = e.target.closest('button'); if (!b) return;
-    homeLoc = b.dataset.loc;
-    document.querySelectorAll('#homeLoc button').forEach(x => x.classList.toggle('on', x === b));
-    renderHome();
   });
   // Tap an analytics card header to expand/collapse it.
   document.getElementById('homeContent').addEventListener('click', e => {
@@ -2729,7 +2705,7 @@
     else html = recSimpleCard(item);
     document.getElementById('recCard').innerHTML = html;
   }
-  document.getElementById('view-recipes').addEventListener('click', e => {
+  document.getElementById('bakingRecipes').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
     const d = b.dataset;
     if (d.sec) { recState.sec = d.sec; recState.idx = 0; recResetVariants(); }
