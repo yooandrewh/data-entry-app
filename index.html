@@ -538,7 +538,7 @@
 <body>
 
 <!-- Version badge — bump on every deploy (v = commit count, time = deploy time PST) -->
-<div class="ver-badge">v73 · Aug 21, 12:40 PM</div>
+<div class="ver-badge">v74 · Aug 21, 1:00 PM</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -2021,7 +2021,8 @@
     const lastDel = dlv.reduce((m, e) => { const d = String(e.datetime).slice(0, 10); return d > m ? d : m; }, '');
     const lastInv = inv.reduce((m, e) => { const d = String(e.datetime).slice(0, 10); return d > m ? d : m; }, '');
 
-    let html = `<div class="home-updated">Updated · 📈 ${fmtWhen(lastSales)} · 🚚 ${fmtWhen(lastDel)} · 📦 ${fmtWhen(lastInv)}</div>`;
+    const fw = d => d ? fmtWhen(d) : '—';   // fmtWhen throws on an empty date
+    let html = `<div class="home-updated">Updated · 📈 ${fw(lastSales)} · 🚚 ${fw(lastDel)} · 📦 ${fw(lastInv)}</div>`;
     const allMisses = [];
     for (const loc of LOCATIONS.filter(l => homeLoc === 'all' || l === homeLoc)) {
       const st = locStats(loc, sales, entries);
@@ -2055,15 +2056,19 @@
         <div class="hint">Ran way above/below that weekday's forecast — repeat whatever drove a 🔥, check a 🥶 for missing data.</div>`;
     }
 
-    // Last 7 days — combined revenue + quantity sold (all locations, all flavors)
-    const from7 = ymdMinus(6);
-    let qty7 = 0;
-    for (const s of sales) if (s.date >= from7 && (homeLoc === 'all' || s.location === homeLoc))
-      qty7 += (typeof s.total === 'number' ? s.total : SALES_FLAVORS.reduce((t, f) => t + (s.amounts[f] || 0), 0));
-    html += `<div class="group-label">Last 7 days</div>
-      <div class="home-metrics">
-        <div class="metric"><div class="m-label">Revenue</div><div class="m-val">${usd(qty7 * PRICE_PER_UNIT)}</div></div>
-        <div class="metric"><div class="m-label">Sold</div><div class="m-val">${qty7}</div><div class="m-sub">madeleines</div></div>
+    // Sales — madeleines sold + revenue over the last 7 and 30 days.
+    const from7 = ymdMinus(6), from30 = ymdMinus(29);
+    let qty7 = 0, qty30 = 0;
+    for (const s of sales) {
+      if (homeLoc !== 'all' && s.location !== homeLoc) continue;
+      const n = (typeof s.total === 'number' ? s.total : SALES_FLAVORS.reduce((t, f) => t + (s.amounts[f] || 0), 0));
+      if (s.date >= from30) qty30 += n;
+      if (s.date >= from7) qty7 += n;
+    }
+    html += `<div class="group-label">Sales</div>
+      <div class="card">
+        <div class="row"><span class="lbl">Last 7 days</span><span class="db-when"><b style="color:var(--text)">${qty7}</b> sold · ${usd(qty7 * PRICE_PER_UNIT)}</span></div>
+        <div class="row"><span class="lbl">Last 30 days</span><span class="db-when"><b style="color:var(--text)">${qty30}</b> sold · ${usd(qty30 * PRICE_PER_UNIT)}</span></div>
       </div>`;
 
     // Full store + madeleine analytics (weekly growth, whole-store, flavor mix,
