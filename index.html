@@ -513,6 +513,7 @@
     padding: 8px 11px; border-radius: 10px; margin: 0 0 12px;
   }
   .home-refreshed { text-align: center; color: var(--muted); font-size: 12px; margin: 6px 0 2px; }
+  .home-updated { color: var(--muted); font-size: 12px; margin: 2px 2px 16px; line-height: 1.5; }
   .home-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
   .metric { background: var(--card); border-radius: 16px; box-shadow: var(--shadow); padding: 14px 16px; }
   .metric .m-label { font-size: 13px; color: var(--muted); font-weight: 600; }
@@ -537,7 +538,7 @@
 <body>
 
 <!-- Version badge — bump on every deploy (v = commit count, time = deploy time PST) -->
-<div class="ver-badge">v70 · Aug 19, 10:50 AM</div>
+<div class="ver-badge">v72 · Aug 21, 12:32 PM</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -675,7 +676,7 @@
 <div class="view" id="view-proj">
   <div class="wrap">
     <header>
-      <h1>Projections</h1>
+      <h1>Forecast</h1>
       <div class="sub" id="projSub">—</div>
     </header>
     <div class="db-filter" id="projScenario">
@@ -2012,13 +2013,7 @@
     const lastDel = dlv.reduce((m, e) => { const d = String(e.datetime).slice(0, 10); return d > m ? d : m; }, '');
     const lastInv = inv.reduce((m, e) => { const d = String(e.datetime).slice(0, 10); return d > m ? d : m; }, '');
 
-    let html = `<div class="group-label">Last updated</div><div class="card">
-        <div class="row"><span class="lbl">📈 Sales</span><span class="db-when">${fmtAgo(lastSales)}</span></div>
-        <div class="row"><span class="lbl">🚚 Deliveries</span><span class="db-when">${fmtAgo(lastDel)}</span></div>
-        <div class="row"><span class="lbl">📦 Inventory</span><span class="db-when">${fmtAgo(lastInv)}</span></div>
-      </div>`;
-
-    html += `<div class="group-label">By location</div>`;
+    let html = `<div class="home-updated">Updated · 📈 ${fmtWhen(lastSales)} · 🚚 ${fmtWhen(lastDel)} · 📦 ${fmtWhen(lastInv)}</div>`;
     const allMisses = [];
     for (const loc of LOCATIONS.filter(l => homeLoc === 'all' || l === homeLoc)) {
       const st = locStats(loc, sales, entries);
@@ -2035,8 +2030,7 @@
           ? `<div class="proj-runout" style="font-size:14px">No recent sales — can't project</div>`
           : `<div class="proj-runout">Runs out in <span class="big">${fmtD(ro.firstD)}</span>${band} <span style="color:var(--muted);font-weight:600">(${PRODUCT_ICON[ro.firstP]} ${ro.firstP})</span></div>`;
       html += `<div class="proj-card">
-          <h3>📍 ${loc}</h3>
-          <div class="proj-sub">${st.hasInv ? `${st.stockTotal} on hand · counted ${fmtWhen(st.invDate)}` : 'Add an inventory count to project run-out'} · ${sold7} sold last 7d</div>
+          <div class="proj-sub" style="margin-top:2px">${st.hasInv ? `${st.stockTotal} on hand · counted ${fmtWhen(st.invDate)}` : 'Add an inventory count to project run-out'} · ${sold7} sold last 7d</div>
           ${staleWarn(st)}
           <div class="proj-stock-chips">${stockChips}</div>
           ${runoutLine}
@@ -2103,7 +2097,7 @@
     for (const loc of LOCATIONS.filter(l => projLoc === 'all' || l === projLoc)) {
       const st = locStats(loc, sales, entries);
       if (!st.hasInv) {
-        html += `<div class="proj-card"><h3>📍 ${loc}</h3><div class="proj-sub">No inventory count logged yet — add an Inventory entry to project run-out.</div></div>`;
+        html += `<div class="proj-card"><div class="proj-sub" style="margin-top:2px">No inventory count logged yet — add an Inventory entry to project run-out.</div></div>`;
         continue;
       }
       const ro = runoutBand(st);
@@ -2113,21 +2107,15 @@
         const span = (dp && dp < st.sellDays) ? ` <span style="color:var(--muted)">(${dp}d)</span>` : '';
         return `<div class="proj-row"><span class="k">${PRODUCT_ICON[p]} ${p}</span><span><b>${fmtD(pick(ro, p))}</b>${fmtBand(ro.lo[p], ro.hi[p])} · ${st.rate[p].toFixed(1)}/day${span}</span></div>`;
       }).join('');
-      const freshRows =
-        `<div class="proj-row"><span class="k">📈 Last sales</span><span>${fmtAgo(st.latestSale)}</span></div>` +
-        `<div class="proj-row"><span class="k">🚚 Last delivery</span><span>${fmtAgo(st.lastDelivery)}</span></div>` +
-        `<div class="proj-row"><span class="k">📦 Last inventory</span><span>${fmtAgo(st.invDate)}</span></div>`;
       const runoutTxt = ro.firstD === Infinity
         ? 'No recent sales — can\'t project'
         : `Runs out in <span class="big">${fmtD(pickFirst(ro))}</span>${fmtBand(ro.firstLo, ro.firstHi)} <span style="color:var(--muted);font-weight:600">(${PRODUCT_ICON[ro.firstP]} ${ro.firstP} first)</span>`;
       html += `<div class="proj-card">
-          <h3>📍 ${loc}</h3>
-          <div class="proj-sub">${st.stockTotal} on hand · counted ${fmtWhen(st.invDate)} · rate from ${st.sellDays} sales ${st.sellDays === 1 ? 'day' : 'days'} · ±${Math.round(st.dailyCV * 100)}% daily swing${trendNote(st)}</div>
+          <div class="proj-sub" style="margin-top:2px">${st.stockTotal} on hand · counted ${fmtAgo(st.invDate)} · rate from ${st.sellDays} sales ${st.sellDays === 1 ? 'day' : 'days'} · ±${Math.round(st.dailyCV * 100)}% daily swing${trendNote(st)}</div>
           ${staleWarn(st)}
           <div class="proj-stock-chips">${stockChips}</div>
           <div class="proj-runout">${runoutTxt}</div>
           ${rateRows}
-          ${freshRows}
         </div>`;
     }
     list.innerHTML = html;
