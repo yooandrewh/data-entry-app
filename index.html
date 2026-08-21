@@ -538,7 +538,7 @@
 <body>
 
 <!-- Version badge — bump on every deploy (v = commit count, time = deploy time PST) -->
-<div class="ver-badge">v72 · Aug 21, 12:32 PM</div>
+<div class="ver-badge">v73 · Aug 21, 12:40 PM</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -621,6 +621,14 @@
         <div class="row">
           <span class="lbl">🍰 Dot</span>
           <div class="amt" data-product="Dot">
+            <button type="button" class="step minus">−</button>
+            <input class="val" type="number" inputmode="numeric" value="0" min="0" />
+            <button type="button" class="step plus">+</button>
+          </div>
+        </div>
+        <div class="row">
+          <span class="lbl">🫖 Earl Grey</span>
+          <div class="amt" data-product="Earl Grey">
             <button type="button" class="step minus">−</button>
             <input class="val" type="number" inputmode="numeric" value="0" min="0" />
             <button type="button" class="step plus">+</button>
@@ -807,11 +815,11 @@
 
 <script>
   const STORE_KEY = 'dataEntries.v1';
-  const PRODUCTS = ['Lemon Poppy', 'Sea Salt', 'Ube', 'Dot'];
-  const PRODUCT_ICON = { 'Lemon Poppy': '🍋', 'Sea Salt': '🧂', 'Ube': '💜', 'Dot': '🍰', 'Matcha': '🍵', 'Chocolate': '🍫', 'Unknown': '❓' };
+  const PRODUCTS = ['Lemon Poppy', 'Sea Salt', 'Ube', 'Dot', 'Earl Grey'];
+  const PRODUCT_ICON = { 'Lemon Poppy': '🍋', 'Sea Salt': '🧂', 'Ube': '💜', 'Dot': '🍰', 'Earl Grey': '🫖', 'Matcha': '🍵', 'Chocolate': '🍫', 'Unknown': '❓' };
   const LOCATIONS = ['La Mirada', 'Stanton'];
   // Flavors the app stocks (PRODUCTS) plus extra ones that show up in sales.
-  const SALES_FLAVORS = ['Lemon Poppy', 'Sea Salt', 'Ube', 'Dot', 'Matcha', 'Chocolate', 'Unknown'];
+  const SALES_FLAVORS = ['Lemon Poppy', 'Sea Salt', 'Ube', 'Dot', 'Earl Grey', 'Matcha', 'Chocolate', 'Unknown'];
   const PRICE_PER_UNIT = 2.50;   // $/madeleine (from Financial Dashboard: $192.50 / 77 units)
   const FLIGHT_ICON = '✈️';      // flights are a count (already inside the flavor totals)
   const usd = n => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n);
@@ -1283,7 +1291,7 @@
     storeSalesCache = r.ok ? ((await r.json()).sales || []) : [];
     return storeSalesCache;
   }
-  const CUR_FLAVORS = ['Lemon Poppy', 'Sea Salt', 'Ube', 'Dot'];   // still-sold flavors
+  const CUR_FLAVORS = ['Lemon Poppy', 'Sea Salt', 'Ube', 'Dot', 'Earl Grey'];   // still-sold flavors
   const DOWK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const hlabel = h => `${h % 12 || 12}${h < 12 ? 'a' : 'p'}`;
   const mean = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0;

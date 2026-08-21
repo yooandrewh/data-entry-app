@@ -31,6 +31,7 @@ const PRODUCT_MAP = {
   'Sea Salt': 'Sea Salt Butter',
   'Ube': 'Ube',
   'Dot': 'Dot',
+  'Earl Grey': 'Earl Grey',
 };
 
 // Allowed locations (must match the Select column values in the sheet).
