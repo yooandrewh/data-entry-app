@@ -538,7 +538,7 @@
 <body>
 
 <!-- Version badge — bump on every deploy (v = commit count, time = deploy time PST) -->
-<div class="ver-badge">v75 · Sep 4, 12:44 PM</div>
+<div class="ver-badge">v77 · Sep 4, 12:48 PM</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -1853,6 +1853,33 @@
       for (const s of locSales) if (s.date > invDate) for (const p of PRODUCTS) sold[p] += (s.amounts[p] || 0);
       stock = {};
       for (const p of PRODUCTS) { stock[p] = Math.max(0, (latestInv.amounts[p] || 0) + deliv[p] - sold[p]); stockTotal += stock[p]; }
+    }
+    // Inventory-implied depletion — for products the madeleine-filtered OCR can't see
+    // (e.g. Dubai Ball, which has no sales rows), estimate the daily run-down from how
+    // much the counted stock fell between two counts, adding back deliveries/goodwill/
+    // transfers logged in between. Only used where there's no sales-based rate, so
+    // madeleine forecasts are untouched.
+    if (invs.length >= 2) {
+      const cNew = invs[0], newYmd = String(cNew.datetime).slice(0, 10);
+      const older = invs.slice(1)
+        .map(c => ({ c, dd: Math.round((parseEntryDate(newYmd) - parseEntryDate(String(c.datetime).slice(0, 10))) / 86400000) }))
+        .filter(x => x.dd >= 1);
+      if (older.length) {
+        const win = older.filter(x => x.dd <= 35);
+        const cOld = (win.length ? win[win.length - 1] : older[0]).c;   // oldest count within ~35d, else nearest older
+        const days = Math.max(1, Math.round((parseEntryDate(newYmd) - parseEntryDate(String(cOld.datetime).slice(0, 10))) / 86400000));
+        const add = ZERO();
+        for (const e of entries)
+          if ((e.type === 'delivery' || e.type === 'goodwill' || e.type === 'transfer') && e.location === loc && !e.taggedForDeletion
+              && ts(e.datetime) > ts(cOld.datetime) && ts(e.datetime) <= ts(cNew.datetime))
+            for (const p of PRODUCTS) add[p] += (e.amounts[p] || 0);
+        for (const p of PRODUCTS) {
+          if (rate[p] > 0) continue;   // sales signal wins; only fill products with none
+          const consumed = (cOld.amounts[p] || 0) + add[p] - (cNew.amounts[p] || 0);
+          const r = Math.max(0, consumed) / days;
+          if (r > 0) { rate[p] = r; dowRate[p] = { wd: r, we: r }; }   // flat (no weekday signal from counts)
+        }
+      }
     }
     // Stock estimate is good through the later of the count and the last sales data.
     const asOf = (invDate && invDate > (latestSale || '')) ? invDate : (latestSale || invDate);
