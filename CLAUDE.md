@@ -1,7 +1,13 @@
 # Kairos — bakery data entry & forecasting
 
 iPhone-optimized web app for Kairos baking: log deliveries, inventory, goodwill and transfers
-of madeleines (Lemon Poppy / Sea Salt / Ube / Dot) by location, then forecast and plan bakes.
+by location, then forecast and plan bakes. Actively tracked products (`PRODUCTS`): **Lemon Poppy,
+Sea Salt, Earl Grey, Dubai Ball**. Ube and Dot were discontinued 2026-09 — dropped from Entry /
+Forecast / Plan, but their history stays in the Data tab (`SALES_FLAVORS` and the sheet columns are
+kept). **Dubai Ball is not a madeleine** — a separate SKU; excluded from the madeleine flavor mix,
+and its sales can't come from the madeleine-filtered OCR, so its Forecast rate stays 0 until a
+sales source exists. Adding a product = `PRODUCTS` + `PRODUCT_ICON` + an Entry stepper + a sheet
+column + the `sync`/`entries`/`sales` maps.
 
 - **Local:** `/Users/andrew/data-entry-app/` · **Repo:** `yooandrewh/data-entry-app` (public)
 - **Live:** https://data-entry-app-roan.vercel.app — the GitHub Pages URL is obsolete, only Vercel works.
