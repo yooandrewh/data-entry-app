@@ -31,6 +31,7 @@ export default async function handler(req, res) {
         'Ube': num(r['Ube']),
         'Dot': num(r['Dot']),
         'Earl Grey': num(r['Earl Grey']),
+        'Dubai Ball': num(r['Dubai Ball']),
         'Matcha': num(r['Matcha']),
         'Chocolate': num(r['Chocolate']),
         'Unknown': num(r['Unknown']),

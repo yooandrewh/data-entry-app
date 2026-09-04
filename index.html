@@ -538,7 +538,7 @@
 <body>
 
 <!-- Version badge — bump on every deploy (v = commit count, time = deploy time PST) -->
-<div class="ver-badge">v74 · Aug 21, 1:00 PM</div>
+<div class="ver-badge">v75 · Sep 4, 12:44 PM</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -611,24 +611,16 @@
           </div>
         </div>
         <div class="row">
-          <span class="lbl">💜 Ube</span>
-          <div class="amt" data-product="Ube">
-            <button type="button" class="step minus">−</button>
-            <input class="val" type="number" inputmode="numeric" value="0" min="0" />
-            <button type="button" class="step plus">+</button>
-          </div>
-        </div>
-        <div class="row">
-          <span class="lbl">🍰 Dot</span>
-          <div class="amt" data-product="Dot">
-            <button type="button" class="step minus">−</button>
-            <input class="val" type="number" inputmode="numeric" value="0" min="0" />
-            <button type="button" class="step plus">+</button>
-          </div>
-        </div>
-        <div class="row">
           <span class="lbl">🫖 Earl Grey</span>
           <div class="amt" data-product="Earl Grey">
+            <button type="button" class="step minus">−</button>
+            <input class="val" type="number" inputmode="numeric" value="0" min="0" />
+            <button type="button" class="step plus">+</button>
+          </div>
+        </div>
+        <div class="row">
+          <span class="lbl">🟤 Dubai Ball</span>
+          <div class="amt" data-product="Dubai Ball">
             <button type="button" class="step minus">−</button>
             <input class="val" type="number" inputmode="numeric" value="0" min="0" />
             <button type="button" class="step plus">+</button>
@@ -815,8 +807,8 @@
 
 <script>
   const STORE_KEY = 'dataEntries.v1';
-  const PRODUCTS = ['Lemon Poppy', 'Sea Salt', 'Ube', 'Dot', 'Earl Grey'];
-  const PRODUCT_ICON = { 'Lemon Poppy': '🍋', 'Sea Salt': '🧂', 'Ube': '💜', 'Dot': '🍰', 'Earl Grey': '🫖', 'Matcha': '🍵', 'Chocolate': '🍫', 'Unknown': '❓' };
+  const PRODUCTS = ['Lemon Poppy', 'Sea Salt', 'Earl Grey', 'Dubai Ball'];   // actively tracked (Ube/Dot discontinued — history kept in Data)
+  const PRODUCT_ICON = { 'Lemon Poppy': '🍋', 'Sea Salt': '🧂', 'Earl Grey': '🫖', 'Dubai Ball': '🟤', 'Ube': '💜', 'Dot': '🍰', 'Matcha': '🍵', 'Chocolate': '🍫', 'Unknown': '❓' };
   const LOCATIONS = ['La Mirada', 'Stanton'];
   // Flavors the app stocks (PRODUCTS) plus extra ones that show up in sales.
   const SALES_FLAVORS = ['Lemon Poppy', 'Sea Salt', 'Ube', 'Dot', 'Earl Grey', 'Matcha', 'Chocolate', 'Unknown'];
@@ -1291,7 +1283,7 @@
     storeSalesCache = r.ok ? ((await r.json()).sales || []) : [];
     return storeSalesCache;
   }
-  const CUR_FLAVORS = ['Lemon Poppy', 'Sea Salt', 'Ube', 'Dot', 'Earl Grey'];   // still-sold flavors
+  const CUR_FLAVORS = ['Lemon Poppy', 'Sea Salt', 'Earl Grey'];   // still-sold madeleine flavors (Ube/Dot discontinued; Dubai Ball is not a madeleine)
   const DOWK = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   const hlabel = h => `${h % 12 || 12}${h < 12 ? 'a' : 'p'}`;
   const mean = a => a.length ? a.reduce((x, y) => x + y, 0) / a.length : 0;

@@ -32,6 +32,7 @@ const PRODUCT_MAP = {
   'Ube': 'Ube',
   'Dot': 'Dot',
   'Earl Grey': 'Earl Grey',
+  'Dubai Ball': 'Dubai Ball',
 };
 
 // Allowed locations (must match the Select column values in the sheet).
