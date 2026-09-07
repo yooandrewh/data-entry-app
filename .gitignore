@@ -6,3 +6,4 @@ migration/*.csv
 node_modules/
 .env*
 .vercel
+.venv/

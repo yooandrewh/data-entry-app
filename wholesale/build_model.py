@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import os
 """Build the wholesale scaling what-if model."""
 import openpyxl
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
@@ -734,5 +735,5 @@ put(ws, "A44", "Batch yield is the whole business. At 20 per batch you produce ~
 
 
 wb.move_sheet("Inputs", offset=-10)
-wb.save("/Users/andrew/kairos-wholesale/wholesale_model.xlsx")
+wb.save(os.path.join(os.path.dirname(os.path.abspath(__file__)), "wholesale_model.xlsx"))
 print("written")
