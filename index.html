@@ -28,6 +28,7 @@
     --tabbar-h: 56px;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  [hidden] { display: none !important; }   /* the hidden attr must win over flex/grid layouts */
   html, body {
     margin: 0; padding: 0;
     background: var(--bg);
@@ -538,7 +539,7 @@
 <body>
 
 <!-- Version badge — bump on every deploy (v = commit count, time = deploy time PST) -->
-<div class="ver-badge">v77 · Sep 4, 12:48 PM</div>
+<div class="ver-badge">v80 · Sep 19, 9:25 AM</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -613,14 +614,6 @@
         <div class="row">
           <span class="lbl">🫖 Earl Grey</span>
           <div class="amt" data-product="Earl Grey">
-            <button type="button" class="step minus">−</button>
-            <input class="val" type="number" inputmode="numeric" value="0" min="0" />
-            <button type="button" class="step plus">+</button>
-          </div>
-        </div>
-        <div class="row">
-          <span class="lbl">🟤 Dubai Ball</span>
-          <div class="amt" data-product="Dubai Ball">
             <button type="button" class="step minus">−</button>
             <input class="val" type="number" inputmode="numeric" value="0" min="0" />
             <button type="button" class="step plus">+</button>
@@ -807,7 +800,8 @@
 
 <script>
   const STORE_KEY = 'dataEntries.v1';
-  const PRODUCTS = ['Lemon Poppy', 'Sea Salt', 'Earl Grey', 'Dubai Ball'];   // actively tracked (Ube/Dot discontinued — history kept in Data)
+  const PRODUCTS = ['Lemon Poppy', 'Sea Salt', 'Earl Grey'];   // actively logged/forecast (Ube/Dot/Dubai Ball retired — history kept in Data)
+  const HIST_PRODUCTS = ['Lemon Poppy', 'Sea Salt', 'Ube', 'Dot', 'Earl Grey', 'Dubai Ball'];   // every flavor ever tracked — for the Data delivery/inventory history
   const PRODUCT_ICON = { 'Lemon Poppy': '🍋', 'Sea Salt': '🧂', 'Earl Grey': '🫖', 'Dubai Ball': '🟤', 'Ube': '💜', 'Dot': '🍰', 'Matcha': '🍵', 'Chocolate': '🍫', 'Unknown': '❓' };
   const LOCATIONS = ['La Mirada', 'Stanton'];
   // Flavors the app stocks (PRODUCTS) plus extra ones that show up in sales.
@@ -1173,18 +1167,18 @@
     // Madeleine totals for the entries shown (excluding ones tagged for deletion).
     const gw = dbFilter === 'goodwill';        // goodwill totals are negative — show magnitudes
     const isXferView = dbFilter === 'transfer'; // transfers net to 0 — count only the "into" leg
-    const totals = Object.fromEntries(PRODUCTS.map(p => [p, 0]));
+    const totals = Object.fromEntries(HIST_PRODUCTS.map(p => [p, 0]));
     const locTotals = {};
     let grand = 0;
     for (const e of entries) {
       if (e.taggedForDeletion) continue;
       let sum = 0;
-      for (const p of PRODUCTS) { let v = e.amounts[p] || 0; if (isXferView) v = Math.max(0, v); totals[p] += v; sum += v; }
+      for (const p of HIST_PRODUCTS) { let v = e.amounts[p] || 0; if (isXferView) v = Math.max(0, v); totals[p] += v; sum += v; }
       grand += sum;
       locTotals[e.location] = (locTotals[e.location] || 0) + sum;
     }
     const mag = v => (gw || isXferView) ? Math.abs(v) : v;
-    const breakdown = PRODUCTS.map(p => `<span>${PRODUCT_ICON[p]} ${mag(totals[p])}</span>`).join('');
+    const breakdown = HIST_PRODUCTS.filter(p => totals[p] !== 0).map(p => `<span>${PRODUCT_ICON[p]} ${mag(totals[p])}</span>`).join('');
     const locBreak = LOCATIONS.map(l => `<span>${l} <b>${mag(locTotals[l] || 0)}</b></span>`).join('');
     const sumLabel = gw ? `madeleine${Math.abs(grand) === 1 ? '' : 's'} given out`
       : isXferView ? `madeleine${mag(grand) === 1 ? '' : 's'} moved`
@@ -1197,8 +1191,8 @@
       const isGw = e.type === 'goodwill';
       const isXfer = e.type === 'transfer';
       const signAdj = isGw || isXfer;   // show magnitudes (stored value is signed)
-      const eTotal = PRODUCTS.reduce((s, p) => s + (e.amounts[p] || 0), 0);
-      const flavorChips = PRODUCTS.filter(p => e.amounts[p] !== 0)
+      const eTotal = HIST_PRODUCTS.reduce((s, p) => s + (e.amounts[p] || 0), 0);
+      const flavorChips = HIST_PRODUCTS.filter(p => e.amounts[p] !== 0)
         .map(p => `<span class="db-chip">${PRODUCT_ICON[p]} ${p} <span class="n">${signAdj ? Math.abs(e.amounts[p]) : e.amounts[p]}</span></span>`)
         .join('') || `<span class="db-chip" style="color:var(--muted)">No amounts</span>`;
       let dirChip = '';
