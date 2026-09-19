@@ -73,7 +73,13 @@ and via `sendBeacon` on `pagehide` / backgrounding.
 ## Tabs
 
 Home · Data · **Entry** (center, boxed blue via `.tab-entry` — it's the primary action) ·
-Forecast · **Baking**. Five tabs; nav shows emoji icon + label.
+**Baking**. Four tabs; nav shows an inline-SVG icon + label.
+
+**Forecast was merged into Home (2026-09).** There is no `view-proj` and no `proj` tab.
+`renderHome()` writes the "last updated" strip to `#homeUpdated`, then calls `renderProj()`,
+which still fills `#projScenario` / `#projSub` / `#projList` — those elements now live inside
+`view-home`. Home no longer draws its own stock card; that was a thinner copy of the same one.
+Cost of the merge: one extra `fetchRemoteEntries()` per Home load (`getSales()` is cached).
 
 **Baking** merges the old Plan + Recipes into one tab with a `#bakingMode` segment toggle
 (`📅 Plan` / `📖 Recipes`) — `renderBaking()` shows `#bakingPlan` or `#bakingRecipes` and calls

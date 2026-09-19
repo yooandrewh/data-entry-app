@@ -554,6 +554,7 @@
     padding: 8px 11px; border-radius: 10px; margin: 0 0 12px;
   }
   .home-updated { color: var(--muted); font-size: 13px; margin: 0 2px 14px; line-height: 1.5; }
+  #projSub { margin: -8px 2px 14px; }
   .home-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
   .metric { background: var(--card); border-radius: 16px; box-shadow: var(--shadow); padding: 14px 16px; }
   .metric .m-label { font-size: 14px; color: var(--muted); font-weight: 600; }
@@ -578,7 +579,7 @@
 <body>
 
 <!-- Version badge — bump on every deploy (v = commit count, time = deploy time PST) -->
-<div class="ver-badge">v84 · Sep 19, 10:15 AM</div>
+<div class="ver-badge">v85 · Sep 19, 10:37 AM</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -587,6 +588,14 @@
       <h1>Kairos</h1>
       <div class="sub" id="homeSub">—</div>
     </header>
+    <div id="homeUpdated"></div>
+    <div class="db-filter" id="projScenario">
+      <button data-scn="bear">🐻 Bear</button>
+      <button class="on" data-scn="base">Expected</button>
+      <button data-scn="bull">🐂 Bull</button>
+    </div>
+    <div class="hint" id="projSub"></div>
+    <div id="projList"></div>
     <div id="homeContent"></div>
   </div>
 </div>
@@ -706,20 +715,6 @@
 </div>
 
 <!-- ===== PROJECTIONS VIEW ===== -->
-<div class="view" id="view-proj">
-  <div class="wrap">
-    <header>
-      <h1>Forecast</h1>
-      <div class="sub" id="projSub">—</div>
-    </header>
-    <div class="db-filter" id="projScenario">
-      <button data-scn="bear">🐻 Bear</button>
-      <button class="on" data-scn="base">Expected</button>
-      <button data-scn="bull">🐂 Bull</button>
-    </div>
-    <div id="projList"></div>
-  </div>
-</div>
 
 <!-- ===== PLAN VIEW (what-if: how much to bake to last until a date) ===== -->
 <div class="view" id="view-plan">
@@ -782,7 +777,6 @@
   <button data-tab="home" class="on"><span class="tic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 10.5 12 4l8.5 6.5V19a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1z"/><path d="M9.5 20v-6h5v6"/></svg></span><span class="tlabel">Home</span></button>
   <button data-tab="db"><span class="tic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M4 6.5h16M4 12h16M4 17.5h10"/></svg></span><span class="tlabel">Data</span></button>
   <button data-tab="entry" class="tab-entry"><span class="tic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span><span class="tlabel">Entry</span></button>
-  <button data-tab="proj"><span class="tic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 16.5 9 11l3.5 3.5L20 6.5"/><path d="M15 6.5h5v5"/></svg></span><span class="tlabel">Forecast</span></button>
   <button data-tab="plan"><span class="tic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 9.5h17M8.5 3.5v3M15.5 3.5v3"/></svg></span><span class="tlabel">Baking</span></button>
 </nav>
 
@@ -1330,7 +1324,7 @@
   }
 
   // ---- Tab switching ----
-  const VIEWS = { home: 'view-home', entry: 'view-entry', db: 'view-db', proj: 'view-proj', plan: 'view-plan' };
+  const VIEWS = { home: 'view-home', entry: 'view-entry', db: 'view-db', plan: 'view-plan' };
   document.querySelector('.tabbar').addEventListener('click', e => {
     const btn = e.target.closest('button'); if (!btn) return;
     const tab = btn.dataset.tab;
@@ -1339,7 +1333,6 @@
     Object.entries(VIEWS).forEach(([t, id]) => document.getElementById(id).classList.toggle('active', t === tab));
     if (tab === 'home') { salesCache = null; renderHome(); }
     if (tab === 'db') { salesCache = null; renderData(); retryUnsynced(); }
-    if (tab === 'proj') { salesCache = null; renderProj(); }
     if (tab === 'plan') { salesCache = null; renderBaking(); }
     window.scrollTo(0, 0);
   });
@@ -2139,28 +2132,18 @@
     const lastInv = inv.reduce((m, e) => { const d = String(e.datetime).slice(0, 10); return d > m ? d : m; }, '');
 
     const fw = d => d ? fmtWhen(d) : '—';   // fmtWhen throws on an empty date
-    let html = `<div class="home-updated">Sales ${fw(lastSales)} · Delivery ${fw(lastDel)} · Count ${fw(lastInv)} · ↻ ${timeLabel()}</div>`;
+    document.getElementById('homeUpdated').innerHTML =
+      `<div class="home-updated">Sales ${fw(lastSales)} · Delivery ${fw(lastDel)} · Count ${fw(lastInv)} · ↻ ${timeLabel()}</div>`;
+
+    // Stock and run-out are drawn by renderProj() into #projList — Home used to
+    // render its own thinner copy of the same card. getSales() is cached by now,
+    // so this costs one extra entries fetch.
+    renderProj();
+    let html = '';
     const allMisses = [];
     for (const loc of LOCATIONS.filter(l => homeLoc === 'all' || l === homeLoc)) {
       const st = locStats(loc, sales, entries);
       for (const mi of forecastMisses(loc, sales, st)) allMisses.push({ loc, ...mi });
-      const ro = runoutBand(st);
-      const band = (ro.firstLo === Infinity || Math.round(ro.firstLo) === Math.round(ro.firstHi)) ? ''
-        : ` <span style="color:var(--muted);font-weight:500;font-size:14px">(${Math.round(ro.firstLo)}–${ro.firstHi === Infinity ? '∞' : Math.round(ro.firstHi)}d)</span>`;
-      const sold7 = soldLastDays(loc, sales, 7);
-      const stockChips = st.hasInv
-        ? PRODUCTS.map(p => kvRow(tok(p), p, st.stock[p], ' left')).join('')
-        : `<div class="proj-row"><span class="k">No inventory count yet</span></div>`;
-      const runoutLine = !st.hasInv ? ''
-        : ro.firstD === Infinity
-          ? `<div class="proj-runout" style="font-size:14px">No recent sales — can't project</div>`
-          : `<div class="proj-runout">Runs out in <span class="big">${fmtD(ro.firstD)}</span>${band} <span style="color:var(--muted);font-weight:600">(${ro.firstP})</span></div>`;
-      html += `<div class="proj-card">
-          <div class="proj-sub" style="margin-top:2px">${st.hasInv ? `${st.stockTotal} on hand · counted ${fmtWhen(st.invDate)}` : 'Add an inventory count to project run-out'} · ${sold7} sold last 7d</div>
-          ${staleWarn(st)}
-          <div class="proj-stock-chips">${stockChips}</div>
-          ${runoutLine}
-        </div>`;
     }
     // Days that blew past (or fell far under) the day-of-week forecast band.
     if (allMisses.length) {
@@ -2855,7 +2838,6 @@
     if (document.getElementById('delScrim').classList.contains('show')) return;
     const active = document.querySelector('.tabbar button.on')?.dataset.tab;
     if (active === 'home') { salesCache = null; renderHome(); }
-    else if (active === 'proj') { salesCache = null; renderProj(); }
     else if (active === 'db') { salesCache = null; renderData(); }
   }
   // Refresh when the app returns to the foreground…
