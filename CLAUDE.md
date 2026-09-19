@@ -2,11 +2,10 @@
 
 iPhone-optimized web app for Kairos baking: log deliveries, inventory, goodwill and transfers
 by location, then forecast and plan bakes. Actively tracked products (`PRODUCTS`): **Lemon Poppy,
-Sea Salt, Earl Grey, Dubai Ball**. Ube and Dot were discontinued 2026-09 — dropped from Entry /
+Sea Salt, Earl Grey**. Ube, Dot and Dubai Ball were discontinued 2026-09 — dropped from Entry /
 Forecast / Plan, but their history stays in the Data tab (`SALES_FLAVORS` and the sheet columns are
-kept). **Dubai Ball is not a madeleine** — a separate SKU; excluded from the madeleine flavor mix,
-and its sales can't come from the madeleine-filtered OCR, so its Forecast rate stays 0 until a
-sales source exists. Adding a product = `PRODUCTS` + `PRODUCT_ICON` + an Entry stepper + a sheet
+kept). **Dubai Ball is not a madeleine** — a separate SKU, excluded from the madeleine flavor mix.
+Adding a product = `PRODUCTS` + `PRODUCT_TOKEN` + `PRODUCT_COLOR` + an Entry stepper + a sheet
 column + the `sync`/`entries`/`sales` maps.
 
 - **Local:** `/Users/andrew/data-entry-app/` · **Repo:** `yooandrewh/data-entry-app` (public)
@@ -20,7 +19,7 @@ remain as an untouched backup, and the `NOTION_TOKEN` / `NOTION_*_DB` Vercel env
 and safe to remove.
 
 - Sheet id `1kmJHEIKkJ3HTvqmIlx2BwSEYZPNbHt28le3LrPQOuIA`, tabs **Deliveries / Inventory / Sales
-  / Store Sales / StoreStats**
+  / Store Sales / StoreStats / Events**
 - Service account `kairos-sheets@premium-griffin-500920-s0.iam.gserviceaccount.com` (Editor)
 - `api/_sheets.js` is a zero-dep client — signs a service-account JWT with `node:crypto` and
   calls the Sheets v4 REST API. Vercel env: `SHEET_ID`, `GOOGLE_SA_JSON` (base64 of the key).
@@ -44,6 +43,32 @@ Steppers and the backend accept negatives generally.
   "Tagged for deletion" = TRUE via `api/tag-delete.js`. Nothing is ever hard-deleted.
 - **Edit** (✏️) works on delivery/inventory rows only. Goodwill and transfers are signed/paired,
   so the button is hidden *and* `api/update-entry.js` refuses them — keep both guards.
+
+## Usage analytics
+
+`track(name, props)` in `index.html` queues events and posts a batch to `api/track.js`, which
+appends them to the **Events** tab (`Timestamp / Date / Session / Device / Event / Props`).
+`ensureTab()` in `_sheets.js` creates that tab on the first call, so nothing is set up by hand.
+
+Stored per event: a random device id from `localStorage.kairosDeviceId`, a coarse device label
+(iPhone / iPad / Android / Desktop), the event name, and a small JSON props blob. No IP, no user
+agent string, no entry text. **The app URL is public and unauthenticated**, so anyone who opens
+the link is recorded the same anonymous way — read the Events tab as "sessions", not "me".
+
+Events: `open`, `tab`, `data_filter`, `data_range`, `data_location`, `data_grouping`,
+`entry_submit`, `forecast_scenario`, `baking_mode`. Flushed on a 5s timer, at 20 queued events,
+and via `sendBeacon` on `pagehide` / backgrounding.
+
+## Visual language
+
+- **Flavors are two-letter tokens, not emoji** — `PRODUCT_TOKEN` + `PRODUCT_COLOR` render through
+  `tok(p)` as a fixed-width colored square (LP, SS, EG…). Emoji were ambiguous at small sizes and
+  had different widths, so rows never lined up. Recipe icons (`REC_ICON`) are still emoji.
+- **Per-flavor numbers stack**, they never sit side by side as pills. One shared row pattern,
+  `.proj-row` (label left, value right, hairline between), used on Data, Forecast and Baking;
+  `kvRow()` builds one. `.pr-fc` adds a muted second line under the value when one line is too long.
+- **Nav and Entry-type icons are inline SVG**, stroked with `currentColor`. No icon font, no build
+  step.
 
 ## Tabs
 

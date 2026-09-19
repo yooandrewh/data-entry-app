@@ -133,6 +133,34 @@ export async function appendRow(tab, obj) {
   return row;
 }
 
+// Append several rows in one API call, each ordered to match the tab's header.
+export async function appendRows(tab, objs) {
+  if (!objs.length) return 0;
+  const header = await getHeader(tab);
+  const values = objs.map((o) => header.map((h) => (o[h] !== undefined && o[h] !== null ? o[h] : '')));
+  await api(
+    `/values/${encodeURIComponent(tab)}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
+    { method: 'POST', body: JSON.stringify({ values }) },
+  );
+  return values.length;
+}
+
+// Create a tab with the given header row if it isn't there yet, so a new
+// endpoint can start writing without anyone adding the tab by hand first.
+export async function ensureTab(tab, header) {
+  const meta = await api('?fields=sheets.properties.title');
+  if ((meta.sheets || []).some((s) => s.properties && s.properties.title === tab)) return false;
+  await api(':batchUpdate', {
+    method: 'POST',
+    body: JSON.stringify({ requests: [{ addSheet: { properties: { title: tab } } }] }),
+  });
+  await api(
+    `/values/${encodeURIComponent(tab)}!A1?valueInputOption=RAW`,
+    { method: 'PUT', body: JSON.stringify({ values: [header] }) },
+  );
+  return true;
+}
+
 // 1-based column index -> A1 letter(s).
 export function colLetter(n) {
   let s = '';

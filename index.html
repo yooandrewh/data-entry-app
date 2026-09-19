@@ -25,7 +25,7 @@
     --shadow: 0 1px 3px rgba(0,0,0,0.06);
     --safe-top: env(safe-area-inset-top, 0px);
     --safe-bottom: env(safe-area-inset-bottom, 0px);
-    --tabbar-h: 56px;
+    --tabbar-h: 62px;
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   [hidden] { display: none !important; }   /* the hidden attr must win over flex/grid layouts */
@@ -45,8 +45,8 @@
   .wrap { max-width: 480px; margin: 0 auto; padding: 0 16px; }
 
   header { padding: 6px 2px 14px; }
-  h1 { font-size: 28px; font-weight: 700; margin: 0; letter-spacing: -0.5px; }
-  .sub { color: var(--muted); font-size: 14px; margin-top: 2px; }
+  h1 { font-size: 30px; font-weight: 700; margin: 0; letter-spacing: -0.5px; }
+  .sub { color: var(--muted); font-size: 14.5px; margin-top: 2px; }
 
   /* Views */
   .view { display: none; }
@@ -61,20 +61,22 @@
     appearance: none; border: none; cursor: pointer;
     background: var(--card); color: var(--text);
     border-radius: 14px; padding: 9px 2px 8px;
-    font-size: 11.5px; font-weight: 600; letter-spacing: -0.2px;
+    font-size: 12.5px; font-weight: 600; letter-spacing: -0.2px;
     box-shadow: var(--shadow);
     display: flex; flex-direction: column; align-items: center; gap: 4px;
     border: 2px solid transparent;
     transition: transform .08s ease, border-color .15s ease;
   }
-  .seg button .ic { font-size: 20px; line-height: 1; }
+  .seg button .ic { display: block; height: 22px; }
+  .seg button .ic svg { display: block; width: 22px; height: 22px; }
+  .seg button .ic svg * { stroke: currentColor; }
   .seg button:active { transform: scale(0.97); }
   .seg button.on[data-type="delivery"] { border-color: var(--blue); color: var(--blue); }
   .seg button.on[data-type="inventory"] { border-color: var(--orange); color: var(--orange); }
   .seg button.on[data-type="goodwill"] { border-color: #16a34a; color: #16a34a; }
   .seg button.on[data-type="transfer"] { border-color: #7c3aed; color: #7c3aed; }
 
-  .group-label { font-size: 13px; color: var(--muted); font-weight: 600;
+  .group-label { font-size: 14px; color: var(--muted); font-weight: 600;
     text-transform: uppercase; letter-spacing: 0.4px; margin: 0 4px 8px; }
 
   .card {
@@ -131,7 +133,7 @@
   }
   .submit:active { transform: scale(0.98); }
 
-  .hint { color: var(--muted); font-size: 13px; margin: -14px 4px 22px; }
+  .hint { color: var(--muted); font-size: 14px; margin: -14px 4px 22px; }
 
   /* ---- Database view ---- */
   .db-entry {
@@ -140,27 +142,36 @@
   }
   .db-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 8px; }
   .db-type {
-    font-size: 13px; font-weight: 700; padding: 4px 10px; border-radius: 8px;
+    font-size: 14px; font-weight: 700; padding: 4px 10px; border-radius: 8px;
     display: inline-flex; align-items: center; gap: 5px;
   }
   .db-type.delivery { background: rgba(0,122,255,0.12); color: var(--blue); }
   .db-type.inventory { background: rgba(255,149,0,0.14); color: var(--orange); }
-  .db-when { font-size: 13px; color: var(--muted); text-align: right; }
-  .db-loc { font-size: 14px; color: var(--muted); margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; gap: 5px; }
+  .db-when { font-size: 14px; color: var(--muted); text-align: right; }
+  .db-loc { font-size: 15px; color: var(--muted); margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; gap: 5px; }
   .db-loc .loc-name { display: flex; align-items: center; gap: 5px; }
-  .db-amts { display: flex; flex-wrap: wrap; gap: 8px; }
-  .db-chip {
-    background: var(--field); border-radius: 10px; padding: 7px 11px;
-    font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px;
+  /* Flavour monogram — fixed width and colour, so every list lines up and the
+     same mark means the same flavour on every tab. */
+  .tok {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px; border-radius: 9px; flex: 0 0 28px;
+    font-size: 11.5px; font-weight: 800; letter-spacing: -0.3px;
+    color: #fff; vertical-align: middle; margin-right: 9px;
   }
-  .db-chip .n { color: var(--blue); }
-  .db-chip.db-total { background: rgba(0,122,255,0.12); color: var(--blue); }
-  .db-chip.db-flight { background: rgba(88,86,214,0.12); color: #4b48b3; }
-  .db-summary .ds-flights { margin-top: 6px; color: #4b48b3; font-weight: 600; }
-  .db-summary .ds-flights .ds-note { color: var(--muted); font-weight: 400; font-size: 12px; }
+
+  /* Amounts read as a column of label/value lines (.proj-row), not a wrapped
+     pill row — the numbers line up on the right so you can scan them. */
+  .db-amts { margin-top: 2px; }
+  .db-amts .proj-row { font-size: 16px; }
+  .db-amts .proj-row .k { color: var(--text); font-weight: 500; }
+  .db-amts .pr-total .k { font-weight: 700; }
+  .db-amts .pr-xfer .k, .db-amts .pr-xfer b { color: #7c3aed; }
+  .db-amts .pr-flight .k, .db-amts .pr-flight b { color: #4b48b3; }
+  .db-summary .ds-flights { margin-top: 10px; color: #4b48b3; font-weight: 600; font-size: 14px; }
+  .db-summary .ds-flights .ds-note { color: var(--muted); font-weight: 400; font-size: 13px; }
   .db-empty { text-align: center; color: var(--muted); padding: 60px 20px; }
   .db-empty .big { font-size: 44px; margin-bottom: 12px; }
-  .db-day { font-size: 13px; color: var(--muted); font-weight: 600;
+  .db-day { font-size: 14px; color: var(--muted); font-weight: 600;
     text-transform: uppercase; letter-spacing: 0.4px; margin: 14px 0 8px;
     position: sticky; top: var(--safe-top); z-index: 5;
     padding: 8px 4px 6px; background: linear-gradient(var(--bg) 75%, transparent); }
@@ -173,7 +184,7 @@
   .chip-row button {
     appearance: none; border: none; cursor: pointer; font-family: inherit;
     white-space: nowrap; flex: 1 0 auto; background: var(--card); color: var(--text);
-    font-size: 14px; font-weight: 600; padding: 9px 14px; border-radius: 999px;
+    font-size: 15px; font-weight: 600; padding: 9px 14px; border-radius: 999px;
     box-shadow: var(--shadow); transition: background .15s ease, color .15s ease;
   }
   .chip-row button.on { background: var(--blue); color: #fff; }
@@ -201,20 +212,22 @@
   .tabbar button {
     flex: 1; appearance: none; border: none; background: none; cursor: pointer;
     color: var(--muted); font-family: inherit;
-    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
-    font-size: 10px; font-weight: 600; padding: 0 2px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+    font-size: 13.5px; font-weight: 600; padding: 0 2px;
   }
-  /* Icon carries the tap target — the whole button is tappable, the icon just makes
-     it obvious. Labels stay small so six tabs don't crowd on a narrow phone. */
-  .tabbar button .tic { font-size: 21px; line-height: 1; }
+  /* Line icons rather than emoji: they sit on one baseline, take the tab's colour,
+     and stay legible at this size. The whole button is the tap target. */
+  .tabbar button .tic { display: block; height: 24px; }
+  .tabbar button .tic svg { display: block; width: 24px; height: 24px; }
+  .tabbar button .tic svg * { stroke: currentColor; }
   .tabbar button .tlabel { line-height: 1; white-space: nowrap; }
   .tabbar button.on { color: var(--blue); font-weight: 700; }
-  .tabbar button.tab-entry { color: var(--blue); }
+  .tabbar button.tab-entry { color: #fff; }
   .tabbar button.tab-entry .tic {
-    background: rgba(0,122,255,0.14); border: 1.5px solid rgba(0,122,255,0.35);
-    border-radius: 13px; padding: 2px 14px; line-height: 1.15;
+    background: var(--blue); border-radius: 12px; padding: 3px 17px;
+    box-shadow: 0 3px 10px rgba(0,122,255,0.35);
   }
-  .tabbar button.tab-entry .tlabel { font-weight: 700; }
+  .tabbar button.tab-entry .tlabel { font-weight: 700; color: var(--blue); }
 
   /* ---- Stores analytics ---- */
   .store-card { background: var(--card); border-radius: 16px; box-shadow: var(--shadow); padding: 16px; margin-bottom: 18px; }
@@ -223,17 +236,17 @@
   .sc-toggle { cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 8px; -webkit-tap-highlight-color: transparent; }
   .sc-toggle .chev { color: var(--muted); font-size: 15px; transition: transform .2s ease; flex-shrink: 0; }
   .store-card:not(.collapsed) .sc-toggle .chev { transform: rotate(90deg); }
-  .sc-toggle .sc-peek { font-size: 12px; color: var(--muted); font-weight: 500; margin-left: auto; }
+  .sc-toggle .sc-peek { font-size: 13px; color: var(--muted); font-weight: 500; margin-left: auto; }
   .store-card.collapsed .sc-body { display: none; }
   .store-card.collapsed { padding-bottom: 14px; }
-  .store-tag { font-size: 13px; color: var(--muted); margin: 2px 0 14px; }
+  .store-tag { font-size: 14px; color: var(--muted); margin: 2px 0 14px; }
   .smetrics { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
   .smetric { background: var(--field); border-radius: 12px; padding: 10px 12px; }
   .smetric .v { font-size: 20px; font-weight: 800; letter-spacing: -0.3px; }
-  .smetric .k { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.3px; margin-top: 2px; }
-  .ssec { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; margin: 18px 2px 9px; }
-  .store-note { font-size: 13px; color: var(--text); background: var(--field); border-radius: 10px; padding: 8px 11px; margin: 12px 0 2px; }
-  .fbar { display: grid; grid-template-columns: 84px 1fr 30px; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 13px; }
+  .smetric .k { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.3px; margin-top: 2px; }
+  .ssec { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; margin: 18px 2px 9px; }
+  .store-note { font-size: 14px; color: var(--text); background: var(--field); border-radius: 10px; padding: 8px 11px; margin: 12px 0 2px; }
+  .fbar { display: grid; grid-template-columns: 84px 1fr 30px; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 14px; }
   .fbar .track { background: var(--sep); border-radius: 6px; height: 10px; overflow: hidden; }
   .fbar .fill { height: 100%; border-radius: 6px; background: var(--blue); }
   .fbar .fill.old { background: var(--muted); opacity: 0.5; }
@@ -247,18 +260,18 @@
   .growth-block { margin-bottom: 14px; }
   .growth-block:last-child { margin-bottom: 0; }
   .growth-head { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
-  .growth-head .gt { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
+  .growth-head .gt { font-size: 13px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
   .growth-head .gv { font-size: 20px; font-weight: 800; letter-spacing: -0.3px; }
   .wbar-p { width: 100%; display: flex; flex-direction: column; justify-content: flex-start; min-height: 2px; }
   .wbar-ghost { width: 100%; box-sizing: border-box; border: 1.5px dashed var(--blue); border-bottom: none; border-radius: 4px 4px 0 0; opacity: 0.55; }
   .wbar-act { width: 100%; background: var(--blue); opacity: 0.45; }
-  .growth-proj { font-size: 12px; color: var(--muted); margin-top: 8px; }
+  .growth-proj { font-size: 13px; color: var(--muted); margin-top: 8px; }
   .growth-proj b { color: var(--blue); font-weight: 700; }
-  .growth-range { font-size: 12.5px; font-weight: 700; margin-top: 3px; }
+  .growth-range { font-size: 13.5px; font-weight: 700; margin-top: 3px; }
   .growth-range.up { color: #16a34a; }
   .growth-range.down { color: var(--red); }
   .growth-range.flat { color: var(--muted); }
-  .wow { font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
+  .wow { font-size: 13px; font-weight: 700; padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
   .wow.up { color: #16a34a; background: rgba(22,163,74,0.12); }
   .wow.down { color: var(--red); background: rgba(255,59,48,0.12); }
   .wow.flat { color: var(--muted); background: var(--field); }
@@ -267,14 +280,14 @@
   .wcol .bar { width: 100%; background: var(--blue); border-radius: 4px 4px 0 0; min-height: 2px; opacity: 0.55; transition: height .2s; }
   .wcol .bar.last { opacity: 1; background: #16a34a; }
   .wcol .lb { font-size: 9px; color: var(--muted); }
-  .cashrow { display: grid; grid-template-columns: 1fr auto; gap: 8px; font-size: 13px; padding: 4px 0; border-top: 1px solid var(--sep); }
+  .cashrow { display: grid; grid-template-columns: 1fr auto; gap: 8px; font-size: 14px; padding: 4px 0; border-top: 1px solid var(--sep); }
   .cashrow:first-child { border-top: none; }
   .cashrow .c-n { color: var(--muted); font-variant-numeric: tabular-nums; }
   .home-stores { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 22px; }
   .hstore { background: var(--card); border-radius: 14px; box-shadow: var(--shadow); padding: 12px; }
   .hstore .hs-n { font-size: 14px; font-weight: 700; margin-bottom: 6px; }
   .hstore .hs-big { font-size: 22px; font-weight: 800; letter-spacing: -0.3px; }
-  .hstore .hs-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .hstore .hs-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
 
   /* ---- Confirmation sheet ---- */
   .scrim {
@@ -291,7 +304,7 @@
   }
   .scrim.show .sheet { transform: translateY(0); }
   .sheet h2 { font-size: 20px; font-weight: 700; margin: 0 0 4px; text-align: center; }
-  .sheet .warn { font-size: 13px; color: var(--muted); text-align: center; margin-bottom: 18px; }
+  .sheet .warn { font-size: 14px; color: var(--muted); text-align: center; margin-bottom: 18px; }
   .sheet .sum {
     background: var(--field); border-radius: 14px; padding: 4px 14px; margin-bottom: 20px;
   }
@@ -337,7 +350,7 @@
     color: var(--text); font-family: inherit; margin-bottom: 6px;
   }
   .alert-box input:focus { outline: none; border-color: var(--blue); }
-  .alert-err { color: var(--red); font-size: 13px; min-height: 18px; margin-bottom: 10px; text-align: center; }
+  .alert-err { color: var(--red); font-size: 14px; min-height: 18px; margin-bottom: 10px; text-align: center; }
 
   /* Delete button on entries */
   .db-del {
@@ -355,7 +368,7 @@
   .db-tools { display: flex; align-items: center; }
   .db-sync {
     appearance: none; font-family: inherit; border: none; cursor: default;
-    margin-top: 10px; font-size: 12px; font-weight: 600;
+    margin-top: 10px; font-size: 13px; font-weight: 600;
     display: inline-flex; align-items: center; gap: 5px;
     padding: 4px 9px; border-radius: 8px; background: transparent;
   }
@@ -376,7 +389,7 @@
   .filter-bar { display: flex; gap: 8px; margin-bottom: 14px; }
   .filter-bar select {
     flex: 1; min-width: 0; appearance: none; -webkit-appearance: none; cursor: pointer;
-    font-family: inherit; font-size: 13px; font-weight: 600;
+    font-family: inherit; font-size: 14px; font-weight: 600;
     color: var(--text); background-color: var(--card); border: none; border-radius: 10px;
     box-shadow: var(--shadow); padding: 9px 24px 9px 11px;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238e8e93' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
@@ -392,7 +405,7 @@
   .db-dates-sep { color: var(--muted); }
   .db-date-clear {
     appearance: none; border: none; cursor: pointer; font-family: inherit;
-    background: var(--field); color: var(--blue); font-weight: 600; font-size: 13px;
+    background: var(--field); color: var(--blue); font-weight: 600; font-size: 14px;
     padding: 8px 12px; border-radius: 10px;
   }
   .db-summary {
@@ -400,21 +413,24 @@
     padding: 14px 16px; margin-bottom: 14px;
   }
   .db-summary .ds-total { font-size: 15px; color: var(--muted); font-weight: 600; }
-  .db-summary .ds-total b { font-size: 26px; color: var(--text); font-weight: 700; margin-right: 5px; }
+  .db-summary .ds-total b { font-size: 32px; color: var(--text); font-weight: 700; margin-right: 5px; }
   .db-summary .ds-break { display: flex; gap: 16px; margin-top: 8px; font-size: 14px; font-weight: 600; }
+  .db-summary .ds-rows { margin-top: 6px; }
+  .db-summary .ds-rows .proj-row { font-size: 14px; }
+  .db-summary .ds-rows .proj-row .k { color: var(--text); font-weight: 600; }
   .db-summary .ds-loc { margin-top: 6px; color: var(--muted); }
   .db-summary .ds-loc b { color: var(--text); }
   .beta-banner {
     background: var(--orange); color: #fff; text-align: center;
-    font-size: 12px; font-weight: 700; letter-spacing: 0.3px; padding: 7px 10px;
+    font-size: 13px; font-weight: 700; letter-spacing: 0.3px; padding: 7px 10px;
   }
   .proj-card {
     background: var(--card); border-radius: 16px; box-shadow: var(--shadow);
     padding: 16px; margin-bottom: 14px;
   }
   .proj-card h3 { font-size: 18px; font-weight: 700; margin: 0 0 2px; }
-  .proj-sub { font-size: 13px; color: var(--muted); margin-bottom: 10px; }
-  .proj-stock-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  .proj-sub { font-size: 14px; color: var(--muted); margin-bottom: 10px; }
+  .proj-stock-chips { margin-bottom: 10px; }
   .proj-runout { font-size: 15px; font-weight: 700; margin-bottom: 10px; }
   .proj-runout .big { font-size: 26px; }
   /* Bake-days selector (Plan) */
@@ -423,7 +439,7 @@
   .bakedays { display: flex; gap: 5px; }
   .bakedays button {
     width: 32px; height: 32px; border-radius: 999px; appearance: none; border: none;
-    background: var(--field); color: var(--muted); font-weight: 700; font-size: 13px;
+    background: var(--field); color: var(--muted); font-weight: 700; font-size: 14px;
     cursor: pointer; font-family: inherit; transition: background .15s ease, color .15s ease;
   }
   .bakedays button.on { background: var(--blue); color: #fff; }
@@ -435,49 +451,49 @@
   }
   .bakedate-add button {
     appearance: none; border: none; cursor: pointer; font-family: inherit;
-    background: var(--field); color: var(--blue); font-weight: 700; font-size: 13px;
+    background: var(--field); color: var(--blue); font-weight: 700; font-size: 14px;
     padding: 8px 14px; border-radius: 10px; white-space: nowrap;
   }
   .bakedate-chips { display: flex; flex-wrap: wrap; gap: 7px; width: 100%; }
   .bakedate-chips:empty { display: none; }
   .bakedate-chip {
     display: inline-flex; align-items: center; gap: 7px; background: rgba(0,122,255,0.12);
-    color: var(--blue); font-weight: 700; font-size: 13px; padding: 6px 6px 6px 12px; border-radius: 999px;
+    color: var(--blue); font-weight: 700; font-size: 14px; padding: 6px 6px 6px 12px; border-radius: 999px;
   }
   .bakedate-chip button {
     appearance: none; border: none; background: rgba(0,122,255,0.2); color: var(--blue);
-    width: 20px; height: 20px; border-radius: 999px; font-size: 12px; line-height: 1;
+    width: 20px; height: 20px; border-radius: 999px; font-size: 13px; line-height: 1;
     cursor: pointer; font-family: inherit; padding: 0;
   }
   .be-section-label {
-    font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em;
+    font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em;
     color: var(--muted); font-weight: 700; margin: 15px 0 4px;
   }
   .split-card .lbl { font-weight: 600; display: block; margin-bottom: 4px; }
   .split-card input[type="range"] {
     width: 100%; margin: 10px 0 8px; accent-color: var(--blue); height: 24px;
   }
-  .split-vals { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; color: var(--muted); }
+  .split-vals { display: flex; justify-content: space-between; gap: 12px; font-size: 14px; color: var(--muted); }
   .split-vals b { color: var(--blue); font-size: 17px; font-weight: 800; margin-right: 3px; }
   .split-vals span:last-child { text-align: right; }
   /* ---- Recipes tab ---- */
   .beta-pill {
     display: inline-block; vertical-align: middle; margin-left: 9px;
-    background: var(--orange); color: #fff; font-size: 11px; font-weight: 800;
+    background: var(--orange); color: #fff; font-size: 12px; font-weight: 800;
     letter-spacing: 0.06em; padding: 3px 9px; border-radius: 999px;
   }
   .rec-beta-note {
     background: rgba(255,149,0,0.12); color: #8a4b00; border-radius: 12px;
-    padding: 10px 13px; margin-bottom: 14px; font-size: 13px; font-weight: 600; line-height: 1.45;
+    padding: 10px 13px; margin-bottom: 14px; font-size: 14px; font-weight: 600; line-height: 1.45;
   }
   .rec-scale { display: flex; gap: 8px; margin: 2px 0 12px; flex-wrap: wrap; }
   .rec-scale button {
     appearance: none; border: none; cursor: pointer; font-family: inherit;
-    background: var(--field); color: var(--text); font-size: 13px; font-weight: 600;
+    background: var(--field); color: var(--text); font-size: 14px; font-weight: 600;
     padding: 7px 14px; border-radius: 999px;
   }
   .rec-scale button.on { background: var(--blue); color: #fff; }
-  .rec-scale .lbl { font-size: 12px; color: var(--muted); font-weight: 600; align-self: center; margin-right: 2px; }
+  .rec-scale .lbl { font-size: 13px; color: var(--muted); font-weight: 600; align-self: center; margin-right: 2px; }
   .rec-qty {
     width: 4.2em; text-align: right; border: none; border-bottom: 1.5px dashed var(--blue);
     background: transparent; font-weight: 600; color: var(--blue);
@@ -485,44 +501,46 @@
   }
   .rec-qty::-webkit-outer-spin-button, .rec-qty::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   .rec-qty:focus { outline: none; border-bottom-style: solid; }
-  .rec-box { background: var(--field); border-radius: 10px; padding: 10px 12px; margin-top: 12px; font-size: 13px; line-height: 1.5; }
-  .rec-box b { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 4px; }
+  .rec-box { background: var(--field); border-radius: 10px; padding: 10px 12px; margin-top: 12px; font-size: 14px; line-height: 1.5; }
+  .rec-box b { display: block; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 4px; }
   .rec-box .gl { display: flex; justify-content: space-between; gap: 10px; padding: 2px 0; }
   .rec-box .gl span:last-child { font-weight: 600; }
-  .rec-box .fr-title { font-weight: 700; color: var(--blue); margin: 6px 0 2px; font-size: 12px; }
+  .rec-box .fr-title { font-weight: 700; color: var(--blue); margin: 6px 0 2px; font-size: 13px; }
   .rec-box p { margin: 6px 0 0; }
-  .rec-conv { font-size: 11px; color: var(--muted); font-weight: 400; }
+  .rec-conv { font-size: 12px; color: var(--muted); font-weight: 400; }
   .rec-addin { font-style: italic; }
   .rec-ratio { font-size: 24px; text-align: center; padding: 8px 0 2px; color: var(--blue); font-weight: 700; }
-  .rec-ratio-lbl { text-align: center; font-size: 12px; color: var(--muted); margin-bottom: 6px; }
-  .rec-link { display: block; margin-top: 12px; font-size: 13px; font-weight: 600; color: var(--blue); text-decoration: none; }
+  .rec-ratio-lbl { text-align: center; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+  .rec-link { display: block; margin-top: 12px; font-size: 14px; font-weight: 600; color: var(--blue); text-decoration: none; }
 
   /* Per-bake-day schedule (Plan) */
   .bake-event { border-top: 1px solid var(--sep); padding: 11px 0 4px; }
   .bake-event:first-child { border-top: none; }
   .be-head { font-size: 14px; font-weight: 700; margin-bottom: 8px; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
-  .be-cover { font-size: 12px; font-weight: 500; color: var(--muted); }
+  .be-cover { font-size: 13px; font-weight: 500; color: var(--muted); }
   .be-total { font-size: 14px; font-weight: 800; color: var(--blue); margin-left: auto; }
-  .be-chips { display: flex; flex-wrap: wrap; gap: 7px; }
-  .be-effort { font-size: 13px; color: var(--muted); font-weight: 600; margin-top: 7px; }
-  .be-enough { font-size: 13px; color: var(--green); font-weight: 700; }
+  .be-chips .proj-row { padding: 6px 0; }
+  .be-effort { font-size: 14px; color: var(--muted); font-weight: 600; margin-top: 7px; }
+  .be-enough { font-size: 14px; color: var(--green); font-weight: 700; }
   .proj-row {
-    display: flex; justify-content: space-between; gap: 10px;
-    font-size: 13px; padding: 7px 0; border-bottom: 1px solid var(--sep);
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    font-size: 15px; padding: 9px 0; border-bottom: 1px solid var(--sep);
   }
   .proj-row:last-child { border-bottom: none; }
-  .proj-row .k { color: var(--muted); }
+  .proj-row .k { color: var(--muted); white-space: nowrap; }
   .proj-row b { color: var(--blue); }
+  .pr-fc .fc-v { text-align: right; }
+  .pr-fc .fc-sub { display: block; font-size: 13px; color: var(--muted); margin-top: 2px; }
   .proj-warn {
-    background: rgba(255,149,0,0.14); color: #8a4b00; font-size: 13px; font-weight: 600;
+    background: rgba(255,149,0,0.14); color: #8a4b00; font-size: 14px; font-weight: 600;
     padding: 8px 11px; border-radius: 10px; margin: 0 0 12px;
   }
-  .home-updated { color: var(--muted); font-size: 12px; margin: 0 2px 14px; line-height: 1.5; }
+  .home-updated { color: var(--muted); font-size: 13px; margin: 0 2px 14px; line-height: 1.5; }
   .home-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
   .metric { background: var(--card); border-radius: 16px; box-shadow: var(--shadow); padding: 14px 16px; }
-  .metric .m-label { font-size: 13px; color: var(--muted); font-weight: 600; }
+  .metric .m-label { font-size: 14px; color: var(--muted); font-weight: 600; }
   .metric .m-val { font-size: 26px; font-weight: 700; margin-top: 4px; }
-  .metric .m-sub { font-size: 12px; color: var(--muted); }
+  .metric .m-sub { font-size: 13px; color: var(--muted); }
   .db-sync.tagged { color: var(--red); background: rgba(255,59,48,0.1); }
   .db-entry.tagged { opacity: 0.6; }
   .db-entry.tagged .db-type { filter: grayscale(0.4); }
@@ -542,7 +560,7 @@
 <body>
 
 <!-- Version badge — bump on every deploy (v = commit count, time = deploy time PST) -->
-<div class="ver-badge">v81 · Sep 19, 9:35 AM</div>
+<div class="ver-badge">v82 · Sep 19, 9:55 AM</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -566,16 +584,16 @@
     <form id="form" autocomplete="off">
       <div class="seg" role="tablist" aria-label="Entry type">
         <button type="button" class="on" data-type="delivery" aria-pressed="true">
-          <span class="ic">🚚</span><span>Delivery</span>
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5v10M8 9.5l4 4 4-4"/><path d="M4 16v3.5h16V16"/></svg></span><span>Delivery</span>
         </button>
         <button type="button" data-type="inventory" aria-pressed="false">
-          <span class="ic">📦</span><span>Inventory</span>
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3.5 20 8v8l-8 4.5L4 16V8z"/><path d="M4 8l8 4.5L20 8M12 12.5v8"/></svg></span><span>Inventory</span>
         </button>
         <button type="button" data-type="goodwill" aria-pressed="false">
-          <span class="ic">🎁</span><span>Goodwill</span>
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 10.5h16V20H4zM3 7h18v3.5H3zM12 7v13"/><path d="M12 7C10.5 4 7 4 7 6s3 1 5 1zM12 7c1.5-3 5-3 5-1s-3 1-5 1z"/></svg></span><span>Goodwill</span>
         </button>
         <button type="button" data-type="transfer" aria-pressed="false">
-          <span class="ic">🔄</span><span>Transfer</span>
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h13l-3.5-3.5M20 15H7l3.5 3.5"/></svg></span><span>Transfer</span>
         </button>
       </div>
 
@@ -597,7 +615,7 @@
       <div class="group-label" id="amtLabel">Amount</div>
       <div class="card" id="amounts">
         <div class="row">
-          <span class="lbl">🍋 Lemon Poppy</span>
+          <span class="lbl"><span class="tok" style="background:#c99306">LP</span>Lemon Poppy</span>
           <div class="amt" data-product="Lemon Poppy">
             <button type="button" class="step minus">−</button>
             <input class="val" type="number" inputmode="numeric" value="0" min="0" />
@@ -605,7 +623,7 @@
           </div>
         </div>
         <div class="row">
-          <span class="lbl">🧂 Sea Salt</span>
+          <span class="lbl"><span class="tok" style="background:#4a7ba7">SS</span>Sea Salt</span>
           <div class="amt" data-product="Sea Salt">
             <button type="button" class="step minus">−</button>
             <input class="val" type="number" inputmode="numeric" value="0" min="0" />
@@ -613,7 +631,7 @@
           </div>
         </div>
         <div class="row">
-          <span class="lbl">🫖 Earl Grey</span>
+          <span class="lbl"><span class="tok" style="background:#6b7280">EG</span>Earl Grey</span>
           <div class="amt" data-product="Earl Grey">
             <button type="button" class="step minus">−</button>
             <input class="val" type="number" inputmode="numeric" value="0" min="0" />
@@ -635,11 +653,11 @@
       <div class="sub" id="dbCount">—</div>
     </header>
     <div class="chip-row" id="dbFilter">
-      <button class="on" data-filter="sales">📈 Sales</button>
-      <button data-filter="delivery">🚚 Deliveries</button>
-      <button data-filter="inventory">📦 Inventory</button>
-      <button data-filter="goodwill">🎁 Goodwill</button>
-      <button data-filter="transfer">🔄 Transfers</button>
+      <button class="on" data-filter="sales">Sales</button>
+      <button data-filter="delivery">Deliveries</button>
+      <button data-filter="inventory">Inventory</button>
+      <button data-filter="goodwill">Goodwill</button>
+      <button data-filter="transfer">Transfers</button>
     </div>
     <div class="filter-bar">
       <select id="dbRange" aria-label="Date range">
@@ -743,11 +761,11 @@
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar">
-  <button data-tab="home" class="on"><span class="tic">🏠</span><span class="tlabel">Home</span></button>
-  <button data-tab="db"><span class="tic">🗂️</span><span class="tlabel">Data</span></button>
-  <button data-tab="entry" class="tab-entry"><span class="tic">➕</span><span class="tlabel">Entry</span></button>
-  <button data-tab="proj"><span class="tic">🔮</span><span class="tlabel">Forecast</span></button>
-  <button data-tab="plan"><span class="tic">🥐</span><span class="tlabel">Baking</span></button>
+  <button data-tab="home" class="on"><span class="tic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 10.5 12 4l8.5 6.5V19a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1z"/><path d="M9.5 20v-6h5v6"/></svg></span><span class="tlabel">Home</span></button>
+  <button data-tab="db"><span class="tic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M4 6.5h16M4 12h16M4 17.5h10"/></svg></span><span class="tlabel">Data</span></button>
+  <button data-tab="entry" class="tab-entry"><span class="tic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span><span class="tlabel">Entry</span></button>
+  <button data-tab="proj"><span class="tic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 16.5 9 11l3.5 3.5L20 6.5"/><path d="M15 6.5h5v5"/></svg></span><span class="tlabel">Forecast</span></button>
+  <button data-tab="plan"><span class="tic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 9.5h17M8.5 3.5v3M15.5 3.5v3"/></svg></span><span class="tlabel">Baking</span></button>
 </nav>
 
 <!-- ===== Confirmation sheet ===== -->
@@ -806,16 +824,64 @@
   const STORE_KEY = 'dataEntries.v1';
   const PRODUCTS = ['Lemon Poppy', 'Sea Salt', 'Earl Grey'];   // actively logged/forecast (Ube/Dot/Dubai Ball retired — history kept in Data)
   const HIST_PRODUCTS = ['Lemon Poppy', 'Sea Salt', 'Ube', 'Dot', 'Earl Grey', 'Dubai Ball'];   // every flavor ever tracked — for the Data delivery/inventory history
-  const PRODUCT_ICON = { 'Lemon Poppy': '🍋', 'Sea Salt': '🧂', 'Earl Grey': '🫖', 'Dubai Ball': '🟤', 'Ube': '💜', 'Dot': '🍰', 'Matcha': '🍵', 'Chocolate': '🍫', 'Unknown': '❓' };
+  // Two-letter monogram + a fixed colour per flavour, used everywhere a flavour
+  // is listed. Emoji were ambiguous at small sizes (🫖 for Earl Grey, 🟤 for
+  // Dubai Ball) and rendered at different widths, so rows never lined up.
+  const PRODUCT_TOKEN = { 'Lemon Poppy': 'LP', 'Sea Salt': 'SS', 'Earl Grey': 'EG', 'Dubai Ball': 'DB', 'Ube': 'UB', 'Dot': 'DT', 'Matcha': 'MA', 'Chocolate': 'CH', 'Unknown': '?', 'Flights': 'FL' };
+  const PRODUCT_COLOR = { 'Lemon Poppy': '#c99306', 'Sea Salt': '#4a7ba7', 'Earl Grey': '#6b7280', 'Dubai Ball': '#a0662d', 'Ube': '#7c5aa6', 'Dot': '#c2557a', 'Matcha': '#5a8f4e', 'Chocolate': '#7b4b2a', 'Unknown': '#9a9ba3', 'Flights': '#8a8d96' };
+  const tok = p => `<span class="tok" style="background:${PRODUCT_COLOR[p] || '#9a9ba3'}">${PRODUCT_TOKEN[p] || '··'}</span>`;
   const LOCATIONS = ['La Mirada', 'Stanton'];
   // Flavors the app stocks (PRODUCTS) plus extra ones that show up in sales.
   const SALES_FLAVORS = ['Lemon Poppy', 'Sea Salt', 'Ube', 'Dot', 'Earl Grey', 'Matcha', 'Chocolate', 'Unknown'];
   const PRICE_PER_UNIT = 2.50;   // $/madeleine (from Financial Dashboard: $192.50 / 77 units)
-  const FLIGHT_ICON = '✈️';      // flights are a count (already inside the flavor totals)
   const usd = n => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n);
   const state = { type: 'delivery', location: 'La Mirada' };
   const esc = s => String(s).replace(/[&<>"']/g, c =>
     ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
+
+  // ---- Usage analytics ----
+  // Queues events and posts them to /api/track, which appends to the Events tab
+  // of the sheet. Anonymous: a random per-device id, a coarse device label, the
+  // event name and a small props object — no names, no free text from entries.
+  // Fire and forget; a failure here never blocks or surfaces in the UI.
+  const TRACK_ENDPOINT = '/api/track';
+  const trackQueue = [];
+  let trackTimer = null;
+  const deviceLabel = () => {
+    const ua = navigator.userAgent || '';
+    return /iPhone/.test(ua) ? 'iPhone' : /iPad/.test(ua) ? 'iPad'
+      : /Android/.test(ua) ? 'Android' : 'Desktop';
+  };
+  const trackSession = (() => {
+    try {
+      let id = localStorage.getItem('kairosDeviceId');
+      if (!id) { id = 'd' + Math.random().toString(36).slice(2, 10); localStorage.setItem('kairosDeviceId', id); }
+      return id;
+    } catch (e) { return 'unknown'; }
+  })();
+  function flushTrack(useBeacon) {
+    if (!trackQueue.length) return;
+    const body = JSON.stringify({ session: trackSession, device: deviceLabel(), events: trackQueue.splice(0) });
+    try {
+      // sendBeacon survives the page being backgrounded or closed; fetch doesn't.
+      if (useBeacon && navigator.sendBeacon) navigator.sendBeacon(TRACK_ENDPOINT, new Blob([body], { type: 'application/json' }));
+      else fetch(TRACK_ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body, keepalive: true }).catch(() => {});
+    } catch (e) {}
+  }
+  function track(name, props) {
+    trackQueue.push({ t: Date.now(), name, props: props || undefined });
+    clearTimeout(trackTimer);
+    if (trackQueue.length >= 20) flushTrack(false);           // don't let a burst grow unbounded
+    else trackTimer = setTimeout(() => flushTrack(false), 5000);   // batch a few taps into one request
+  }
+  addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushTrack(true); });
+  addEventListener('pagehide', () => flushTrack(true));
+
+  // One label/value line. Per-flavor numbers stack down the card instead of
+  // wrapping as pills, so the values line up in a column you can scan.
+  const kvRow = (icon, label, value, extra = '', cls = '') =>
+    `<div class="proj-row${cls ? ' ' + cls : ''}"><span class="k">${icon ? icon + ' ' : ''}${label}</span>` +
+    `<span><b>${value}</b>${extra}</span></div>`;
 
   // Where to POST entries so they sync to Notion. '/api/sync' works when the app
   // is hosted on Vercel (same origin). If you keep the app on GitHub Pages, set
@@ -853,7 +919,7 @@
     document.getElementById('locLabel').textContent = isXfer ? 'From' : 'Location';
     const xh = document.getElementById('xferHint');
     xh.hidden = !isXfer;
-    if (isXfer) xh.textContent = `🔄 Moves to ${otherLoc(state.location)}`;
+    if (isXfer) xh.textContent = `Moves to ${otherLoc(state.location)}`;
   }
 
   // ---- Type selector ----
@@ -947,11 +1013,11 @@
       .map(p => {
         const n = pending.amounts[p];
         const shown = isGoodwill ? `−${Math.abs(n)}` : isXfer ? Math.abs(n) : n;
-        return `<div class="l"><span class="k">${PRODUCT_ICON[p]} ${p}</span><span class="v">${shown}</span></div>`;
+        return `<div class="l"><span class="k">${tok(p)}${p}</span><span class="v">${shown}</span></div>`;
       })
       .join('') || `<div class="l"><span class="k">Amounts</span><span class="v">All zero</span></div>`;
     const goodwillNote = isGoodwill
-      ? `<div class="l"><span class="k">🎁 Goodwill</span><span class="v">samples given — removes from stock</span></div>`
+      ? `<div class="l"><span class="k">Goodwill</span><span class="v">samples given — removes from stock</span></div>`
       : '';
     const whereRow = isXfer
       ? `<div class="l"><span class="k">Move</span><span class="v">${esc(pending.location)} → ${esc(pending.to)}</span></div>`
@@ -982,6 +1048,8 @@
 
     // Fire-and-forget sync to Notion (entry is already saved locally).
     syncEntry(record);
+    track('entry_submit', { type: record.type, loc: record.location,
+      total: Object.values(record.amounts || {}).reduce((s, v) => s + (Number(v) || 0), 0) });
 
     scrim.classList.remove('show');
     pending = null;
@@ -1182,12 +1250,13 @@
       locTotals[e.location] = (locTotals[e.location] || 0) + sum;
     }
     const mag = v => (gw || isXferView) ? Math.abs(v) : v;
-    const breakdown = HIST_PRODUCTS.filter(p => totals[p] !== 0).map(p => `<span>${PRODUCT_ICON[p]} ${mag(totals[p])}</span>`).join('');
+    const breakdown = HIST_PRODUCTS.filter(p => (totals[p] || 0) !== 0)
+      .map(p => kvRow(tok(p), p, mag(totals[p]))).join('');
     const locBreak = LOCATIONS.map(l => `<span>${l} <b>${mag(locTotals[l] || 0)}</b></span>`).join('');
     const sumLabel = gw ? `madeleine${Math.abs(grand) === 1 ? '' : 's'} given out`
       : isXferView ? `madeleine${mag(grand) === 1 ? '' : 's'} moved`
       : `madeleine${grand === 1 ? '' : 's'}`;
-    let html = `<div class="db-summary"><div class="ds-total"><b>${mag(grand)}</b> ${sumLabel}</div><div class="ds-break">${breakdown}</div><div class="ds-break ds-loc">📍 ${locBreak}</div></div>`;
+    let html = `<div class="db-summary"><div class="ds-total"><b>${mag(grand)}</b> ${sumLabel}</div><div class="ds-rows">${breakdown}</div><div class="ds-break ds-loc">${locBreak}</div></div>`;
     let lastDay = null;
     for (const e of entries) {
       const dk = dayKey(e.datetime);
@@ -1196,18 +1265,21 @@
       const isXfer = e.type === 'transfer';
       const signAdj = isGw || isXfer;   // show magnitudes (stored value is signed)
       const eTotal = HIST_PRODUCTS.reduce((s, p) => s + (e.amounts[p] || 0), 0);
-      const flavorChips = HIST_PRODUCTS.filter(p => e.amounts[p] !== 0)
-        .map(p => `<span class="db-chip">${PRODUCT_ICON[p]} ${p} <span class="n">${signAdj ? Math.abs(e.amounts[p]) : e.amounts[p]}</span></span>`)
-        .join('') || `<span class="db-chip" style="color:var(--muted)">No amounts</span>`;
-      let dirChip = '';
+      const shown = HIST_PRODUCTS.filter(p => (e.amounts[p] || 0) !== 0);   // a missing key is not a zero row
+      const flavorRows = shown
+        .map(p => kvRow(tok(p), p, signAdj ? Math.abs(e.amounts[p]) : e.amounts[p]))
+        .join('') || `<div class="proj-row"><span class="k">No amounts</span></div>`;
+      let dirRow = '';
       if (isXfer) {
         const dir = String(e.note || '').replace(/^Transfer\s*/i, '');   // "→ Stanton" / "← La Mirada"
-        dirChip = `<span class="db-chip" style="background:rgba(124,58,237,0.12);color:#7c3aed">${esc(dir)} · ${eTotal < 0 ? 'out' : 'in'}</span>`;
+        dirRow = kvRow('', esc(dir), eTotal < 0 ? 'out' : 'in', '', 'pr-xfer');
       }
-      const totalChip = eTotal !== 0
-        ? `<span class="db-chip db-total">${signAdj ? Math.abs(eTotal) : eTotal}${isGw ? ' given out' : isXfer ? ' moved' : ' total'}</span>`
+      // A single flavor already shows the total — only add the line when it adds something.
+      const totalRow = (eTotal !== 0 && shown.length > 1)
+        ? kvRow('', isGw ? 'Given out' : isXfer ? 'Moved' : 'Total',
+                signAdj ? Math.abs(eTotal) : eTotal, '', 'pr-total')
         : '';
-      const chips = dirChip + flavorChips + totalChip;
+      const chips = dirRow + flavorRows + totalRow;
       let footer = '', trash = '', editBtn = '';
       if (e.taggedForDeletion) {
         footer = `<div class="db-sync tagged">🏷️ Tagged for deletion</div>`;
@@ -1225,11 +1297,11 @@
       html +=
         `<div class="db-entry${e.taggedForDeletion ? ' tagged' : ''}">
            <div class="db-head">
-             <span class="db-type ${e.type}">${e.type==='delivery'?'🚚':e.type==='goodwill'?'🎁':e.type==='transfer'?'🔄':'📦'} ${cap(e.type)}</span>
+             <span class="db-type ${e.type}">${cap(e.type)}</span>
              <span class="db-when">${fmtWhen(e.datetime)}</span>
            </div>
            <div class="db-loc">
-             <span class="loc-name">📍 ${esc(e.location)}</span>
+             <span class="loc-name">${esc(e.location)}</span>
              <div class="db-tools">${editBtn}${trash}</div>
            </div>
            <div class="db-amts">${chips}</div>
@@ -1244,6 +1316,7 @@
   document.querySelector('.tabbar').addEventListener('click', e => {
     const btn = e.target.closest('button'); if (!btn) return;
     const tab = btn.dataset.tab;
+    track('tab', { tab });
     document.querySelectorAll('.tabbar button').forEach(b => b.classList.toggle('on', b === btn));
     Object.entries(VIEWS).forEach(([t, id]) => document.getElementById(id).classList.toggle('active', t === tab));
     if (tab === 'home') { salesCache = null; renderHome(); }
@@ -1264,6 +1337,7 @@
   document.getElementById('bakingMode').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
     bakingMode = b.dataset.mode;
+    track('baking_mode', { mode: bakingMode });
     renderBaking();
   });
 
@@ -1396,7 +1470,7 @@
     const gm = growthBlock('Weekly madeleines · ' + scope, madWeekly, v => String(Math.round(v)));
     if (gr || gm) {
       const wowPeek = (wowBadge(revWeekly) || wowBadge(madWeekly)).replace(/<[^>]+>/g, '') || 'revenue & madeleines';
-      html += wrap('📈 Weekly Growth', `${gr}${gm}<div class="store-note" style="margin-top:12px">Mon–Sun weeks · WoW = last two complete weeks · faded bar = in progress</div>`, wowPeek);
+      html += wrap("Weekly Growth", `${gr}${gm}<div class="store-note" style="margin-top:12px">Mon–Sun weeks · WoW = last two complete weeks · faded bar = in progress</div>`, wowPeek);
     }
 
     for (const name of names) {
@@ -1410,7 +1484,7 @@
         if (ws.avgTicket != null) m.push([usd(ws.avgTicket), 'avg ticket']);
         m.push([usd(Math.round(ws.totalRev)), `total · ${ws.days}d`]);
         body += `<div class="smetrics">${m.map(([v, k]) => `<div class="smetric"><div class="v">${v}</div><div class="k">${k}</div></div>`).join('')}</div>`;
-        const bits = [`🍩 ${ws.madPerDay.toFixed(1)} madeleines/day`];
+        const bits = [`${ws.madPerDay.toFixed(1)} madeleines/day`];
         if (ws.madAttach != null) bits.push(`~${ws.madAttach.toFixed(1)}% of orders`);
         if (ws.madRevShare != null) bits.push(`~${ws.madRevShare.toFixed(1)}% of revenue`);
         body += `<div class="store-note">${bits.join(' · ')}</div>`;
@@ -1421,7 +1495,7 @@
         const mix = recentFlavorMix(msales, name, 14) || s.flavors;
         const recent = mix !== s.flavors;
         const topCur = CUR_FLAVORS.filter(f => mix[f]).sort((a, b) => mix[b] - mix[a])[0];
-        body += `<div class="ssec" style="margin-top:20px">🍩 Madeleines${topCur ? ` · ${PRODUCT_ICON[topCur]} ${topCur}-led` : ''}</div>`;
+        body += `<div class="ssec" style="margin-top:20px">Madeleines${topCur ? ` · ${tok(topCur)}${topCur}-led` : ''}</div>`;
         const metrics = [[s.madsPerDay, 'sold / day'], [usd(s.aov), 'avg order'], [s.basket, 'items / order'], [usd(s.madRevenue), 'mad revenue']];
         body += `<div class="smetrics">${metrics.map(([v, k]) => `<div class="smetric"><div class="v">${v}</div><div class="k">${k}</div></div>`).join('')}</div>`;
         const total = Object.values(mix).reduce((a, b) => a + b, 0) || 1;
@@ -1429,7 +1503,7 @@
         const fmax = Math.max(1, ...flavKeys.map(f => mix[f]));
         body += `<div class="ssec">Flavor mix${recent ? ' · last 14 days' : ''}</div>` + flavKeys.map(f => {
           const v = mix[f], old = !CUR_FLAVORS.includes(f);
-          return `<div class="fbar"><span>${PRODUCT_ICON[f] || ''} ${f}</span><div class="track"><div class="fill${old ? ' old' : ''}" style="width:${Math.round(v / fmax * 100)}%"></div></div><span class="n">${Math.round(v / total * 100)}%</span></div>`;
+          return `<div class="fbar"><span>${tok(f)}${f}</span><div class="track"><div class="fill${old ? ' old' : ''}" style="width:${Math.round(v / fmax * 100)}%"></div></div><span class="n">${Math.round(v / total * 100)}%</span></div>`;
         }).join('');
         const dmax = Math.max(1, ...DOWK.map(d => s.dow[d] || 0));
         body += `<div class="ssec">Busiest days</div><div class="vbars">` + DOWK.map(d => `<div class="vbar"><div class="col${d === 'Sat' || d === 'Sun' ? ' hot' : ''}" style="height:${Math.round((s.dow[d] || 0) / dmax * 100)}%"></div><span class="lb">${d[0]}</span></div>`).join('') + `</div>`;
@@ -1440,8 +1514,8 @@
         body += `<div class="ssec">Top cashiers</div>` + (s.cashiers || []).map(([n, c]) => `<div class="cashrow"><span>${esc(n)}</span><span class="c-n">${c}</span></div>`).join('');
       }
       if (!body) continue;
-      const peek = [ws ? `${usd(Math.round(ws.avgRev))}/day` : null, s ? `🍩 ${s.madsPerDay}/day` : null].filter(Boolean).join(' · ');
-      html += wrap(`📍 ${esc(name)}`, body, peek);
+      const peek = [ws ? `${usd(Math.round(ws.avgRev))}/day` : null, s ? `${s.madsPerDay}/day` : null].filter(Boolean).join(' · ');
+      html += wrap(`${esc(name)}`, body, peek);
     }
     return html;
   }
@@ -1465,6 +1539,7 @@
   document.getElementById('dbFilter').addEventListener('click', e => {
     const btn = e.target.closest('button'); if (!btn) return;
     dbFilter = btn.dataset.filter;
+    track('data_filter', { type: dbFilter });
     document.querySelectorAll('#dbFilter button').forEach(b => b.classList.toggle('on', b === btn));
     renderData();
   });
@@ -1472,6 +1547,7 @@
   const locSel = document.getElementById('dbLoc');
   locSel.addEventListener('change', () => {
     dataLoc = locSel.value;
+    track('data_location', { loc: dataLoc });
     locSel.classList.toggle('set', dataLoc !== 'all');
     renderData();
   });
@@ -1508,6 +1584,7 @@
     const v = rangeSel.value;
     const dd = document.getElementById('dbDates');
     if (v === 'custom') { dd.hidden = false; return; }
+    track('data_range', { range: v === '' ? 'all' : v + 'd' });
     dd.hidden = true;
     if (v === '') { dateFrom = ''; dateTo = ''; }
     else { dateFrom = ymdMinus(Number(v)); dateTo = ymdMinus(0); }
@@ -1614,7 +1691,7 @@
     document.querySelectorAll('#editLocPills .pill').forEach(p => p.classList.toggle('on', p.dataset.loc === editLoc));
     document.getElementById('editAmounts').innerHTML = PRODUCTS.map(p => `
       <div class="row">
-        <span class="lbl">${PRODUCT_ICON[p]} ${p}</span>
+        <span class="lbl">${tok(p)}${p}</span>
         <div class="amt" data-product="${p}">
           <button type="button" class="step minus">−</button>
           <input class="val" type="number" inputmode="numeric" value="${ent.amounts[p] || 0}" />
@@ -1735,22 +1812,23 @@
       totalFlights += (s.flights || 0);
     }
     const breakdown = SALES_FLAVORS.filter(f => flavorTotals[f] > 0)
-      .map(f => `<span>${PRODUCT_ICON[f]} ${flavorTotals[f]}</span>`).join('');
+      .map(f => kvRow(tok(f), f, flavorTotals[f])).join('');
     const locBreak = LOCATIONS.map(l => `<span>${l} <b>${locTotals[l] || 0}</b></span>`).join('');
     const flightLine = totalFlights > 0
-      ? `<div class="ds-break ds-flights">${FLIGHT_ICON} <b>${totalFlights}</b> flight${totalFlights === 1 ? '' : 's'} <span class="ds-note">(included in totals above)</span></div>`
+      ? `<div class="ds-flights">${tok('Flights')}<b>${totalFlights}</b> flight${totalFlights === 1 ? '' : 's'} <span class="ds-note">(included in totals above)</span></div>`
       : '';
-    let html = `<div class="db-summary"><div class="ds-total"><b>${grand}</b> sold · ${usd(grand * PRICE_PER_UNIT)}</div><div class="ds-break">${breakdown}</div>${dataLoc === 'all' ? `<div class="ds-break ds-loc">📍 ${locBreak}</div>` : ''}${flightLine}</div>`;
+    let html = `<div class="db-summary"><div class="ds-total"><b>${grand}</b> sold · ${usd(grand * PRICE_PER_UNIT)}</div><div class="ds-rows">${breakdown}</div>${dataLoc === 'all' ? `<div class="ds-break ds-loc">${locBreak}</div>` : ''}${flightLine}</div>`;
     for (const g of ordered) {
       const label = salesGroup === 'week'
         ? 'Week of ' + new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(parseEntryDate(g.key))
         : dayKey(g.key);
       const flavorChips = SALES_FLAVORS.filter(f => g.amounts[f] > 0)
-        .map(f => `<span class="db-chip">${PRODUCT_ICON[f]} ${f} <span class="n">${g.amounts[f]}</span></span>`)
-        .join('') || `<span class="db-chip" style="color:var(--muted)">0</span>`;
-      const flightChip = g.flights > 0 ? `<span class="db-chip db-flight">${FLIGHT_ICON} ${g.flights} flight${g.flights === 1 ? '' : 's'}</span>` : '';
+        .map(f => kvRow(tok(f), f, g.amounts[f]))
+        .join('') || `<div class="proj-row"><span class="k">No sales</span></div>`;
+      const flightChip = g.flights > 0
+        ? kvRow(tok('Flights'), `Flight${g.flights === 1 ? '' : 's'}`, g.flights, '', 'pr-flight') : '';
       html += `<div class="db-entry">
-          <div class="db-head"><span class="db-type" style="background:rgba(52,199,89,0.14);color:var(--green)">📈 ${label}</span><span class="db-when">${g.total} total</span></div>
+          <div class="db-head"><span class="db-type" style="background:rgba(52,199,89,0.14);color:var(--green)">${label}</span><span class="db-when">${g.total} total</span></div>
           <div class="db-amts">${flavorChips}${flightChip}</div>
         </div>`;
     }
@@ -1758,6 +1836,7 @@
   }
   document.getElementById('dbGroup').addEventListener('change', e => {
     salesGroup = e.target.value;
+    track('data_grouping', { grouping: salesGroup });
     e.target.classList.toggle('set', salesGroup !== 'day');
     renderSalesView();
   });
@@ -2052,12 +2131,12 @@
         : ` <span style="color:var(--muted);font-weight:500;font-size:14px">(${Math.round(ro.firstLo)}–${ro.firstHi === Infinity ? '∞' : Math.round(ro.firstHi)}d)</span>`;
       const sold7 = soldLastDays(loc, sales, 7);
       const stockChips = st.hasInv
-        ? PRODUCTS.map(p => `<span class="db-chip">${PRODUCT_ICON[p]} ${st.stock[p]}</span>`).join('')
-        : `<span class="db-chip" style="color:var(--muted)">No inventory count yet</span>`;
+        ? PRODUCTS.map(p => kvRow(tok(p), p, st.stock[p], ' left')).join('')
+        : `<div class="proj-row"><span class="k">No inventory count yet</span></div>`;
       const runoutLine = !st.hasInv ? ''
         : ro.firstD === Infinity
           ? `<div class="proj-runout" style="font-size:14px">No recent sales — can't project</div>`
-          : `<div class="proj-runout">Runs out in <span class="big">${fmtD(ro.firstD)}</span>${band} <span style="color:var(--muted);font-weight:600">(${PRODUCT_ICON[ro.firstP]} ${ro.firstP})</span></div>`;
+          : `<div class="proj-runout">Runs out in <span class="big">${fmtD(ro.firstD)}</span>${band} <span style="color:var(--muted);font-weight:600">(${ro.firstP})</span></div>`;
       html += `<div class="proj-card">
           <div class="proj-sub" style="margin-top:2px">${st.hasInv ? `${st.stockTotal} on hand · counted ${fmtWhen(st.invDate)}` : 'Add an inventory count to project run-out'} · ${sold7} sold last 7d</div>
           ${staleWarn(st)}
@@ -2133,19 +2212,21 @@
         continue;
       }
       const ro = runoutBand(st);
-      const stockChips = PRODUCTS.map(p => `<span class="db-chip">${PRODUCT_ICON[p]} ${st.stock[p]}</span>`).join('');
+      // Stock, run-out and rate on one line per flavor — the old chip row repeated
+      // the same flavor names right above this list.
       const rateRows = PRODUCTS.map(p => {
         const dp = st.sellDaysFor ? st.sellDaysFor[p] : st.sellDays;
         const span = (dp && dp < st.sellDays) ? ` <span style="color:var(--muted)">(${dp}d)</span>` : '';
-        return `<div class="proj-row"><span class="k">${PRODUCT_ICON[p]} ${p}</span><span><b>${fmtD(pick(ro, p))}</b>${fmtBand(ro.lo[p], ro.hi[p])} · ${st.rate[p].toFixed(1)}/day${span}</span></div>`;
+        // Stock on the first line, run-out and rate under it — one line held all
+        // three and the flavour name wrapped on a phone.
+        return `<div class="proj-row pr-fc"><span class="k">${tok(p)}${p}</span><span class="fc-v"><b>${st.stock[p]}</b> left<span class="fc-sub"><b>${fmtD(pick(ro, p))}</b>${fmtBand(ro.lo[p], ro.hi[p])} · ${st.rate[p].toFixed(1)}/day${span}</span></span></div>`;
       }).join('');
       const runoutTxt = ro.firstD === Infinity
         ? 'No recent sales — can\'t project'
-        : `Runs out in <span class="big">${fmtD(pickFirst(ro))}</span>${fmtBand(ro.firstLo, ro.firstHi)} <span style="color:var(--muted);font-weight:600">(${PRODUCT_ICON[ro.firstP]} ${ro.firstP} first)</span>`;
+        : `Runs out in <span class="big">${fmtD(pickFirst(ro))}</span>${fmtBand(ro.firstLo, ro.firstHi)} <span style="color:var(--muted);font-weight:600">(${ro.firstP} first)</span>`;
       html += `<div class="proj-card">
           <div class="proj-sub" style="margin-top:2px">${st.stockTotal} on hand · counted ${fmtAgo(st.invDate)} · rate from ${st.sellDays} sales ${st.sellDays === 1 ? 'day' : 'days'} · ±${Math.round(st.dailyCV * 100)}% daily swing${trendNote(st)}</div>
           ${staleWarn(st)}
-          <div class="proj-stock-chips">${stockChips}</div>
           <div class="proj-runout">${runoutTxt}</div>
           ${rateRows}
         </div>`;
@@ -2270,12 +2351,13 @@
     const flavorRows = totNeed > 0
       ? `<div class="be-section-label">Per flavor · whole plan</div>` +
         PRODUCTS.filter(p => perFlavor[p] > 0).map(p =>
-          `<div class="proj-row"><span class="k">${PRODUCT_ICON[p]} ${p}</span><span><b>${perFlavor[p]}</b> madeleines · ${batchLabel(perFlavorB[p])}</span></div>`).join('')
+          `<div class="proj-row pr-fc"><span class="k">${tok(p)}${p}</span><span class="fc-v"><b>${perFlavor[p]}</b> madeleines<span class="fc-sub">${batchLabel(perFlavorB[p])}</span></span></div>`).join('')
       : '';
     const evRows = `<div class="be-section-label">By bake day</div>` + events.map(ev => {
       const eff = bakeEffort(ev.bake);
       const chips = ev.any
-        ? `<div class="be-chips">${PRODUCTS.filter(p => ev.bake[p] > 0).map(p => `<span class="db-chip">${PRODUCT_ICON[p]} ${ev.bake[p]}<span style="color:var(--muted);font-weight:500"> · ${flavorBatches(ev.bake[p])}b</span></span>`).join('')}</div>
+        ? `<div class="be-chips">${PRODUCTS.filter(p => ev.bake[p] > 0).map(p =>
+             kvRow(tok(p), p, ev.bake[p], ` · ${batchLabel(flavorBatches(ev.bake[p]))}`)).join('')}</div>
              <div class="be-effort">${batchLabel(eff.batches)} · ~${fmtDur(eff.min)}</div>`
         : `<div class="be-enough">enough on hand — no bake needed</div>`;
       return `<div class="bake-event">
@@ -2300,9 +2382,9 @@
       const safe = bakeMap[p];
       bakeSafe += safe; bakeExp += Math.max(0, Math.ceil(expMap[p] - haveMap[p]));
       const right = safe > 0
-        ? `<b>bake ${safe}</b> <span style="color:var(--muted);font-weight:500">· ${batchLabel(flavorBatches(safe))}</span>`
+        ? `<b>bake ${safe}</b>`
         : `<span style="color:var(--green);font-weight:700">enough</span>`;
-      rows += `<div class="proj-row"><span class="k">${PRODUCT_ICON[p]} ${p}</span><span>${right} <span style="color:var(--muted);font-weight:500">· have ${haveMap[p]}</span></span></div>`;
+      rows += `<div class="proj-row pr-fc"><span class="k">${tok(p)}${p}</span><span class="fc-v">${right}<span class="fc-sub">${safe > 0 ? batchLabel(flavorBatches(safe)) + " · " : ""}have ${haveMap[p]}</span></span></div>`;
     }
     const eff = bakeEffort(bakeMap);
     const effLine = bakeSafe > 0 ? `<div class="be-effort" style="margin:2px 0 12px">${batchLabel(eff.batches)} total · ~${fmtDur(eff.min)}</div>` : '';
@@ -2387,7 +2469,7 @@
         for (const w of withEvents) {
           const evs = applySplit(w.events, planSplit);
           tally(evs);
-          html += scheduleCardHtml(`📍 ${w.loc}`, `${w.st.stockTotal} on hand now · ${dayWord}${trendNote(w.st)}`, evs, target);
+          html += scheduleCardHtml(`${w.loc}`, `${w.st.stockTotal} on hand now · ${dayWord}${trendNote(w.st)}`, evs, target);
         }
       }
     } else {
@@ -2408,11 +2490,11 @@
         }
       } else {
         for (const w of withMaps)
-          html += lumpCardHtml(`📍 ${w.loc}`, `${w.nDays} day${w.nDays === 1 ? '' : 's'} to go · ${w.nDays - w.nWe} weekday / ${w.nWe} weekend · ${w.st.stockTotal} on hand now${trendNote(w.st)}`, w.bakeMap, w.haveMap, w.expMap);
+          html += lumpCardHtml(`${w.loc}`, `${w.nDays} day${w.nDays === 1 ? '' : 's'} to go · ${w.nDays - w.nWe} weekday / ${w.nWe} weekend · ${w.st.stockTotal} on hand now${trendNote(w.st)}`, w.bakeMap, w.haveMap, w.expMap);
       }
     }
     for (const c of skipped)
-      html += `<div class="proj-card"><h3>📍 ${c.loc}</h3><div class="proj-sub">${c.st.hasInv ? 'No recent sales to forecast from.' : 'Add an inventory count to include this store.'}</div></div>`;
+      html += `<div class="proj-card"><h3>${c.loc}</h3><div class="proj-sub">${c.st.hasInv ? 'No recent sales to forecast from.' : 'Add an inventory count to include this store.'}</div></div>`;
     if (!html) html = `<div class="db-empty"><div class="big">📅</div>Nothing to plan.</div>`;
     document.getElementById('planList').innerHTML = html;
 
@@ -2488,6 +2570,7 @@
   document.getElementById('projScenario').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
     projScenario = b.dataset.scn;
+    track('forecast_scenario', { scenario: projScenario });
     document.querySelectorAll('#projScenario button').forEach(x => x.classList.toggle('on', x === b));
     renderProj();
   });
@@ -2765,6 +2848,7 @@
   // without a manual reload.
   setInterval(() => { if (document.visibilityState === 'visible') refreshActiveTab(); }, 60000);
 
+  track('open', { standalone: !!(window.navigator.standalone || matchMedia('(display-mode: standalone)').matches) });
   renderHome();
   retryUnsynced();
 </script>
