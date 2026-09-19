@@ -90,6 +90,9 @@
   }
   .row:last-child { border-bottom: none; }
   .row .lbl { font-size: 17px; flex-shrink: 0; }
+  /* On a narrow phone the flavour name yields, never the stepper. */
+  .row .lbl-flavor { flex-shrink: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .row .amt { flex-shrink: 0; }
   .row input[type="datetime-local"] {
     appearance: none; border: none; background: transparent; color: var(--text);
     font-family: inherit; font-size: 17px; text-align: right; flex: 1;
@@ -108,21 +111,31 @@
   .pill.on { background: var(--blue); color: #fff; }
 
   /* Stepper amounts */
-  .amt { display: flex; align-items: center; gap: 14px; }
+  .amt { display: flex; align-items: center; gap: 11px; }
   .amt .step {
-    width: 34px; height: 34px; border-radius: 999px; border: none; cursor: pointer;
+    width: 44px; height: 44px; border-radius: 999px; border: none; cursor: pointer;
     background: var(--field); color: var(--text);
     font-size: 22px; font-weight: 500; line-height: 1;
     display: flex; align-items: center; justify-content: center;
   }
   .amt .step:active { background: var(--sep); }
   .amt .val {
-    width: 60px; text-align: center; font-size: 19px; font-weight: 600;
+    width: 44px; text-align: center; font-size: 19px; font-weight: 600;
     border: none; background: transparent; color: var(--text); font-family: inherit;
   }
   .amt .val::-webkit-outer-spin-button,
   .amt .val::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   .amt .val { -moz-appearance: textfield; }
+
+  /* 320px phones: the token is redundant next to a spelled-out flavour name,
+     so it goes rather than squeezing the stepper or truncating the label. */
+  @media (max-width: 360px) {
+    .row { padding: 14px 12px; }
+    .row .lbl-flavor .tok { display: none; }
+    .amt { gap: 9px; }
+    .amt .step { width: 40px; height: 40px; }
+    .amt .val { width: 42px; }
+  }
 
   .submit {
     width: 100%; appearance: none; border: none; cursor: pointer;
@@ -184,8 +197,8 @@
   .chip-row button {
     appearance: none; border: none; cursor: pointer; font-family: inherit;
     white-space: nowrap; flex: 1 0 auto; background: var(--card); color: var(--text);
-    font-size: 15px; font-weight: 600; padding: 9px 14px; border-radius: 999px;
-    box-shadow: var(--shadow); transition: background .15s ease, color .15s ease;
+    font-size: 15px; font-weight: 600; padding: 13px 16px; border-radius: 999px;
+    min-height: 44px; box-shadow: var(--shadow); transition: background .15s ease, color .15s ease;
   }
   .chip-row button.on { background: var(--blue); color: #fff; }
   .db-dates[hidden] { display: none; }
@@ -382,7 +395,7 @@
   .db-filter button {
     flex: 1; appearance: none; border: none; cursor: pointer; font-family: inherit;
     background: transparent; color: var(--text); font-size: 14px; font-weight: 600;
-    padding: 9px 6px; border-radius: 9px; transition: background .15s ease;
+    padding: 13px 6px; border-radius: 9px; transition: background .15s ease;
   }
   .db-filter button.on { background: var(--card); box-shadow: var(--shadow); }
   /* One row of native selects — replaces the location / grouping / preset pill rows */
@@ -391,7 +404,7 @@
     flex: 1; min-width: 0; appearance: none; -webkit-appearance: none; cursor: pointer;
     font-family: inherit; font-size: 14px; font-weight: 600;
     color: var(--text); background-color: var(--card); border: none; border-radius: 10px;
-    box-shadow: var(--shadow); padding: 9px 24px 9px 11px;
+    box-shadow: var(--shadow); min-height: 44px; padding: 13px 26px 13px 12px;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238e8e93' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     background-repeat: no-repeat; background-position: right 9px center; background-size: 9px 5.4px;
   }
@@ -436,9 +449,9 @@
   /* Bake-days selector (Plan) */
   .row-stack { flex-direction: column; align-items: flex-start; gap: 10px; }
   .row-stack .bakedays { width: 100%; justify-content: space-between; }
-  .bakedays { display: flex; gap: 5px; }
+  .bakedays { display: flex; gap: 5px; flex: 1; }
   .bakedays button {
-    width: 32px; height: 32px; border-radius: 999px; appearance: none; border: none;
+    flex: 1; min-width: 0; height: 44px; border-radius: 999px; appearance: none; border: none;
     background: var(--field); color: var(--muted); font-weight: 700; font-size: 14px;
     cursor: pointer; font-family: inherit; transition: background .15s ease, color .15s ease;
   }
@@ -560,7 +573,7 @@
 <body>
 
 <!-- Version badge — bump on every deploy (v = commit count, time = deploy time PST) -->
-<div class="ver-badge">v82 · Sep 19, 9:55 AM</div>
+<div class="ver-badge">v83 · Sep 19, 10:07 AM</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -615,7 +628,7 @@
       <div class="group-label" id="amtLabel">Amount</div>
       <div class="card" id="amounts">
         <div class="row">
-          <span class="lbl"><span class="tok" style="background:#c99306">LP</span>Lemon Poppy</span>
+          <span class="lbl lbl-flavor"><span class="tok" style="background:#c99306">LP</span>Lemon Poppy</span>
           <div class="amt" data-product="Lemon Poppy">
             <button type="button" class="step minus">−</button>
             <input class="val" type="number" inputmode="numeric" value="0" min="0" />
@@ -623,7 +636,7 @@
           </div>
         </div>
         <div class="row">
-          <span class="lbl"><span class="tok" style="background:#4a7ba7">SS</span>Sea Salt</span>
+          <span class="lbl lbl-flavor"><span class="tok" style="background:#4a7ba7">SS</span>Sea Salt</span>
           <div class="amt" data-product="Sea Salt">
             <button type="button" class="step minus">−</button>
             <input class="val" type="number" inputmode="numeric" value="0" min="0" />
@@ -631,7 +644,7 @@
           </div>
         </div>
         <div class="row">
-          <span class="lbl"><span class="tok" style="background:#6b7280">EG</span>Earl Grey</span>
+          <span class="lbl lbl-flavor"><span class="tok" style="background:#6b7280">EG</span>Earl Grey</span>
           <div class="amt" data-product="Earl Grey">
             <button type="button" class="step minus">−</button>
             <input class="val" type="number" inputmode="numeric" value="0" min="0" />
