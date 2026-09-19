@@ -44,30 +44,30 @@
   }
   .wrap { max-width: 480px; margin: 0 auto; padding: 0 16px; }
 
-  header { padding: 8px 4px 18px; }
-  h1 { font-size: 32px; font-weight: 700; margin: 0; letter-spacing: -0.5px; }
-  .sub { color: var(--muted); font-size: 15px; margin-top: 3px; }
+  header { padding: 6px 2px 14px; }
+  h1 { font-size: 28px; font-weight: 700; margin: 0; letter-spacing: -0.5px; }
+  .sub { color: var(--muted); font-size: 14px; margin-top: 2px; }
 
   /* Views */
   .view { display: none; }
   .view.active { display: block; }
 
-  /* Segmented type selector */
+  /* Segmented type selector — one compact row, so the form fits a phone screen */
   .seg {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
-    margin-bottom: 22px;
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
+    margin-bottom: 16px;
   }
   .seg button {
     appearance: none; border: none; cursor: pointer;
     background: var(--card); color: var(--text);
-    border-radius: 16px; padding: 16px 6px;
-    font-size: 15px; font-weight: 600;
+    border-radius: 14px; padding: 9px 2px 8px;
+    font-size: 11.5px; font-weight: 600; letter-spacing: -0.2px;
     box-shadow: var(--shadow);
-    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
     border: 2px solid transparent;
     transition: transform .08s ease, border-color .15s ease;
   }
-  .seg button .ic { font-size: 26px; }
+  .seg button .ic { font-size: 20px; line-height: 1; }
   .seg button:active { transform: scale(0.97); }
   .seg button.on[data-type="delivery"] { border-color: var(--blue); color: var(--blue); }
   .seg button.on[data-type="inventory"] { border-color: var(--orange); color: var(--orange); }
@@ -372,13 +372,17 @@
     padding: 9px 6px; border-radius: 9px; transition: background .15s ease;
   }
   .db-filter button.on { background: var(--card); box-shadow: var(--shadow); }
-  .db-presets { display: flex; gap: 8px; margin-bottom: 10px; }
-  .db-presets button {
-    appearance: none; border: none; cursor: pointer; font-family: inherit;
-    background: var(--field); color: var(--text); font-size: 13px; font-weight: 600;
-    padding: 7px 14px; border-radius: 999px;
+  /* One row of native selects — replaces the location / grouping / preset pill rows */
+  .filter-bar { display: flex; gap: 8px; margin-bottom: 14px; }
+  .filter-bar select {
+    flex: 1; min-width: 0; appearance: none; -webkit-appearance: none; cursor: pointer;
+    font-family: inherit; font-size: 13px; font-weight: 600;
+    color: var(--text); background-color: var(--card); border: none; border-radius: 10px;
+    box-shadow: var(--shadow); padding: 9px 24px 9px 11px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238e8e93' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 9px center; background-size: 9px 5.4px;
   }
-  .db-presets button.on { background: var(--blue); color: #fff; }
+  .filter-bar select.set { color: var(--blue); }
   .db-dates { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
   .db-dates input[type="date"] {
     flex: 1; min-width: 0; appearance: none; border: 1px solid var(--sep);
@@ -513,8 +517,7 @@
     background: rgba(255,149,0,0.14); color: #8a4b00; font-size: 13px; font-weight: 600;
     padding: 8px 11px; border-radius: 10px; margin: 0 0 12px;
   }
-  .home-refreshed { text-align: center; color: var(--muted); font-size: 12px; margin: 6px 0 2px; }
-  .home-updated { color: var(--muted); font-size: 12px; margin: 2px 2px 16px; line-height: 1.5; }
+  .home-updated { color: var(--muted); font-size: 12px; margin: 0 2px 14px; line-height: 1.5; }
   .home-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
   .metric { background: var(--card); border-radius: 16px; box-shadow: var(--shadow); padding: 14px 16px; }
   .metric .m-label { font-size: 13px; color: var(--muted); font-weight: 600; }
@@ -539,7 +542,7 @@
 <body>
 
 <!-- Version badge — bump on every deploy (v = commit count, time = deploy time PST) -->
-<div class="ver-badge">v80 · Sep 19, 9:25 AM</div>
+<div class="ver-badge">v81 · Sep 19, 9:35 AM</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -576,7 +579,6 @@
         </button>
       </div>
 
-      <div class="group-label">Details</div>
       <div class="card">
         <div class="row">
           <span class="lbl">Date &amp; time</span>
@@ -590,7 +592,6 @@
           </div>
         </div>
       </div>
-      <div class="hint" id="baseHint">Defaults to now (PST). Adjust for a future entry.</div>
       <div class="hint" id="xferHint" hidden style="color:#7c3aed;font-weight:600"></div>
 
       <div class="group-label" id="amtLabel">Amount</div>
@@ -640,20 +641,23 @@
       <button data-filter="goodwill">🎁 Goodwill</button>
       <button data-filter="transfer">🔄 Transfers</button>
     </div>
-    <div class="db-filter" id="dataLoc">
-      <button class="on" data-loc="all">All</button>
-      <button data-loc="La Mirada">La Mirada</button>
-      <button data-loc="Stanton">Stanton</button>
-    </div>
-    <div class="db-filter" id="salesGroup">
-      <button class="on" data-group="day">By day</button>
-      <button data-group="week">By week</button>
-    </div>
-    <div class="db-presets" id="dbPresets">
-      <button type="button" data-days="0">Today</button>
-      <button type="button" data-days="6">7 days</button>
-      <button type="button" data-days="29">30 days</button>
-      <button type="button" id="dateRangeToggle" data-toggle="1">📆 Custom</button>
+    <div class="filter-bar">
+      <select id="dbRange" aria-label="Date range">
+        <option value="">All time</option>
+        <option value="0">Today</option>
+        <option value="6">Last 7 days</option>
+        <option value="29">Last 30 days</option>
+        <option value="custom">Custom range…</option>
+      </select>
+      <select id="dbLoc" aria-label="Location">
+        <option value="all">All stores</option>
+        <option value="La Mirada">La Mirada</option>
+        <option value="Stanton">Stanton</option>
+      </select>
+      <select id="dbGroup" aria-label="Grouping">
+        <option value="day">By day</option>
+        <option value="week">By week</option>
+      </select>
     </div>
     <div class="db-dates" id="dbDates" hidden>
       <input type="date" id="dateFrom" aria-label="From date" />
@@ -701,7 +705,7 @@
           <input type="date" id="planDate" />
         </div>
         <div class="row row-stack">
-          <span class="lbl">Bake days <span style="font-weight:400;color:var(--muted);font-size:12px">— tap weekdays, or add a specific date</span></span>
+          <span class="lbl">Bake days<span style="display:block;font-weight:400;color:var(--muted);font-size:12px;margin-top:1px">Tap weekdays, or add one date</span></span>
           <div class="bakedays" id="bakeDays">
             <button type="button" data-dow="1">M</button>
             <button type="button" data-dow="2">T</button>
@@ -1101,7 +1105,7 @@
 
   // Single entry point for the Data tab — dispatches to Sales or entries.
   function renderData() {
-    document.getElementById('salesGroup').hidden = (dbFilter !== 'sales');
+    document.getElementById('dbGroup').hidden = (dbFilter !== 'sales');   // grouping is a Sales-only control
     if (dbFilter === 'sales') renderSalesView();
     else renderDB();
   }
@@ -1465,18 +1469,18 @@
     renderData();
   });
   // ---- Location filter (All / La Mirada / Stanton) ----
-  document.getElementById('dataLoc').addEventListener('click', e => {
-    const btn = e.target.closest('button'); if (!btn) return;
-    dataLoc = btn.dataset.loc;
-    document.querySelectorAll('#dataLoc button').forEach(b => b.classList.toggle('on', b === btn));
+  const locSel = document.getElementById('dbLoc');
+  locSel.addEventListener('change', () => {
+    dataLoc = locSel.value;
+    locSel.classList.toggle('set', dataLoc !== 'all');
     renderData();
   });
 
-  // ---- Date-range filter (presets + custom From/To) ----
+  // ---- Date-range filter (preset select + custom From/To) ----
   const fromEl = document.getElementById('dateFrom');
   const toEl = document.getElementById('dateTo');
   const dateClearBtn = document.getElementById('dateClear');
-  const clearPresets = () => document.querySelectorAll('#dbPresets button').forEach(b => b.classList.remove('on'));
+  const rangeSel = document.getElementById('dbRange');
 
   function ymdMinus(days) {
     const [y, mo, d] = nowPST().slice(0, 10).split('-').map(Number);
@@ -1494,24 +1498,28 @@
   function applyDateRange() {
     fromEl.value = dateFrom; toEl.value = dateTo;
     dateClearBtn.hidden = !(dateFrom || dateTo);
+    rangeSel.classList.toggle('set', !!(dateFrom || dateTo));
     renderData();
   }
+  // A hand-picked From/To no longer matches a preset — show it as the custom range.
+  const toCustom = () => { rangeSel.value = 'custom'; document.getElementById('dbDates').hidden = false; };
 
-  document.getElementById('dbPresets').addEventListener('click', e => {
-    const b = e.target.closest('button'); if (!b) return;
-    if (b.dataset.toggle) {                    // 📆 Custom — show/hide the From–To row
-      const dd = document.getElementById('dbDates');
-      dd.hidden = !dd.hidden;
-      b.classList.toggle('on', !dd.hidden);
-      return;
-    }
-    dateFrom = ymdMinus(Number(b.dataset.days)); dateTo = ymdMinus(0);
-    clearPresets(); b.classList.add('on');
+  rangeSel.addEventListener('change', () => {
+    const v = rangeSel.value;
+    const dd = document.getElementById('dbDates');
+    if (v === 'custom') { dd.hidden = false; return; }
+    dd.hidden = true;
+    if (v === '') { dateFrom = ''; dateTo = ''; }
+    else { dateFrom = ymdMinus(Number(v)); dateTo = ymdMinus(0); }
     applyDateRange();
   });
-  dateClearBtn.addEventListener('click', () => { dateFrom = ''; dateTo = ''; clearPresets(); applyDateRange(); });
-  fromEl.addEventListener('change', () => { dateFrom = fromEl.value; clearPresets(); applyDateRange(); });
-  toEl.addEventListener('change', () => { dateTo = toEl.value; clearPresets(); applyDateRange(); });
+  dateClearBtn.addEventListener('click', () => {
+    dateFrom = ''; dateTo = '';
+    rangeSel.value = ''; document.getElementById('dbDates').hidden = true;
+    applyDateRange();
+  });
+  fromEl.addEventListener('change', () => { dateFrom = fromEl.value; toCustom(); applyDateRange(); });
+  toEl.addEventListener('change', () => { dateTo = toEl.value; toCustom(); applyDateRange(); });
 
   // ---- Delete entry (password-gated) ----
   // NOTE: a client-side password is only a deterrent — anyone can read it in the
@@ -1748,10 +1756,9 @@
     }
     list.innerHTML = html;
   }
-  document.getElementById('salesGroup').addEventListener('click', e => {
-    const b = e.target.closest('button'); if (!b) return;
-    salesGroup = b.dataset.group;
-    document.querySelectorAll('#salesGroup button').forEach(x => x.classList.toggle('on', x === b));
+  document.getElementById('dbGroup').addEventListener('change', e => {
+    salesGroup = e.target.value;
+    e.target.classList.toggle('set', salesGroup !== 'day');
     renderSalesView();
   });
 
@@ -1958,10 +1965,10 @@
     const g = Math.pow(ratios.reduce((a, b) => a * b, 1), 1 / ratios.length);
     return Math.min(1.25, Math.max(0.8, 1 + (g - 1) * 0.5));
   }
-  function nowLabel() {
+  // Time only — for the one-line "last updated" strip on Home.
+  function timeLabel() {
     return new Intl.DateTimeFormat('en-US', {
-      timeZone: 'America/Los_Angeles', month: 'short', day: 'numeric',
-      hour: 'numeric', minute: '2-digit'
+      timeZone: 'America/Los_Angeles', hour: 'numeric', minute: '2-digit'
     }).format(new Date());
   }
   function daysSince(ymd) {
@@ -2035,7 +2042,7 @@
     const lastInv = inv.reduce((m, e) => { const d = String(e.datetime).slice(0, 10); return d > m ? d : m; }, '');
 
     const fw = d => d ? fmtWhen(d) : '—';   // fmtWhen throws on an empty date
-    let html = `<div class="home-updated">Updated · 📈 ${fw(lastSales)} · 🚚 ${fw(lastDel)} · 📦 ${fw(lastInv)}</div>`;
+    let html = `<div class="home-updated">Sales ${fw(lastSales)} · Delivery ${fw(lastDel)} · Count ${fw(lastInv)} · ↻ ${timeLabel()}</div>`;
     const allMisses = [];
     for (const loc of LOCATIONS.filter(l => homeLoc === 'all' || l === homeLoc)) {
       const st = locStats(loc, sales, entries);
@@ -2092,7 +2099,6 @@
       if (analytics) html += `<div class="group-label">Store & madeleine analytics</div>${analytics}`;
     } catch (e) { /* store data optional on Home */ }
 
-    html += `<div class="home-refreshed">↻ Refreshed ${nowLabel()} PST</div>`;
     content.innerHTML = html;
   }
 
