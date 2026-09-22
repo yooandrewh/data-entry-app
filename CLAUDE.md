@@ -77,6 +77,15 @@ and via `sendBeacon` on `pagehide` / backgrounding.
   `kvRow()` builds one. `.pr-fc` adds a muted second line under the value when one line is too long.
 - **Nav and Entry-type icons are inline SVG**, stroked with `currentColor`. No icon font, no build
   step.
+- **One type scale, as CSS variables on `:root`** — `--fs-micro` 11 / `--fs-nav` 12 /
+  `--fs-caption` 13 / `--fs-body` 15 / `--fs-lg` 17 / `--fs-title` 20 / `--fs-figure` 26 /
+  `--fs-display` 32. Every `font-size` in the sheet uses one of these. Deliberate exceptions:
+  `h1` (30px), `.tok` (sized to its box) and `.db-empty .big` (an emoji graphic). **Don't add a
+  raw px font-size** — pick the nearest step, or the scale stops being one. It had drifted to 23
+  distinct sizes before 2026-09-22.
+- **Emoji are gone from labels and controls.** They survive only where they carry meaning: the
+  Bear/Bull scenario toggle, recipe icons (`REC_ICON`), empty-state glyphs, and status marks
+  (✓ synced, ⚠️ warning, 🔥/🥶 forecast misses, 🗑️/✏️ row actions).
 
 ## Tabs
 
