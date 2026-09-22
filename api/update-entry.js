@@ -20,6 +20,9 @@ const PRODUCT_MAP = {
   'Sea Salt': 'Sea Salt Butter',
   'Ube': 'Ube',
   'Dot': 'Dot',
+  'Earl Grey': 'Earl Grey',
+  'Dubai Ball': 'Dubai Ball',
+  'Pumpkin Muffin': 'Pumpkin Muffin',
 };
 const ALLOWED_LOCATIONS = ['La Mirada', 'Stanton'];
 

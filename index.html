@@ -94,6 +94,8 @@
   .row:last-child { border-bottom: none; }
   .row .lbl { font-size: 17px; flex-shrink: 0; }
   /* On a narrow phone the flavour name yields, never the stepper. */
+  /* Slightly tighter token here — 'Pumpkin Muffin' is the longest name and needs the room. */
+  .row .lbl-flavor .tok { width: 24px; height: 24px; flex-basis: 24px; margin-right: 7px; font-size: 11px; }
   .row .lbl-flavor { flex-shrink: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .row .amt { flex-shrink: 0; }
   .row input[type="datetime-local"] {
@@ -114,7 +116,7 @@
   .pill.on { background: var(--blue); color: #fff; }
 
   /* Stepper amounts */
-  .amt { display: flex; align-items: center; gap: 11px; }
+  .amt { display: flex; align-items: center; gap: 10px; }
   .amt .step {
     width: 44px; height: 44px; border-radius: 999px; border: none; cursor: pointer;
     background: var(--field); color: var(--text);
@@ -123,7 +125,7 @@
   }
   .amt .step:active { background: var(--sep); }
   .amt .val {
-    width: 44px; text-align: center; font-size: 19px; font-weight: 600;
+    width: 38px; text-align: center; font-size: 19px; font-weight: 600;
     border: none; background: transparent; color: var(--text); font-family: inherit;
   }
   .amt .val::-webkit-outer-spin-button,
@@ -137,7 +139,7 @@
     .row .lbl-flavor .tok { display: none; }
     .amt { gap: 9px; }
     .amt .step { width: 40px; height: 40px; }
-    .amt .val { width: 42px; }
+    .amt .val { width: 36px; }
   }
 
   .submit {
@@ -579,7 +581,7 @@
 <body>
 
 <!-- Version badge — bump on every deploy (v = commit count, time = deploy time PST) -->
-<div class="ver-badge">v85 · Sep 19, 10:37 AM</div>
+<div class="ver-badge">v86 · Sep 22, 11:48 AM</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -660,6 +662,14 @@
         <div class="row">
           <span class="lbl lbl-flavor"><span class="tok" style="background:#6b7280">EG</span>Earl Grey</span>
           <div class="amt" data-product="Earl Grey">
+            <button type="button" class="step minus">−</button>
+            <input class="val" type="number" inputmode="numeric" value="0" min="0" />
+            <button type="button" class="step plus">+</button>
+          </div>
+        </div>
+        <div class="row">
+          <span class="lbl lbl-flavor"><span class="tok" style="background:#d4620a">PM</span>Pumpkin Muffin</span>
+          <div class="amt" data-product="Pumpkin Muffin">
             <button type="button" class="step minus">−</button>
             <input class="val" type="number" inputmode="numeric" value="0" min="0" />
             <button type="button" class="step plus">+</button>
@@ -834,13 +844,13 @@
 
 <script>
   const STORE_KEY = 'dataEntries.v1';
-  const PRODUCTS = ['Lemon Poppy', 'Sea Salt', 'Earl Grey'];   // actively logged/forecast (Ube/Dot/Dubai Ball retired — history kept in Data)
-  const HIST_PRODUCTS = ['Lemon Poppy', 'Sea Salt', 'Ube', 'Dot', 'Earl Grey', 'Dubai Ball'];   // every flavor ever tracked — for the Data delivery/inventory history
+  const PRODUCTS = ['Lemon Poppy', 'Sea Salt', 'Earl Grey', 'Pumpkin Muffin'];   // actively logged/forecast (Ube/Dot/Dubai Ball retired — history kept in Data)
+  const HIST_PRODUCTS = ['Lemon Poppy', 'Sea Salt', 'Ube', 'Dot', 'Earl Grey', 'Dubai Ball', 'Pumpkin Muffin'];   // every flavor ever tracked — for the Data delivery/inventory history
   // Two-letter monogram + a fixed colour per flavour, used everywhere a flavour
   // is listed. Emoji were ambiguous at small sizes (🫖 for Earl Grey, 🟤 for
   // Dubai Ball) and rendered at different widths, so rows never lined up.
-  const PRODUCT_TOKEN = { 'Lemon Poppy': 'LP', 'Sea Salt': 'SS', 'Earl Grey': 'EG', 'Dubai Ball': 'DB', 'Ube': 'UB', 'Dot': 'DT', 'Matcha': 'MA', 'Chocolate': 'CH', 'Unknown': '?', 'Flights': 'FL' };
-  const PRODUCT_COLOR = { 'Lemon Poppy': '#c99306', 'Sea Salt': '#4a7ba7', 'Earl Grey': '#6b7280', 'Dubai Ball': '#a0662d', 'Ube': '#7c5aa6', 'Dot': '#c2557a', 'Matcha': '#5a8f4e', 'Chocolate': '#7b4b2a', 'Unknown': '#9a9ba3', 'Flights': '#8a8d96' };
+  const PRODUCT_TOKEN = { 'Lemon Poppy': 'LP', 'Sea Salt': 'SS', 'Earl Grey': 'EG', 'Pumpkin Muffin': 'PM', 'Dubai Ball': 'DB', 'Ube': 'UB', 'Dot': 'DT', 'Matcha': 'MA', 'Chocolate': 'CH', 'Unknown': '?', 'Flights': 'FL' };
+  const PRODUCT_COLOR = { 'Lemon Poppy': '#c99306', 'Sea Salt': '#4a7ba7', 'Earl Grey': '#6b7280', 'Pumpkin Muffin': '#d4620a', 'Dubai Ball': '#a0662d', 'Ube': '#7c5aa6', 'Dot': '#c2557a', 'Matcha': '#5a8f4e', 'Chocolate': '#7b4b2a', 'Unknown': '#9a9ba3', 'Flights': '#8a8d96' };
   const tok = p => `<span class="tok" style="background:${PRODUCT_COLOR[p] || '#9a9ba3'}">${PRODUCT_TOKEN[p] || '··'}</span>`;
   const LOCATIONS = ['La Mirada', 'Stanton'];
   // Flavors the app stocks (PRODUCTS) plus extra ones that show up in sales.

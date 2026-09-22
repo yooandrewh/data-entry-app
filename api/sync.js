@@ -33,6 +33,7 @@ const PRODUCT_MAP = {
   'Dot': 'Dot',
   'Earl Grey': 'Earl Grey',
   'Dubai Ball': 'Dubai Ball',
+  'Pumpkin Muffin': 'Pumpkin Muffin',
 };
 
 // Allowed locations (must match the Select column values in the sheet).

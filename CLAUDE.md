@@ -2,11 +2,19 @@
 
 iPhone-optimized web app for Kairos baking: log deliveries, inventory, goodwill and transfers
 by location, then forecast and plan bakes. Actively tracked products (`PRODUCTS`): **Lemon Poppy,
-Sea Salt, Earl Grey**. Ube, Dot and Dubai Ball were discontinued 2026-09 — dropped from Entry /
-Forecast / Plan, but their history stays in the Data tab (`SALES_FLAVORS` and the sheet columns are
-kept). **Dubai Ball is not a madeleine** — a separate SKU, excluded from the madeleine flavor mix.
-Adding a product = `PRODUCTS` + `PRODUCT_TOKEN` + `PRODUCT_COLOR` + an Entry stepper + a sheet
-column + the `sync`/`entries`/`sales` maps.
+Sea Salt, Earl Grey, Pumpkin Muffin**. Ube, Dot and Dubai Ball were discontinued 2026-09 — dropped
+from Entry / Forecast / Plan, but their history stays in the Data tab (`SALES_FLAVORS` and the
+sheet columns are kept).
+
+**Dubai Ball and Pumpkin Muffin are not madeleines** — separate SKUs, excluded from the madeleine
+flavor mix. Neither is in `SALES_FLAVORS`, because the OCR pipeline only reads madeleines: they
+have no sales source, so their Forecast rate stays 0.0/day and run-out reads ∞ until one exists.
+Deliveries, inventory and stock-on-hand work normally.
+
+Adding a product touches all of: `PRODUCTS`, `HIST_PRODUCTS`, `PRODUCT_TOKEN`, `PRODUCT_COLOR`,
+an Entry stepper row in the markup, a column in the sheet's Deliveries **and** Inventory tabs, and
+the maps in `api/sync.js`, `api/entries.js`, `api/sales.js` and `api/update-entry.js`. Miss the
+sheet column and `appendRow` drops the value silently, because it maps by header name.
 
 - **Local:** `/Users/andrew/data-entry-app/` · **Repo:** `yooandrewh/data-entry-app` (public)
 - **Live:** https://data-entry-app-roan.vercel.app — the GitHub Pages URL is obsolete, only Vercel works.

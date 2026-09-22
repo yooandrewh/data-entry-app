@@ -38,6 +38,7 @@ async function readTab({ type, tab }) {
           'Dot': num(r['Dot']),
           'Earl Grey': num(r['Earl Grey']),
           'Dubai Ball': num(r['Dubai Ball']),
+          'Pumpkin Muffin': num(r['Pumpkin Muffin']),
         },
         taggedForDeletion: truthy(r['Tagged for deletion']),
         synced: true,
