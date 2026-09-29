@@ -98,7 +98,7 @@ which still fills `#projScenario` / `#projSub` / `#projList` — those elements 
 `view-home`. Home no longer draws its own stock card; that was a thinner copy of the same one.
 Cost of the merge: one extra `fetchRemoteEntries()` per Home load (`getSales()` is cached).
 
-**Baking** merges the old Plan + Recipes into one tab with a `#bakingMode` segment toggle
+**Baking** has a `#bakingMode` segment toggle (Plan / Recipes / **Costs**) — the older note follows:
 (`📅 Plan` / `📖 Recipes`) — `renderBaking()` shows `#bakingPlan` or `#bakingRecipes` and calls
 `renderPlan()` / `renderRecipes()`. There is no separate Recipes tab/view anymore.
 
@@ -130,7 +130,7 @@ one; the last date crams everything through the target date.
 
 ## Gotchas
 
-- **The version badge is hardcoded** (a footer line under the tab bar, `--footer-h`). `.ver-badge` shows `v<git commit count> · <deploy time PST>`
+- **The version badge is hardcoded** (a solid strip on top of the tab bar, `--footer-h`, so scrolled content passes behind it). `.ver-badge` shows `v<git commit count> · <deploy time PST>`
   and **must be bumped by hand in every deploy commit** (`git rev-list --count HEAD`, including
   the commit you're making).
 - Vercel is linked to the `andrewlew1s` GitHub identity; push-to-deploy on the `yooandrewh` repo
@@ -178,3 +178,15 @@ Net weight = (batter + glaze + topping grams) ÷ `BATCH_YIELD` (**18 per batch**
 edit it if you weigh finished pieces. Prepared in: LGI Kitchen, Fullerton CA. The label text is
 `contenteditable` so a line can be fixed before printing. Recipe rows with no gram amount
 (peach jam, sprinkles) are supplied by `lblExtra` on the recipe.
+
+## Costs (Baking → Costs)
+
+Ported from the old `kairos.html` Costing section (which CLAUDE.md used to say was left out).
+`renderCosts()` has two views: **Cost per item** (pick any recipe; batch cost from `costRows()`,
+÷ pieces-per-batch, plus per-item filling/topping from `COST_META`) and **Ingredient prices**
+(package size + price → $/g). Prices/yields save to `localStorage` (`costPrices.v1`, `costYields.v1`)
+— this device only, but `DEFAULT_PRICES` ships in the public source, so the seed prices are visible
+to anyone with the repo. Every ingredient any recipe uses appears in the price list; ones with no
+price are flagged "Needs a price" and block that recipe's total. Cake Flour = AP + cornstarch
+(436:64), Egg White/Yolk = Eggs, Tea Bags = 2g tea leaves. Unlike the old page, flavoring notes,
+glaze and toppings count toward the batch. Madeleine yield defaults to `BATCH_YIELD` (18).

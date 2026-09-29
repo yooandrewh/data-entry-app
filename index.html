@@ -29,7 +29,7 @@
     --safe-top: env(safe-area-inset-top, 0px);
     --safe-bottom: env(safe-area-inset-bottom, 0px);
     --tabbar-h: 64px;
-    --footer-h: 20px;      /* version line under the tab bar */
+    --footer-h: 20px;      /* version line sitting just above the tab bar */
     /* Type scale — every font-size in this sheet is one of these. Before this the
        stylesheet had 23 distinct sizes and no hierarchy. Exceptions, on purpose:
        h1 (30px), .tok (sized to its box) and .db-empty .big (an emoji graphic). */
@@ -224,11 +224,13 @@
   .chip-row button.on { background: var(--accent); color: #fff; }
   .db-dates[hidden] { display: none; }
 
-  /* Version footer — a line under the tab bar on every tab */
+  /* Version line — centred just above the tab bar on every tab */
   .ver-badge {
-    position: fixed; left: 0; right: 0; bottom: var(--safe-bottom); height: var(--footer-h); z-index: 55;
+    position: fixed; left: 0; right: 0; bottom: calc(var(--safe-bottom) + var(--tabbar-h)); height: var(--footer-h); z-index: 41;
     display: flex; align-items: center; justify-content: center; white-space: nowrap;
     font-size: var(--fs-micro); font-weight: 600; color: var(--muted); pointer-events: none;
+    /* Same surface as the tab bar, so it reads as the bar's top strip and scrolling content passes behind it. */
+    background: var(--bg); border-top: 1px solid var(--sep);
   }
 
   /* ---- Tab bar ---- */
@@ -236,8 +238,8 @@
      otherwise they spread to the screen edges on anything wider than a phone. */
   .tabbar {
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
-    height: calc(var(--tabbar-h) + var(--footer-h) + var(--safe-bottom));
-    padding: 0 var(--col-pad) calc(var(--footer-h) + var(--safe-bottom));
+    height: calc(var(--tabbar-h) + var(--safe-bottom));
+    padding: 0 var(--col-pad) var(--safe-bottom);
     background: rgba(255,255,255,0.92);
     -webkit-backdrop-filter: saturate(180%) blur(20px);
     backdrop-filter: saturate(180%) blur(20px);
@@ -371,6 +373,21 @@
     body.printing-label .inv-noprint { display: none !important; }
     body.printing-label .lbl-doc { font-size: 11pt; }
   }
+
+  /* ---- Costs ---- */
+  .cost-in { width: 4.2em; text-align: right; font-family: inherit; font-size: var(--fs-body); font-weight: 600; color: var(--accent); background: transparent; border: none; border-bottom: 1.5px dashed var(--accent); padding: 0 1px 1px; -moz-appearance: textfield; }
+  .cost-in:focus { outline: none; border-bottom-style: solid; }
+  .cost-miss { color: var(--red); font-size: var(--fs-caption); }
+  .cost-total { font-weight: 700; }
+  .cost-sub { font-size: var(--fs-caption); color: var(--muted); margin: 14px 0 2px; text-transform: uppercase; letter-spacing: .5px; font-weight: 600; }
+  .cp-group { font-size: var(--fs-micro); text-transform: uppercase; letter-spacing: .6px; color: var(--muted); font-weight: 700; margin: 16px 4px 6px; }
+  .cp-row { background: var(--card); border-radius: 12px; box-shadow: var(--shadow); padding: 10px 14px; margin-bottom: 8px; display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; }
+  .cp-name { font-size: var(--fs-body); font-weight: 600; }
+  .cp-name a { font-size: var(--fs-caption); font-weight: 500; color: var(--accent); margin-left: 6px; text-decoration: none; }
+  .cp-meta { grid-column: 1 / -1; font-size: var(--fs-caption); color: var(--muted); }
+  .cp-ins { display: flex; align-items: center; gap: 6px; font-size: var(--fs-caption); color: var(--muted); }
+  .cp-ins input { width: 5em; font-family: inherit; font-size: var(--fs-body); color: var(--text); background: var(--field); border: 1px solid var(--sep); border-radius: 8px; padding: 6px 8px; text-align: right; }
+  .cp-row.need { box-shadow: inset 3px 0 0 var(--orange), var(--shadow); }
 
   /* ---- Confirmation sheet ---- */
   .scrim {
@@ -653,7 +670,7 @@
 <body>
 
 <!-- Version badge — bump on every deploy (v = commit count, time = deploy time PST) -->
-<div class="ver-badge">v90 · Sep 29, 4:51 PM</div>
+<div class="ver-badge">v91 · Sep 29, 4:55 PM</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -812,6 +829,7 @@
     <div class="db-filter" id="bakingMode">
       <button class="on" data-mode="plan">Plan</button>
       <button data-mode="recipes">Recipes</button>
+      <button data-mode="costs">Costs</button>
     </div>
 
     <!-- Plan mode -->
@@ -854,6 +872,19 @@
       </div>
       <div class="filter-bar"><select id="recPick" aria-label="Recipe"></select></div>
       <div id="recCard"></div>
+    </div>
+
+    <!-- Costs mode -->
+    <div id="bakingCosts" hidden>
+      <div class="db-filter" id="costTab">
+        <button class="on" data-ctab="recipes">Cost per item</button>
+        <button data-ctab="prices">Ingredient prices</button>
+      </div>
+      <div id="costRecipes">
+        <div class="filter-bar"><select id="costPick" aria-label="Recipe"></select></div>
+        <div id="costCard"></div>
+      </div>
+      <div id="costPrices" hidden></div>
     </div>
   </div>
 </div>
@@ -1477,12 +1508,13 @@
   });
   // Baking tab has two modes (Plan / Recipes) toggled by a segment control.
   function renderBaking() {
-    const planOn = bakingMode === 'plan';
-    document.getElementById('bakingPlan').hidden = !planOn;
-    document.getElementById('bakingRecipes').hidden = planOn;
+    document.getElementById('bakingPlan').hidden = bakingMode !== 'plan';
+    document.getElementById('bakingRecipes').hidden = bakingMode !== 'recipes';
+    document.getElementById('bakingCosts').hidden = bakingMode !== 'costs';
     document.querySelectorAll('#bakingMode button').forEach(x => x.classList.toggle('on', x.dataset.mode === bakingMode));
-    if (planOn) { renderPlan(); }
-    else { document.getElementById('planSub').textContent = 'Recipes · amounts scale with batches'; renderRecipes(); }
+    if (bakingMode === 'plan') renderPlan();
+    else if (bakingMode === 'recipes') { document.getElementById('planSub').textContent = 'Recipes · amounts scale with batches'; renderRecipes(); }
+    else { document.getElementById('planSub').textContent = 'Costs · what one item costs to make'; renderCosts(); }
   }
   document.getElementById('bakingMode').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
@@ -1999,7 +2031,7 @@
 
   // ===== Shared projection math (used by Home + Projections) =====
   let projLoc = 'La Mirada', homeLoc = 'La Mirada', planLoc = 'La Mirada';   // Stanton paused — La Mirada only (historical Stanton still in Data)
-  let bakingMode = 'plan';   // Baking tab sub-view: 'plan' | 'recipes'
+  let bakingMode = 'plan';   // Baking tab sub-view: 'plan' | 'recipes' | 'costs'
   let planSplit = 0;        // 0..1 — front-load fraction shifted onto the earlier of two bake dates
   let lastPlanSales = null, lastPlanEntries = null;   // cached for live slider re-paint
   let planBakeDates = [];   // specific 'YYYY-MM-DD' bake dates (vary week to week); empty = lump-sum mode
@@ -3005,6 +3037,228 @@
   document.getElementById('recPick').addEventListener('change', e => {
     recState.idx = Number(e.target.value); recResetVariants(); renderRecipes();
   });
+  // ===== Costs: ingredient prices → cost per item =====
+  // Ported from the old kairos.html Costing section. Prices live in localStorage (this device only);
+  // every ingredient a recipe uses shows up in the price list, and one with no price yet is flagged.
+  const PRICE_ALIASES = {
+    'all-purpose flour': 'All Purpose Flour', 'white sugar': 'Sugar', 'granulated sugar': 'Sugar',
+    'light brown sugar': 'Brown Sugar', 'egg': 'Eggs', 'whole eggs': 'Eggs', 'egg whites': 'Eggs', 'egg white': 'Eggs', 'egg yolk': 'Eggs',
+    'earl grey': 'Earl Grey Tea Leaves', 'fresh cream': 'Heavy Cream', 'vanilla bean paste': 'Vanilla Extract',
+    'pure vanilla extract': 'Vanilla Extract', 'kosher salt': 'Salt', 'flaked sea salt': 'Salt',
+    'semisweet chocolate chips': 'Chocolate Chips', 'toasted pecans': 'Pecans', 'pure maple syrup': 'Maple Syrup',
+  };
+  // amt = package size (g, or ml for liquids); price = package price in USD; null = not entered yet.
+  const DEFAULT_PRICES = {
+    'All Purpose Flour': { amt: 9071.8, unit: 'g', price: 19.99, link: 'https://www.costco.com/p/-/kirkland-signature-organic-unbleached-all-purpose-flour-10-lbs-2-count/4000063331?sp=lws&langId=-1', note: 'Costco Kirkland Organic 10lb x2 (20lb total)' },
+    'Cornstarch': { amt: 453.6, unit: 'g', price: 1.99, link: 'https://www.target.com/p/corn-starch-16oz-good-38-gather-8482/-/A-77914320', note: 'Target Good & Gather, 16oz' },
+    'Almond Flour': { amt: 1360.8, unit: 'g', price: 29.13, link: 'https://www.amazon.com/dp/B07L9Q45HG?th=1', note: '3lb bag' },
+    'Cocoa Powder': { amt: 700, unit: 'g', price: 14.99, link: 'https://www.costco.com/p/-/rodelle-gourmet-baking-cocoa-powder-25-oz/100381408?DM_PersistentCookieCreated=true&sp=lws&langId=-1', note: 'Costco Rodelle, 25oz' },
+    'Baking Powder': { amt: 1814.4, unit: 'g', price: 14.99, link: 'https://www.costco.com/p/-/clabber-girl-baking-powder-4-lbs/100581199?sp=lws&langId=-1', note: 'Costco Clabber Girl, 4lb' },
+    'Baking Soda': { amt: 453.6, unit: 'g', price: 0.99 },
+    'Sugar': { amt: 11340, unit: 'g', price: 20.19, link: 'https://sameday.costco.com/store/costco/products/31871-c-h-pure-cane-granulated-white-sugar-25-lb', note: 'Costco C&H Pure Cane, 25lb' },
+    'Brown Sugar': { amt: 907.2, unit: 'g', price: 0.99 },
+    'Powdered Sugar': { amt: 907.2, unit: 'g', price: 3.89 },
+    'Eggs': { amt: 3400, unit: 'g', price: 8.29, link: 'https://sameday.costco.com/store/costco/products/19232662-kirkland-signature-cage-free-eggs-ussa-grade-aa-60-ct', note: 'Costco Kirkland Cage Free, 60 ct. Egg White / Yolk cost derives from this same $/g.' },
+    'Unsalted Butter': { amt: 907.2, unit: 'g', price: 18.49, note: 'Kerrygold Pure Unsalted Irish Butter, 8oz x4-count' },
+    'Salt': { amt: 850.5, unit: 'g', price: 3.99, link: 'https://sameday.costco.com/store/costco/products/19231239-kirkland-signature-pure-sea-salt-30-oz-30-oz', note: 'Costco Kirkland Pure Sea Salt, 30oz' },
+    'Vanilla Extract': { amt: 473, unit: 'ml', price: 10.87, link: 'https://sameday.costco.com/store/costco/products/31874-kirkland-signature-pure-vanilla-16-ounces-16-oz', note: 'Costco Kirkland Pure Vanilla, 16oz. Vanilla Bean Paste uses this same $/g.' },
+    'Cream Cheese': { amt: 1360.8, unit: 'g', price: 10.49, link: 'https://sameday.costco.com/store/costco/products/17314404-philadelphia-cream-cheese-48-oz', note: 'Costco Philadelphia, 48oz' },
+    'Heavy Cream': { amt: 946, unit: 'ml', price: 5.19, note: 'Target brand' },
+    'Milk': { amt: 1892.7, unit: 'ml', price: 3.39 },
+    'Skim Milk Powder': { amt: 272, unit: 'g', price: 4.59, note: 'Target brand' },
+    'Yeast': { amt: 113.4, unit: 'g', price: 6.29, link: 'https://www.target.com/p/fleischmann-s-active-dry-yeast-4oz/-/A-14771430', note: 'Target Fleischmann\'s Active Dry Yeast, 4oz' },
+    'Mugwort Powder': { amt: 300, unit: 'g', price: 26.31, link: 'https://www.amazon.com/dp/B081756F27' },
+    'Kataifi': { amt: 453.6, unit: 'g', price: 4.99, link: 'https://www.instacart.com/products/244980-indo-european-kataifi-shredded-dough-16-oz?retailerSlug=super-king', note: 'Instacart / Super King, 16oz' },
+    'Pistachio Butter': { amt: 18143.7, unit: 'g', price: 600, note: '40lb pail' },
+    'Honey': { amt: 2041.2, unit: 'g', price: 21.99, link: 'https://www.costco.com/p/-/kirkland-signature-organic-raw-honey-24-oz-3-count/100334136?bvstate=pg:4/ct:r', note: 'Costco Kirkland Organic Raw Honey, 24oz x3' },
+    'Ricotta Cheese': { amt: 425, unit: 'g', price: 4.97 },
+    'Apricot': { amt: 500, unit: 'g', price: 4.49 },
+    'Apple Sauce': { amt: 680, unit: 'g', price: 2.58 },
+    'Coconut Oil': { amt: 453.6, unit: 'g', price: 4.99 },
+    'Coconut Milk': { amt: 400, unit: 'ml', price: 2.39 },
+    'Ube Extract': { amt: 60, unit: 'ml', price: 6.95 },
+    'Matcha Powder': { amt: 340, unit: 'g', price: 18.32 },
+    'Cranberry': { amt: 142, unit: 'g', price: 1.49 },
+    'Dark Chocolate (Callebaut)': { amt: 2500, unit: 'g', price: 52.99, note: 'Different product from Chocolate Chips — priced separately.' },
+    'White Chocolate': { amt: 1125, unit: 'g', price: 7.99 },
+    'Chocolate Chips': { amt: 2047, unit: 'g', price: 16.99 },
+    'Bread Flour': { amt: 2268, unit: 'g', price: 6.58 },
+    'Wheat Flour': { amt: 2268, unit: 'g', price: 2.49 },
+    'Lemon Juice': { amt: 2000, unit: 'ml', price: 9.09 },
+    'Condensed Milk': { amt: 396, unit: 'g', price: 3.49 },
+    'Mascarpone Cheese': { amt: 226, unit: 'g', price: 4.49 },
+    'Earl Grey Tea Leaves': { amt: 200, unit: 'g', price: 14.34, note: 'Each Earl Grey Paste tea bag = 2g of leaves; Tea Bags cost derives from this $/g.' },
+    'Dried Fig': { amt: 1134, unit: 'g', price: 12.49 },
+    'Wine': { amt: 750, unit: 'ml', price: 8.99 },
+    'Frozen Strawberry': { amt: 1814.4, unit: 'g', price: 13.25 },
+    'Blueberry': { amt: 500, unit: 'g', price: 4.49 },
+    'Nonpareil Sprinkles': { amt: 998, unit: 'g', price: 16.27, note: '2.2lb bag — tops about 100 Dot Cake madeleines' },
+    'Coconut Flakes': { amt: 453.6, unit: 'g', price: 8.59, note: '1lb bag — tops about 150 Ube madeleines' },
+    'Peach Jam': { amt: 374, unit: 'g', price: 8.99, note: '374g jar — use about 10g per madeleine' },
+  };
+  // Per-recipe extras, keyed "section:key". Fillings/toppings are costed per finished item.
+  const COST_META = {
+    'mad:Peach Crumble': { toppings: [{ label: 'Cream Cheese Frosting filling', refFilling: 'Cream Cheese Frosting', coversItems: 200 }, { label: 'Peach Jam', ingredient: 'Peach Jam', gramsPerItem: 10 }] },
+    'mad:Dot Cake': { toppings: [{ label: 'Cream Cheese Frosting filling', refFilling: 'Cream Cheese Frosting', coversItems: 200 }, { label: 'Nonpareil Sprinkles', ingredient: 'Nonpareil Sprinkles', coversItems: 100 }] },
+    'mad:Earl Grey': { toppings: [{ label: 'Anglesie Buttercream filling', refFilling: 'Anglesie Buttercream', coversItems: 33 }, { label: 'Earl Grey Paste filling', refFilling: 'Earl Grey Paste', coversItems: 33 }] },
+    'mad:Ube': { toppings: [{ label: 'Coconut Flakes topping', ingredient: 'Coconut Flakes', coversItems: 150 }] },
+    'mad:Pumpkin Pie Spice': { toppings: [{ label: 'Pumpkin Cream Cheese Frosting (20g)', refFilling: 'Pumpkin Cream Cheese Frosting', grams: 20 }] },
+    'scone:plainscone': { yield: 797 / 90, toppings: [{ label: 'Strawberry Cream Cheese filling (60g)', refRecipe: { section: 'scone', key: 'strawberrycc', grams: 60 } }] },
+    'scone:strawberrycc': { yield: 1368 / 60 },
+  };
+  const COST_SECTIONS = [['mad', 'Madeleines', () => REC_MADS], ['fill', 'Fillings', () => REC_FILLINGS], ['scone', 'Scones', () => REC_SCONES], ['other', 'Other', () => REC_OTHER]];
+  const costItemKey = (sec, it) => `${sec}:${it.key || it.name}`;
+  const costItemName = (sec, it) => sec === 'mad' ? (it.title || it.name + ' Madeleine') : (it.type === 'sable' ? 'Sable Cookies' : it.name);
+
+  const titleCase = t => t.replace(/\b\w/g, c => c.toUpperCase());
+  function costCanon(name) {
+    const base = String(name).split(',')[0].replace(/\(.*?\)/g, '').replace(/\*/g, '').trim();
+    const lc = base.toLowerCase();
+    if (PRICE_ALIASES[lc]) return PRICE_ALIASES[lc];
+    const hit = Object.keys(DEFAULT_PRICES).find(k => k.toLowerCase() === lc || k.toLowerCase().replace(/\s*\(.*\)/, '') === lc);
+    return hit || titleCase(base);
+  }
+  let costPrices = {}, costYields = {};
+  function loadCosts() {
+    let stored = {}; try { stored = JSON.parse(localStorage.getItem('costPrices.v1')) || {}; } catch {}
+    try { costYields = JSON.parse(localStorage.getItem('costYields.v1')) || {}; } catch { costYields = {}; }
+    costPrices = {};
+    Object.keys(DEFAULT_PRICES).forEach(k => { costPrices[k] = Object.assign({ unit: 'g', amt: null, price: null }, DEFAULT_PRICES[k], stored[k] || {}); });
+    Object.keys(stored).forEach(k => { if (!costPrices[k]) costPrices[k] = Object.assign({ unit: 'g', amt: null, price: null }, stored[k]); });
+  }
+  const saveCosts = () => { try { localStorage.setItem('costPrices.v1', JSON.stringify(costPrices)); localStorage.setItem('costYields.v1', JSON.stringify(costYields)); } catch {} };
+
+  // Base-recipe rows [name, grams] for one item (first version; the cost is per 1 batch).
+  function costRows(sec, it) {
+    const num = r => [r[0], typeof r[1] === 'number' ? r[1] : lblGrams(r[1]) || parseFloat(r[1]) || 0];
+    let rows;
+    if (sec === 'mad') {
+      const base = it.versions ? it.versions[0].rows : it.custom ? it.custom
+        : [['Cake Flour', it.flour], ['Baking Powder', REC_MAD_BASE['Baking Powder']], ['Salt', it.salt], ['Eggs', REC_MAD_BASE['Eggs']], ['Sugar', REC_MAD_BASE['Sugar']], ['Vanilla Extract', REC_MAD_BASE['Vanilla Extract']], ['Unsalted Butter', REC_MAD_BASE['Unsalted Butter']]];
+      // flavoring, glaze and topping are part of the batch too (the old costing left them out)
+      rows = [...base, ...lblNoteRows(it.note), ...(it.glaze || []), ...(it.topping || [])].map(num);
+    } else if (sec === 'fill') {
+      if (it.type === 'twocol') rows = it.rows.map(r => [r[0], r[1]]);
+      else if (it.type === 'ratio') { const [a, b] = it.ratio.split(':').map(parseFloat); rows = [['Sugar', a], ['Heavy Cream', b]]; }
+      else rows = it.rows.map(num);
+    } else if (it.type === 'sable') rows = [...REC_SABLE.types[0].rows, ...REC_SABLE.types[0].addins].map(num);
+    else if (it.type === 'macaron') rows = it.base.map(num);
+    else if (it.type === 'glutenfree') rows = it.sizes[0].rows.map(num);
+    else rows = [...it.rows, ...(it.soak || [])].map(num);
+    return rows.filter(r => r[1] > 0);
+  }
+  function costUnit(name) { const p = costPrices[costCanon(name)]; return p && p.amt && p.price ? p.price / p.amt : null; }
+  function costLine(name, qty) {
+    if (/^water$/i.test(name)) return 0;
+    const c = costCanon(name);
+    if (c === 'Cake Flour') { const a = costUnit('All Purpose Flour'), b = costUnit('Cornstarch'); return a == null || b == null ? null : qty * 436 / 500 * a + qty * 64 / 500 * b; }
+    if (c === 'Tea Bags') { const u = costUnit('Earl Grey Tea Leaves'); return u == null ? null : qty * 2 * u; }
+    const u = costUnit(c); return u == null ? null : qty * u;
+  }
+  function costSum(rows) { let t = 0; for (const r of rows) { const c = costLine(r[0], r[1]); if (c == null) return null; t += c; } return t; }
+  function costTopping(t) {
+    if (t.gramsPerItem != null) { const u = costUnit(t.ingredient); return u == null ? null : u * t.gramsPerItem; }
+    if (t.coversItems != null && t.ingredient) { const p = costPrices[costCanon(t.ingredient)]; return p && p.price ? p.price / t.coversItems : null; }
+    if (t.refFilling) {
+      const f = REC_FILLINGS.find(x => x.name === t.refFilling); if (!f) return null;
+      const rows = costRows('fill', f), sum = costSum(rows); if (sum == null) return null;
+      return t.grams != null ? sum / rows.reduce((a, r) => a + r[1], 0) * t.grams : sum / t.coversItems;
+    }
+    if (t.refRecipe) {
+      const list = COST_SECTIONS.find(x => x[0] === t.refRecipe.section)[2]();
+      const ref = list.find(x => (x.key || x.name) === t.refRecipe.key); if (!ref) return null;
+      const rows = costRows(t.refRecipe.section, ref), sum = costSum(rows); if (sum == null) return null;
+      return sum / rows.reduce((a, r) => a + r[1], 0) * t.refRecipe.grams;
+    }
+    return null;
+  }
+  function costDefaultYield(sec, it) {
+    const m = COST_META[costItemKey(sec, it)]; if (m && m.yield) return m.yield;
+    if (sec === 'mad') return BATCH_YIELD;
+    const y = String(it.yieldText || '').match(/makes (?:about )?(\d+)/); return y ? Number(y[1]) : '';
+  }
+  const money = n => '$' + n.toFixed(3);
+
+  // Every ingredient the recipes use, so a new one (pecans, pumpkin puree…) shows up in the price list.
+  function costAllNames() {
+    const names = new Set(Object.keys(costPrices));
+    COST_SECTIONS.forEach(([sec, , get]) => get().forEach(it => costRows(sec, it).forEach(r => {
+      const c = costCanon(r[0]); if (c !== 'Cake Flour' && c !== 'Tea Bags' && c.toLowerCase() !== 'water') names.add(c);
+    })));
+    (COST_META && Object.values(COST_META)).forEach(m => (m.toppings || []).forEach(t => t.ingredient && names.add(costCanon(t.ingredient))));
+    return [...names];
+  }
+
+  let costTab = 'recipes', costSel = 'mad:Classic';
+  function renderCosts() {
+    if (!Object.keys(costPrices).length) loadCosts();
+    document.querySelectorAll('#costTab button').forEach(b => b.classList.toggle('on', b.dataset.ctab === costTab));
+    document.getElementById('costRecipes').hidden = costTab !== 'recipes';
+    document.getElementById('costPrices').hidden = costTab !== 'prices';
+    if (costTab === 'recipes') renderCostCard(); else renderCostPrices();
+  }
+  function renderCostCard() {
+    const pick = document.getElementById('costPick');
+    pick.innerHTML = COST_SECTIONS.map(([sec, label, get]) =>
+      `<optgroup label="${label}">${get().map(it => `<option value="${esc(costItemKey(sec, it))}">${REC_ICON[it.name] || '📖'} ${esc(costItemName(sec, it))}</option>`).join('')}</optgroup>`).join('');
+    if (![...pick.options].some(o => o.value === costSel)) costSel = pick.options[0].value;
+    pick.value = costSel;
+    const [sec, key] = costSel.split(/:(.*)/s);
+    const it = COST_SECTIONS.find(x => x[0] === sec)[2]().find(x => (x.key || x.name) === key);
+    const rows = costRows(sec, it);
+    let batch = 0, missing = false;
+    const lines = rows.map(r => {
+      const c = costLine(r[0], r[1]), unit = (costPrices[costCanon(r[0])] || {}).unit === 'ml' ? 'ml' : 'g';
+      const label = `${esc(r[0])} <span class="rec-conv">(${rFmt(r[1])}${costCanon(r[0]) === 'Tea Bags' ? ' bags' : unit})</span>`;
+      if (c == null) { missing = true; return `<div class="proj-row"><span class="k">${label}</span><span class="cost-miss">add price</span></div>`; }
+      batch += c; return `<div class="proj-row"><span class="k">${label}</span><span><b>${money(c)}</b></span></div>`;
+    }).join('');
+    const yv = costYields[costSel] != null ? costYields[costSel] : costDefaultYield(sec, it);
+    const per = yv && !missing ? batch / yv : null;
+    const tops = (COST_META[costSel] || {}).toppings || [];
+    let tTotal = 0, tMissing = false;
+    const topHtml = tops.map(t => { const c = costTopping(t); if (c == null) { tMissing = true; return `<div class="proj-row"><span class="k">${esc(t.label)}</span><span class="cost-miss">add price</span></div>`; } tTotal += c; return `<div class="proj-row"><span class="k">${esc(t.label)}</span><span><b>${money(c)}</b></span></div>`; }).join('');
+    const finished = per != null && !tMissing ? per + tTotal : null;
+    document.getElementById('costCard').innerHTML = `<div class="proj-card">
+      <h3>${REC_ICON[it.name] || '📖'} ${esc(costItemName(sec, it))}</h3>
+      <div class="proj-sub">ingredient cost for 1 batch of the base recipe</div>
+      ${lines}
+      ${missing ? '<div class="cost-miss" style="margin-top:8px">Some ingredients have no price yet — add them under Ingredient prices.</div>' : ''}
+      <div class="proj-row"><span class="k cost-total">Batch cost</span><span class="cost-total">${missing ? '—' : '$' + batch.toFixed(2)}</span></div>
+      <div class="proj-row"><span class="k">Pieces per batch</span><span><input class="cost-in" type="number" inputmode="decimal" step="any" min="0" placeholder="?" value="${yv === '' ? '' : rFmt(yv)}" data-cyield="1"></span></div>
+      <div class="proj-row"><span class="k cost-total">Batter cost per item</span><span class="cost-total">${per != null ? money(per) : '—'}</span></div>
+      ${tops.length ? `<div class="cost-sub">Filling &amp; topping, per item</div>${topHtml}
+        <div class="proj-row"><span class="k cost-total">Cost per item, finished</span><span class="cost-total">${finished != null ? money(finished) : '—'}</span></div>` : ''}
+    </div>`;
+  }
+  function renderCostPrices() {
+    const names = costAllNames().sort((a, b) => a.localeCompare(b));
+    const has = n => costPrices[n] && costPrices[n].amt && costPrices[n].price;
+    const row = n => {
+      const p = costPrices[n] || { unit: 'g', amt: null, price: null }, u = has(n) ? p.price / p.amt : null;
+      return `<div class="cp-row ${has(n) ? '' : 'need'}" data-cname="${esc(n)}">
+        <div class="cp-name">${esc(n)}${p.link ? `<a href="${esc(p.link)}" target="_blank" rel="noopener noreferrer">source</a>` : ''}</div>
+        <div class="cp-ins"><input type="number" inputmode="decimal" step="any" placeholder="size" value="${p.amt != null ? p.amt : ''}" data-cf="amt">${p.unit}<span>$</span><input type="number" inputmode="decimal" step="any" placeholder="0.00" value="${p.price != null ? p.price : ''}" data-cf="price"></div>
+        <div class="cp-meta">${u != null ? `$${u.toFixed(4)} per ${p.unit}` : 'Enter package size and price'}${p.note ? ` · ${esc(p.note)}` : ''}</div></div>`;
+    };
+    const need = names.filter(n => !has(n)), done = names.filter(has);
+    document.getElementById('costPrices').innerHTML = `
+      <div class="warn" style="text-align:left;margin:4px 2px 4px">Type the size of the package you buy and what it costs. Cake Flour is worked out from All Purpose Flour + Cornstarch (436g : 64g); Egg White / Yolk use the Eggs price; Tea Bags use Earl Grey Tea Leaves (2g each). Saved on this device only.</div>
+      ${need.length ? `<div class="cp-group">Needs a price (${need.length})</div>${need.map(row).join('')}` : ''}
+      <div class="cp-group">Priced (${done.length})</div>${done.map(row).join('')}`;
+  }
+  document.getElementById('costTab').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { costTab = b.dataset.ctab; renderCosts(); } });
+  document.getElementById('costPick').addEventListener('change', e => { costSel = e.target.value; renderCostCard(); });
+  document.getElementById('bakingCosts').addEventListener('change', e => {
+    const y = e.target.closest('[data-cyield]');
+    if (y) { const n = parseFloat(y.value); costYields[costSel] = isNaN(n) || n <= 0 ? null : n; saveCosts(); renderCostCard(); return; }
+    const f = e.target.closest('[data-cf]'); if (!f) return;
+    const name = f.closest('[data-cname]').dataset.cname, n = parseFloat(f.value);
+    costPrices[name] = costPrices[name] || { unit: 'g', amt: null, price: null };
+    costPrices[name][f.dataset.cf] = f.value === '' || isNaN(n) ? null : n;
+    saveCosts(); renderCostPrices();
+  });
+
   // ---- Ingredient label: mix order → weight order, allergens, net weight, best-by dates ----
   const LBL_FRIDGE_DAYS = 7, LBL_FREEZER_DAYS = 14;
   const LBL_SUB = { 'white chocolate': 'sugar, fractionated palm kernel oil, milk, nonfat milk, hydrogenated palm oil, soy lecithin, and natural flavor' };
