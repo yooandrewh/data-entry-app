@@ -653,7 +653,7 @@
 <body>
 
 <!-- Version badge — bump on every deploy (v = commit count, time = deploy time PST) -->
-<div class="ver-badge">v89 · Sep 29, 4:48 PM</div>
+<div class="ver-badge">v90 · Sep 29, 4:51 PM</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -958,6 +958,7 @@
     <div class="lbl-doc" id="lblDoc"></div>
     <div class="actions inv-noprint" style="margin-top:16px">
       <button class="btn-primary" id="lblPrintBtn">Print label</button>
+      <button class="btn-ghost" id="lblSaveBtn">Download as image</button>
       <button class="btn-ghost" id="lblCloseBtn">Close</button>
     </div>
   </div>
@@ -3094,6 +3095,39 @@
   document.getElementById('lblNet').addEventListener('input', paintLabel);
   document.getElementById('lblCloseBtn').addEventListener('click', () => document.getElementById('lblScrim').classList.remove('show'));
   document.getElementById('lblScrim').addEventListener('click', e => { if (e.target.id === 'lblScrim') e.target.classList.remove('show'); });
+  // Render the label to a PNG: SVG <foreignObject> → canvas, so no library is needed.
+  async function lblToBlob() {
+    const doc = document.getElementById('lblDoc'), w = doc.offsetWidth, h = doc.offsetHeight, scale = 3;
+    const css = [...document.styleSheets].flatMap(ss => { try { return [...ss.cssRules]; } catch { return []; } }).filter(r => r.selectorText && r.selectorText.includes('.lbl-')).map(r => r.cssText).join('');
+    const clone = doc.cloneNode(true);
+    clone.removeAttribute('id'); clone.style.cssText = `box-sizing:border-box;width:${w}px;`;
+    clone.querySelectorAll('[contenteditable]').forEach(e => e.removeAttribute('contenteditable'));
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><foreignObject width="100%" height="100%"><div xmlns="http://www.w3.org/1999/xhtml"><style>${css}</style>${new XMLSerializer().serializeToString(clone)}</div></foreignObject></svg>`;
+    const img = new Image();
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
+    await img.decode();
+    const cv = document.createElement('canvas'); cv.width = w * scale; cv.height = h * scale;
+    const ctx = cv.getContext('2d'); ctx.fillStyle = '#fffdf8'; ctx.fillRect(0, 0, cv.width, cv.height);
+    ctx.drawImage(img, 0, 0, cv.width, cv.height);
+    return new Promise(res => cv.toBlob(res, 'image/png'));
+  }
+  document.getElementById('lblSaveBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('lblSaveBtn'), label = btn.textContent;
+    btn.disabled = true; btn.textContent = 'Preparing…';
+    try {
+      const blob = await lblToBlob();
+      const slug = (lblItem.title || lblItem.name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      const file = new File([blob], `${slug}-label-${document.getElementById('lblMfg').value}.png`, { type: 'image/png' });
+      track('label_download', { name: lblItem.name });
+      // On iPhone the share sheet offers "Save Image"; elsewhere fall back to a normal download.
+      if (navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file] }); return; } catch (e) { if (e.name === 'AbortError') return; } }
+      const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = file.name;
+      document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+    } catch (e) {
+      document.getElementById('toastMsg').textContent = 'Couldn’t make the image';
+      const t = document.getElementById('toast'); t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2200);
+    } finally { btn.disabled = false; btn.textContent = label; }
+  });
   document.getElementById('lblPrintBtn').addEventListener('click', () => {
     track('label_print', { name: lblItem && lblItem.name });
     document.body.classList.add('printing-label');
