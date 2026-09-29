@@ -190,3 +190,11 @@ to anyone with the repo. Every ingredient any recipe uses appears in the price l
 price are flagged "Needs a price" and block that recipe's total. Cake Flour = AP + cornstarch
 (436:64), Egg White/Yolk = Eggs, Tea Bags = 2g tea leaves. Unlike the old page, flavoring notes,
 glaze and toppings count toward the batch. Madeleine yield defaults to `BATCH_YIELD` (18).
+
+**Receipt scan** (Baking → Costs → Ingredient prices → *Scan a receipt*): `api/receipt.js` sends the
+photo (downsized to ~1600px JPEG client-side) to the Anthropic API with a `record_receipt` tool and
+the app's ingredient names; the client shows a review sheet (`#rcpScrim`) and only writes prices the
+user confirms. Needs Vercel env **`ANTHROPIC_API_KEY`**. The app URL is public, so also set
+**`RECEIPT_CODE`** — the client prompts for it once and remembers it (`localStorage.receiptCode`);
+without it anyone with the link can spend the API credits. Optional `RECEIPT_MODEL`.
+The receipt image is not stored, but it does leave for Anthropic's API.

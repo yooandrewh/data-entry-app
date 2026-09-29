@@ -389,6 +389,15 @@
   .cp-ins input { width: 5em; font-family: inherit; font-size: var(--fs-body); color: var(--text); background: var(--field); border: 1px solid var(--sep); border-radius: 8px; padding: 6px 8px; text-align: right; }
   .cp-row.need { box-shadow: inset 3px 0 0 var(--orange), var(--shadow); }
 
+  .rcp-row { border-bottom: 1px solid var(--sep); padding: 10px 0; display: grid; grid-template-columns: auto 1fr; gap: 6px 10px; align-items: center; }
+  .rcp-row:last-child { border-bottom: none; }
+  .rcp-row .txt { font-size: var(--fs-caption); color: var(--muted); grid-column: 2; }
+  .rcp-row select, .rcp-row input[type=number] { font-family: inherit; font-size: var(--fs-body); color: var(--text); background: var(--field); border: 1px solid var(--sep); border-radius: 8px; padding: 7px 8px; min-width: 0; }
+  .rcp-row select { width: 100%; }
+  .rcp-row .nums { grid-column: 2; display: flex; align-items: center; gap: 6px; font-size: var(--fs-caption); color: var(--muted); }
+  .rcp-row .nums input { width: 5.5em; text-align: right; }
+  .rcp-scan { width: 100%; margin: 4px 0 6px; }
+
   /* ---- Confirmation sheet ---- */
   .scrim {
     position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,0.4);
@@ -670,7 +679,7 @@
 <body>
 
 <!-- Version badge — bump on every deploy (v = commit count, time = deploy time PST) -->
-<div class="ver-badge">v91 · Sep 29, 4:55 PM</div>
+<div class="ver-badge">v92 · Sep 29, 4:59 PM</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -991,6 +1000,19 @@
       <button class="btn-primary" id="lblPrintBtn">Print label</button>
       <button class="btn-ghost" id="lblSaveBtn">Download as image</button>
       <button class="btn-ghost" id="lblCloseBtn">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Receipt scan review ===== -->
+<div class="scrim" id="rcpScrim">
+  <div class="sheet inv-sheet" role="dialog" aria-modal="true" aria-labelledby="rcpTitle">
+    <h2 id="rcpTitle">Receipt</h2>
+    <div class="warn" id="rcpWarn"></div>
+    <div id="rcpRows"></div>
+    <div class="actions" style="margin-top:14px">
+      <button class="btn-primary" id="rcpApply">Update prices</button>
+      <button class="btn-ghost" id="rcpCancel">Cancel</button>
     </div>
   </div>
 </div>
@@ -2788,11 +2810,11 @@
       custom: [['Cake Flour', 144], ['Toasted Pecans (ground fine)', 30], ['Baking Powder', 5], ['Salt', 2], ['Whole Eggs', 190], ['Brown Sugar', 70], ['Pure Maple Syrup (dark/robust)', 30], ['Vanilla Extract', 5], ['Unsalted Butter', 180], ['Avocado Oil', 20]],
       topping: [['Toasted Pecans, coarsely chopped', '30g'], ['Maple Syrup, for brushing', '15g']] },
     { name: 'Pumpkin Pie Spice', title: 'Pumpkin Pie Spice Madeleine',
-      custom: [['Cake Flour', 182], ['Baking Powder', 7], ['Salt', 2], ['Eggs', 160], ['Granulated Sugar', 120], ['Light Brown Sugar', 20], ['Vanilla Extract', 5], ['Pumpkin Puree, well-drained', 100], ['Ground Cinnamon', 1], ['Pumpkin Pie Spice', 7], ['Unsalted Butter, melted and cooled', 190]],
+      custom: [['Cake Flour', 182], ['Baking Powder', 7], ['Salt', 2], ['Eggs', 160], ['Granulated Sugar', 120], ['Light Brown Sugar', 20], ['Vanilla Extract', 5], ['Pumpkin Puree, well-drained', 100], ['Pumpkin Pie Spice', 7], ['Unsalted Butter, melted and cooled', 190]],
       fillingRefs: ['Pumpkin Cream Cheese Frosting'],
       fillingNote: 'Frosting mix: 90g of the base + 30g pumpkin puree + 10g powdered sugar + 5g spice = 135g. Frost each madeleine with 20g — 135g covers about 6, with 15g left over.',
       lblExtra: { filling: ['pumpkin puree', 'pumpkin pie spice'] },
-      notes: '1. Whisk together the cake flour, baking powder, salt, cinnamon, and pumpkin pie spice. Set aside.<br>2. In a large bowl, whisk eggs, granulated sugar, and brown sugar for 2–3 minutes until pale and slightly thickened.<br>3. Whisk in vanilla extract and pumpkin puree until smooth.<br>4. Gently fold the dry mixture into the wet mixture just until no streaks remain.<br>5. Fold in melted butter until fully incorporated and glossy.<br>6. Cover and refrigerate the batter at least 1 hour (overnight best).<br>7. Butter and flour a madeleine pan. Preheat oven to 375°F (190°C).<br>8. Fill each mold about ¾ full with chilled batter.<br>9. Bake ~11 minutes, until edges are golden, a hump has formed, and a toothpick comes out clean.<br>10. Unmold immediately onto a wire rack and cool.<br><br>Drain the pumpkin puree in a fine sieve for 10–15 minutes first — excess water is the main risk to texture. Chilling the batter is essential for the classic hump. Whole cinnamon plus a pumpkin pie spice blend gives a fresher, brighter aroma than the blend alone.' },
+      notes: '1. Whisk together the cake flour, baking powder, salt, and pumpkin pie spice. Set aside.<br>2. In a large bowl, whisk eggs, granulated sugar, and brown sugar for 2–3 minutes until pale and slightly thickened.<br>3. Whisk in vanilla extract and pumpkin puree until smooth.<br>4. Gently fold the dry mixture into the wet mixture just until no streaks remain.<br>5. Fold in melted butter until fully incorporated and glossy.<br>6. Cover and refrigerate the batter at least 1 hour (overnight best).<br>7. Butter and flour a madeleine pan. Preheat oven to 375°F (190°C).<br>8. Fill each mold about ¾ full with chilled batter.<br>9. Bake ~11 minutes, until edges are golden, a hump has formed, and a toothpick comes out clean.<br>10. Unmold immediately onto a wire rack and cool.<br><br>Drain the pumpkin puree in a fine sieve for 10–15 minutes first — excess water is the main risk to texture. Chilling the batter is essential for the classic hump.' },
   ];
   const REC_FILLINGS = [
     { name: 'Lemon Curd', type: 'single', rows: [['Eggs', '100g'], ['Sugar', '60g'], ['Lemon Juice', '40g'], ['Unsalted Butter', '60g']] },
@@ -3243,6 +3265,8 @@
     };
     const need = names.filter(n => !has(n)), done = names.filter(has);
     document.getElementById('costPrices').innerHTML = `
+      <button class="btn-ghost rcp-scan" id="rcpScan">Scan a receipt</button>
+      <input type="file" id="rcpFile" accept="image/*" hidden>
       <div class="warn" style="text-align:left;margin:4px 2px 4px">Type the size of the package you buy and what it costs. Cake Flour is worked out from All Purpose Flour + Cornstarch (436g : 64g); Egg White / Yolk use the Eggs price; Tea Bags use Earl Grey Tea Leaves (2g each). Saved on this device only.</div>
       ${need.length ? `<div class="cp-group">Needs a price (${need.length})</div>${need.map(row).join('')}` : ''}
       <div class="cp-group">Priced (${done.length})</div>${done.map(row).join('')}`;
@@ -3257,6 +3281,83 @@
     costPrices[name] = costPrices[name] || { unit: 'g', amt: null, price: null };
     costPrices[name][f.dataset.cf] = f.value === '' || isNaN(n) ? null : n;
     saveCosts(); renderCostPrices();
+  });
+
+  // ---- Receipt scan: photo → /api/receipt → review → update ingredient prices ----
+  const RECEIPT_ENDPOINT = '/api/receipt';
+  let rcpItems = [], rcpMeta = {};
+  const rcpToast = msg => { document.getElementById('toastMsg').textContent = msg; const t = document.getElementById('toast'); t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2600); };
+  // Downsize to ~1600px JPEG so the upload stays small and fast on cellular.
+  async function rcpEncode(file) {
+    const bm = await createImageBitmap(file), k = Math.min(1, 1600 / Math.max(bm.width, bm.height));
+    const cv = document.createElement('canvas'); cv.width = Math.round(bm.width * k); cv.height = Math.round(bm.height * k);
+    cv.getContext('2d').drawImage(bm, 0, 0, cv.width, cv.height);
+    return cv.toDataURL('image/jpeg', 0.85).split(',')[1];
+  }
+  async function rcpPost(image) {
+    const send = code => fetch(RECEIPT_ENDPOINT, {
+      method: 'POST', headers: Object.assign({ 'content-type': 'application/json' }, code ? { 'x-receipt-code': code } : {}),
+      body: JSON.stringify({ image, mediaType: 'image/jpeg', known: costAllNames() }),
+    });
+    let code = ''; try { code = localStorage.getItem('receiptCode') || ''; } catch {}
+    let r = await send(code);
+    if (r.status === 401) {   // the server may require a code (RECEIPT_CODE) — ask once, remember it
+      code = prompt('Receipt code:') || '';
+      if (!code) throw new Error('A receipt code is needed.');
+      r = await send(code);
+      if (r.ok) try { localStorage.setItem('receiptCode', code); } catch {}
+    }
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.error || 'HTTP ' + r.status);
+    return data;
+  }
+  function rcpPaint() {
+    const names = costAllNames().sort((a, b) => a.localeCompare(b));
+    document.getElementById('rcpTitle').textContent = rcpMeta.store ? `Receipt · ${rcpMeta.store}` : 'Receipt';
+    document.getElementById('rcpWarn').textContent = rcpItems.length
+      ? 'Check each line, then update. Unmatched lines are skipped. Sizes are the total for the line, in g or ml.'
+      : 'No ingredient lines found on that receipt.';
+    document.getElementById('rcpRows').innerHTML = rcpItems.map((it, i) => `
+      <div class="rcp-row" data-i="${i}">
+        <input type="checkbox" data-rf="on" ${it.on ? 'checked' : ''}>
+        <select data-rf="ingredient"><option value="">Skip this line</option>${names.map(n => `<option value="${esc(n)}" ${n === it.ingredient ? 'selected' : ''}>${esc(n)}</option>`).join('')}</select>
+        <div class="txt">${esc(it.text)}</div>
+        <div class="nums"><input type="number" inputmode="decimal" step="any" placeholder="size" value="${it.size_amount != null ? it.size_amount : ''}" data-rf="size_amount">${it.size_unit || 'g'}<span>$</span><input type="number" inputmode="decimal" step="any" value="${it.price != null ? it.price : ''}" data-rf="price"></div>
+      </div>`).join('');
+  }
+  document.getElementById('costPrices').addEventListener('click', e => { if (e.target.closest('#rcpScan')) document.getElementById('rcpFile').click(); });
+  document.getElementById('costPrices').addEventListener('change', async e => {
+    if (e.target.id !== 'rcpFile' || !e.target.files[0]) return;
+    const file = e.target.files[0]; e.target.value = '';
+    const btn = document.getElementById('rcpScan'), label = btn.textContent;
+    btn.disabled = true; btn.textContent = 'Reading receipt…';
+    try {
+      const data = await rcpPost(await rcpEncode(file));
+      rcpMeta = data;
+      rcpItems = data.items.map(it => ({ ...it, on: !!(it.ingredient && it.size_amount && it.price) }));
+      track('receipt_scan', { lines: rcpItems.length });
+      rcpPaint(); document.getElementById('rcpScrim').classList.add('show');
+    } catch (err) { rcpToast(err.message || 'Couldn’t read that receipt'); }
+    finally { const b = document.getElementById('rcpScan'); if (b) { b.disabled = false; b.textContent = label; } }
+  });
+  document.getElementById('rcpRows').addEventListener('change', e => {
+    const f = e.target.closest('[data-rf]'); if (!f) return;
+    const it = rcpItems[Number(f.closest('.rcp-row').dataset.i)], k = f.dataset.rf;
+    if (k === 'on') it.on = f.checked;
+    else if (k === 'ingredient') { it.ingredient = f.value || null; it.on = !!f.value; rcpPaint(); }
+    else it[k] = f.value === '' ? null : parseFloat(f.value);
+  });
+  document.getElementById('rcpCancel').addEventListener('click', () => document.getElementById('rcpScrim').classList.remove('show'));
+  document.getElementById('rcpApply').addEventListener('click', () => {
+    let n = 0;
+    rcpItems.filter(it => it.on && it.ingredient && it.size_amount > 0 && it.price > 0).forEach(it => {
+      const p = costPrices[it.ingredient] = costPrices[it.ingredient] || { unit: 'g', amt: null, price: null };
+      p.amt = it.size_amount; p.price = it.price; p.unit = it.size_unit || p.unit || 'g';
+      p.note = `Receipt${rcpMeta.store ? ' · ' + rcpMeta.store : ''}${rcpMeta.date ? ' · ' + rcpMeta.date : ''}`;
+      n++;
+    });
+    saveCosts(); document.getElementById('rcpScrim').classList.remove('show'); renderCostPrices();
+    rcpToast(n ? `Updated ${n} price${n === 1 ? '' : 's'}` : 'Nothing to update');
   });
 
   // ---- Ingredient label: mix order → weight order, allergens, net weight, best-by dates ----
