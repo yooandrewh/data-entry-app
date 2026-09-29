@@ -3,6 +3,9 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Catamaran:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="color-scheme" content="light" />
@@ -12,20 +15,21 @@
 <title>Kairos</title>
 <style>
   :root {
-    --bg: #f2f2f7;
+    --bg: #f7f2f5;
     --card: #ffffff;
-    --text: #1c1c1e;
-    --muted: #8e8e93;
-    --sep: #e5e5ea;
-    --blue: #007aff;
+    --text: #341f37;        /* Pantone 7449 C Deep Plum */
+    --muted: #8c7a8e;
+    --sep: #eadfe7;
+    --accent: #a067a2;      /* Pantone 7655 C Dusty Mauve — primary actions, links, active tab */
     --green: #34c759;
-    --orange: #ff9500;
+    --orange: #f0a875;      /* Pantone 1485 C Apricot — warm highlight */
     --red: #ff3b30;
-    --field: #f2f2f7;
+    --field: #f7f2f5;
     --shadow: 0 1px 3px rgba(0,0,0,0.06);
     --safe-top: env(safe-area-inset-top, 0px);
     --safe-bottom: env(safe-area-inset-bottom, 0px);
     --tabbar-h: 64px;
+    --footer-h: 20px;      /* version line under the tab bar */
     /* Type scale — every font-size in this sheet is one of these. Before this the
        stylesheet had 23 distinct sizes and no hierarchy. Exceptions, on purpose:
        h1 (30px), .tok (sized to its box) and .db-empty .big (an emoji graphic). */
@@ -47,14 +51,14 @@
     margin: 0; padding: 0;
     background: var(--bg);
     color: var(--text);
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", system-ui, sans-serif;
+    font-family: "Catamaran", -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
     font-size: var(--fs-lg);
     -webkit-font-smoothing: antialiased;
   }
   body {
     min-height: 100vh;
     padding-top: calc(var(--safe-top) + 8px);
-    padding-bottom: calc(var(--safe-bottom) + var(--tabbar-h) + 12px);
+    padding-bottom: calc(var(--safe-bottom) + var(--footer-h) + var(--tabbar-h) + 12px);
   }
   .wrap { max-width: 480px; margin: 0 auto; padding: 0 16px; }
 
@@ -85,7 +89,7 @@
   .seg button .ic svg { display: block; width: 22px; height: 22px; }
   .seg button .ic svg * { stroke: currentColor; }
   .seg button:active { transform: scale(0.97); }
-  .seg button.on[data-type="delivery"] { border-color: var(--blue); color: var(--blue); }
+  .seg button.on[data-type="delivery"] { border-color: var(--accent); color: var(--accent); }
   .seg button.on[data-type="inventory"] { border-color: var(--orange); color: var(--orange); }
   .seg button.on[data-type="goodwill"] { border-color: #16a34a; color: #16a34a; }
   .seg button.on[data-type="transfer"] { border-color: #7c3aed; color: #7c3aed; }
@@ -124,7 +128,7 @@
     transition: transform .08s ease;
   }
   .pill:active { transform: scale(0.95); }
-  .pill.on { background: var(--blue); color: #fff; }
+  .pill.on { background: var(--accent); color: #fff; }
 
   /* Stepper amounts */
   .amt { display: flex; align-items: center; gap: 10px; }
@@ -155,9 +159,9 @@
 
   .submit {
     width: 100%; appearance: none; border: none; cursor: pointer;
-    background: var(--blue); color: #fff; font-size: var(--fs-title); font-weight: 700;
+    background: var(--accent); color: #fff; font-size: var(--fs-title); font-weight: 700;
     padding: 17px; border-radius: 16px;
-    box-shadow: 0 6px 20px rgba(0,122,255,0.3);
+    box-shadow: 0 6px 20px rgba(160,103,162,0.3);
     transition: transform .08s ease, opacity .15s ease;
   }
   .submit:active { transform: scale(0.98); }
@@ -174,7 +178,7 @@
     font-size: var(--fs-caption); font-weight: 700; padding: 4px 10px; border-radius: 8px;
     display: inline-flex; align-items: center; gap: 5px;
   }
-  .db-type.delivery { background: rgba(0,122,255,0.12); color: var(--blue); }
+  .db-type.delivery { background: rgba(160,103,162,0.12); color: var(--accent); }
   .db-type.inventory { background: rgba(255,149,0,0.14); color: var(--orange); }
   .db-when { font-size: var(--fs-caption); color: var(--muted); text-align: right; }
   .db-daylabel { font-size: var(--fs-body); font-weight: 700; }
@@ -217,15 +221,14 @@
     font-size: var(--fs-body); font-weight: 600; padding: 13px 16px; border-radius: 999px;
     min-height: 44px; box-shadow: var(--shadow); transition: background .15s ease, color .15s ease;
   }
-  .chip-row button.on { background: var(--blue); color: #fff; }
+  .chip-row button.on { background: var(--accent); color: #fff; }
   .db-dates[hidden] { display: none; }
 
-  /* Version badge (top right, all tabs) */
+  /* Version footer — a line under the tab bar on every tab */
   .ver-badge {
-    position: fixed; top: calc(var(--safe-top) + 10px); right: var(--gutter-x, 12px); z-index: 55;
-    font-size: var(--fs-micro); font-weight: 600; color: var(--muted);
-    background: var(--field); padding: 3px 9px; border-radius: 999px;
-    pointer-events: none; opacity: 0.9;
+    position: fixed; left: 0; right: 0; bottom: var(--safe-bottom); height: var(--footer-h); z-index: 55;
+    display: flex; align-items: center; justify-content: center; white-space: nowrap;
+    font-size: var(--fs-micro); font-weight: 600; color: var(--muted); pointer-events: none;
   }
 
   /* ---- Tab bar ---- */
@@ -233,8 +236,8 @@
      otherwise they spread to the screen edges on anything wider than a phone. */
   .tabbar {
     position: fixed; left: 0; right: 0; bottom: 0; z-index: 40;
-    height: calc(var(--tabbar-h) + var(--safe-bottom));
-    padding: 0 var(--col-pad) var(--safe-bottom);
+    height: calc(var(--tabbar-h) + var(--footer-h) + var(--safe-bottom));
+    padding: 0 var(--col-pad) calc(var(--footer-h) + var(--safe-bottom));
     background: rgba(255,255,255,0.92);
     -webkit-backdrop-filter: saturate(180%) blur(20px);
     backdrop-filter: saturate(180%) blur(20px);
@@ -254,13 +257,13 @@
   /* Override each icon's own stroke-width — 1.9 at this size read lighter than the label. */
   .tabbar button .tic svg * { stroke: currentColor; stroke-width: 2; }
   .tabbar button .tlabel { line-height: 1; white-space: nowrap; }
-  .tabbar button.on { color: var(--blue); font-weight: 700; }
-  /* Entry keeps its blue pill because it is the primary action, but its LABEL
-     stays muted unless the tab is actually open — a permanently blue label read
+  .tabbar button.on { color: var(--accent); font-weight: 700; }
+  /* Entry keeps its accent pill because it is the primary action, but its LABEL
+     stays muted unless the tab is actually open — a permanently accented label read
      as a second selected tab. */
   .tabbar button.tab-entry .tic {
-    background: var(--blue); color: #fff; border-radius: 13px; padding: 2px 14px;
-    box-shadow: 0 2px 8px rgba(0,122,255,0.3);
+    background: var(--accent); color: #fff; border-radius: 13px; padding: 2px 14px;
+    box-shadow: 0 2px 8px rgba(160,103,162,0.3);
   }
 
   /* ---- Stores analytics ---- */
@@ -282,12 +285,12 @@
   .store-note { font-size: var(--fs-caption); color: var(--text); background: var(--field); border-radius: 10px; padding: 8px 11px; margin: 12px 0 2px; }
   .fbar { display: grid; grid-template-columns: 84px 1fr 30px; align-items: center; gap: 8px; margin-bottom: 6px; font-size: var(--fs-caption); }
   .fbar .track { background: var(--sep); border-radius: 6px; height: 10px; overflow: hidden; }
-  .fbar .fill { height: 100%; border-radius: 6px; background: var(--blue); }
+  .fbar .fill { height: 100%; border-radius: 6px; background: var(--accent); }
   .fbar .fill.old { background: var(--muted); opacity: 0.5; }
   .fbar .n { text-align: right; font-variant-numeric: tabular-nums; color: var(--muted); }
   .vbars { display: flex; align-items: flex-end; gap: 5px; height: 66px; margin-top: 2px; }
   .vbar { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px; height: 100%; justify-content: flex-end; }
-  .vbar .col { width: 100%; background: var(--blue); border-radius: 4px 4px 0 0; min-height: 2px; transition: height .2s; }
+  .vbar .col { width: 100%; background: var(--accent); border-radius: 4px 4px 0 0; min-height: 2px; transition: height .2s; }
   .vbar .col.hot { background: var(--orange); }
   .vbar .lb { font-size: var(--fs-micro); color: var(--muted); }
   /* weekly growth */
@@ -297,10 +300,10 @@
   .growth-head .gt { font-size: var(--fs-micro); font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.4px; }
   .growth-head .gv { font-size: var(--fs-title); font-weight: 800; letter-spacing: -0.3px; }
   .wbar-p { width: 100%; display: flex; flex-direction: column; justify-content: flex-start; min-height: 2px; }
-  .wbar-ghost { width: 100%; box-sizing: border-box; border: 1.5px dashed var(--blue); border-bottom: none; border-radius: 4px 4px 0 0; opacity: 0.55; }
-  .wbar-act { width: 100%; background: var(--blue); opacity: 0.45; }
+  .wbar-ghost { width: 100%; box-sizing: border-box; border: 1.5px dashed var(--accent); border-bottom: none; border-radius: 4px 4px 0 0; opacity: 0.55; }
+  .wbar-act { width: 100%; background: var(--accent); opacity: 0.45; }
   .growth-proj { font-size: var(--fs-caption); color: var(--muted); margin-top: 8px; }
-  .growth-proj b { color: var(--blue); font-weight: 700; }
+  .growth-proj b { color: var(--accent); font-weight: 700; }
   .growth-range { font-size: var(--fs-caption); font-weight: 700; margin-top: 3px; }
   .growth-range.up { color: #16a34a; }
   .growth-range.down { color: var(--red); }
@@ -311,7 +314,7 @@
   .wow.flat { color: var(--muted); background: var(--field); }
   .wchart { display: flex; align-items: flex-end; gap: 5px; height: 72px; margin-top: 8px; }
   .wcol { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; height: 100%; justify-content: flex-end; }
-  .wcol .bar { width: 100%; background: var(--blue); border-radius: 4px 4px 0 0; min-height: 2px; opacity: 0.55; transition: height .2s; }
+  .wcol .bar { width: 100%; background: var(--accent); border-radius: 4px 4px 0 0; min-height: 2px; opacity: 0.55; transition: height .2s; }
   .wcol .bar.last { opacity: 1; background: #16a34a; }
   .wcol .lb { font-size: var(--fs-micro); color: var(--muted); }
   .cashrow { display: grid; grid-template-columns: 1fr auto; gap: 8px; font-size: var(--fs-caption); padding: 4px 0; border-top: 1px solid var(--sep); }
@@ -322,6 +325,52 @@
   .hstore .hs-n { font-size: var(--fs-body); font-weight: 700; margin-bottom: 6px; }
   .hstore .hs-big { font-size: var(--fs-title); font-weight: 800; letter-spacing: -0.3px; }
   .hstore .hs-sub { font-size: var(--fs-caption); color: var(--muted); margin-top: 2px; }
+
+  /* ---- Invoice (Data → Deliveries → Create invoice) ---- */
+  .inv-open { width: 100%; margin: 0 0 14px; }
+  .inv-sheet { max-height: 92vh; overflow-y: auto; }
+  .inv-field { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--sep); font-size: var(--fs-body); }
+  .inv-field:last-child { border-bottom: none; }
+  .inv-field input, .inv-field select {
+    font-family: inherit; font-size: var(--fs-body); color: var(--text); background: var(--card);
+    border: 1px solid var(--sep); border-radius: 10px; padding: 8px 10px; min-width: 0; text-align: right;
+  }
+  .inv-field input.price { width: 90px; }
+  .inv-doc { color: #1a1a1a; background: #fff; border-radius: 12px; padding: 4px 2px; }
+  .inv-doc h3 { margin: 0; font-size: var(--fs-title); letter-spacing: 1px; text-transform: uppercase; }
+  .inv-meta { display: flex; justify-content: space-between; gap: 12px; font-size: var(--fs-caption); color: var(--muted); margin: 6px 0 14px; }
+  .inv-meta b { display: block; color: var(--text); font-size: var(--fs-body); }
+  .inv-table { width: 100%; border-collapse: collapse; font-size: var(--fs-body); }
+  .inv-table th { text-align: right; font-size: var(--fs-micro); text-transform: uppercase; letter-spacing: .5px; color: var(--muted); padding: 6px 0; border-bottom: 1px solid var(--sep); }
+  .inv-table th:first-child, .inv-table td:first-child { text-align: left; }
+  .inv-table td { text-align: right; padding: 9px 0; border-bottom: 1px solid var(--sep); }
+  .inv-total { display: flex; justify-content: space-between; font-size: var(--fs-lg); font-weight: 700; padding: 12px 0 4px; }
+  .inv-empty { text-align: center; color: var(--muted); padding: 22px 0; font-size: var(--fs-body); }
+  @media print {
+    body.printing-invoice > *:not(#invScrim) { display: none !important; }
+    body.printing-invoice #invScrim { position: static; background: none; opacity: 1; display: block; }
+    body.printing-invoice .inv-sheet { transform: none; max-width: none; max-height: none; overflow: visible; padding: 0; border-radius: 0; }
+    body.printing-invoice .inv-noprint { display: none !important; }
+  }
+
+  /* ---- Ingredient label ---- */
+  .rec-label-btn { width: 100%; margin-top: 14px; }
+  .lbl-doc { background: #fffdf8; color: #211d1a; border: 1.5px solid #211d1a; padding: 14px 16px; font-family: Arial, Helvetica, sans-serif; font-size: 13px; line-height: 1.4; }
+  .lbl-doc p { margin: 0 0 8px; }
+  .lbl-brand { color: #6f665c; font-weight: 700; font-size: 12px; }
+  .lbl-title { font-family: Georgia, "Times New Roman", serif; font-weight: 700; font-size: 22px; padding-bottom: 4px; margin-bottom: 8px; border-bottom: 2px solid #211d1a; }
+  .lbl-title small { font-size: 12px; font-weight: 700; }
+  .lbl-doc .k { color: #6f665c; font-weight: 700; text-transform: uppercase; }
+  .lbl-contains { color: #7b2a45; font-weight: 700; text-transform: uppercase; }
+  .lbl-note { font-size: 11px; font-style: italic; color: #6f665c; margin: 6px 0 0 !important; }
+  .lbl-doc [contenteditable]:focus { outline: 1px dashed var(--accent); }
+  @media print {
+    body.printing-label > *:not(#lblScrim) { display: none !important; }
+    body.printing-label #lblScrim { position: static; background: none; opacity: 1; display: block; }
+    body.printing-label .inv-sheet { transform: none; max-width: none; max-height: none; overflow: visible; padding: 0; border-radius: 0; background: none; }
+    body.printing-label .inv-noprint { display: none !important; }
+    body.printing-label .lbl-doc { font-size: 11pt; }
+  }
 
   /* ---- Confirmation sheet ---- */
   .scrim {
@@ -352,7 +401,7 @@
   .sheet .actions { display: flex; flex-direction: column; gap: 10px; }
   .btn-primary {
     appearance: none; border: none; cursor: pointer; width: 100%;
-    background: var(--blue); color: #fff; font-size: var(--fs-lg); font-weight: 700;
+    background: var(--accent); color: #fff; font-size: var(--fs-lg); font-weight: 700;
     padding: 16px; border-radius: 15px; font-family: inherit;
   }
   .btn-primary:active { transform: scale(0.98); }
@@ -383,7 +432,7 @@
     border: 1px solid var(--sep); border-radius: 12px; background: var(--field);
     color: var(--text); font-family: inherit; margin-bottom: 6px;
   }
-  .alert-box input:focus { outline: none; border-color: var(--blue); }
+  .alert-box input:focus { outline: none; border-color: var(--accent); }
   .alert-err { color: var(--red); font-size: var(--fs-caption); min-height: 18px; margin-bottom: 10px; text-align: center; }
 
   /* Delete button on entries */
@@ -395,7 +444,7 @@
   .db-del:active { background: var(--sep); }
   .db-edit {
     appearance: none; border: none; cursor: pointer; background: var(--field);
-    color: var(--blue); font-size: var(--fs-body); width: 32px; height: 32px; border-radius: 999px;
+    color: var(--accent); font-size: var(--fs-body); width: 32px; height: 32px; border-radius: 999px;
     display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-right: 6px;
   }
   .db-edit:active { background: var(--sep); }
@@ -418,7 +467,15 @@
     background: transparent; color: var(--text); font-size: var(--fs-body); font-weight: 600;
     padding: 13px 6px; border-radius: 9px; transition: background .15s ease;
   }
-  .db-filter button.on { background: var(--card); box-shadow: var(--shadow); }
+  .db-filter button.on, .db-filter select.on { background: var(--card); box-shadow: var(--shadow); }
+  /* "More" — a select dressed as the third segment, so the rarer entry types stay one tap away */
+  .db-filter select {
+    flex: 1; min-width: 0; appearance: none; -webkit-appearance: none; cursor: pointer; font-family: inherit;
+    background-color: transparent; border: none; color: var(--text); font-size: var(--fs-body); font-weight: 600;
+    padding: 13px 22px 13px 6px; border-radius: 9px; text-align: center; text-align-last: center;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238c7a8e' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 8px center; background-size: 9px 5.4px;
+  }
   /* One row of native selects — replaces the location / grouping / preset pill rows */
   .filter-bar { display: flex; gap: 8px; margin-bottom: 14px; }
   .filter-bar select {
@@ -429,7 +486,7 @@
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%238e8e93' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
     background-repeat: no-repeat; background-position: right 9px center; background-size: 9px 5.4px;
   }
-  .filter-bar select.set { color: var(--blue); }
+  .filter-bar select.set { color: var(--accent); }
   .db-dates { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
   .db-dates input[type="date"] {
     flex: 1; min-width: 0; appearance: none; border: 1px solid var(--sep);
@@ -439,7 +496,7 @@
   .db-dates-sep { color: var(--muted); }
   .db-date-clear {
     appearance: none; border: none; cursor: pointer; font-family: inherit;
-    background: var(--field); color: var(--blue); font-weight: 600; font-size: var(--fs-caption);
+    background: var(--field); color: var(--accent); font-weight: 600; font-size: var(--fs-caption);
     padding: 8px 12px; border-radius: 10px;
   }
   .db-summary {
@@ -476,7 +533,7 @@
     background: var(--field); color: var(--muted); font-weight: 700; font-size: var(--fs-body);
     cursor: pointer; font-family: inherit; transition: background .15s ease, color .15s ease;
   }
-  .bakedays button.on { background: var(--blue); color: #fff; }
+  .bakedays button.on { background: var(--accent); color: #fff; }
   .bakedate-add { display: flex; gap: 8px; width: 100%; margin-top: 2px; }
   .bakedate-add input[type="date"] {
     flex: 1; min-width: 0; appearance: none; border: 1px solid var(--sep);
@@ -485,17 +542,17 @@
   }
   .bakedate-add button {
     appearance: none; border: none; cursor: pointer; font-family: inherit;
-    background: var(--field); color: var(--blue); font-weight: 700; font-size: var(--fs-body);
+    background: var(--field); color: var(--accent); font-weight: 700; font-size: var(--fs-body);
     padding: 8px 14px; border-radius: 10px; white-space: nowrap;
   }
   .bakedate-chips { display: flex; flex-wrap: wrap; gap: 7px; width: 100%; }
   .bakedate-chips:empty { display: none; }
   .bakedate-chip {
-    display: inline-flex; align-items: center; gap: 7px; background: rgba(0,122,255,0.12);
-    color: var(--blue); font-weight: 700; font-size: var(--fs-caption); padding: 6px 6px 6px 12px; border-radius: 999px;
+    display: inline-flex; align-items: center; gap: 7px; background: rgba(160,103,162,0.12);
+    color: var(--accent); font-weight: 700; font-size: var(--fs-caption); padding: 6px 6px 6px 12px; border-radius: 999px;
   }
   .bakedate-chip button {
-    appearance: none; border: none; background: rgba(0,122,255,0.2); color: var(--blue);
+    appearance: none; border: none; background: rgba(160,103,162,0.2); color: var(--accent);
     width: 20px; height: 20px; border-radius: 999px; font-size: var(--fs-caption); line-height: 1;
     cursor: pointer; font-family: inherit; padding: 0;
   }
@@ -505,10 +562,10 @@
   }
   .split-card .lbl { font-weight: 600; display: block; margin-bottom: 4px; }
   .split-card input[type="range"] {
-    width: 100%; margin: 10px 0 8px; accent-color: var(--blue); height: 24px;
+    width: 100%; margin: 10px 0 8px; accent-color: var(--accent); height: 24px;
   }
   .split-vals { display: flex; justify-content: space-between; gap: 12px; font-size: var(--fs-caption); color: var(--muted); }
-  .split-vals b { color: var(--blue); font-size: var(--fs-body); font-weight: 800; margin-right: 3px; }
+  .split-vals b { color: var(--accent); font-size: var(--fs-body); font-weight: 800; margin-right: 3px; }
   .split-vals span:last-child { text-align: right; }
   /* ---- Recipes tab ---- */
   .beta-pill {
@@ -526,11 +583,11 @@
     background: var(--field); color: var(--text); font-size: var(--fs-caption); font-weight: 600;
     padding: 7px 14px; border-radius: 999px;
   }
-  .rec-scale button.on { background: var(--blue); color: #fff; }
+  .rec-scale button.on { background: var(--accent); color: #fff; }
   .rec-scale .lbl { font-size: var(--fs-caption); color: var(--muted); font-weight: 600; align-self: center; margin-right: 2px; }
   .rec-qty {
-    width: 4.2em; text-align: right; border: none; border-bottom: 1.5px dashed var(--blue);
-    background: transparent; font-weight: 600; color: var(--blue);
+    width: 4.2em; text-align: right; border: none; border-bottom: 1.5px dashed var(--accent);
+    background: transparent; font-weight: 600; color: var(--accent);
     font-family: inherit; font-size: var(--fs-body); padding: 0 1px 1px; -moz-appearance: textfield;
   }
   .rec-qty::-webkit-outer-spin-button, .rec-qty::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
@@ -539,20 +596,20 @@
   .rec-box b { display: block; font-size: var(--fs-micro); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 4px; }
   .rec-box .gl { display: flex; justify-content: space-between; gap: 10px; padding: 2px 0; }
   .rec-box .gl span:last-child { font-weight: 600; }
-  .rec-box .fr-title { font-weight: 700; color: var(--blue); margin: 6px 0 2px; font-size: var(--fs-caption); }
+  .rec-box .fr-title { font-weight: 700; color: var(--accent); margin: 6px 0 2px; font-size: var(--fs-caption); }
   .rec-box p { margin: 6px 0 0; }
   .rec-conv { font-size: var(--fs-micro); color: var(--muted); font-weight: 400; }
   .rec-addin { font-style: italic; }
-  .rec-ratio { font-size: var(--fs-figure); text-align: center; padding: 8px 0 2px; color: var(--blue); font-weight: 700; }
+  .rec-ratio { font-size: var(--fs-figure); text-align: center; padding: 8px 0 2px; color: var(--accent); font-weight: 700; }
   .rec-ratio-lbl { text-align: center; font-size: var(--fs-caption); color: var(--muted); margin-bottom: 6px; }
-  .rec-link { display: block; margin-top: 12px; font-size: var(--fs-caption); font-weight: 600; color: var(--blue); text-decoration: none; }
+  .rec-link { display: block; margin-top: 12px; font-size: var(--fs-caption); font-weight: 600; color: var(--accent); text-decoration: none; }
 
   /* Per-bake-day schedule (Plan) */
   .bake-event { border-top: 1px solid var(--sep); padding: 11px 0 4px; }
   .bake-event:first-child { border-top: none; }
   .be-head { font-size: var(--fs-body); font-weight: 700; margin-bottom: 8px; display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
   .be-cover { font-size: var(--fs-caption); font-weight: 500; color: var(--muted); }
-  .be-total { font-size: var(--fs-body); font-weight: 800; color: var(--blue); margin-left: auto; }
+  .be-total { font-size: var(--fs-body); font-weight: 800; color: var(--accent); margin-left: auto; }
   .be-chips .proj-row { padding: 6px 0; }
   .be-effort { font-size: var(--fs-caption); color: var(--muted); font-weight: 600; margin-top: 7px; }
   .be-enough { font-size: var(--fs-caption); color: var(--green); font-weight: 700; }
@@ -562,7 +619,7 @@
   }
   .proj-row:last-child { border-bottom: none; }
   .proj-row .k { color: var(--muted); white-space: nowrap; }
-  .proj-row b { color: var(--blue); }
+  .proj-row b { color: var(--accent); }
   .pr-fc .fc-v { text-align: right; }
   .pr-fc .fc-sub { display: block; font-size: var(--fs-caption); color: var(--muted); margin-top: 2px; }
   .proj-warn {
@@ -583,7 +640,7 @@
 
   /* Toast */
   .toast {
-    position: fixed; left: 50%; bottom: calc(var(--safe-bottom) + var(--tabbar-h) + 18px);
+    position: fixed; left: 50%; bottom: calc(var(--safe-bottom) + var(--footer-h) + var(--tabbar-h) + 18px);
     transform: translateX(-50%) translateY(20px);
     background: var(--green); color: #fff; font-weight: 600; font-size: var(--fs-body);
     padding: 13px 22px; border-radius: 14px; box-shadow: 0 8px 24px rgba(0,0,0,0.2);
@@ -596,7 +653,7 @@
 <body>
 
 <!-- Version badge — bump on every deploy (v = commit count, time = deploy time PST) -->
-<div class="ver-badge">v88 · Sep 22, 12:01 PM</div>
+<div class="ver-badge">v89 · Sep 29, 4:48 PM</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -704,12 +761,15 @@
       <h1>Data</h1>
       <div class="sub" id="dbCount">—</div>
     </header>
-    <div class="chip-row" id="dbFilter">
+    <div class="db-filter" id="dbFilter">
       <button class="on" data-filter="sales">Sales</button>
       <button data-filter="delivery">Deliveries</button>
-      <button data-filter="inventory">Inventory</button>
-      <button data-filter="goodwill">Goodwill</button>
-      <button data-filter="transfer">Transfers</button>
+      <select id="dbMore" aria-label="More entry types">
+        <option value="" selected hidden>More</option>
+        <option value="inventory">Inventory</option>
+        <option value="goodwill">Goodwill</option>
+        <option value="transfer">Transfers</option>
+      </select>
     </div>
     <div class="filter-bar">
       <select id="dbRange" aria-label="Date range">
@@ -729,6 +789,7 @@
         <option value="week">By week</option>
       </select>
     </div>
+    <button type="button" class="btn-ghost inv-open" id="invOpen" hidden>Create invoice</button>
     <div class="db-dates" id="dbDates" hidden>
       <input type="date" id="dateFrom" aria-label="From date" />
       <span class="db-dates-sep">–</span>
@@ -791,7 +852,7 @@
         <button data-sec="scone">🥐 Scones</button>
         <button data-sec="other">🧁 Other</button>
       </div>
-      <div class="chip-row" id="recChips"></div>
+      <div class="filter-bar"><select id="recPick" aria-label="Recipe"></select></div>
       <div id="recCard"></div>
     </div>
   </div>
@@ -851,6 +912,53 @@
     <div class="actions">
       <button class="btn-primary" id="editSaveBtn">Save changes</button>
       <button class="btn-ghost" id="editCancelBtn">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Invoice ===== -->
+<div class="scrim" id="invScrim">
+  <div class="sheet inv-sheet" role="dialog" aria-modal="true" aria-labelledby="invTitle">
+    <div id="invForm">
+      <h2 id="invTitle">Create invoice</h2>
+      <div class="warn">Built from delivery entries for one store. Goodwill, transfers and deleted entries are left out.</div>
+      <div class="sum">
+        <div class="inv-field"><span>Store</span>
+          <select id="invStore"><option>La Mirada</option><option>Stanton</option></select></div>
+        <div class="inv-field"><span>From</span><input type="date" id="invFrom" /></div>
+        <div class="inv-field"><span>To</span><input type="date" id="invTo" /></div>
+      </div>
+      <div class="warn" style="margin-bottom:8px">Price per unit</div>
+      <div class="sum" id="invPrices"></div>
+      <div class="actions">
+        <button class="btn-primary" id="invGenBtn">Generate invoice</button>
+        <button class="btn-ghost" id="invCancelBtn">Cancel</button>
+      </div>
+    </div>
+    <div id="invResult" hidden>
+      <div class="inv-doc" id="invDoc"></div>
+      <div class="actions inv-noprint" style="margin-top:16px">
+        <button class="btn-primary" id="invPrintBtn">Print / Save as PDF</button>
+        <button class="btn-ghost" id="invCopyBtn">Copy as text</button>
+        <button class="btn-ghost" id="invBackBtn">Back</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Ingredient label ===== -->
+<div class="scrim" id="lblScrim">
+  <div class="sheet inv-sheet" role="dialog" aria-modal="true" aria-labelledby="lblTitleH">
+    <h2 id="lblTitleH" class="inv-noprint">Ingredient label</h2>
+    <div class="sum inv-noprint">
+      <div class="inv-field"><span>Manufactured</span><input type="date" id="lblMfg" /></div>
+      <div class="inv-field"><span>Net weight</span><input type="text" id="lblNet" /></div>
+    </div>
+    <div class="warn inv-noprint">Best-by dates fill in from the manufactured date: fridge 7 days, freezer 2 weeks. Tap any text on the label to edit it before printing.</div>
+    <div class="lbl-doc" id="lblDoc"></div>
+    <div class="actions inv-noprint" style="margin-top:16px">
+      <button class="btn-primary" id="lblPrintBtn">Print label</button>
+      <button class="btn-ghost" id="lblCloseBtn">Close</button>
     </div>
   </div>
 </div>
@@ -1210,9 +1318,22 @@
 
   // Single entry point for the Data tab — dispatches to Sales or entries.
   function renderData() {
+    document.getElementById('invOpen').hidden = (dbFilter !== 'delivery');   // invoices come from deliveries
     document.getElementById('dbGroup').hidden = (dbFilter !== 'sales');   // grouping is a Sales-only control
     if (dbFilter === 'sales') renderSalesView();
     else renderDB();
+  }
+
+  // Remote rows plus this device's not-yet-synced ones, newest first. If the shared
+  // read failed, fall back to all local entries so nothing vanishes while offline.
+  function mergeEntries(remote, remoteOk) {
+    const local = loadEntries();
+    const remoteIds = new Set(remote.map(e => e.notionId).filter(Boolean));
+    const pending = remoteOk
+      ? local.filter(e => !e.synced && !(e.notionId && remoteIds.has(e.notionId)))
+      : local;
+    return [...pending, ...remote]
+      .sort((a, b) => String(b.datetime).localeCompare(String(a.datetime)));
   }
 
   async function renderDB() {
@@ -1229,15 +1350,7 @@
     }
     if (seq !== renderSeq) return; // a newer render started — drop this stale one
 
-    const local = loadEntries();
-    const remoteIds = new Set(remote.map(e => e.notionId).filter(Boolean));
-    // This device's entries not yet in Notion (pending sync). If the shared read
-    // failed, fall back to all local entries so nothing vanishes while offline.
-    const pending = remoteOk
-      ? local.filter(e => !e.synced && !(e.notionId && remoteIds.has(e.notionId)))
-      : local;
-    lastEntries = [...pending, ...remote]
-      .sort((a, b) => String(b.datetime).localeCompare(String(a.datetime)));
+    lastEntries = mergeEntries(remote, remoteOk);
     lastRemoteOk = remoteOk;
     paintDB();
   }
@@ -1572,13 +1685,19 @@
   }
 
   // ---- Data type filter (Sales / Deliveries / Inventory) ----
-  document.getElementById('dbFilter').addEventListener('click', e => {
-    const btn = e.target.closest('button'); if (!btn) return;
-    dbFilter = btn.dataset.filter;
+  function setDbFilter(type) {
+    dbFilter = type;
     track('data_filter', { type: dbFilter });
-    document.querySelectorAll('#dbFilter button').forEach(b => b.classList.toggle('on', b === btn));
+    const more = document.getElementById('dbMore');
+    document.querySelectorAll('#dbFilter button').forEach(b => b.classList.toggle('on', b.dataset.filter === type));
+    more.classList.toggle('on', type !== 'sales' && type !== 'delivery');
+    more.value = more.classList.contains('on') ? type : '';   // else back to the "More" label
     renderData();
+  }
+  document.getElementById('dbFilter').addEventListener('click', e => {
+    const btn = e.target.closest('button'); if (btn) setDbFilter(btn.dataset.filter);
   });
+  document.getElementById('dbMore').addEventListener('change', e => setDbFilter(e.target.value));
   // ---- Location filter (All / La Mirada / Stanton) ----
   const locSel = document.getElementById('dbLoc');
   locSel.addEventListener('change', () => {
@@ -2332,7 +2451,7 @@
   // each baking session costs 20m setup once, then 15m prep + 14m bake per batch
   // (glaze happens during the bake, so it's free). Batches are counted per flavor
   // (you can't mix flavors in a batch). Sequential single-oven estimate.
-  const BATCH_YIELD = 20, SETUP_MIN = 20, PREP_MIN = 15, BAKE_MIN = 14;
+  const BATCH_YIELD = 18, SETUP_MIN = 20, PREP_MIN = 15, BAKE_MIN = 14;
   const flavorBatches = n => Math.ceil(Math.max(0, n) / BATCH_YIELD);
   // Effort for a whole bake session given a {flavor: qty} map — batches summed per flavor.
   function bakeEffort(bake) {
@@ -2609,10 +2728,10 @@
         { label: 'Original', rows: [['Cake Flour', 174], ['Baking Powder', 6], ['Salt', 2], ['Eggs', 200], ['Sugar', 140], ['Vanilla Extract', 5], ['Unsalted Butter', 200]] },
         { label: 'Ver B', rows: [['Cake Flour', 174], ['Baking Powder', 6], ['Salt', 2], ['Eggs', 200], ['Sugar', 140], ['Honey', 20], ['Vanilla Extract', 5], ['Unsalted Butter', 200]] },
       ] },
-    { name: 'Peach Crumble', flour: 174, salt: 2,
+    { name: 'Peach Crumble', flour: 174, salt: 2, lblExtra: { filling: ['peach jam'] },
       fillingRefs: ['Cream Cheese Frosting'],
       fillingNote: 'Plus a spoonful of peach jam, about 10g per madeleine. Same frosting batch as Dot Cake — 3lb cream cheese base makes enough for about 200 madeleines.' },
-    { name: 'Dot Cake', flour: 174, salt: 2,
+    { name: 'Dot Cake', flour: 174, salt: 2, lblExtra: { topping: ['nonpareil sprinkles'] },
       fillingRefs: ['Cream Cheese Frosting'],
       fillingNote: 'Topped with a layer of nonpareil sprinkles. 3lb cream cheese base makes enough frosting for about 200 madeleines; a 2.2lb bag of sprinkles tops about 100.' },
     { name: 'Earl Grey', title: 'Earl Grey Madeleine', link: 'https://www.youtube.com/watch?v=M4BGif3Ga-Q',
@@ -2632,6 +2751,15 @@
     { name: 'Matcha', flour: 156, salt: 2, note: '14g matcha powder' },
     { name: 'Mugwort', title: 'Mugwort Madeleine', link: 'https://www.youtube.com/watch?v=vZBX4NI951A',
       custom: [['All Purpose Flour', 40], ['Cake Flour', 65], ['Baking Powder', 5], ['Baking Soda', 1], ['White Sugar', 25], ['Brown Sugar', 35], ['Unsalted Butter', 110], ['Eggs', 72], ['Salt', 1], ['White Chocolate', 120], ['Skim Milk Powder', 5], ['Milk', 25], ['Honey', 20], ['Mugwort Powder', 15]] },
+    { name: 'Maple Pecan',
+      custom: [['Cake Flour', 144], ['Toasted Pecans (ground fine)', 30], ['Baking Powder', 5], ['Salt', 2], ['Whole Eggs', 190], ['Brown Sugar', 70], ['Pure Maple Syrup (dark/robust)', 30], ['Vanilla Extract', 5], ['Unsalted Butter', 180], ['Avocado Oil', 20]],
+      topping: [['Toasted Pecans, coarsely chopped', '30g'], ['Maple Syrup, for brushing', '15g']] },
+    { name: 'Pumpkin Pie Spice', title: 'Pumpkin Pie Spice Madeleine',
+      custom: [['Cake Flour', 182], ['Baking Powder', 7], ['Salt', 2], ['Eggs', 160], ['Granulated Sugar', 120], ['Light Brown Sugar', 20], ['Vanilla Extract', 5], ['Pumpkin Puree, well-drained', 100], ['Ground Cinnamon', 1], ['Pumpkin Pie Spice', 7], ['Unsalted Butter, melted and cooled', 190]],
+      fillingRefs: ['Pumpkin Cream Cheese Frosting'],
+      fillingNote: 'Frosting mix: 90g of the base + 30g pumpkin puree + 10g powdered sugar + 5g spice = 135g. Frost each madeleine with 20g — 135g covers about 6, with 15g left over.',
+      lblExtra: { filling: ['pumpkin puree', 'pumpkin pie spice'] },
+      notes: '1. Whisk together the cake flour, baking powder, salt, cinnamon, and pumpkin pie spice. Set aside.<br>2. In a large bowl, whisk eggs, granulated sugar, and brown sugar for 2–3 minutes until pale and slightly thickened.<br>3. Whisk in vanilla extract and pumpkin puree until smooth.<br>4. Gently fold the dry mixture into the wet mixture just until no streaks remain.<br>5. Fold in melted butter until fully incorporated and glossy.<br>6. Cover and refrigerate the batter at least 1 hour (overnight best).<br>7. Butter and flour a madeleine pan. Preheat oven to 375°F (190°C).<br>8. Fill each mold about ¾ full with chilled batter.<br>9. Bake ~11 minutes, until edges are golden, a hump has formed, and a toothpick comes out clean.<br>10. Unmold immediately onto a wire rack and cool.<br><br>Drain the pumpkin puree in a fine sieve for 10–15 minutes first — excess water is the main risk to texture. Chilling the batter is essential for the classic hump. Whole cinnamon plus a pumpkin pie spice blend gives a fresher, brighter aroma than the blend alone.' },
   ];
   const REC_FILLINGS = [
     { name: 'Lemon Curd', type: 'single', rows: [['Eggs', '100g'], ['Sugar', '60g'], ['Lemon Juice', '40g'], ['Unsalted Butter', '60g']] },
@@ -2639,6 +2767,8 @@
     { name: 'Anglesie Buttercream', type: 'twocol', cols: ['Base', '1lb Butter'],
       rows: [['Milk', 50, 232], ['Unsalted Butter', 100, 464], ['Sugar', 30, 135], ['Egg Yolk', 40, 186]] },
     { name: 'Earl Grey Paste', type: 'single', rows: [['Milk', '150ml'], ['Heavy Cream', '80ml'], ['Sugar', '35g'], ['Tea Bags', '2']] },
+    { name: 'Pumpkin Cream Cheese Frosting', type: 'single', rows: [['Unsalted Butter', '113g'], ['Cream Cheese', '226.8g'], ['Powdered Sugar', '70g']],
+      notes: 'Base total 409.8g. For the frosting mix, take 90g of the base and add 30g pumpkin puree, 10g powdered sugar and 5g spice (135g total). Frost each madeleine with 20g — 135g yields about 6 portions, with 15g left over.' },
     { name: 'Chocolate Ganache', type: 'single', rows: [['Dark Chocolate (Callebaut)', '100g'], ['Unsalted Butter', '20g'], ['Heavy Cream*', '100g']],
       notes: '*Adjust heavy cream slightly to taste for desired firmness.' },
     { name: 'Caramel', type: 'ratio', ratio: '200g : 150g', label: 'sugar : heavy cream' },
@@ -2680,6 +2810,9 @@
     { key: 'earlgreyfigcake', name: 'Earl Grey Fig Cake', type: 'simple', link: 'https://www.youtube.com/watch?v=f-rtq3rZe1I', yieldText: '6 inch cake',
       rows: [['All Purpose Flour', 160], ['Almond Flour', 20], ['Baking Powder', 4], ['Brown Sugar', 110], ['Unsalted Butter', 150], ['Eggs', 130], ['Salt', 2], ['Heavy Cream', 90]],
       soak: [['Earl Grey', 4], ['Dried Fig', 100], ['Wine', 60]] },
+    { key: 'flatchookie', name: 'Flat Chocolate Chip Chookie', type: 'simple', yieldText: 'base recipe',
+      rows: [['All-Purpose Flour', 375], ['Baking Soda', 5], ['Kosher Salt', 4], ['Unsalted Butter, softened', 227], ['Light Brown Sugar, packed', 160], ['Granulated Sugar', 120], ['Eggs', 100], ['Pure Vanilla Extract', 10], ['Semisweet Chocolate Chips', 425], ['Flaked Sea Salt, optional', 5]],
+      notes: 'Bake at 350°F for 10–11 minutes.' },
   ];
   const REC_SCONES = [
     { key: 'plainscone', name: 'Plain Scone', type: 'simple', link: 'https://www.youtube.com/watch?v=KpWso8VrUn8', yieldText: '5.5cm scoop · makes 10',
@@ -2692,7 +2825,7 @@
       rows: [['Cream Cheese', 550], ['Blueberry', 550], ['Powdered Sugar', 65], ['Salt', 3]],
       notes: 'Freeze completely solid before wrapping into the scone dough.' },
   ];
-  const REC_ICON = { 'Classic': '🧈', 'Peach Crumble': '🍑', 'Dot Cake': '🍰', 'Earl Grey': '🫖', 'Ube': '💜', 'Lemon Poppy': '🍋', 'Double Choco': '🍫', 'Matcha': '🍵', 'Mugwort': '🌿', 'Lemon Curd': '🍋', 'Cream Cheese Frosting': '🧀', 'Anglesie Buttercream': '🧈', 'Earl Grey Paste': '🫖', 'Chocolate Ganache': '🍫', 'Caramel': '🍯', 'Mascarpone Cream': '🥛', 'Milk Cream': '🥛', 'Plain Scone': '🥐', 'Strawberry Cream Cheese': '🍓', 'Blueberry Cream Cheese': '🫐', 'Gluten Free Cake': '🎂', 'Sable': '🍪', 'Macarons': '🌈', 'Salt Bread': '🥖', 'Vegan Donut': '🍩', 'Apricot Ricotta Cake': '🍑', 'Earl Grey Fig Cake': '🍰' };
+  const REC_ICON = { 'Classic': '🧈', 'Peach Crumble': '🍑', 'Dot Cake': '🍰', 'Earl Grey': '🫖', 'Ube': '💜', 'Lemon Poppy': '🍋', 'Double Choco': '🍫', 'Matcha': '🍵', 'Mugwort': '🌿', 'Pumpkin Pie Spice': '🎃', 'Pumpkin Cream Cheese Frosting': '🎃', 'Flat Chocolate Chip Chookie': '🍪', 'Maple Pecan': '🌰', 'Lemon Curd': '🍋', 'Cream Cheese Frosting': '🧀', 'Anglesie Buttercream': '🧈', 'Earl Grey Paste': '🫖', 'Chocolate Ganache': '🍫', 'Caramel': '🍯', 'Mascarpone Cream': '🥛', 'Milk Cream': '🥛', 'Plain Scone': '🥐', 'Strawberry Cream Cheese': '🍓', 'Blueberry Cream Cheese': '🫐', 'Gluten Free Cake': '🎂', 'Sable': '🍪', 'Macarons': '🌈', 'Salt Bread': '🥖', 'Vegan Donut': '🍩', 'Apricot Ricotta Cake': '🍑', 'Earl Grey Fig Cake': '🍰' };
 
   const recState = { sec: 'mad', idx: 0, batches: 1, madVer: 0, sableType: 0, sableFlav: 0, macScale: 1, macCustom: null, gfSize: 0 };
   function recResetVariants() { recState.batches = 1; recState.madVer = 0; recState.sableType = 0; recState.sableFlav = 0; recState.macScale = 1; recState.macCustom = null; recState.gfSize = 0; }
@@ -2723,14 +2856,36 @@
     return `<div class="fr-title">${name}</div>${rows}`;
   }
   const recLink = url => url ? `<a class="rec-link" href="${url}" target="_blank" rel="noopener noreferrer">Reference recipe ↗</a>` : '';
+  // Madeleine ingredients always read in mixing order: eggs → sugar → liquids/flavoring,
+  // then dry (flour, leavening, salt, other dry), then fat. Stable within a group.
+  function recMadRank(name) {
+    const n = name.toLowerCase();
+    if (/egg/.test(n)) return 0;
+    if (/sugar/.test(n)) return 1;
+    if (/butter|oil/.test(n)) return 20;
+    if (/chocolate/.test(n)) return 21;
+    if (/powder|leaves|pecan/.test(n) && !/baking/.test(n)) return 13;
+    if (/flour|starch/.test(n)) return 10;
+    if (/baking/.test(n)) return 11;
+    if (/salt/.test(n)) return 12;
+    if (/honey|syrup|cream|milk|vanilla|extract|puree/.test(n)) return 2;
+    return 13;
+  }
+  const recMadSort = rows => rows.map((r, i) => [r, i]).sort((a, b) => recMadRank(a[0][0]) - recMadRank(b[0][0]) || a[1] - b[1]).map(x => x[0]);
+  // The batter rows of a madeleine in the currently selected version (unsorted).
+  function recMadRows(item) {
+    if (item.versions) return item.versions[recState.madVer].rows;
+    if (item.custom) return item.custom;
+    return [['Cake Flour', item.flour], ['Baking Powder', REC_MAD_BASE['Baking Powder']], ['Salt', item.salt], ['Eggs', REC_MAD_BASE['Eggs']], ['Sugar', REC_MAD_BASE['Sugar']], ['Vanilla Extract', REC_MAD_BASE['Vanilla Extract']], ['Unsalted Butter', REC_MAD_BASE['Unsalted Butter']]];
+  }
   function recMadCard(item) {
-    let rows, verChips = '', verLbl = '';
+    let verChips = '', verLbl = '';
     if (item.versions) {
       const v = item.versions[recState.madVer];
-      rows = v.rows; verLbl = ` · ${v.label}`;
+      verLbl = ` · ${v.label}`;
       verChips = `<div class="rec-scale">${item.versions.map((vv, i) => `<button data-rmadver="${i}" class="${recState.madVer === i ? 'on' : ''}">${vv.label}</button>`).join('')}</div>`;
-    } else if (item.custom) rows = item.custom;
-    else rows = [['Cake Flour', item.flour], ['Baking Powder', REC_MAD_BASE['Baking Powder']], ['Salt', item.salt], ['Eggs', REC_MAD_BASE['Eggs']], ['Sugar', REC_MAD_BASE['Sugar']], ['Vanilla Extract', REC_MAD_BASE['Vanilla Extract']], ['Unsalted Butter', REC_MAD_BASE['Unsalted Butter']]];
+    }
+    const rows = recMadSort(recMadRows(item));
     const b = recState.batches;
     return `<div class="proj-card">
         <h3>${REC_ICON[item.name] || '🍰'} ${item.title || item.name + ' Madeleine'}</h3>
@@ -2739,9 +2894,11 @@
         ${recIngRows(rows, b)}
         ${item.note ? `<div class="rec-box"><b>Flavoring</b>${rScaleNote(item.note, b)}</div>` : ''}
         ${item.glaze ? `<div class="rec-box"><b>Glaze</b>${item.glaze.map(g => `<div class="gl"><span>${g[0]}</span><span>${rScaleStr(g[1], b)}</span></div>`).join('')}</div>` : ''}
+        ${item.topping ? `<div class="rec-box"><b>Topping</b>${item.topping.map(g => `<div class="gl"><span>${g[0]}</span><span>${rScaleStr(g[1], b)}</span></div>`).join('')}</div>` : ''}
         ${(item.fillingRefs || item.fillingNote) ? `<div class="rec-box"><b>Filling & Topping</b>${(item.fillingRefs || []).map(recFillingRef).join('')}${item.fillingNote ? `<p>${item.fillingNote}</p>` : ''}</div>` : ''}
-        <div class="rec-box"><b>Notes</b>${REC_MAD_NOTES}</div>
+        <div class="rec-box"><b>Notes</b>${item.notes || REC_MAD_NOTES}</div>
         ${recLink(item.link)}
+        <button class="btn-ghost rec-label-btn" data-rlabel="1">Make ingredient label</button>
       </div>`;
   }
   function recFillCard(item) {
@@ -2816,8 +2973,10 @@
     document.querySelectorAll('#recSection button').forEach(x => x.classList.toggle('on', x.dataset.sec === recState.sec));
     const list = recList();
     if (recState.idx >= list.length) recState.idx = 0;
-    document.getElementById('recChips').innerHTML = list.map((it, i) =>
-      `<button data-rchip="${i}" class="${i === recState.idx ? 'on' : ''}">${REC_ICON[it.name] || '📖'} ${it.name}</button>`).join('');
+    const pick = document.getElementById('recPick');
+    pick.innerHTML = list.map((it, i) =>
+      `<option value="${i}">${REC_ICON[it.name] || '📖'} ${it.name}</option>`).join('');
+    pick.value = recState.idx;
     const item = list[recState.idx];
     let html;
     if (recState.sec === 'mad') html = recMadCard(item);
@@ -2832,15 +2991,114 @@
     const b = e.target.closest('button'); if (!b) return;
     const d = b.dataset;
     if (d.sec) { recState.sec = d.sec; recState.idx = 0; recResetVariants(); }
-    else if (d.rchip != null) { recState.idx = Number(d.rchip); recResetVariants(); }
     else if (d.rbatch != null) recState.batches = Number(d.rbatch);
     else if (d.rmadver != null) recState.madVer = Number(d.rmadver);
     else if (d.rsabletype != null) { recState.sableType = Number(d.rsabletype); recState.sableFlav = 0; }
     else if (d.rsableflav != null) recState.sableFlav = Number(d.rsableflav);
     else if (d.rmacscale != null) { recState.macScale = Number(d.rmacscale); recState.macCustom = null; }
     else if (d.rgfsize != null) recState.gfSize = Number(d.rgfsize);
+    else if (d.rlabel != null) { openLabel(recList()[recState.idx]); return; }
     else return;
     renderRecipes();
+  });
+  document.getElementById('recPick').addEventListener('change', e => {
+    recState.idx = Number(e.target.value); recResetVariants(); renderRecipes();
+  });
+  // ---- Ingredient label: mix order → weight order, allergens, net weight, best-by dates ----
+  const LBL_FRIDGE_DAYS = 7, LBL_FREEZER_DAYS = 14;
+  const LBL_SUB = { 'white chocolate': 'sugar, fractionated palm kernel oil, milk, nonfat milk, hydrogenated palm oil, soy lecithin, and natural flavor' };
+  const lblClean = n => {
+    let t = String(n).split(',')[0].replace(/\(.*?\)/g, '').replace(/\*/g, '').trim().toLowerCase()
+      .replace(/^toasted /, '').replace(/^pure /, '').replace(/^whole eggs?$/, 'eggs').replace(/^egg yolk$/, 'egg yolks');
+    return t.replace(/earl grey/g, 'Earl Grey');
+  };
+  // Grams from a data value: 113 | '113g' | '150ml' (ml ≈ g). Amounts with no unit ('2' tea bags) count as 0 → listed last.
+  const lblGrams = v => { if (typeof v === 'number') return v; const m = String(v).match(/^\s*(\d+(?:\.\d+)?)\s*(g|ml)\b/i); return m ? parseFloat(m[1]) : 0; };
+  // Flavoring notes like '4g lemon extract + 6g lemon poppy seed' → rows.
+  function lblNoteRows(note) {
+    return String(note || '').split('+').map(x => x.trim()).map(x => {
+      let m = x.match(/^(\d+(?:\.\d+)?)g\s+(.+)$/); if (m) return [m[2], parseFloat(m[1])];
+      m = x.match(/^(\d+\/\d+|\d+(?:\.\d+)?)\s*tsp\s+(.+)$/); if (m) { const q = m[1].includes('/') ? m[1].split('/').reduce((a, b) => a / b) : parseFloat(m[1]); return [m[2], q * 5]; }
+      return null;
+    }).filter(Boolean);
+  }
+  // Rows → most-to-least by weight (stable, so ties keep mixing order), merged by name.
+  function lblList(rows, extras) {
+    const m = new Map();
+    rows.forEach(([n, g]) => { const k = lblClean(n); m.set(k, (m.get(k) || 0) + g); });
+    const names = [...m].sort((a, b) => b[1] - a[1]).map(x => x[0]);
+    (extras || []).forEach(x => { if (!m.has(x)) names.push(x); });
+    return names.map(n => LBL_SUB[n] ? `${n} (${LBL_SUB[n]})` : n);
+  }
+  function lblFillingRows(item) {
+    const out = [];
+    (item.fillingRefs || []).forEach(ref => {
+      const f = REC_FILLINGS.find(x => x.name === ref); if (!f) return;
+      if (f.type === 'ratio') { const [a, b] = f.ratio.split(':').map(x => parseFloat(x)); const [na, nb] = f.label.split(':').map(x => x.trim()); out.push([na, a], [nb, b]); }
+      else f.rows.forEach(r => out.push([r[0], f.type === 'twocol' ? r[1] : lblGrams(r[1])]));
+    });
+    return out;
+  }
+  function lblAllergens(text) {
+    const t = text.toLowerCase(), out = [];
+    if (/egg/.test(t)) out.push('Egg');
+    if (/butter|cream|milk|cheese|mascarpone/.test(t.replace(/coconut milk/g, ''))) out.push('Milk');
+    if (/flour/.test(t)) out.push('Wheat');
+    if (/pecan|almond|walnut|hazelnut|pistachio|cashew/.test(t)) out.push('Tree nuts');
+    if (/soy/.test(t)) out.push('Soy');
+    return out;
+  }
+  const lblDate = ymd => { const [y, m, d] = ymd.split('-'); return `${m}.${d}.${y}`; };
+  const lblCap = s => s.charAt(0).toUpperCase() + s.slice(1);
+  let lblItem = null;
+  function openLabel(item) {
+    lblItem = item;
+    const batter = [...recMadSort(recMadRows(item)), ...lblNoteRows(item.note)].map(r => [r[0], lblGrams(r[1])]);
+    const glaze = (item.glaze || []).map(g => [g[0], lblGrams(g[1])]);
+    const topping = (item.topping || []).map(g => [g[0], lblGrams(g[1])]);
+    const filling = lblFillingRows(item);
+    const total = [...batter, ...glaze, ...topping].reduce((a, r) => a + r[1], 0);
+    lblItem.calc = { batter, glaze, topping, filling, perPiece: total / BATCH_YIELD };
+    document.getElementById('lblMfg').value = nowPST().slice(0, 10);
+    const g = Math.round(lblItem.calc.perPiece);
+    document.getElementById('lblNet').value = `${g} g (${(lblItem.calc.perPiece / 28.3495).toFixed(1)} oz) each`;
+    paintLabel();
+    document.getElementById('lblScrim').classList.add('show');
+  }
+  function paintLabel() {
+    const item = lblItem, c = item.calc, ex = item.lblExtra || {};
+    const line = (k, list) => list.length ? `<p contenteditable="true"><span class="k">${k}:</span> ${esc(lblCap(list.join(', ')))}.</p>` : '';
+    const main = lblList(c.batter);
+    const parts = [
+      line('Ingredients', main),
+      line('Glaze', lblList(c.glaze)),
+      line('Filling', lblList(c.filling, ex.filling)),
+      line('Topping', lblList(c.topping, ex.topping)),
+    ].join('');
+    const all = [...main, ...lblList(c.glaze), ...lblList(c.filling, ex.filling), ...lblList(c.topping, ex.topping)].join(', ');
+    const al = lblAllergens(all);
+    const mfg = document.getElementById('lblMfg').value || nowPST().slice(0, 10);
+    document.getElementById('lblDoc').innerHTML = `
+      <div class="lbl-brand">[KAIROSBAKING]</div>
+      <div class="lbl-title">${esc(item.title || item.name + ' Madeleine')} <small>(Perishable Keep Refrigerated)</small></div>
+      ${parts}
+      ${al.length ? `<p class="lbl-contains" contenteditable="true">Contains: ${al.join(', ')}.</p>` : ''}
+      <p><span class="k">Net wt.:</span> <span contenteditable="true">${esc(document.getElementById('lblNet').value)}</span></p>
+      <p><span class="k">Manufactured / packed by:</span> Kairosbaking, Fullerton, CA</p>
+      <p><span class="k">Prepared in:</span> LGI Kitchen in Fullerton, CA</p>
+      <p><span class="k">Manufactured:</span> ${lblDate(mfg)}</p>
+      <p><span class="k">Best by / use by:</span> ${lblDate(addDays(mfg, LBL_FRIDGE_DAYS))} refrigerated · ${lblDate(addDays(mfg, LBL_FREEZER_DAYS))} frozen</p>
+      <p class="lbl-note">Note: Product must be refrigerated or discarded after 2 hours of sitting at room temperature.</p>`;
+  }
+  document.getElementById('lblMfg').addEventListener('input', paintLabel);
+  document.getElementById('lblNet').addEventListener('input', paintLabel);
+  document.getElementById('lblCloseBtn').addEventListener('click', () => document.getElementById('lblScrim').classList.remove('show'));
+  document.getElementById('lblScrim').addEventListener('click', e => { if (e.target.id === 'lblScrim') e.target.classList.remove('show'); });
+  document.getElementById('lblPrintBtn').addEventListener('click', () => {
+    track('label_print', { name: lblItem && lblItem.name });
+    document.body.classList.add('printing-label');
+    window.addEventListener('afterprint', () => document.body.classList.remove('printing-label'), { once: true });
+    window.print();
   });
   // Type any amount over a dashed number to rescale the whole recipe from it.
   document.getElementById('recCard').addEventListener('change', e => {

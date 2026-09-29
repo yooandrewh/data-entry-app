@@ -64,7 +64,7 @@ agent string, no entry text. **The app URL is public and unauthenticated**, so a
 the link is recorded the same anonymous way — read the Events tab as "sessions", not "me".
 
 Events: `open`, `tab`, `data_filter`, `data_range`, `data_location`, `data_grouping`,
-`entry_submit`, `forecast_scenario`, `baking_mode`. Flushed on a 5s timer, at 20 queued events,
+`entry_submit`, `forecast_scenario`, `baking_mode`, `invoice_create`. Flushed on a 5s timer, at 20 queued events,
 and via `sendBeacon` on `pagehide` / backgrounding.
 
 ## Visual language
@@ -89,7 +89,7 @@ and via `sendBeacon` on `pagehide` / backgrounding.
 
 ## Tabs
 
-Home · Data · **Entry** (center, boxed blue via `.tab-entry` — it's the primary action) ·
+Home · Data · **Entry** (center, boxed in the accent colour via `.tab-entry` — it's the primary action) ·
 **Baking**. Four tabs; nav shows an inline-SVG icon + label.
 
 **Forecast was merged into Home (2026-09).** There is no `view-proj` and no `proj` tab.
@@ -121,7 +121,7 @@ uncapped, a single outlier widens the band until real dips stop being detected.
 
 Scenario toggle is 🐻 Bear / Expected / 🐂 Bull.
 
-Bake effort constants: `BATCH_YIELD=20, SETUP_MIN=20, PREP_MIN=15, BAKE_MIN=14`. Time is
+Bake effort constants: `BATCH_YIELD=18, SETUP_MIN=20, PREP_MIN=15, BAKE_MIN=14`. Time is
 `20 + batches×(15+14)` min — sequential single oven, glaze overlaps the bake.
 
 Plan bake dates are **specific calendar dates**, not a recurring weekly pattern (they vary week
@@ -130,7 +130,7 @@ one; the last date crams everything through the target date.
 
 ## Gotchas
 
-- **The version badge is hardcoded.** `.ver-badge` shows `v<git commit count> · <deploy time PST>`
+- **The version badge is hardcoded** (a footer line under the tab bar, `--footer-h`). `.ver-badge` shows `v<git commit count> · <deploy time PST>`
   and **must be bumped by hand in every deploy commit** (`git rev-list --count HEAD`, including
   the commit you're making).
 - Vercel is linked to the `andrewlew1s` GitHub identity; push-to-deploy on the `yooandrewh` repo
@@ -145,3 +145,36 @@ one; the last date crams everything through the target date.
 Sales data is written automatically by the OCR pipeline in `~/Downloads/kairos_videos_raw/` —
 see that directory's CLAUDE.md. `parse_kairos.py` auto-pushes Sales and StoreStats on every
 non-debug parse.
+
+## Color palette (decided 2026-09-29 — use this from now on)
+
+Pantone **1485 C Apricot** `#f0a875` (`--orange`, warm highlight) · **7449 C Deep Plum** `#341f37`
+(`--text`) · **7655 C Dusty Mauve** `#a067a2` (`--accent`, primary actions/links/active tab).
+Neutrals (`--bg`, `--sep`, `--muted`) are plum-tinted. Hexes were eyeballed from a screenshot of
+the swatches, not the official Pantone conversions. Green/red stay as status colors. `--blue` was
+renamed `--accent`; don't reintroduce iOS blue.
+
+**Recipes keep discontinued flavors** (Ube, Dot Cake, etc.) — user's call, 2026-09-29. Only
+Entry / Forecast / Plan drop discontinued products; never filter the Recipes list by `PRODUCTS`.
+
+## Invoices
+
+Data → Deliveries → **Create invoice** (`openInvoice()` / `buildInvoice()`): pick a store and a date
+range, and it sums `delivery` entries for that store (goodwill, transfers and tagged-for-deletion
+rows are excluded), prices them, and shows a printable invoice (Print / Save PDF via `@media print`,
+or Copy as text). Unit prices are editable per product and remembered in `localStorage.invoicePrices.v1`;
+they **default to `PRICE_PER_UNIT` ($2.50), which is the retail figure, not a wholesale price**.
+Nothing is written to the sheet — invoices are generated on the fly.
+
+## Ingredient labels
+
+Baking → Recipes → any madeleine → **Make ingredient label** (`openLabel()` / `paintLabel()`). Live
+preview + `window.print()`. Inputs: manufactured date (defaults to today, editable each print) and
+net weight; best-by is auto — **fridge +7 days, freezer +14 days** — and both are printed. Ingredients
+are listed **most → least by weight** (`lblList`, ties keep mixing order), with Glaze / Filling /
+Topping as separate lines; allergens (`lblAllergens`) are keyword-detected from the final list.
+Net weight = (batter + glaze + topping grams) ÷ `BATCH_YIELD` (**18 per batch**, changed from 20
+2026-09-29 — this also drives Plan batch counts). It's a raw-batter estimate, not a scale weight —
+edit it if you weigh finished pieces. Prepared in: LGI Kitchen, Fullerton CA. The label text is
+`contenteditable` so a line can be fixed before printing. Recipe rows with no gram amount
+(peach jam, sprinkles) are supplied by `lblExtra` on the recipe.
