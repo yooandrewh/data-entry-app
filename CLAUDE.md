@@ -267,3 +267,17 @@ version read pale: `--bg` is now an apricot tint (`#f8e2d0`), text is Deep Plum,
 colours. `madeleine.png` was cut out with a colour-segmentation script (macOS's Vision subject-mask API
 isn't in this machine's SDK); redo it the same way if the photo changes. The small madeleine also marks
 the *Mads* segment in Recipes.
+
+## Keys + plum default (2026-09-29, supersedes the neumorphic look above)
+
+**Deep Plum is the default colour** (`--accent: #341f37`): tabs, links, values, selected and primary
+buttons. Buttons are squared **keys**, like elevator panels: light brushed-metal keys normally
+(`--key-light`), dark plum keys with a soft glow when selected or primary (`--key-dark`, `--glow`), a
+2px bottom edge and a press-down state. The segmented control is a dark panel with a lit light key;
+the floating nav is a dark plum slab whose current tab is a lit key. This is the **last block in the
+stylesheet ("Keys")** and it overrides the earlier "Soft UI" rules, which are now mostly dead — edit the
+Keys block, don't the older ones. Mauve/apricot are secondary (apricot page tint, hero fallback).
+
+Home's hero is the **actual photo** (`hero.jpg`, resized from IMG_0909.HEIC) with the name over its dark
+corner; the background-removed madeleine (`madeleine.png`) is only the small logo beside the name and the
+Mads button icon.

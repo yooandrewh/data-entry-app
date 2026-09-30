@@ -161,7 +161,7 @@
     width: 100%; appearance: none; border: none; cursor: pointer;
     background: var(--accent); color: #fff; font-size: var(--fs-title); font-weight: 700;
     padding: 17px; border-radius: 16px;
-    box-shadow: 0 6px 20px rgba(160,103,162,0.3);
+    box-shadow: 0 6px 20px rgba(52,31,55,0.3);
     transition: transform .08s ease, opacity .15s ease;
   }
   .submit:active { transform: scale(0.98); }
@@ -178,7 +178,7 @@
     font-size: var(--fs-caption); font-weight: 700; padding: 4px 10px; border-radius: 8px;
     display: inline-flex; align-items: center; gap: 5px;
   }
-  .db-type.delivery { background: rgba(160,103,162,0.12); color: var(--accent); }
+  .db-type.delivery { background: rgba(52,31,55,0.12); color: var(--accent); }
   .db-type.inventory { background: rgba(255,149,0,0.14); color: var(--orange); }
   .db-when { font-size: var(--fs-caption); color: var(--muted); text-align: right; }
   .db-daylabel { font-size: var(--fs-body); font-weight: 700; }
@@ -265,7 +265,7 @@
      as a second selected tab. */
   .tabbar button.tab-entry .tic {
     background: var(--accent); color: #fff; border-radius: 13px; padding: 2px 14px;
-    box-shadow: 0 2px 8px rgba(160,103,162,0.3);
+    box-shadow: 0 2px 8px rgba(52,31,55,0.3);
   }
 
   /* ---- Stores analytics ---- */
@@ -616,11 +616,11 @@
   .bakedate-chips { display: flex; flex-wrap: wrap; gap: 7px; width: 100%; }
   .bakedate-chips:empty { display: none; }
   .bakedate-chip {
-    display: inline-flex; align-items: center; gap: 7px; background: rgba(160,103,162,0.12);
+    display: inline-flex; align-items: center; gap: 7px; background: rgba(52,31,55,0.12);
     color: var(--accent); font-weight: 700; font-size: var(--fs-caption); padding: 6px 6px 6px 12px; border-radius: 999px;
   }
   .bakedate-chip button {
-    appearance: none; border: none; background: rgba(160,103,162,0.2); color: var(--accent);
+    appearance: none; border: none; background: rgba(52,31,55,0.2); color: var(--accent);
     width: 20px; height: 20px; border-radius: 999px; font-size: var(--fs-caption); line-height: 1;
     cursor: pointer; font-family: inherit; padding: 0;
   }
@@ -856,13 +856,81 @@
   .tab-pill { display: flex; gap: 4px; height: 100%; max-width: 480px; margin: 0 auto; padding: 6px; border-radius: 32px;
     background: rgba(255,248,240,0.96); box-shadow: 0 8px 22px rgba(90,50,60,0.24); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
   .tabbar button { border-radius: 26px; }
-  .tabbar button.on { background: rgba(160,103,162,0.16); }
+  .tabbar button.on { background: rgba(52,31,55,0.16); }
+  /* ================= Keys: plum by default, modern elevator-panel buttons =================
+     Last block in the stylesheet, so it wins. Buttons are squared "keys": light brushed-metal keys
+     normally, dark plum keys with a soft glow when selected or primary. Deep Plum is the default colour. */
+  :root {
+    --accent: #341f37;
+    --card: #fff6ee; --field: #f0d9c5; --sep: #eacfb9;
+    --shadow: inset 0 1px 0 rgba(255,255,255,0.85), 0 8px 18px rgba(90,50,60,0.14);
+    --key-light: linear-gradient(180deg, #fffaf4 0%, #ecdccb 100%);
+    --key-dark: linear-gradient(180deg, #4d3151 0%, #2a1a2e 100%);
+    --key-light-shadow: inset 0 1px 0 #fff, 0 2px 0 #cbb7a3, 0 6px 10px rgba(90,50,60,0.16);
+    --key-dark-shadow: inset 0 1px 0 rgba(255,255,255,0.18), 0 2px 0 #1a0e1d, 0 7px 12px rgba(52,31,55,0.34);
+    --key-pressed: inset 0 2px 6px rgba(0,0,0,0.30);
+    --glow: 0 0 9px rgba(255,255,255,0.6);
+    --key-r: 12px;
+  }
+  /* light keys */
+  .seg button, .pill, .amt .step, .chip-row button, .rec-scale button, .bakedays button, .bakedate-add button,
+  .db-date-clear, .bs-step button, .btn-ghost, .em-close, .filter-bar select {
+    background: var(--key-light); color: var(--plum); border: none; border-radius: var(--key-r);
+    box-shadow: var(--key-light-shadow); transition: transform .08s ease, box-shadow .08s ease;
+  }
+  .filter-bar select { background-color: #f6e8da; }
+  .chip-row button, .pill, .bakedays button { border-radius: 10px; }
+  .btn-ghost { border-radius: 14px; }
+  /* dark keys: selected + primary */
+  .seg button.on, .seg button.on[data-type], .pill.on, .chip-row button.on, .rec-scale button.on, .bakedays button.on,
+  .btn-primary, .submit, .db-new {
+    background: var(--key-dark); color: #fff; text-shadow: var(--glow); box-shadow: var(--key-dark-shadow); border-color: transparent;
+  }
+  .btn-primary, .submit { border-radius: 14px; letter-spacing: .2px; }
+  .db-new { border-radius: 12px; }
+  .seg button.on .ic svg { filter: drop-shadow(0 0 4px rgba(255,255,255,0.75)); }
+  /* pressed */
+  .seg button:active, .pill:active, .amt .step:active, .chip-row button:active, .rec-scale button:active, .bakedays button:active,
+  .bakedate-add button:active, .bs-step button:active, .btn-ghost:active, .btn-primary:active, .submit:active, .db-new:active, .em-close:active {
+    transform: translateY(1px); box-shadow: var(--key-pressed);
+  }
+  /* segmented control: a dark panel with a lit light key */
+  .db-filter { background: linear-gradient(180deg, #2c1a30, #3a2440); box-shadow: inset 0 2px 6px rgba(0,0,0,0.4); padding: 4px; border-radius: 14px; }
+  .db-filter button, .db-filter select { color: #ecdccb; background: transparent; box-shadow: none; text-shadow: none; }
+  .db-filter button.on, .db-filter select.on { background: var(--key-light); color: var(--plum); box-shadow: var(--key-light-shadow); }
+  .db-filter select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23ecdccb' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+  .db-filter select.on { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23341f37' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+  /* fields */
+  input[type="date"], .inv-field input, .inv-field select, .cp-ins input, .rcp-row input[type=number], .rcp-row select {
+    background: var(--field); border: 1px solid var(--sep); box-shadow: inset 0 1px 2px rgba(52,31,55,0.12); border-radius: 10px;
+  }
+  .rec-qty:focus, .cost-in:focus, .bs-step input:focus, .amt .val:focus, .row-text:focus { background: var(--field); box-shadow: inset 0 1px 3px rgba(52,31,55,0.2); }
+  .tok { border-radius: 8px; }
+  /* Home tabs + card */
+  .hc-tabs button.on { color: var(--plum); border-bottom-color: var(--plum); }
+  .hc-foot button { color: var(--plum); text-decoration: underline; text-underline-offset: 3px; }
+  .home-card .filter-bar select { background-color: #f6e8da; }
+  /* floating nav: a dark panel, the current tab is a lit key */
+  .tab-pill { background: linear-gradient(180deg, #402746 0%, #26152a 100%); border-radius: 24px;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.14), 0 10px 24px rgba(52,31,55,0.42); }
+  .tabbar button { color: rgba(255,240,228,0.62); border-radius: 18px; }
+  .tabbar button.on { background: var(--key-light); color: var(--plum); box-shadow: var(--key-light-shadow); }
+  /* Home hero: the photo itself, name over its dark corner, the cut-out as a small logo */
+  .home-hero { min-height: 400px; padding-bottom: 54px; color: #fff6ee;
+    background: linear-gradient(180deg, rgba(22,12,26,0.62) 0%, rgba(22,12,26,0.10) 48%, rgba(22,12,26,0) 100%), url("hero.jpg") 50% 46% / cover no-repeat; }
+  .hero-kicker { color: #fff6ee; opacity: .85; }
+  .hero-name { display: flex; align-items: center; gap: 10px; margin: 8px 0 4px; }
+  .hero-logo { height: 52px; width: auto; flex: none; transform: rotate(-8deg); filter: drop-shadow(0 4px 5px rgba(0,0,0,0.45)); }
+  .hero-title { color: #fff6ee; margin: 0; text-shadow: 0 2px 12px rgba(0,0,0,0.35); }
+  .hero-tag { color: #fff6ee; opacity: .9; }
+  .home-season { background: rgba(38,21,42,0.72); color: #fff6ee; box-shadow: inset 0 1px 0 rgba(255,255,255,0.18); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); border-radius: 10px; }
+  .home-card { margin-top: -34px; }
 </style>
 </head>
 <body>
 
 <!-- Version badge — bump on every deploy (v = commit count, time = deploy time PST) -->
-<div class="ver-badge">v100 · Sep 29, 5:42 PM</div>
+<div class="ver-badge">v101 · Sep 29, 5:46 PM</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -870,9 +938,8 @@
     <div class="home-hero">
       <button type="button" class="home-season" data-seasonal-edit>This season</button>
       <div class="hero-kicker" id="homeSub">—</div>
-      <h1 class="hero-title">Kairosbaking</h1>
+      <div class="hero-name"><img class="hero-logo" src="madeleine.png" alt="" width="46" height="60"><h1 class="hero-title">Kairosbaking</h1></div>
       <div class="hero-tag">Baking at God's perfect time</div>
-      <img class="hero-img" src="madeleine.png" alt="" width="200" height="262">
     </div>
 
     <div class="home-card">
