@@ -1067,12 +1067,22 @@
   .bs2-block h4 small { display: block; font-weight: 400; text-transform: none; color: #666; font-size: 12px; letter-spacing: 0; }
   .bs2-grp { margin-bottom: 12px; }
   @media print { body.printing-bake .bs2-doc { font-size: 11pt; } }
+
+  /* ---- Home: booking link + kitchen times ---- */
+  .home-menu a.hm-link { display: flex; align-items: center; justify-content: center; width: 100%; height: 58px; text-decoration: none; font-size: var(--fs-lg); font-weight: 500; letter-spacing: 0.6px; color: #fff6ee;
+    background: rgba(255,255,255,0.08); border: 1.5px solid rgba(255,246,238,0.85); -webkit-backdrop-filter: blur(1.5px); backdrop-filter: blur(1.5px); }
+  .home-menu a.hm-link:active { background: rgba(255,255,255,0.22); }
+  .kt { margin: 0 0 10px; border-bottom: 1px solid var(--sep); }
+  .kt summary { cursor: pointer; padding: 10px 2px; font-weight: 700; font-size: var(--fs-body); color: var(--accent); }
+  .kt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; padding: 4px 0 12px; }
+  .kt-grid label { display: flex; flex-direction: column; gap: 3px; font-size: var(--fs-caption); color: var(--muted); }
+  .kt-grid input { font-size: var(--fs-body); padding: 8px 10px; width: 100%; border: none; background: var(--tint); color: var(--text); }
 </style>
 </head>
 <body>
 
 <!-- Version badge — bump on every deploy (v = commit count, time = deploy time PST) -->
-<div class="ver-badge">v111 · Sep 29, 6:29 PM</div>
+<div class="ver-badge">v112 · Sep 29, 6:42 PM</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -1089,6 +1099,7 @@
       <button type="button" data-hpage="forecast">Forecast</button>
       <button type="button" data-hpage="plan">Baking Plan</button>
       <button type="button" data-hpage="invoice">Invoice</button>
+      <a class="hm-link" href="https://app.thefoodcorridor.com/tfc_food_business_dashboard/69084-kairosbaking/bookings?locale=en" target="_blank" rel="noopener noreferrer">Book Commercial Kitchen ↗</a>
     </div>
     <div class="home-ver" id="homeVer"></div>
 
@@ -1111,6 +1122,7 @@
 
     <!-- Baking plan -->
     <div id="homePlan" hidden>
+      <details class="kt"><summary>Kitchen Times</summary><div class="kt-grid" id="ktGrid"></div></details>
     <div id="bakingPlan">
       <div class="card">
         <div class="row">
@@ -3133,14 +3145,51 @@
   // each baking session costs 20m setup once, then 15m prep + 14m bake per batch
   // (glaze happens during the bake, so it's free). Batches are counted per flavor
   // (you can't mix flavors in a batch). Sequential single-oven estimate.
-  const BATCH_YIELD = 18, SETUP_MIN = 20, PREP_MIN = 15, BAKE_MIN = 14;
+  const BATCH_YIELD = 18;
   const flavorBatches = n => Math.ceil(Math.max(0, n) / BATCH_YIELD);
-  // Effort for a whole bake session given a {flavor: qty} map — batches summed per flavor.
+  // ---- Kitchen time model (commercial kitchen). Every number is editable under "Kitchen times". ----
+  //  Batch prep happens before the batter rests: `prepGroup` batches at a time, ~`prepMin` minutes per go.
+  //  After resting: bake `pans` pans at once (`bakeMin` + `coolMin` per round, the pans need cooling before they're refilled),
+  //  glaze the glazed flavours (`glazeSec` per madeleine), then clean (`cleanMin`). Setup is outside the booking.
+  const KT_DEFAULT = { prepGroup: 3, prepMin: 17.5, pans: 4, perPan: 12, bakeMin: 12, coolMin: 5, glazeSec: 15, setupMin: 15, cleanMin: 30 };
+  const KT_LABELS = { prepGroup: 'Batches prepped at once', prepMin: 'Minutes per prep', pans: 'Pans baked at once', perPan: 'Madeleines per pan', bakeMin: 'Bake minutes', coolMin: 'Cooling minutes', glazeSec: 'Glaze seconds each', setupMin: 'Setup minutes (not booked)', cleanMin: 'Cleaning minutes' };
+  const GLAZED = ['Lemon Poppy', 'Earl Grey'];
+  let KT = { ...KT_DEFAULT };
+  try { Object.assign(KT, JSON.parse(localStorage.getItem('kitchenTimes.v1')) || {}); } catch {}
+  // Effort for a bake session given a {flavor: qty} map.
   function bakeEffort(bake) {
-    let batches = 0;
-    for (const p of PRODUCTS) batches += flavorBatches(bake[p] || 0);
-    return { batches, min: batches ? SETUP_MIN + batches * (PREP_MIN + BAKE_MIN) : 0 };
+    let batches = 0, pieces = 0, glazed = 0;
+    for (const p of PRODUCTS) { const n = bake[p] || 0; batches += flavorBatches(n); pieces += n; if (GLAZED.includes(p)) glazed += n; }
+    const rounds = pieces ? Math.ceil(Math.ceil(pieces / KT.perPan) / KT.pans) : 0;
+    const prep = batches ? Math.round(Math.ceil(batches / KT.prepGroup) * KT.prepMin) : 0;
+    const bakeCool = rounds * (KT.bakeMin + KT.coolMin);
+    const glaze = Math.round(glazed * KT.glazeSec / 60);
+    const baking = pieces ? bakeCool + glaze + KT.cleanMin : 0;          // after the batter rests, cleaning included
+    return { batches, pieces, rounds, prep, bakeCool, glaze, baking, setup: pieces ? KT.setupMin : 0, min: prep + baking };
   }
+  const sumEff = list => list.reduce((a, e) => { for (const k of Object.keys(e)) a[k] = (a[k] || 0) + e[k]; return a; }, {});
+  // The kitchen-time rows shown on a plan card.
+  function kitchenRows(e) {
+    if (!e || !e.pieces) return '';
+    return `<div class="be-section-label">Kitchen time</div>
+      <div class="proj-row"><span class="k">Batch prep</span><span><b>${fmtDur(e.prep)}</b></span></div>
+      <div class="proj-row"><span class="k">Baking, after the batter rests</span><span><b>${fmtDur(e.baking)}</b></span></div>
+      <div class="proj-row"><span class="k">Total to book</span><span><b>${fmtDur(e.min)}</b></span></div>
+      <div class="be-effort">Baking = ${e.rounds} round${e.rounds === 1 ? '' : 's'} × ${KT.bakeMin + KT.coolMin} min${e.glaze ? ` + ${fmtDur(e.glaze)} glazing` : ''} + ${KT.cleanMin} min cleaning. Setup ${KT.setupMin} min is not booked.</div>`;
+  }
+  // ---- Kitchen times: editable assumptions behind the plan's hours ----
+  function paintKitchenTimes() {
+    document.getElementById('ktGrid').innerHTML = Object.keys(KT_DEFAULT).map(k =>
+      `<label><span>${KT_LABELS[k]}</span><input type="number" inputmode="decimal" step="any" min="0" value="${KT[k]}" data-kt="${k}"></label>`).join('');
+  }
+  document.getElementById('ktGrid').addEventListener('change', e => {
+    const i = e.target.closest('[data-kt]'); if (!i) return;
+    const n = parseFloat(i.value); KT[i.dataset.kt] = n >= 0 ? n : KT_DEFAULT[i.dataset.kt];
+    try { localStorage.setItem('kitchenTimes.v1', JSON.stringify(KT)); } catch {}
+    paintKitchenTimes(); renderPlan();
+  });
+  paintKitchenTimes();
+
   function fmtDur(min) {
     if (min <= 0) return '0 min';
     const h = Math.floor(min / 60), m = min % 60;
@@ -3161,9 +3210,9 @@
   // A per-bake-date schedule card (used for a single store OR the combined view).
   function scheduleCardHtml(title, subLine, events, target) {
     const perFlavor = ZERO(), perFlavorB = ZERO();
-    let totNeed = 0, totBatches = 0, totMin = 0;
+    let totNeed = 0, totBatches = 0;
+    const effAll = sumEff(events.map(ev => bakeEffort(ev.bake)));
     for (const ev of events) {
-      totMin += bakeEffort(ev.bake).min;
       for (const p of PRODUCTS) if (ev.bake[p] > 0) {
         perFlavor[p] += ev.bake[p]; perFlavorB[p] += flavorBatches(ev.bake[p]);
         totNeed += ev.bake[p]; totBatches += flavorBatches(ev.bake[p]);
@@ -3179,7 +3228,7 @@
       const chips = ev.any
         ? `<div class="be-chips">${PRODUCTS.filter(p => ev.bake[p] > 0).map(p =>
              kvRow(tok(p), p, ev.bake[p], ` · ${batchLabel(flavorBatches(ev.bake[p]))}`)).join('')}</div>
-             <div class="be-effort">${batchLabel(eff.batches)} · ~${fmtDur(eff.min)}</div>`
+             <div class="be-effort">${batchLabel(eff.batches)} · prep ${fmtDur(eff.prep)} · baking ${fmtDur(eff.baking)}</div>`
         : `<div class="be-enough">enough on hand — no bake needed</div>`;
       return `<div class="bake-event">
           <div class="be-head">${wkShort(ev.ymd)} ${fmtWhen(ev.ymd)} <span class="be-cover">covers thru ${wkShort(ev.coverUntil)} ${fmtWhen(ev.coverUntil)}</span>${ev.any ? `<span class="be-total">${ev.total}</span>` : ''}</div>
@@ -3190,9 +3239,10 @@
         <h3>${title}</h3>
         <div class="proj-sub">${subLine}</div>
         ${totNeed
-          ? `<div class="proj-runout">Make <span class="big">${totNeed}</span> madeleines · ${batchLabel(totBatches)} · ~${fmtDur(totMin)}</div>`
+          ? `<div class="proj-runout">Make <span class="big">${totNeed}</span> madeleines · ${batchLabel(totBatches)} · ~${fmtDur(effAll.min || 0)} to book</div>`
           : `<div class="proj-runout" style="color:var(--green)">On hand covers you through ${fmtWhen(target)}</div>`}
         ${flavorRows}
+        ${kitchenRows(effAll)}
         ${evRows}
       </div>`;
   }
@@ -3208,7 +3258,7 @@
       rows += `<div class="proj-row pr-fc"><span class="k">${tok(p)}${p}</span><span class="fc-v">${right}<span class="fc-sub">${safe > 0 ? batchLabel(flavorBatches(safe)) + " · " : ""}have ${haveMap[p]}</span></span></div>`;
     }
     const eff = bakeEffort(bakeMap);
-    const effLine = bakeSafe > 0 ? `<div class="be-effort" style="margin:2px 0 12px">${batchLabel(eff.batches)} total · ~${fmtDur(eff.min)}</div>` : '';
+    const effLine = bakeSafe > 0 ? `<div class="be-effort" style="margin:2px 0 6px">${batchLabel(eff.batches)} total</div>${kitchenRows(eff)}` : '';
     return `<div class="proj-card">
         <h3>${title}</h3>
         <div class="proj-sub">${subLine}</div>
@@ -3762,7 +3812,9 @@
     'Poppy Seed': { amt: 227, unit: 'g', price: 8.19, link: 'https://www.amazon.com/dp/B09C35F9GN', note: 'Frontier Co-op whole, 8 oz. Price is Frontier\'s own site — confirm the Amazon price' },
     'Lemon Emulsion': { amt: 118, unit: 'ml', price: 6.99, link: 'https://www.amazon.com/dp/B002HQKDH0', note: 'LorAnn Lemon Emulsion, 4 fl oz. About $6.49–$7.99 elsewhere — confirm the Amazon price. Used instead of lemon extract' },
     'Maple Syrup': { amt: 1330, unit: 'g', price: 12.59, link: 'https://www.costco.com/kirkland-signature-organic-pure-maple-syrup-338-oz.product.100333884.html', note: 'Costco Kirkland Organic Pure Maple Syrup, 33.8 fl oz (1 L ≈ 1.33 kg). $12.59 in warehouse, $14.99 online — confirm' },
-    'Pecans': { amt: 907, unit: 'g', price: null, link: 'https://www.costco.com/.product.100115257.html', note: 'Costco Kirkland Pecan Halves, 2 lb — price not found; enter it or scan a receipt' },
+    'Pecans': { amt: 907, unit: 'g', price: 15.99, link: 'https://www.costco.com/.product.100115257.html', note: 'Costco Kirkland Pecan Halves, 2 lb' },
+    'Ube Powder': { amt: 907, unit: 'g', price: null, link: 'https://www.amazon.com/dp/B0FQTYRPMM', note: 'Purple sweet potato (ube) powder, 2 lb — price not found; enter it' },
+    'Avocado Oil': { amt: 1840, unit: 'g', price: 29.99, link: 'https://www.costco.com/p/-/chosen-foods-100-pure-avocado-oil-2-l/100640848', note: 'Costco Chosen Foods 100% Pure Avocado Oil, 2 L (≈ 1.84 kg)' },
   };
   // Per-recipe extras, keyed "section:key". Fillings/toppings are costed per finished item.
   const COST_META = {
@@ -3778,6 +3830,8 @@
   const costItemKey = (sec, it) => `${sec}:${it.key || it.name}`;
   const costItemName = (sec, it) => sec === 'mad' ? (it.title || it.name + ' Madeleine') : (it.type === 'sable' ? 'Sable Cookies' : it.name);
 
+  // Ingredients that vary by flavour and are deliberately not priced (not in the price list or the cost card).
+  const COST_SKIP = new Set(['Flavor Powder']);
   const titleCase = t => t.replace(/\b\w/g, c => c.toUpperCase());
   function costCanon(name) {
     const base = String(name).split(',')[0].replace(/\(.*?\)/g, '').replace(/\*/g, '').trim();
@@ -3851,7 +3905,7 @@
   function costAllNames() {
     const names = new Set(Object.keys(costPrices));
     COST_SECTIONS.forEach(([sec, , get]) => get().forEach(it => costRows(sec, it).forEach(r => {
-      const c = costCanon(r[0]); if (c !== 'Cake Flour' && c !== 'Tea Bags' && c.toLowerCase() !== 'water') names.add(c);
+      const c = costCanon(r[0]); if (c !== 'Cake Flour' && c !== 'Tea Bags' && c.toLowerCase() !== 'water' && !COST_SKIP.has(c)) names.add(c);
     })));
     (COST_META && Object.values(COST_META)).forEach(m => (m.toppings || []).forEach(t => t.ingredient && names.add(costCanon(t.ingredient))));
     return [...names];
@@ -3873,7 +3927,7 @@
     pick.value = costSel;
     const [sec, key] = costSel.split(/:(.*)/s);
     const it = COST_SECTIONS.find(x => x[0] === sec)[2]().find(x => (x.key || x.name) === key);
-    const rows = costRows(sec, it);
+    const rows = costRows(sec, it).filter(r => !COST_SKIP.has(costCanon(r[0])));
     let batch = 0, missing = false;
     const lines = rows.map(r => {
       const c = costLine(r[0], r[1]), unit = (costPrices[costCanon(r[0])] || {}).unit === 'ml' ? 'ml' : 'g';
@@ -3913,7 +3967,6 @@
     document.getElementById('costPrices').innerHTML = `
       <button class="btn-ghost rcp-scan" id="rcpScan">Scan a receipt</button>
       <input type="file" id="rcpFile" accept="image/*" hidden>
-      <div class="warn" style="text-align:left;margin:4px 2px 4px">Type the size of the package you buy and what it costs. Cake Flour is worked out from All Purpose Flour + Cornstarch (436g : 64g); Egg White / Yolk use the Eggs price; Tea Bags use Earl Grey Tea Leaves (2g each). Saved on this device only.</div>
       ${need.length ? `<div class="cp-group">Needs a price (${need.length})</div>${need.map(row).join('')}` : ''}
       <div class="cp-group">Priced (${done.length})</div>${done.map(row).join('')}`;
   }

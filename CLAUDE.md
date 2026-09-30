@@ -338,3 +338,13 @@ between groups (`recMadRank`), then a *Total Ingredients Needed* block. `bakeShe
 block and packs them into **two columns per Letter page** (page 1 has the title) so no block is split;
 the on-screen preview is the same blocks in one column (`.bs2-*` styles). Titles across the app are
 Title Case (Bake Sheet, Baking Plan, Confirm Entry, …).
+
+## Kitchen time + booking link (2026-09-29)
+
+Plan cards show **kitchen time** for the commercial kitchen (`bakeEffort()` / `kitchenRows()`), from
+editable assumptions (*Kitchen Times*, saved in `kitchenTimes.v1`, defaults in `KT_DEFAULT`):
+**batch prep** = ⌈batches ÷ 3⌉ × 17.5 min (before the batter rests); **baking after resting** = rounds ×
+(12 bake + 5 cooling) where a round is 4 pans × 12 madeleines, + 15 s glazing per Lemon Poppy / Earl Grey
+madeleine, + 30 min cleaning; **total to book** = prep + baking. **Setup (15 min) is shown but not booked.**
+*Madeleines per pan = 12 is an assumption* (a batch is 18) — change it in Kitchen Times if your pans differ.
+Home has a **Book Commercial Kitchen** link (opens The Food Corridor's booking page in a new tab).
