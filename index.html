@@ -1173,7 +1173,19 @@
   html { font-size: 17px; }
   body { font-weight: 600; }
   h1, .hero-title, .sheet h2, #hpTitle { font-weight: 400 !important; }
-  .bs2-doc, .bs2-page { font-family: "Cormorant Garamond", Georgia, serif; }
+  /* On-screen bake sheet (and saved sheets) follow the app; the PDF / print pages keep their paper look */
+  body:not(.printing-bake) #bsScrim .bs2-doc { background: transparent; color: var(--text); font-family: inherit; font-size: var(--fs-body); line-height: 1.4; padding: 0; overflow-wrap: anywhere; }
+  body:not(.printing-bake) #bsScrim .bs2-title { font-family: "Pinyon Script", "Cormorant Garamond", Georgia, cursive; font-weight: 400; font-size: 34px; line-height: 1.15; }
+  body:not(.printing-bake) #bsScrim .bs2-date { color: var(--muted); font-size: var(--fs-caption); margin: 2px 0 12px; }
+  body:not(.printing-bake) #bsScrim .bs2-block { background: var(--card); border: 1px solid var(--sep); padding: 10px 12px 6px; margin: 0 0 8px; }
+  body:not(.printing-bake) #bsScrim .bs2-block h4 { font-size: var(--fs-body); font-weight: 700; text-transform: none; letter-spacing: 0; color: var(--text); margin: 0 0 4px; }
+  body:not(.printing-bake) #bsScrim .bs2-block h4 small { color: var(--muted); font-size: var(--fs-caption); font-weight: 500; }
+  body:not(.printing-bake) #bsScrim .bs2-grp { margin: 0 0 6px; }
+  body:not(.printing-bake) #bsScrim .bs2-grp > div { padding: 5px 0; border-bottom: 1px solid var(--sep); font-size: var(--fs-caption); }
+  body:not(.printing-bake) #bsScrim .bs2-grp > div:last-child { border-bottom: none; }
+  /* Close sits at the top of the sheet */
+  #bsScrim .bs-top { position: sticky; top: -1px; z-index: 3; display: flex; justify-content: flex-end; padding: 0 0 6px; margin: 0 0 4px; background: var(--card, #fbf9f5); }
+  #bsScrim .bs-top button { width: auto; margin: 0; padding: 8px 16px; }
   /* Phones: iOS draws its status bar / home-indicator over the page (env() can read 0 in Safari),
      so keep at least this much clear at the top and bottom — nothing sits under them. */
   @media (pointer: coarse) {
@@ -1524,7 +1536,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v133 · Sep 30, 3:45 AM</div>
+<div class="ver-badge">v134 · Sep 30, 4:05 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -1631,11 +1643,11 @@
 <!-- ===== Bake sheet ===== -->
 <div class="scrim" id="bsScrim">
   <div class="sheet inv-sheet" role="dialog" aria-modal="true" aria-label="Bake sheet">
+    <div class="bs-top inv-noprint"><button class="btn-ghost" id="bsCloseBtn">Close</button></div>
     <div id="bsDoc"></div>
     <div class="actions inv-noprint" style="margin-top:16px">
       <button class="btn-primary" id="bsPdfBtn">Download PDF</button>
       <button class="btn-ghost" id="bsPrintBtn">Print</button>
-      <button class="btn-ghost" id="bsCloseBtn">Close</button>
     </div>
   </div>
 </div>
