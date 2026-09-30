@@ -1321,6 +1321,8 @@
   .te-item { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-bottom: 1px solid var(--sep); }
   .te-item input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--accent); flex: none; } .te-item span { flex: 1; min-width: 0; }
   .te-b { width: 5.5em; text-align: right; }
+  .bs2-sub { margin-top: 8px; } .bs2-subh { font-weight: 800; text-transform: uppercase; font-size: 12px; letter-spacing: .3px; margin-bottom: 1px; }
+  body:not(.printing-bake) #bsScrim .bs2-subh { font-size: var(--fs-micro); color: var(--muted); border-bottom: none !important; padding: 6px 0 2px !important; letter-spacing: .6px; }
 </style>
 </head>
 <body>
@@ -1608,7 +1610,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.57.01 · Sep 30, 7:00 PM</div>
+<div class="ver-badge">v1.57.02 · Sep 30, 7:30 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -4730,18 +4732,23 @@
     const totals = new Map();
     const blocks = bakeSheet.map(b => {
       const f = bsFind(b.key); if (!f) return null;
-      const rows = recMadSort(costRows(f.sec, f.it));
-      rows.forEach(([n, g]) => { const c = bsCanon(n), t = totals.get(c) || { g: 0, uses: new Set() }; t.g += g * b.b; t.uses.add(b.key); totals.set(c, t); });
+      // Madeleines / muffins: the batter is its own list; syrup, glaze and topping go underneath as separate sections (not part of the batter).
+      const split = f.sec === 'mad' || f.it.type === 'muffin';
+      const rows = recMadSort(split ? costRows(f.sec, { ...f.it, syrup: null, glaze: null, topping: null }) : costRows(f.sec, f.it));
+      const numr = r => [r[0], typeof r[1] === 'number' ? r[1] : lblGrams(r[1]) || parseFloat(r[1]) || 0];
+      const subs = split ? [['Simple syrup', f.it.syrup], ['Glaze', f.it.glaze], ['Topping', f.it.topping]].filter(([, l]) => l && l.length)
+        .map(([label, l]) => ({ label, rows: l.map(numr).filter(r => r[1] > 0) })) : [];
+      [...rows, ...subs.flatMap(sb => sb.rows)].forEach(([n, g]) => { const c = bsCanon(n), t = totals.get(c) || { g: 0, uses: new Set() }; t.g += g * b.b; t.uses.add(b.key); totals.set(c, t); });
       const groups = [[], [], []];
       rows.forEach(([n, g]) => { const r = recMadRank(String(n)); groups[r <= 2 ? 0 : r <= 13 ? 1 : 2].push(bsLine(n, g * b.b)); });
       const y = f.sec === 'mad' ? BATCH_YIELD : costDefaultYield(f.sec, f.it);
-      return { title: costItemName(f.sec, f.it), note: `${rFmt(b.b)} batch${b.b === 1 ? '' : 'es'}${y ? ` · ≈ ${rFmt(b.b * y)} pcs` : ''}`, groups: groups.filter(g => g.length) };
+      return { title: costItemName(f.sec, f.it), note: `${rFmt(b.b)} batch${b.b === 1 ? '' : 'es'}${y ? ` · ≈ ${rFmt(b.b * y)} pcs` : ''}`, groups: groups.filter(g => g.length), subs: subs.map(sb => ({ label: sb.label, lines: sb.rows.map(([n, g]) => bsLine(n, g * b.b)) })) };
     }).filter(Boolean);
     const tot = BS_TOTALS.filter(n => totals.has(n)).map(n => bsLine(n, totals.get(n).g));   // for now: just butter, eggs and sugars
     if (tot.length) blocks.push({ title: 'Total ingredients needed', note: 'all recipes', groups: [tot] });
     return blocks;
   }
-  const bsBlockHtml = bl => `<div class="bs2-block"><h4>${esc(bl.title)}<small>${esc(bl.note)}</small></h4>${bl.groups.map(g => `<div class="bs2-grp">${g.map(l => `<div>${esc(l)}</div>`).join('')}</div>`).join('')}</div>`;
+  const bsBlockHtml = bl => `<div class="bs2-block"><h4>${esc(bl.title)}<small>${esc(bl.note)}</small></h4>${bl.groups.map(g => `<div class="bs2-grp">${g.map(l => `<div>${esc(l)}</div>`).join('')}</div>`).join('')}${(bl.subs || []).map(sb => `<div class="bs2-grp bs2-sub"><div class="bs2-subh">${esc(sb.label)}</div>${sb.lines.map(l => `<div>${esc(l)}</div>`).join('')}</div>`).join('')}</div>`;
   const bsHeadHtml = () => { const [y, m, d] = (bsView ? bsView.day : nowPST().slice(0, 10)).split('-').map(Number); const eff = bsView ? bsView.eff : bsEffort(); const kt = eff ? `<div class="bs2-kt">Expected kitchen time: <b>${fmtDur(eff.min)}</b> · prep ${fmtDur(eff.prep)} · baking ${fmtDur(eff.baking)}</div>` : ''; return `<div class="bs2-title">Bake Plan</div><div class="bs2-date">${esc(new Date(y, m - 1, d).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }))} · amounts are for the base version of each recipe</div>${kt}`; };
   function paintBakeSheetDoc() {
     // Summary first: which recipes and how many batches, and the kitchen time they add up to.
