@@ -201,9 +201,15 @@ The receipt image is not stored, but it does leave for Anthropic's API.
 
 ## Bake sheet (Baking → Plan, bottom card)
 
-Pick any recipe + number of batches (`bakeSheet.v1` in localStorage), **Preview sheet** → per-recipe
-scaled ingredient lists, then **Total ingredients needed** merged across recipes (`bsCanon` only
-merges spelling variants — egg yolk stays separate from whole eggs). Print (`printing-bake`) or
+Choose from the **seasonal** recipes (dropdown adds on select; batches default to the plan's projected bake via `planBakeTotals` + `BS_PRODUCT`, else 1; **Add all seasonal** adds them all) — batches saved in `bakeSheet.v1`. **Preview sheet** → per-recipe
+scaled ingredient lists, then **Total ingredients needed** merged across recipes, showing only `BS_TOTALS`
+(butter, eggs, sugar, powdered sugar — for now). `bsCanon` only merges spelling variants. Print (`printing-bake`) or
 **Download as image** (`domToBlob()`, shared with the label). Amounts are the base version of each
 recipe from `costRows()` (flavoring, glaze and topping rows included). It is independent of the
 forecast — it doesn't prefill from the Plan numbers.
+
+**Seasonal recipes** (`SEASONAL`, editable via *Edit this season's recipes*, saved in `seasonal.v1`;
+default Classic, Lemon Poppy, Pumpkin Pie Spice madeleines, Lemon Curd, Pumpkin Cream Cheese Frosting)
+sort to the top of every recipe/cost dropdown ("This season" group) and are the only ones the bake
+sheet offers. Everything else stays reachable in the Recipes tab — nothing is hidden there.
+`BS_PRODUCT` maps recipe → forecast product for batch defaults (Classic→Sea Salt is a guess).

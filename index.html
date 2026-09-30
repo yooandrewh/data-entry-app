@@ -403,7 +403,6 @@
   .bs-head { padding: 0 14px 10px; display: flex; flex-direction: column; gap: 2px; }
   .bs-head b { font-size: var(--fs-lg); }
   .bs-head span { font-size: var(--fs-caption); color: var(--muted); }
-  .bs-add { flex: none; padding: 0 18px; }
   .bs-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-top: 1px solid var(--sep); }
   .bs-item .nm { flex: 1; min-width: 0; font-size: var(--fs-body); font-weight: 600; }
   .bs-item .nm small { display: block; font-weight: 400; color: var(--muted); font-size: var(--fs-caption); }
@@ -412,6 +411,11 @@
   .bs-step input { width: 3.2em; text-align: center; font-family: inherit; font-size: var(--fs-body); font-weight: 600; color: var(--accent); border: none; border-bottom: 1.5px dashed var(--accent); background: transparent; padding: 0 0 1px; }
   .bs-x { border: none; background: none; color: var(--muted); font-size: var(--fs-lg); cursor: pointer; padding: 4px; font-family: inherit; }
   .bs-foot { padding: 10px 14px 8px; }
+  .bs-links { display: flex; justify-content: space-between; gap: 10px; padding: 0 14px 6px; }
+  .bs-links button { border: none; background: none; padding: 4px 0; font-family: inherit; font-size: var(--fs-caption); font-weight: 600; color: var(--accent); cursor: pointer; }
+  .sea-sec { font-size: var(--fs-micro); text-transform: uppercase; letter-spacing: .6px; color: var(--muted); font-weight: 700; margin: 14px 2px 4px; }
+  .sea-row { display: flex; align-items: center; gap: 12px; padding: 9px 2px; border-bottom: 1px solid var(--sep); font-size: var(--fs-body); }
+  .sea-row input { width: 20px; height: 20px; accent-color: var(--accent); }
   .bs-empty { padding: 10px 14px 4px; font-size: var(--fs-caption); color: var(--muted); border-top: 1px solid var(--sep); }
   .bs-doc { background: #fff; color: #1a1a1a; font-family: Arial, Helvetica, sans-serif; font-size: 13px; line-height: 1.4; padding: 4px 2px; }
   .bs-doc h3 { margin: 0 0 2px; font-size: 20px; }
@@ -711,7 +715,7 @@
 <body>
 
 <!-- Version badge — bump on every deploy (v = commit count, time = deploy time PST) -->
-<div class="ver-badge">v93 · Sep 29, 5:02 PM</div>
+<div class="ver-badge">v94 · Sep 29, 5:08 PM</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -903,7 +907,8 @@
 
       <div class="card bs-card">
         <div class="bs-head"><b>Bake sheet</b><span>Pick recipes and batches, then print or download</span></div>
-        <div class="filter-bar" style="padding:0 14px;margin:0 0 4px"><select id="bsPick" aria-label="Recipe to add"></select><button type="button" class="btn-ghost bs-add" id="bsAdd">Add</button></div>
+        <div class="filter-bar" style="padding:0 14px;margin:0 0 4px"><select id="bsPick" aria-label="Add a recipe"></select></div>
+        <div class="bs-links"><button type="button" data-seasonal-edit>Edit this season's recipes</button><button type="button" id="bsAddAll">Add all seasonal</button></div>
         <div id="bsList"></div>
         <div class="bs-foot"><button type="button" class="btn-primary" id="bsOpen">Preview sheet</button></div>
       </div>
@@ -919,6 +924,7 @@
         <button data-sec="other">🧁 Other</button>
       </div>
       <div class="filter-bar"><select id="recPick" aria-label="Recipe"></select></div>
+      <div class="bs-links" style="margin:-6px 0 8px"><button type="button" data-seasonal-edit>Edit this season's recipes</button></div>
       <div id="recCard"></div>
     </div>
 
@@ -1065,6 +1071,16 @@
       <button class="btn-ghost" id="bsSaveBtn">Download as image</button>
       <button class="btn-ghost" id="bsCloseBtn">Close</button>
     </div>
+  </div>
+</div>
+
+<!-- ===== Seasonal recipes ===== -->
+<div class="scrim" id="seaScrim">
+  <div class="sheet inv-sheet" role="dialog" aria-modal="true" aria-labelledby="seaTitle">
+    <h2 id="seaTitle">This season's recipes</h2>
+    <div class="warn">These go to the top of every recipe dropdown and are the ones the bake sheet offers.</div>
+    <div id="seaList"></div>
+    <div class="actions" style="margin-top:14px"><button class="btn-primary" id="seaDone">Done</button></div>
   </div>
 </div>
 
@@ -2658,6 +2674,7 @@
     return [{ ...e1, bake: b1, total: t1, any: t1 > 0 }, { ...e2, bake: b2, total: t2, any: t2 > 0 }];
   }
 
+  let planBakeTotals = {};
   async function renderPlan() {
     const sub = document.getElementById('planSub');
     const list = document.getElementById('planList');
@@ -2698,7 +2715,8 @@
     // Slider only makes sense for exactly two bake dates.
     const splitOn = bakeDateSet.size && activeDates.length === 2;
     let agg1 = 0, agg2 = 0;
-    const tally = evs => { for (const ev of evs) { if (ev.ymd === activeDates[0]) agg1 += ev.total; else if (ev.ymd === activeDates[1]) agg2 += ev.total; } };
+    const planTotals = ZERO();   // pieces to bake per product across the whole plan — feeds the bake sheet's batch defaults
+    const tally = evs => { for (const ev of evs) { for (const p of PRODUCTS) planTotals[p] += (ev.bake && ev.bake[p]) || 0; if (ev.ymd === activeDates[0]) agg1 += ev.total; else if (ev.ymd === activeDates[1]) agg2 += ev.total; } };
 
     if (bakeDateSet.size) {
       const withEvents = usable.map(c => ({ ...c, events: bakeSchedule(c.st, c.dowr, addDays(todayYmd, 1), target, bakeDateSet, c.st.growth) }));
@@ -2725,6 +2743,7 @@
         for (const p of PRODUCTS) { bakeMap[p] = Math.max(0, Math.ceil(demand[p] * (1 + m) - c.st.stock[p])); haveMap[p] = c.st.stock[p]; expMap[p] = demand[p]; }
         return { ...c, bakeMap, haveMap, expMap, nDays, nWe };
       });
+      for (const w of withMaps) for (const p of PRODUCTS) planTotals[p] += w.bakeMap[p];
       if (combined) {
         if (withMaps.length) {
           const bakeMap = ZERO(), haveMap = ZERO(), expMap = ZERO();
@@ -2742,6 +2761,7 @@
       html += `<div class="proj-card"><h3>${c.loc}</h3><div class="proj-sub">${c.st.hasInv ? 'No recent sales to forecast from.' : 'Add an inventory count to include this store.'}</div></div>`;
     if (!html) html = `<div class="db-empty"><div class="big">📅</div>Nothing to plan.</div>`;
     document.getElementById('planList').innerHTML = html;
+    planBakeTotals = planTotals;
 
     // Split slider (two dates only).
     const wrap = document.getElementById('planSplitWrap');
@@ -2935,7 +2955,14 @@
 
   const recState = { sec: 'mad', idx: 0, batches: 1, madVer: 0, sableType: 0, sableFlav: 0, macScale: 1, macCustom: null, gfSize: 0 };
   function recResetVariants() { recState.batches = 1; recState.madVer = 0; recState.sableType = 0; recState.sableFlav = 0; recState.macScale = 1; recState.macCustom = null; recState.gfSize = 0; }
-  function recList() { return recState.sec === 'mad' ? REC_MADS : recState.sec === 'fill' ? REC_FILLINGS : recState.sec === 'scone' ? REC_SCONES : REC_OTHER; }
+  // This season's recipes — pulled to the top of every recipe dropdown, and the only ones the bake sheet offers.
+  const SEASONAL_DEFAULT = ['mad:Classic', 'mad:Lemon Poppy', 'mad:Pumpkin Pie Spice', 'fill:Lemon Curd', 'fill:Pumpkin Cream Cheese Frosting'];
+  let SEASONAL = SEASONAL_DEFAULT;   // editable in the app ("This season's recipes"), saved on this device
+  try { const v = JSON.parse(localStorage.getItem('seasonal.v1')); if (Array.isArray(v)) SEASONAL = v; } catch {}
+  const seasonRank = (sec, it) => { const i = SEASONAL.indexOf(`${sec}:${it.key || it.name}`); return i < 0 ? 99 : i; };
+  const isSeasonal = (sec, it) => seasonRank(sec, it) < 99;
+  const seasonalFirst = (sec, arr) => [...arr].sort((a, b) => seasonRank(sec, a) - seasonRank(sec, b));   // stable: the rest keep their order
+  function recList() { const sec = recState.sec; return seasonalFirst(sec, sec === 'mad' ? REC_MADS : sec === 'fill' ? REC_FILLINGS : sec === 'scone' ? REC_SCONES : REC_OTHER); }
   const rFmt = n => typeof n === 'string' ? n : String(Math.round(n * 10) / 10);
   // Scale the FIRST number in a string (glaze amounts, ratios).
   const rScaleStr = (str, m) => (!m || m === 1) ? str : String(str).replace(/(\d+(?:\.\d+)?)/, (x, num) => rFmt(parseFloat(num) * m));
@@ -3080,8 +3107,11 @@
     const list = recList();
     if (recState.idx >= list.length) recState.idx = 0;
     const pick = document.getElementById('recPick');
-    pick.innerHTML = list.map((it, i) =>
-      `<option value="${i}">${REC_ICON[it.name] || '📖'} ${it.name}</option>`).join('');
+    const opt = (it, i) => `<option value="${i}">${REC_ICON[it.name] || '📖'} ${it.name}</option>`;
+    const nSeason = list.filter(it => isSeasonal(recState.sec, it)).length;
+    pick.innerHTML = nSeason && nSeason < list.length
+      ? `<optgroup label="This season">${list.slice(0, nSeason).map((it, i) => opt(it, i)).join('')}</optgroup><optgroup label="All recipes">${list.slice(nSeason).map((it, i) => opt(it, i + nSeason)).join('')}</optgroup>`
+      : list.map(opt).join('');
     pick.value = recState.idx;
     const item = list[recState.idx];
     let html;
@@ -3179,7 +3209,7 @@
     'scone:plainscone': { yield: 797 / 90, toppings: [{ label: 'Strawberry Cream Cheese filling (60g)', refRecipe: { section: 'scone', key: 'strawberrycc', grams: 60 } }] },
     'scone:strawberrycc': { yield: 1368 / 60 },
   };
-  const COST_SECTIONS = [['mad', 'Madeleines', () => REC_MADS], ['fill', 'Fillings', () => REC_FILLINGS], ['scone', 'Scones', () => REC_SCONES], ['other', 'Other', () => REC_OTHER]];
+  const COST_SECTIONS = [['mad', 'Madeleines', () => seasonalFirst('mad', REC_MADS)], ['fill', 'Fillings', () => seasonalFirst('fill', REC_FILLINGS)], ['scone', 'Scones', () => seasonalFirst('scone', REC_SCONES)], ['other', 'Other', () => seasonalFirst('other', REC_OTHER)]];
   const costItemKey = (sec, it) => `${sec}:${it.key || it.name}`;
   const costItemName = (sec, it) => sec === 'mad' ? (it.title || it.name + ' Madeleine') : (it.type === 'sable' ? 'Sable Cookies' : it.name);
 
@@ -3418,15 +3448,20 @@
   // Light merge only (spelling variants of the same thing) — unlike pricing, egg yolk stays separate from whole eggs.
   const BS_ALIAS = { 'whole eggs': 'Eggs', 'egg': 'Eggs', 'granulated sugar': 'Sugar', 'white sugar': 'Sugar', 'light brown sugar': 'Brown Sugar', 'all-purpose flour': 'All Purpose Flour', 'pure vanilla extract': 'Vanilla Extract', 'kosher salt': 'Salt' };
   const bsCanon = n => { const b = String(n).split(',')[0].replace(/\(.*?\)/g, '').replace(/\*/g, '').trim(); return BS_ALIAS[b.toLowerCase()] || titleCase(b); };
+  const BS_TOTALS = ['Unsalted Butter', 'Eggs', 'Sugar', 'Powdered Sugar'];
   const bsFind = key => { const [sec, k] = key.split(/:(.*)/s); const it = (COST_SECTIONS.find(x => x[0] === sec) || [])[2]?.().find(x => (x.key || x.name) === k); return it ? { sec, it } : null; };
+  // Which forecast product a recipe's batches come from (recipes with no product just start at 1 batch).
+  const BS_PRODUCT = { 'mad:Lemon Poppy': 'Lemon Poppy', 'mad:Earl Grey': 'Earl Grey', 'mad:Classic': 'Sea Salt' };
+  const bsProjectedBatches = key => { const p = BS_PRODUCT[key], n = p && planBakeTotals[p]; return n > 0 ? flavorBatches(n) : 0; };
   function renderBakeSheet() {
     const pick = document.getElementById('bsPick');
-    pick.innerHTML = COST_SECTIONS.map(([sec, label, get]) => `<optgroup label="${label}">${get().map(it => `<option value="${esc(costItemKey(sec, it))}">${REC_ICON[it.name] || '📖'} ${esc(costItemName(sec, it))}</option>`).join('')}</optgroup>`).join('');
+    const opts = COST_SECTIONS.flatMap(([sec, , get]) => get().filter(it => isSeasonal(sec, it)).map(it => ({ sec, it })));
+    pick.innerHTML = `<option value="" selected disabled>Add a recipe…</option>` + opts.map(({ sec, it }) => `<option value="${esc(costItemKey(sec, it))}">${REC_ICON[it.name] || '📖'} ${esc(costItemName(sec, it))}</option>`).join('');
     const rows = bakeSheet.map((b, i) => { const f = bsFind(b.key); if (!f) return ''; const y = f.sec === 'mad' ? BATCH_YIELD : costDefaultYield(f.sec, f.it);
-      return `<div class="bs-item" data-bi="${i}"><div class="nm">${esc(costItemName(f.sec, f.it))}${y ? `<small>≈ ${rFmt(b.b * y)} pieces</small>` : ''}</div>
+      return `<div class="bs-item" data-bi="${i}"><div class="nm">${esc(costItemName(f.sec, f.it))}<small>${y ? `≈ ${rFmt(b.b * y)} pieces` : ''}${b.plan ? `${y ? ' · ' : ''}from plan` : ''}</small></div>
         <div class="bs-step"><button type="button" data-bs="-">−</button><input type="number" inputmode="decimal" step="0.5" min="0.5" value="${rFmt(b.b)}" data-bs="n" aria-label="Batches"><button type="button" data-bs="+">+</button></div>
         <button type="button" class="bs-x" data-bs="x" aria-label="Remove">✕</button></div>`; }).join('');
-    document.getElementById('bsList').innerHTML = rows || '<div class="bs-empty">Nothing added yet — choose a recipe above.</div>';
+    document.getElementById('bsList').innerHTML = rows || '<div class="bs-empty">Nothing added yet — choose a recipe above and it is added with the batches your plan calls for.</div>';
     document.getElementById('bsOpen').disabled = !bakeSheet.length;
   }
   function paintBakeSheetDoc() {
@@ -3439,7 +3474,7 @@
       const lines = rows.map(([n, g]) => `<div class="r"><span>${esc(bsCanon(n) === titleCase(String(n).split(',')[0].replace(/\(.*?\)/g, '').trim()) || /^[a-z]/.test(n) ? titleCase(String(n).split(',')[0].replace(/\(.*?\)/g, '').trim()) : String(n).split(',')[0].replace(/\(.*?\)/g, '').trim())}</span><b>${rFmt(g * b.b)} g</b></div>`).join('');
       return `<h4>${esc(costItemName(f.sec, f.it))}<span>${rFmt(b.b)} batch${b.b === 1 ? '' : 'es'}${y ? ` · ≈ ${rFmt(b.b * y)} pcs` : ''}</span></h4>${lines}`;
     }).join('');
-    const sorted = [...totals].sort((a, b) => b[1].g - a[1].g);
+    const sorted = BS_TOTALS.filter(n => totals.has(n)).map(n => [n, totals.get(n)]);   // for now: just butter, eggs and sugars
     const totalRows = sorted.map(([n, t]) => {
       const conv = n === 'Cake Flour' ? ` <i>(= AP ${rFmt(t.g * 436 / 500)} g + cornstarch ${rFmt(t.g * 64 / 500)} g)</i>` : '';
       return `<div class="r"><span>${esc(n)}${conv}${t.uses.size > 1 ? ` <i>· in ${t.uses.size} recipes</i>` : ''}</span><b>${rFmt(t.g)} g</b></div>`;
@@ -3447,9 +3482,34 @@
     document.getElementById('bsDoc').innerHTML = `<h3>Bake sheet</h3><div class="d">${fmt(today)} · amounts are for the base version of each recipe</div>${blocks}
       <h4 class="tot">Total ingredients needed<span>all recipes</span></h4>${totalRows}`;
   }
-  document.getElementById('bsAdd').addEventListener('click', () => {
-    const key = document.getElementById('bsPick').value, ex = bakeSheet.find(b => b.key === key);
-    if (ex) ex.b += 1; else bakeSheet.push({ key, b: 1 });
+  document.getElementById('bsPick').addEventListener('change', e => {
+    const key = e.target.value; if (!key) return;
+    const ex = bakeSheet.find(b => b.key === key), proj = bsProjectedBatches(key);
+    if (ex) ex.b += 1; else bakeSheet.push({ key, b: proj || 1, plan: !!proj });
+    saveBakeSheet(); renderBakeSheet();
+  });
+  // ---- Edit which recipes are "this season" ----
+  function paintSeasonal() {
+    document.getElementById('seaList').innerHTML = COST_SECTIONS.map(([sec, label]) => {
+      const all = { mad: REC_MADS, fill: REC_FILLINGS, scone: REC_SCONES, other: REC_OTHER }[sec];
+      return `<div class="sea-sec">${label}</div>` + all.map(it => { const k = costItemKey(sec, it);
+        return `<label class="sea-row"><input type="checkbox" data-sk="${esc(k)}" ${SEASONAL.includes(k) ? 'checked' : ''}><span>${REC_ICON[it.name] || '📖'} ${esc(costItemName(sec, it))}</span></label>`; }).join('');
+    }).join('');
+  }
+  document.addEventListener('click', e => { if (e.target.closest('[data-seasonal-edit]')) { paintSeasonal(); document.getElementById('seaScrim').classList.add('show'); } });
+  document.getElementById('seaList').addEventListener('change', e => {
+    const c = e.target.closest('[data-sk]'); if (!c) return;
+    SEASONAL = c.checked ? [...SEASONAL.filter(k => k !== c.dataset.sk), c.dataset.sk] : SEASONAL.filter(k => k !== c.dataset.sk);
+    try { localStorage.setItem('seasonal.v1', JSON.stringify(SEASONAL)); } catch {}
+  });
+  const seaClose = () => { document.getElementById('seaScrim').classList.remove('show'); renderBaking(); };
+  document.getElementById('seaDone').addEventListener('click', seaClose);
+  document.getElementById('seaScrim').addEventListener('click', e => { if (e.target.id === 'seaScrim') seaClose(); });
+  document.getElementById('bsAddAll').addEventListener('click', () => {
+    COST_SECTIONS.forEach(([sec, , get]) => get().filter(it => isSeasonal(sec, it)).forEach(it => {
+      const key = costItemKey(sec, it); if (bakeSheet.some(b => b.key === key)) return;
+      const proj = bsProjectedBatches(key); bakeSheet.push({ key, b: proj || 1, plan: !!proj });
+    }));
     saveBakeSheet(); renderBakeSheet();
   });
   document.getElementById('bsList').addEventListener('click', e => {
