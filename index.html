@@ -151,7 +151,6 @@
      so it goes rather than squeezing the stepper or truncating the label. */
   @media (max-width: 360px) {
     .row { padding: 14px 12px; }
-    .row .lbl-flavor .tok { display: none; }
     .amt { gap: 9px; }
     .amt .step { width: 40px; height: 40px; }
     .amt .val { width: 36px; }
@@ -1465,7 +1464,7 @@
       <div class="group-label" id="amtLabel">Amount</div>
       <div class="card" id="amounts">
         <div class="row">
-          <span class="lbl lbl-flavor"><span class="tok" style="background:#c99306">LP</span>Lemon Poppy</span>
+          <span class="lbl lbl-flavor"><span class="tok" data-tok="Lemon Poppy"></span>Lemon Poppy</span>
           <div class="amt" data-product="Lemon Poppy">
             <button type="button" class="step minus">−</button>
             <input class="val" type="number" inputmode="numeric" value="0" min="0" />
@@ -1473,7 +1472,7 @@
           </div>
         </div>
         <div class="row">
-          <span class="lbl lbl-flavor"><span class="tok" style="background:#4a7ba7">SS</span>Sea Salt</span>
+          <span class="lbl lbl-flavor"><span class="tok" data-tok="Sea Salt"></span>Sea Salt</span>
           <div class="amt" data-product="Sea Salt">
             <button type="button" class="step minus">−</button>
             <input class="val" type="number" inputmode="numeric" value="0" min="0" />
@@ -1481,7 +1480,7 @@
           </div>
         </div>
         <div class="row">
-          <span class="lbl lbl-flavor"><span class="tok" style="background:#6b7280">EG</span>Earl Grey</span>
+          <span class="lbl lbl-flavor"><span class="tok" data-tok="Earl Grey"></span>Earl Grey</span>
           <div class="amt" data-product="Earl Grey">
             <button type="button" class="step minus">−</button>
             <input class="val" type="number" inputmode="numeric" value="0" min="0" />
@@ -1489,7 +1488,7 @@
           </div>
         </div>
         <div class="row">
-          <span class="lbl lbl-flavor"><span class="tok" style="background:#d4620a">PM</span>Pumpkin Muffin</span>
+          <span class="lbl lbl-flavor"><span class="tok" data-tok="Pumpkin Muffin"></span>Pumpkin Muffin</span>
           <div class="amt" data-product="Pumpkin Muffin">
             <button type="button" class="step minus">−</button>
             <input class="val" type="number" inputmode="numeric" value="0" min="0" />
@@ -1591,7 +1590,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.53.07 · Sep 30, 3:30 PM</div>
+<div class="ver-badge">v1.53.08 · Sep 30, 4:00 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -1803,6 +1802,7 @@
   const PRODUCT_COLOR = { 'Lemon Poppy': '#c99306', 'Sea Salt': '#4a7ba7', 'Earl Grey': '#6b7280', 'Pumpkin Muffin': '#d4620a', 'Dubai Ball': '#a0662d', 'Ube': '#7c5aa6', 'Dot': '#c2557a', 'Matcha': '#5a8f4e', 'Chocolate': '#7b4b2a', 'Unknown': '#9a9ba3', 'Flights': '#8a8d96' };
   const TOK_IC = { 'Lemon Poppy': 'lemon', 'Sea Salt': 'madeleine', 'Earl Grey': 'teacup', 'Pumpkin Muffin': 'pumpkin', 'Dubai Ball': 'nut', 'Ube': 'ube', 'Dot': 'cake_dot', 'Matcha': 'matcha', 'Chocolate': 'choco', 'Flights': 'box' };
   const tok = p => `<span class="tok">${ic(TOK_IC[p] || 'madeleine', 22)}</span>`;
+  document.querySelectorAll('[data-tok]').forEach(el => { el.outerHTML = tok(el.dataset.tok); });   // Entry's amount rows: logo left of the name
   const LOCATIONS = ['La Mirada', 'Stanton'];
   // Flavors the app stocks (PRODUCTS) plus extra ones that show up in sales.
   const SALES_FLAVORS = ['Lemon Poppy', 'Sea Salt', 'Ube', 'Dot', 'Earl Grey', 'Matcha', 'Chocolate', 'Unknown'];
