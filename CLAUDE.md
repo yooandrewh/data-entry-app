@@ -417,3 +417,11 @@ commit (no more `git rev-list --count`). Pick the bump by how big the change is:
 - **patch** (`v1.51.01`): a fix, spacing/wording tweak, copy or price/recipe data change.
 It started at `v1.51.00` (continuing from build 151, which was the old commit count). Check the live version with
 `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+
+
+## Receipt scan removed (2026-09-30)
+
+The *Scan a receipt* feature (and `api/receipt.js`, the `#rcpScrim` review sheet, `ANTHROPIC_API_KEY` / `RECEIPT_CODE` env vars) was
+**deleted** — not worth paying for the API right now. Earlier sections that describe it are out of date; the env vars can be
+removed from Vercel if they were ever set. Ingredient prices are entered by hand under Baking → Costs → Ingredient prices.
+`rcpToast()` survives only as a small message toast (invoice copy, PDF errors).
