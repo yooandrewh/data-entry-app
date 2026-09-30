@@ -1182,6 +1182,17 @@
     .tab-pill { height: var(--tabbar-h); }
   }
   .home-ver { display: none !important; }
+  /* Data summaries: two compact columns instead of one long list */
+  .db-summary .ds-rows, .db-amts { display: grid; grid-template-columns: 1fr 1fr; column-gap: 18px; }
+  .db-summary .ds-rows .proj-row, .db-amts .proj-row { padding: 5px 0; min-height: 0; font-size: var(--fs-caption); gap: 6px; }
+  .db-summary .ds-rows .proj-row .k, .db-amts .proj-row .k { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .db-summary .ds-rows .tok, .db-amts .tok { width: 20px; height: 20px; flex-basis: 20px; margin-right: 5px; }
+  .db-summary .ds-rows .tok .ic2, .db-amts .tok .ic2 { width: 20px !important; height: 20px !important; }
+  .db-summary .ds-total b { font-size: var(--fs-figure); }
+  .db-summary .ds-break { margin-top: 4px; }
+  .db-summary .ds-flights { margin-top: 6px; }
+  .db-summary .ds-flights .tok { width: 18px; height: 18px; flex-basis: 18px; margin-right: 4px; }
+  .db-summary .ds-flights .tok .ic2 { width: 18px !important; height: 18px !important; }
 </style>
 </head>
 <body>
@@ -1461,7 +1472,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v125 · Sep 30, 12:20 AM</div>
+<div class="ver-badge">v126 · Sep 30, 12:40 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
