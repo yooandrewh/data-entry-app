@@ -389,3 +389,8 @@ picker. The `<select>` itself remains the button and holds the value; choosing a
 normal `change`, so existing handlers are untouched. It's wired by document-level delegation (mousedown +
 iOS touchend `preventDefault`, Enter/Space/↓ from the keyboard, Esc / outside-click / page scroll to close).
 Add `data-native` to a select to opt out. iPhone behaviour relies on the touchend `preventDefault` — verify on device.
+
+**Nav icons (latest):** three hand-drawn line icons at a 1.5 stroke (thin, like the bakery line-icon set):
+Home = a house with a chimney, Data = the bar-chart-with-trend-line (bars are masked so the line has a gap
+around it, `#dataMask`), Baking = an outlined madeleine shell with ridges. Inline SVG with `currentColor`, so
+they follow the active/landing colours. Sized 28px.

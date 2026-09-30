@@ -254,10 +254,10 @@
   }
   /* Line icons rather than emoji: they sit on one baseline, take the tab's colour,
      and stay legible at this size. The whole button is the tap target. */
-  .tabbar button .tic { display: block; height: 26px; }
-  .tabbar button .tic svg { display: block; width: 26px; height: 26px; }
+  .tabbar button .tic { display: block; height: 28px; }
+  .tabbar button .tic svg { display: block; width: 28px; height: 28px; }
   /* Override each icon's own stroke-width — 1.9 at this size read lighter than the label. */
-  .tabbar button .tic svg * { stroke: currentColor; stroke-width: 2; }
+  .tabbar button .tic svg * { stroke: currentColor; stroke-width: 1.5; }
   .tabbar button .tlabel { line-height: 1; white-space: nowrap; }
   .tabbar button.on { color: var(--accent); font-weight: 700; }
   /* Entry keeps its accent pill because it is the primary action, but its LABEL
@@ -1432,13 +1432,13 @@
   </div>
 </div>
 
-<div class="ver-badge">v120 · Sep 29, 10:31 PM</div>
+<div class="ver-badge">v121 · Sep 29, 10:35 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
-  <button data-tab="home" class="on"><span class="tic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 10.5 12 4l8.5 6.5V19a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1z"/><path d="M9.5 20v-6h5v6"/></svg></span><span class="tlabel">Home</span></button>
-  <button data-tab="db"><span class="tic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M4 6.5h16M4 12h16M4 17.5h10"/></svg></span><span class="tlabel">Data</span></button>
-  <button data-tab="plan"><span class="tic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 9.5h17M8.5 3.5v3M15.5 3.5v3"/></svg></span><span class="tlabel">Baking</span></button>
+  <button data-tab="home" class="on"><span class="tic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.2 11.4 12 4l8.8 7.4"/><path d="M5.6 9.8V20h12.8V9.8"/><path d="M10 20v-5.6h4V20"/><path d="M16.4 6.5V4.2h2.2v4.1"/></svg></span><span class="tlabel">Home</span></button>
+  <button data-tab="db"><span class="tic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><mask id="dataMask" maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24"><rect width="24" height="24" fill="#fff" style="stroke:none"/><path d="M3.2 16.6 8.6 11.4 14.6 15.4 20.8 8" style="stroke:#000;stroke-width:4.4" fill="none"/></mask><g mask="url(#dataMask)"><rect x="3.5" y="12.2" width="3" height="7.8"/><rect x="8.5" y="8.6" width="3" height="11.4"/><rect x="13.5" y="4" width="3" height="16"/><rect x="18.5" y="10" width="3" height="10"/></g><path d="M4.2 15.7 7.6 12.4M9.6 12.1 13.6 14.8M15.6 14.4 20.8 8"/><circle cx="3.2" cy="16.6" r="1.1"/><circle cx="8.6" cy="11.4" r="1.4"/><circle cx="14.6" cy="15.4" r="1.4"/><path d="M17.7 7.6 20.8 8 20.2 11.1"/></svg></span><span class="tlabel">Data</span></button>
+  <button data-tab="plan"><span class="tic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.7C8.2 19.7 4.8 15.7 4.8 11c0-3.4 1.8-6 4.2-6.7 1-.6 2-.4 3 .1 1-.5 2-.7 3-.1 2.4.7 4.2 3.3 4.2 6.7 0 4.7-3.4 8.7-7.2 9.7z"/><path d="M12 20C9.9 16.5 8.7 11.5 9.1 5"/><path d="M12 20c0-5 0-10.500 0-14.700"/><path d="M12 20c2.100-3.500 3.300-8.500 2.900-15"/></svg></span><span class="tlabel">Baking</span></button>
 </div></nav>
 
 <!-- ===== Confirmation sheet ===== -->
