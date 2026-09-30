@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Italiana&display=swap" rel="stylesheet" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-<meta name="color-scheme" content="dark" />
+<meta name="color-scheme" content="light" />
 <meta name="apple-mobile-web-app-title" content="Kairos" />
 <link rel="apple-touch-icon" href="icon.png" />
 <link rel="icon" type="image/png" href="icon.png" />
@@ -1018,32 +1018,6 @@
   .home-hero { padding-top: calc(var(--safe-top) + 64px); }
   .hero-kicker { position: absolute; top: calc(var(--safe-top) + 24px); left: 20px; }
 
-  /* ================= EXPERIMENT: inverted colours — Deep Plum ground, peach ink =================
-     Delete this block to go back to the peach-ground look. */
-  :root {
-    color-scheme: dark;
-    --bg: #341f37; --card: #432a47; --field: rgba(248,226,208,0.10); --sep: rgba(248,226,208,0.16);
-    --text: #f8e2d0; --muted: rgba(248,226,208,0.62); --plum: #f8e2d0;
-    --accent: #f0a875; --tint: rgba(248,226,208,0.10);
-    --grad: linear-gradient(#f0a875, #f0a875);
-  }
-  input, select, textarea { color: var(--text); }
-  .home-card { background: var(--card); }
-  /* selected + primary: apricot with plum text */
-  .seg button.on, .seg button.on[data-type], .pill.on, .chip-row button.on, .rec-scale button.on, .bakedays button.on,
-  .btn-primary, .submit, .db-new, .db-filter button.on, .db-filter select.on { color: #341f37; }
-  .seg button.on .ic svg { stroke: #341f37; }
-  /* nav: an apricot bar with plum icons */
-  .tab-pill { background: #f0a875; }
-  .tabbar button { color: rgba(52,31,55,0.68); }
-  .tabbar button.on { background: rgba(52,31,55,0.16); color: #341f37; }
-  /* dropdown arrows: peach on the dark tint, plum on the apricot selected segment */
-  .filter-bar select, .home-card .filter-bar select { background-color: var(--tint); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23f8e2d0' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); color: var(--text); }
-  .db-filter select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23f8e2d0' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
-  .db-filter select.on { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23341f37' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"), var(--grad); }
-  .rec-beta-note { color: #f0a875; background: rgba(240,168,117,0.14); }
-  .hp-head, .hp-back { color: var(--text); }
-  .db-day { background: var(--bg); }
   /* ================= Bottom nav: one solid bar, flush to the screen edges (not a floating pill) ================= */
   :root { --tabbar-h: 62px; }
   .tabbar, body.home-landing .tabbar { padding: 0; height: calc(var(--tabbar-h) + var(--safe-bottom)); background: #f0a875; border-top: none; }
@@ -1077,12 +1051,50 @@
   .kt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; padding: 4px 0 12px; }
   .kt-grid label { display: flex; flex-direction: column; gap: 3px; font-size: var(--fs-caption); color: var(--muted); }
   .kt-grid input { font-size: var(--fs-body); padding: 8px 10px; width: 100%; border: none; background: var(--tint); color: var(--text); }
+
+  /* ================= Photo palette, bright (final block — wins over everything above) =================
+     Colours sampled from the Home photo: caramel crust #a45a22, cream plate #d6cbb9, light backdrop #e0dede,
+     shadow navy #232a33. Light ground, navy ink, caramel for selected / primary / links. The Home landing
+     itself stays on the photo. */
+  :root {
+    color-scheme: light;
+    --bg: #f2eee7; --card: #fbf9f5; --field: #e8e2d6; --sep: #ddd5c6;
+    --text: #232a33; --muted: #6d6660; --plum: #232a33;
+    --accent: #a45a22; --tint: rgba(35,42,51,0.07);
+    --grad: linear-gradient(#a45a22, #a45a22);
+  }
+  input, select, textarea { color: var(--text); }
+  .home-card { background: var(--card); }
+  /* selected + primary: caramel with white text */
+  .seg button.on, .seg button.on[data-type], .pill.on, .chip-row button.on, .rec-scale button.on, .bakedays button.on,
+  .btn-primary, .submit, .db-new, .db-filter button.on, .db-filter select.on { color: #fff; }
+  .seg button.on .ic svg { stroke: #fff; }
+  /* nav: one light bar, the current tab in caramel */
+  .tabbar, body.home-landing .tabbar { background: #fbf9f5; border-top: 1px solid var(--sep); }
+  .tabbar button { color: var(--muted); }
+  .tabbar button.on { background: rgba(164,90,34,0.12); color: var(--accent); }
+  /* dropdown arrows */
+  .filter-bar select, .home-card .filter-bar select { background-color: var(--tint); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23232a33' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); color: var(--text); }
+  .db-filter select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23232a33' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+  .db-filter select.on { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23ffffff' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"), var(--grad); }
+  .rec-beta-note { color: #8a4b00; background: rgba(255,149,0,0.12); }
+  .hp-head, .hp-back { color: var(--text); }
+  .db-day { background: var(--bg); }
+  .ver-badge { background: var(--bg); color: var(--muted); }
+  .home-season { background: #fbf9f5; color: #232a33; }
+
+  /* ---- Home landing: the buttons sit in the middle of the screen, the version at the bottom ---- */
+  #view-home:not(.paged) .wrap { display: flex; flex-direction: column;
+    min-height: calc(100vh - var(--safe-top) - 4px - var(--safe-bottom) - var(--footer-h) - var(--tabbar-h) - 12px); }
+  #view-home:not(.paged) .home-hero { min-height: 0; padding-bottom: 8px; flex: none; }
+  #view-home:not(.paged) .home-menu { margin: auto 0; }
+  #view-home:not(.paged) .home-ver { margin: 0 0 8px; }
 </style>
 </head>
 <body>
 
 <!-- Version badge — bump on every deploy (v = commit count, time = deploy time PST) -->
-<div class="ver-badge">v112 · Sep 29, 6:42 PM</div>
+<div class="ver-badge">v113 · Sep 29, 6:44 PM</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">

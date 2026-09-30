@@ -348,3 +348,13 @@ editable assumptions (*Kitchen Times*, saved in `kitchenTimes.v1`, defaults in `
 madeleine, + 30 min cleaning; **total to book** = prep + baking. **Setup (15 min) is shown but not booked.**
 *Madeleines per pan = 12 is an assumption* (a batch is 18) — change it in Kitchen Times if your pans differ.
 Home has a **Book Commercial Kitchen** link (opens The Food Corridor's booking page in a new tab).
+
+## Photo palette, bright (2026-09-29, latest — replaces the plum/peach themes above)
+
+The rest of the app takes its colours from the Home photo and is **light**: caramel crust `#a45a22`
+(`--accent`: selected, primary, links, values), cream plate → ground `#f2eee7` / cards `#fbf9f5`, shadow navy
+`#232a33` (ink), warm grey `#6d6660` (muted). The inverted-plum experiment is gone. This is the last CSS
+block ("Photo palette, bright") and wins over the older ones. The Home *landing* still sits on the photo
+with transparent outlined buttons, centred vertically (`#view-home:not(.paged)` is a flex column with the
+menu on `margin: auto`); Home's sub-pages and every other screen use the bright theme. Apricot/plum/mauve
+from the first palette are no longer used.
