@@ -320,7 +320,7 @@ the final CSS block wins, so edit that one. Older Soft UI / Keys / Flat-gradient
 stylesheet ("EXPERIMENT: inverted colours") — **delete it to get the peach-ground look back**. Note `--plum`
 is deliberately re-pointed to peach there (it means "the ink colour on tinted controls"). Paper documents
 (invoice, labels, bake sheet) keep their own dark-on-white colours. All big titles (`h1`, Home title, sheet
-`h2`, Home page titles) are **Italiana**; **This season** is a 46px solid peach button.
+`h2`, Home page titles) are **Italiana**; **This season** is a compact 36px solid peach button.
 
 **Bottom nav (latest):** one solid apricot bar, full width and flush to the bottom edge (not a floating
 pill) — `--tabbar-h` is 62px. The active tab is a darker tint; no focus outline. The earlier floating-pill
