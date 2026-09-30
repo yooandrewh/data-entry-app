@@ -1275,6 +1275,16 @@
   body:not(.printing-bake) #bsScrim .bs2-summary b { display: block; font-size: var(--fs-body); margin-bottom: 2px; }
   body:not(.printing-bake) #bsScrim .bs2-sum-t { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--sep); color: var(--accent); font-weight: 700; }
   @media print { .bs2-summary { display: none; } }
+  /* Forecast cards: tight, simple first view */
+  #projList .proj-card { padding: 10px 12px 6px; margin-bottom: 8px; }
+  #projList .proj-card .info-btn { margin-top: 2px; }
+  #projList .proj-runout { margin: 0 0 4px; }
+  #projList .pr-fc { padding: 5px 0; min-height: 0; }
+  #projList .pr-fc .fc-v { display: flex; align-items: baseline; justify-content: flex-end; gap: 8px; }
+  #projList .pr-fc .fc-sub { display: inline; margin: 0; }
+  #projList .info-body { margin-top: 4px; }
+  #projList .info-body .pr-fc .fc-v { flex-direction: column; align-items: flex-end; gap: 0; }
+  #projList .info-body .pr-fc .fc-sub { display: block; }
 </style>
 </head>
 <body>
@@ -1561,7 +1571,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v146 · Sep 30, 9:00 AM</div>
+<div class="ver-badge">v147 · Sep 30, 9:20 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -3375,21 +3385,28 @@
       const ro = runoutBand(st);
       // Stock, run-out and rate on one line per flavor — the old chip row repeated
       // the same flavor names right above this list.
-      const rateRows = PRODUCTS.map(p => {
+      // First view: one short line per flavor (left · run-out date). Rates and bands are behind the i.
+      const rateRows = PRODUCTS.map(p =>
+        `<div class="proj-row pr-fc"><span class="k">${tok(p)}${p}</span><span class="fc-v"><b>${st.stock[p]}</b> left <span class="fc-sub"><b>${fmtD(pick(ro, p))}</b></span></span></div>`).join('');
+      const detailRows = PRODUCTS.map(p => {
         const dp = st.sellDaysFor ? st.sellDaysFor[p] : st.sellDays;
         const span = (dp && dp < st.sellDays) ? ` <span style="color:var(--muted)">(${dp}d)</span>` : '';
-        // Stock on the first line, run-out and rate under it — one line held all
-        // three and the flavour name wrapped on a phone.
-        return `<div class="proj-row pr-fc"><span class="k">${tok(p)}${p}</span><span class="fc-v"><b>${st.stock[p]}</b> left<span class="fc-sub"><b>${fmtD(pick(ro, p))}</b>${fmtBand(ro.lo[p], ro.hi[p])} · ${st.rate[p].toFixed(1)}/day${span}</span></span></div>`;
+        return `<div class="proj-row pr-fc"><span class="k">${p}</span><span class="fc-v"><b>${fmtD(pick(ro, p))}</b>${fmtBand(ro.lo[p], ro.hi[p])}<span class="fc-sub">${st.rate[p].toFixed(1)}/day${span}</span></span></div>`;
       }).join('');
       const runoutTxt = ro.firstD === Infinity
         ? 'No recent sales — can\'t project'
-        : `Runs out in <span class="big">${fmtD(pickFirst(ro))}</span>${fmtBand(ro.firstLo, ro.firstHi)}<span class="pr-first">${ro.firstP} runs out first</span>`;
+        : `Runs out in <span class="big">${fmtD(pickFirst(ro))}</span><span class="pr-first">${ro.firstP} first</span>`;
       html += `<div class="proj-card">
-          <div class="proj-sub" style="margin-top:2px">${st.stockTotal} on hand · counted ${fmtAgo(st.invDate)} · rate from ${st.sellDays} sales ${st.sellDays === 1 ? 'day' : 'days'} · ±${Math.round(st.dailyCV * 100)}% daily swing${trendNote(st)}</div>
-          ${staleWarn(st)}
+          ${infoBtn()}
           <div class="proj-runout">${runoutTxt}</div>
+          ${staleWarn(st)}
           ${rateRows}
+          <div class="info-body" hidden>
+            <div class="proj-sub">${st.stockTotal} on hand · counted ${fmtAgo(st.invDate)} · rate from ${st.sellDays} sales ${st.sellDays === 1 ? 'day' : 'days'} · ±${Math.round(st.dailyCV * 100)}% daily swing${trendNote(st)}</div>
+            <div class="be-section-label">Run-out and daily rate</div>
+            ${runoutTxt.indexOf('Runs out') === 0 ? `<div class="be-effort">Overall run-out band: ${fmtD(pickFirst(ro))}${fmtBand(ro.firstLo, ro.firstHi)}</div>` : ''}
+            ${detailRows}
+          </div>
         </div>`;
     }
     list.innerHTML = html;
