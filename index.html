@@ -1253,6 +1253,7 @@
   .bh-row { display: flex; align-items: center; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--sep); cursor: pointer; }
   .bh-main { flex: 1; min-width: 0; } .bh-main small { display: block; color: var(--muted); font-size: var(--fs-caption); }
   #bsKitchen { padding: 0 14px; } #bsKitchen .be-section-label { margin-top: 10px; }
+  .tm-plan-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--sep); }
 </style>
 </head>
 <body>
@@ -1539,7 +1540,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v136 · Sep 30, 5:05 AM</div>
+<div class="ver-badge">v137 · Sep 30, 5:30 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -3508,9 +3509,9 @@
   function stopTick() { if (tmTick) { clearInterval(tmTick); tmTick = null; } }
   const tmClock = ms => { const t = Math.max(0, Math.floor(ms / 1000)); const h = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60), sec = t % 60; const p = n => String(n).padStart(2, '0'); return (h ? h + ':' : '') + p(m) + ':' + p(sec); };
   const tmMin = ms => Math.round(ms / 6000) / 10;   // minutes, 1 decimal
-  function tmStart(task, note, qty) {
+  function tmStart(task, note, qty, plan) {
     if (!TM_TASKS[task]) task = 'Other';
-    TM.running.push({ id: Date.now() + '-' + Math.random().toString(36).slice(2, 6), task, note: (note || '').slice(0, 120), qty: parseFloat(qty) > 0 ? parseFloat(qty) : 0, start: Date.now() });
+    TM.running.push({ id: Date.now() + '-' + Math.random().toString(36).slice(2, 6), task, note: (note || '').slice(0, 120), qty: parseFloat(qty) > 0 ? parseFloat(qty) : 0, start: Date.now(), plan: plan > 0 ? plan : 0 });
     tmSave(); track('timer_start', { task });
   }
   function tmStop(id, task) {
@@ -3548,7 +3549,7 @@
     const taskOpts = Object.keys(TM_TASKS).map(t => `<option${t === (keep.task || 'Batch prep') ? ' selected' : ''}>${t}</option>`).join('');
     const running = TM.running.length ? TM.running.slice().reverse().map(r =>
       `<div class="tm-run"><div class="tm-clock" data-tm-clock="${r.id}">${tmClock(now - r.start)}</div>
-        <div class="tm-info"><b>${esc(r.task)}</b>${r.qty ? ` · ${r.qty} ${TM_TASKS[r.task]?.unit || ''}` : ''}${r.note ? `<div class="tm-note">${esc(r.note)}</div>` : ''}</div>
+        <div class="tm-info"><b>${esc(r.task)}</b>${r.qty ? ` · ${r.qty} ${TM_TASKS[r.task]?.unit || ''}` : ''}${r.plan ? `<div class="tm-note">Plan: ${fmtDur(r.plan)}</div>` : ''}${r.note ? `<div class="tm-note">${esc(r.note)}</div>` : ''}</div>
         <button type="button" class="btn-primary tm-stop" data-tm-stop="${r.id}">Stop</button>
         <button type="button" class="tm-x" data-tm-drop="${r.id}" aria-label="Discard timer">✕</button></div>`).join('')
       : `<div class="tm-empty">Nothing running.</div>`;
@@ -3561,13 +3562,23 @@
     const canUse = avgs.some(a => a.mine != null);
     const log = TM.log.slice(0, 40).map(l =>
       `<div class="tm-log"><div class="tm-l1"><b>${esc(l.task)}</b>${l.qty ? ` · ${l.qty} ${TM_TASKS[l.task]?.unit || ''}` : ''}<span class="tm-dur">${tmClock(l.end - l.start)}</span></div>
-        <div class="tm-note">${tmFmtWhen(l.start)}${l.note ? ' · ' + esc(l.note) : ''}</div>
+        <div class="tm-note">${tmFmtWhen(l.start)}${l.plan ? ` · planned ${fmtDur(l.plan)}` : ''}${l.note ? ' · ' + esc(l.note) : ''}</div>
         <button type="button" class="tm-x" data-tm-del="${l.id}" aria-label="Delete">✕</button></div>`).join('') || `<div class="tm-empty">Timed tasks show up here.</div>`;
+    const pe = bsEffort();
+    const planStep = (task, label, qty, unit, min) => `<div class="tm-plan-row"><div class="tm-info"><b>${label}</b><div class="tm-note">${qty ? `${qty} ${unit} · ` : ''}plan ${fmtDur(min)}</div></div><button type="button" class="btn-primary tm-stop" data-tm-plan="${task}|${qty}|${min}">Start</button></div>`;
+    const planCard = pe
+      ? `<div class="group-label">From my bake plan</div><div class="card"><div class="tm-list"><div class="tm-note" style="padding:4px 0 6px">${esc(pe.names.join(' · '))}</div>
+          ${planStep('Batch prep', 'Batch prep', Math.ceil(pe.batches), 'batches', pe.prep)}
+          ${planStep('Baking', 'Baking', pe.rounds, 'pan loads', pe.oven)}
+          ${pe.glazed ? planStep('Glazing', 'Glazing', pe.glazed, 'pieces', pe.glaze) : ''}
+          <button type="button" class="btn-ghost" id="tmHist" style="margin-top:8px">Saved plans</button></div></div>`
+      : `<div class="group-label">From my bake plan</div><div class="card"><div class="tm-list"><div class="tm-empty">Add madeleines to the bake plan (Home → Baking Plan) and prep, baking and glazing timers appear here, pre-filled with the counts and planned times.</div><button type="button" class="btn-ghost" id="tmHist">Saved plans</button></div></div>`;
     const base = location.origin + location.pathname;
     const links = ['Batch prep', 'Baking', 'Glazing', 'Cleaning'].map(t => `<div class="tm-url"><b>Start ${t.toLowerCase()}</b><code>${base}?timer=start&amp;task=${encodeURIComponent(t)}</code></div>`).join('')
       + `<div class="tm-url"><b>Stop</b><code>${base}?timer=stop</code></div><div class="tm-url"><b>Stop one task</b><code>${base}?timer=stop&amp;task=Glazing</code></div>`;
     root.innerHTML = `
       <div class="bm-row"><button type="button" class="btn-ghost bm-btn" data-bm>Baking Mode: Off</button><span class="bm-hint">Keeps the screen on while you bake</span></div>
+      ${planCard}
       <div class="card"><div class="tm-form">
         <div class="inv-field"><span>Task</span><select id="tmTask">${taskOpts}</select></div>
         <div class="inv-field" id="tmQtyRow"><span id="tmQtyLbl"></span><input type="number" inputmode="decimal" min="0" step="any" id="tmQty" value="${esc(keep.qty || '')}" /></div>
@@ -3603,6 +3614,11 @@
   }
   document.getElementById('homeTimers').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.tmPlan) {
+      const [task, qty, min] = b.dataset.tmPlan.split('|'); const pe = bsEffort();
+      tmStart(task, 'Bake plan: ' + (pe ? pe.names.join(', ') : ''), qty, parseFloat(min)); renderTimers(); return;
+    }
+    if (b.id === 'tmHist') { document.getElementById('bsHist').click(); return; }
     if (b.id === 'tmStart') {
       tmStart(document.getElementById('tmTask').value, document.getElementById('tmNote').value, document.getElementById('tmQty').value);
       document.getElementById('tmNote').value = ''; document.getElementById('tmQty').value = ''; renderTimers();
@@ -4523,20 +4539,24 @@
   }
   // Kitchen time for what's on the bake plan: only the madeleines are timed (batches × 18 pieces each);
   // fillings, scones and the rest aren't part of the kitchen-time model.
-  function paintBsKitchen() {
-    const el = document.getElementById('bsKitchen'); if (!el) return;
-    let batches = 0, pieces = 0, glazed = 0;
+  function bsEffort() {
+    let batches = 0, pieces = 0, glazed = 0; const names = [];
     for (const b of bakeSheet) {
       const f = bsFind(b.key); if (!f || f.sec !== 'mad') continue;
-      const n = b.b * BATCH_YIELD; batches += b.b; pieces += n;
+      const n = b.b * BATCH_YIELD; batches += b.b; pieces += n; names.push(`${f.it.name} ×${rFmt(b.b)}`);
       if (GLAZED.includes(f.it.name.replace(/\s*madeleines?$/i, '').trim())) glazed += n;
     }
-    if (!pieces) { el.innerHTML = ''; return; }
+    if (!pieces) return null;
     const rounds = Math.ceil(Math.ceil(pieces / KT.perPan) / KT.pans);
     const prep = Math.round(Math.ceil(batches / KT.prepGroup) * KT.prepMin);
     const glaze = Math.round(glazed * KT.glazeSec / 60);
     const baking = rounds * (KT.bakeMin + KT.coolMin) + glaze + KT.cleanMin;
-    el.innerHTML = kitchenRows({ pieces, prep, baking, min: prep + baking, rounds, glaze }).replace('be-section-label', 'be-section-label bs-kt-label');
+    return { batches, pieces, glazed, rounds, prep, glaze, baking, min: prep + baking, names, oven: rounds * KT.bakeMin, cool: rounds * KT.coolMin };
+  }
+  function paintBsKitchen() {
+    const el = document.getElementById('bsKitchen'); if (!el) return;
+    const e = bsEffort(); if (!e) { el.innerHTML = ''; return; }
+    el.innerHTML = kitchenRows(e);
   }
   // Ingredient line as it's written on the sheet: "190 grams Whole eggs" (sentence case, brackets → comma).
   const bsLineName = n => {
