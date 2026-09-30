@@ -257,7 +257,7 @@
   .tabbar button .tic { display: block; height: 28px; }
   .tabbar button .tic svg { display: block; width: 28px; height: 28px; }
   /* Override each icon's own stroke-width — 1.9 at this size read lighter than the label. */
-  .tabbar button .tic svg * { stroke: currentColor; stroke-width: 1.5; }
+  .tabbar button .tic svg * { stroke: currentColor; stroke-width: 1.15; }
   .tabbar button .tlabel { line-height: 1; white-space: nowrap; }
   .tabbar button.on { color: var(--accent); font-weight: 700; }
   /* Entry keeps its accent pill because it is the primary action, but its LABEL
@@ -1154,7 +1154,7 @@
   select:focus, select:focus-visible { outline: none; border-color: var(--accent); }
 
   /* ---- Icon set ---- */
-  .ic2 { width: 1.2em; height: 1.2em; vertical-align: -0.24em; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+  .ic2 { width: 1.2em; height: 1.2em; vertical-align: -0.24em; fill: none; stroke: currentColor; stroke-width: 1.05; stroke-linecap: round; stroke-linejoin: round; flex: none; }
   [data-ic] { display: inline-block; line-height: 0; }
   [data-ic] .ic2 { width: 20px; height: 20px; vertical-align: -5px; }
   .db-empty .big { font-size: 0; margin-bottom: 12px; }
@@ -1166,6 +1166,9 @@
   .sea-row .ic2 { width: 20px; height: 20px; margin-right: 6px; vertical-align: -4px; }
   #recSection button { display: flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; }
   #recSection [data-ic] { display: inline-flex; }
+  /* Product marks are icons now, not monogram squares */
+  .tok { background: none !important; width: 26px; flex-basis: 26px; height: 26px; margin-right: 8px; }
+  .tok .ic2 { width: 26px !important; height: 26px !important; vertical-align: middle; }
 </style>
 </head>
 <body>
@@ -1251,7 +1254,6 @@
 
     <!-- Invoice -->
     <div id="homeInvoice" hidden>
-      <div class="warn" style="text-align:left;margin:2px 4px 8px">Built from delivery entries for one store. Goodwill, transfers and deleted entries are left out.</div>
       <div class="card"><div class="sum" style="margin:0 12px">
         <div class="inv-field"><span>Store</span><select id="invStore"><option>La Mirada</option><option>Stanton</option></select></div>
         <div class="inv-field"><span>From</span><input type="date" id="invFrom" /></div>
@@ -1446,7 +1448,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v122 · Sep 29, 10:44 PM</div>
+<div class="ver-badge">v123 · Sep 29, 11:30 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -1657,7 +1659,8 @@
   // Dubai Ball) and rendered at different widths, so rows never lined up.
   const PRODUCT_TOKEN = { 'Lemon Poppy': 'LP', 'Sea Salt': 'SS', 'Earl Grey': 'EG', 'Pumpkin Muffin': 'PM', 'Dubai Ball': 'DB', 'Ube': 'UB', 'Dot': 'DT', 'Matcha': 'MA', 'Chocolate': 'CH', 'Unknown': '?', 'Flights': 'FL' };
   const PRODUCT_COLOR = { 'Lemon Poppy': '#c99306', 'Sea Salt': '#4a7ba7', 'Earl Grey': '#6b7280', 'Pumpkin Muffin': '#d4620a', 'Dubai Ball': '#a0662d', 'Ube': '#7c5aa6', 'Dot': '#c2557a', 'Matcha': '#5a8f4e', 'Chocolate': '#7b4b2a', 'Unknown': '#9a9ba3', 'Flights': '#8a8d96' };
-  const tok = p => `<span class="tok" style="background:${PRODUCT_COLOR[p] || '#9a9ba3'}">${PRODUCT_TOKEN[p] || '··'}</span>`;
+  const TOK_IC = { 'Lemon Poppy': 'lemon', 'Sea Salt': 'madeleine', 'Earl Grey': 'teacup', 'Pumpkin Muffin': 'pumpkin', 'Dubai Ball': 'nut', 'Ube': 'ube', 'Dot': 'cake_dot', 'Matcha': 'matcha', 'Chocolate': 'choco', 'Flights': 'box' };
+  const tok = p => `<span class="tok">${ic(TOK_IC[p] || 'madeleine', 22)}</span>`;
   const LOCATIONS = ['La Mirada', 'Stanton'];
   // Flavors the app stocks (PRODUCTS) plus extra ones that show up in sales.
   const SALES_FLAVORS = ['Lemon Poppy', 'Sea Salt', 'Ube', 'Dot', 'Earl Grey', 'Matcha', 'Chocolate', 'Unknown'];
