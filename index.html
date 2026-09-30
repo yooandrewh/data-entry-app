@@ -1254,6 +1254,10 @@
   .bh-main { flex: 1; min-width: 0; } .bh-main small { display: block; color: var(--muted); font-size: var(--fs-caption); }
   #bsKitchen { padding: 0 14px; } #bsKitchen .be-section-label { margin-top: 10px; }
   .tm-plan-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--sep); }
+  .info-btn { float: right; width: 24px; height: 24px; padding: 0; border: 1px solid var(--muted); background: transparent; color: var(--muted); font-family: "Cormorant Garamond", Georgia, serif; font-style: italic; font-weight: 700; font-size: var(--fs-body); line-height: 1; cursor: pointer; border-radius: 50% !important; }
+  .info-btn.on { color: var(--accent); border-color: var(--accent); background: rgba(164,90,34,0.16); }
+  .info-body { margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--sep); }
+  .info-body[hidden] { display: none; }
 </style>
 </head>
 <body>
@@ -1540,7 +1544,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v137 · Sep 30, 5:30 AM</div>
+<div class="ver-badge">v138 · Sep 30, 6:00 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -3689,38 +3693,51 @@
         </div>`;
     }).join('');
     return `<div class="proj-card">
-        <h3>${title}</h3>
-        <div class="proj-sub">${subLine}</div>
+        <h3>${title}${infoBtn()}</h3>
         ${totNeed
-          ? `<div class="proj-runout">Make <span class="big">${totNeed}</span> madeleines · ${batchLabel(totBatches)} · ~${fmtDur(effAll.min || 0)} to book</div>`
+          ? `<div class="proj-runout">Make <span class="big">${totNeed}</span> <span style="color:var(--muted);font-weight:600">${batchLabel(totBatches)} · ${fmtDur(effAll.min || 0)} to book</span></div>`
           : `<div class="proj-runout" style="color:var(--green)">On hand covers you through ${fmtWhen(target)}</div>`}
         ${flavorRows}
-        ${kitchenRows(effAll)}
         ${evRows}
+        <div class="info-body" hidden>
+          <div class="proj-sub">${subLine}</div>
+          ${kitchenRows(effAll)}
+        </div>
       </div>`;
   }
   // A lump-sum card (no bake dates picked) — single store OR combined.
   function lumpCardHtml(title, subLine, bakeMap, haveMap, expMap) {
-    let rows = '', bakeSafe = 0, bakeExp = 0;
+    let rows = '', haveRows = '', bakeSafe = 0, bakeExp = 0;
     for (const p of PRODUCTS) {
       const safe = bakeMap[p];
       bakeSafe += safe; bakeExp += Math.max(0, Math.ceil(expMap[p] - haveMap[p]));
       const right = safe > 0
         ? `<b>bake ${safe}</b>`
         : `<span style="color:var(--green);font-weight:700">enough</span>`;
-      rows += `<div class="proj-row pr-fc"><span class="k">${tok(p)}${p}</span><span class="fc-v">${right}<span class="fc-sub">${safe > 0 ? batchLabel(flavorBatches(safe)) + " · " : ""}have ${haveMap[p]}</span></span></div>`;
+      rows += `<div class="proj-row pr-fc"><span class="k">${tok(p)}${p}</span><span class="fc-v">${right}${safe > 0 ? `<span class="fc-sub">${batchLabel(flavorBatches(safe))}</span>` : ''}</span></div>`;
+      haveRows += `<div class="proj-row"><span class="k">${p}</span><span>have <b>${haveMap[p]}</b> · expected need ${Math.ceil(expMap[p])}</span></div>`;
     }
     const eff = bakeEffort(bakeMap);
-    const effLine = bakeSafe > 0 ? `<div class="be-effort" style="margin:2px 0 6px">${batchLabel(eff.batches)} total</div>${kitchenRows(eff)}` : '';
+    const brief = bakeSafe > 0 ? `<div class="be-effort" style="margin:2px 0 6px">${batchLabel(eff.batches)} · ${fmtDur(eff.min)} to book</div>` : '';
     return `<div class="proj-card">
-        <h3>${title}</h3>
-        <div class="proj-sub">${subLine}</div>
-        <div class="proj-runout">Make <span class="big">${bakeSafe}</span> to be safe <span style="color:var(--muted);font-weight:600">(~${bakeExp} expected)</span></div>
-        ${effLine}
+        <h3>${title}${infoBtn()}</h3>
+        <div class="proj-runout">Make <span class="big">${bakeSafe}</span></div>
+        ${brief}
         ${rows}
+        <div class="info-body" hidden>
+          <div class="proj-sub">${subLine}</div>
+          <div class="be-effort">“Make” is enough to stay safe through the target date; about ${bakeExp} is the expected need.</div>
+          <div class="be-section-label">On hand</div>${haveRows}
+          ${bakeSafe > 0 ? kitchenRows(eff) : ''}
+        </div>
       </div>`;
   }
-
+  function infoBtn() { return `<button type="button" class="info-btn" data-info aria-label="Details" aria-expanded="false">i</button>`; }
+  document.addEventListener('click', e => {
+    const b = e.target.closest('[data-info]'); if (!b) return;
+    const body = b.closest('.proj-card').querySelector('.info-body'); if (!body) return;
+    body.hidden = !body.hidden; b.setAttribute('aria-expanded', String(!body.hidden)); b.classList.toggle('on', !body.hidden);
+  });
   // Redistribute a 2-date schedule: shift a fraction r of the later day's load onto
   // the earlier day (r=0 → bake as-needed; r=1 → bake it all on the first day). Every
   // position stays safe — the total per flavor is unchanged, only WHEN it's baked.
