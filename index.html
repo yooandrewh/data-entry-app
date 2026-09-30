@@ -1603,7 +1603,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.55.02 · Sep 30, 5:30 PM</div>
+<div class="ver-badge">v1.56.00 · Sep 30, 6:00 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -4633,8 +4633,9 @@
   const rcpToast = msg => { document.getElementById('toastMsg').textContent = msg; const t = document.getElementById('toast'); t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2600); };
 
   // ===== Bake sheet: pick recipes + batches → printable list with combined ingredient totals =====
-  let bakeSheet = [];
-  try { bakeSheet = (JSON.parse(localStorage.getItem('bakeSheet.v1')) || []).map(b => b.key === 'mad:Pumpkin Pie Spice' ? { ...b, key: 'other:pumpkinmuffin' } : b); } catch {}
+  // The bake plan starts from this season's recipes every time the app loads (anything else you add lasts until you reload;
+  // use "Save this plan" to keep one). Batches then follow the forecast where it has a number.
+  let bakeSheet = COST_SECTIONS.flatMap(([sec, , get]) => get().filter(it => isSeasonal(sec, it)).map(it => ({ key: costItemKey(sec, it), b: 1, plan: false })));
   const saveBakeSheet = () => { try { localStorage.setItem('bakeSheet.v1', JSON.stringify(bakeSheet)); } catch {} };
   // Light merge only (spelling variants of the same thing) — unlike pricing, egg yolk stays separate from whole eggs.
   const BS_ALIAS = { 'whole eggs': 'Eggs', 'egg': 'Eggs', 'granulated sugar': 'Sugar', 'white sugar': 'Sugar', 'light brown sugar': 'Brown Sugar', 'all-purpose flour': 'All Purpose Flour', 'pure vanilla extract': 'Vanilla Extract', 'kosher salt': 'Salt' };
@@ -4661,8 +4662,12 @@
   }
   function renderBakeSheet() {
     const pick = document.getElementById('bsPick');
-    const opts = COST_SECTIONS.flatMap(([sec, , get]) => get().filter(it => isSeasonal(sec, it)).map(it => ({ sec, it })));
-    pick.innerHTML = `<option value="" selected disabled>Add a recipe…</option>` + opts.map(({ sec, it }) => `<option value="${esc(costItemKey(sec, it))}" data-icon="${recKey(it.name)}">${esc(costItemName(sec, it))}</option>`).join('');
+    const optHtml = ({ sec, it }) => `<option value="${esc(costItemKey(sec, it))}" data-icon="${recKey(it.name)}">${esc(costItemName(sec, it))}</option>`;
+    const seasonal = COST_SECTIONS.flatMap(([sec, , get]) => get().filter(it => isSeasonal(sec, it)).map(it => ({ sec, it })));
+    const rest = COST_SECTIONS.map(([sec, label, get]) => [label, get().filter(it => !isSeasonal(sec, it)).map(it => ({ sec, it }))]).filter(([, l]) => l.length);
+    pick.innerHTML = `<option value="" selected disabled>Add a recipe…</option>`
+      + (seasonal.length ? `<optgroup label="This season">${seasonal.map(optHtml).join('')}</optgroup>` : '')
+      + rest.map(([label, l]) => `<optgroup label="${label}">${l.map(optHtml).join('')}</optgroup>`).join('');
     const rows = bakeSheet.map((b, i) => { const f = bsFind(b.key); if (!f) return ''; const y = f.sec === 'mad' ? BATCH_YIELD : costDefaultYield(f.sec, f.it);
       return `<div class="bs-item" data-bi="${i}"><div class="nm">${esc(costItemName(f.sec, f.it))}<small>${y ? `≈ ${rFmt(b.b * y)} pieces` : ''}${b.plan ? `${y ? ' · ' : ''}from plan` : ''}</small></div>
         <div class="bs-step"><button type="button" data-bs="-">−</button><input type="number" inputmode="decimal" step="0.5" min="0.5" value="${rFmt(b.b)}" data-bs="n" aria-label="Batches"><button type="button" data-bs="+">+</button></div>

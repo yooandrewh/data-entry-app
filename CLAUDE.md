@@ -436,3 +436,11 @@ column in the Deliveries and Inventory tabs: `api/_sheets.js` adds that header c
 madeleine flavors), so its forecast rate is 0 and run-out reads ∞ until one exists — deliveries, inventory and stock on hand work.
 The bake plan's auto-fill maps `mad:Maple Pecan` → Maple Pecan (`BS_PRODUCT`), but with no sales rate the plan won't ask for any.
 To add another product later, follow the checklist at the top of this file and, for the sheet column, add its name to `AUTO_COLUMNS`.
+
+
+## Bake plan recipe picker (2026-09-30)
+
+The Bake Plan's *Add a recipe* dropdown lists **every** recipe — a "This season" group first, then Madeleines / Fillings / Scones / Other.
+The plan itself **starts from this season's recipes on every app load** (`bakeSheet` is no longer restored from `bakeSheet.v1`); anything
+added by hand lasts until the next reload — use *Save this plan* to keep one. The forecast still fills/updates batches for mapped products
+(`BS_PRODUCT`) unless you've edited that recipe by hand.
