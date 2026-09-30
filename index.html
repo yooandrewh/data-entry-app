@@ -716,12 +716,106 @@
     display: flex; align-items: center; gap: 8px;
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  /* ================= Soft UI =================
+     Buttons are raised from one shared surface with paired light/dark shadows and sink when
+     pressed or selected; accent buttons are raised in the accent colour. Spacing is tightened
+     to match. This block deliberately comes last so it overrides the rules above. */
+  :root {
+    --bg: #f3edf1; --card: #f3edf1; --field: #ebe3e9; --sep: #e4d9e0;
+    --neu-lo: rgba(158,120,146,0.30); --neu-hi: rgba(255,255,255,0.95);
+    --shadow: 4px 4px 9px var(--neu-lo), -4px -4px 9px var(--neu-hi);
+    --neu-sm: 3px 3px 6px var(--neu-lo), -3px -3px 6px var(--neu-hi);
+    --neu-in: inset 2px 2px 5px var(--neu-lo), inset -2px -2px 5px var(--neu-hi);
+    --neu-acc: 3px 3px 8px rgba(96,52,99,0.38), -3px -3px 8px rgba(196,148,199,0.55);
+    --neu-acc-in: inset 2px 2px 6px rgba(80,40,84,0.45), inset -2px -2px 6px rgba(200,150,203,0.4);
+  }
+  button, input, select { font-family: inherit; }
+  /* raised */
+  .seg button, .pill, .amt .step, .chip-row button, .rec-scale button, .bakedays button,
+  .bakedate-add button, .db-date-clear, .bs-step button, .btn-ghost {
+    background: var(--bg); box-shadow: var(--neu-sm); border-color: transparent;
+    transition: box-shadow .12s ease, background .12s ease;
+  }
+  .btn-ghost, .em-close { color: var(--text); }
+  .em-close { background: var(--bg); box-shadow: var(--neu-sm); }
+  .btn-ghost { border-radius: 14px; padding: 11px; }
+  .filter-bar select { background-color: var(--bg); box-shadow: var(--neu-sm); }
+  /* selected, non-accent → pressed in */
+  .seg button.on, .seg button.on[data-type] { box-shadow: var(--neu-in); border-color: transparent; }
+  /* selected, accent-filled → raised in the accent colour */
+  .pill.on, .chip-row button.on, .rec-scale button.on, .bakedays button.on { background: var(--accent); color: #fff; box-shadow: var(--neu-acc); }
+  .btn-primary, .submit { background: var(--accent); box-shadow: var(--neu-acc); }
+  .tabbar button.tab-entry .tic { box-shadow: var(--neu-acc); }
+  /* pressing sinks any button */
+  .seg button:active, .pill:active, .amt .step:active, .chip-row button:active, .rec-scale button:active,
+  .bakedays button:active, .bakedate-add button:active, .bs-step button:active, .btn-ghost:active { box-shadow: var(--neu-in); transform: none; }
+  .pill.on:active, .chip-row button.on:active, .rec-scale button.on:active, .bakedays button.on:active,
+  .btn-primary:active, .submit:active { box-shadow: var(--neu-acc-in); transform: none; }
+  /* segmented control: a sunken track with a raised thumb */
+  .db-filter { background: var(--field); box-shadow: var(--neu-in); padding: 3px; margin-bottom: 8px; }
+  .db-filter button.on, .db-filter select.on { background: var(--bg); box-shadow: var(--neu-sm); color: var(--accent); }
+  /* text fields sit in a shallow well */
+  input[type="date"], .inv-field input, .inv-field select, .cp-ins input, .rcp-row input[type=number], .rcp-row select {
+    background: var(--field); box-shadow: var(--neu-in); border: none; border-radius: 10px;
+  }
+  /* quantity inputs: no dotted underline; a soft well appears only while editing */
+  .rec-qty, .cost-in, .bs-step input { border: none; border-bottom: none; background: transparent; padding: 1px 4px; border-radius: 8px; }
+  .rec-qty:focus, .cost-in:focus, .bs-step input:focus, .amt .val:focus { outline: none; background: var(--field); box-shadow: var(--neu-in); }
+  .amt .val { border-radius: 8px; }
+  .tabbar { background: rgba(243,237,241,0.94); box-shadow: 0 -4px 12px rgba(158,120,146,0.14); border-top: none; }
+
+  /* tighter spacing */
+  body { padding-top: calc(var(--safe-top) + 4px); }
+  header { padding: 2px 2px 8px; }
+  .seg { gap: 6px; margin-bottom: 10px; }
+  .seg button { padding: 7px 2px 6px; gap: 3px; }
+  .card { margin-bottom: 12px; }
+  .row { padding: 9px 12px; min-height: 44px; gap: 8px; }
+  .amt { gap: 8px; }
+  .amt .step { width: 38px; height: 38px; }
+  .amt .val { width: 34px; }
+  .submit { padding: 13px; }
+  .hint { margin: -6px 4px 12px; }
+  .db-entry { padding: 10px 12px; margin-bottom: 8px; }
+  .db-day { margin: 10px 0 6px; }
+  .proj-card { padding: 12px 14px; margin-bottom: 10px; }
+  .proj-sub { margin-bottom: 6px; }
+  .proj-row { padding: 7px 0; }
+  .store-card { padding: 12px 14px; margin-bottom: 10px; }
+  .home-stores { gap: 8px; margin-bottom: 12px; }
+  .chip-row { gap: 6px; margin-bottom: 8px; }
+  .chip-row button { padding: 9px 14px; min-height: 38px; }
+  .db-filter button { padding: 10px 6px; }
+  .db-filter select { padding: 10px 22px 10px 6px; }
+  .filter-bar { gap: 6px; margin-bottom: 8px; }
+  .filter-bar select { min-height: 38px; padding: 9px 26px 9px 12px; }
+  .db-dates { margin-bottom: 10px; }
+  .rec-scale { gap: 6px; margin: 0 0 8px; }
+  .rec-scale button { padding: 6px 12px; }
+  .rec-box { padding: 8px 10px; margin-top: 8px; }
+  .rec-beta-note { padding: 8px 11px; margin-bottom: 8px; }
+  .bs-item { padding: 8px 12px; }
+  .bs-step button { width: 28px; height: 28px; }
+  .cp-row { padding: 8px 12px; margin-bottom: 6px; }
+  .cp-group { margin: 10px 4px 4px; }
+  .sheet .actions { gap: 8px; }
+  .btn-primary { padding: 13px; }
+  /* ---- New entry: a popup opened from Data's top-right button ---- */
+  .entry-modal { position: fixed; inset: 0; z-index: 58; background: var(--bg); overflow-y: auto; -webkit-overflow-scrolling: touch;
+    padding: calc(var(--safe-top) + 4px) 0 calc(var(--safe-bottom) + 16px); }
+  .entry-modal[hidden] { display: none; }
+  .em-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+  .em-close { width: 38px; height: 38px; border-radius: 50%; border: none; cursor: pointer; font-size: var(--fs-lg); color: var(--text); flex: none; }
+  .db-head-row { position: relative; padding-right: 96px; }
+  .db-new { position: absolute; top: 4px; right: 2px; border: none; cursor: pointer; border-radius: 999px; padding: 9px 16px;
+    background: var(--accent); color: #fff; font-size: var(--fs-body); font-weight: 700; box-shadow: var(--neu-acc); }
+  .db-new:active { box-shadow: var(--neu-acc-in); }
 </style>
 </head>
 <body>
 
 <!-- Version badge — bump on every deploy (v = commit count, time = deploy time PST) -->
-<div class="ver-badge">v96 · Sep 29, 5:12 PM</div>
+<div class="ver-badge">v97 · Sep 29, 5:20 PM</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -739,15 +833,19 @@
     <div class="hint" id="projSub"></div>
     <div id="projList"></div>
     <div id="homeContent"></div>
+    <div class="card"><div class="row"><span class="lbl">This season's recipes<span style="display:block;font-weight:400;color:var(--muted);font-size:var(--fs-caption)">Shown first in Baking and offered on the bake sheet</span></span><button type="button" class="btn-ghost" style="width:auto;padding:8px 16px" data-seasonal-edit>Edit</button></div></div>
   </div>
 </div>
 
 <!-- ===== ENTRY VIEW ===== -->
-<div class="view" id="view-entry">
+<div class="entry-modal" id="view-entry" hidden role="dialog" aria-modal="true" aria-label="New entry">
   <div class="wrap">
-    <header>
-      <h1>New Entry</h1>
-      <div class="sub" id="todayLabel">—</div>
+    <header class="em-head">
+      <div>
+        <h1>New Entry</h1>
+        <div class="sub" id="todayLabel">—</div>
+      </div>
+      <button type="button" class="em-close" id="entryClose" aria-label="Close">✕</button>
     </header>
 
     <form id="form" autocomplete="off">
@@ -825,9 +923,10 @@
 <!-- ===== DATA VIEW (Sales + Deliveries + Inventory) ===== -->
 <div class="view" id="view-db">
   <div class="wrap">
-    <header>
+    <header class="db-head-row">
       <h1>Data</h1>
       <div class="sub" id="dbCount">—</div>
+      <button type="button" class="db-new" id="newEntryBtn">+ Entry</button>
     </header>
     <div class="db-filter" id="dbFilter">
       <button class="on" data-filter="sales">Sales</button>
@@ -914,7 +1013,7 @@
       <div class="card bs-card">
         <div class="bs-head"><b>Bake sheet</b><span>Pick recipes and batches, then print or download</span></div>
         <div class="filter-bar" style="padding:0 14px;margin:0 0 4px"><select id="bsPick" aria-label="Add a recipe"></select></div>
-        <div class="bs-links"><button type="button" data-seasonal-edit>Edit this season's recipes</button><button type="button" id="bsAddAll">Add all seasonal</button></div>
+        <div class="bs-links"><button type="button" id="bsAddAll">Add all seasonal</button></div>
         <div id="bsList"></div>
         <div class="bs-foot"><button type="button" class="btn-primary" id="bsOpen">Preview sheet</button></div>
       </div>
@@ -930,7 +1029,7 @@
         <button data-sec="other">🧁 Other</button>
       </div>
       <div class="filter-bar"><select id="recPick" aria-label="Recipe"></select></div>
-      <div class="bs-links" style="margin:-6px 0 8px"><button type="button" data-seasonal-edit>Edit this season's recipes</button><button type="button" data-gen-labels>Generate labels</button></div>
+      <div class="bs-links" style="margin:-6px 0 8px"><button type="button" data-gen-labels>Generate labels</button></div>
       <div id="recCard"></div>
     </div>
 
@@ -953,7 +1052,6 @@
 <nav class="tabbar">
   <button data-tab="home" class="on"><span class="tic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 10.5 12 4l8.5 6.5V19a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1z"/><path d="M9.5 20v-6h5v6"/></svg></span><span class="tlabel">Home</span></button>
   <button data-tab="db"><span class="tic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M4 6.5h16M4 12h16M4 17.5h10"/></svg></span><span class="tlabel">Data</span></button>
-  <button data-tab="entry" class="tab-entry"><span class="tic"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></span><span class="tlabel">Entry</span></button>
   <button data-tab="plan"><span class="tic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 9.5h17M8.5 3.5v3M15.5 3.5v3"/></svg></span><span class="tlabel">Baking</span></button>
 </nav>
 
@@ -1253,10 +1351,14 @@
     if (navigator.vibrate) navigator.vibrate(8);
   });
   document.querySelectorAll('.amt .val').forEach(inp => {
-    // allow an optional leading minus, then digits
+    // Tapping the field selects what's in it, so the first digit you type replaces the 0 instead of landing next to it.
+    inp.addEventListener('focus', () => setTimeout(() => { try { inp.select(); } catch {} }, 0));
     inp.addEventListener('input', () => {
-      inp.value = inp.value.replace(/[^0-9-]/g, '').replace(/(?!^)-/g, '');
+      // allow an optional leading minus, then digits — and never a leading zero ("05" → "5", "-03" → "-3")
+      const t = inp.value.replace(/[^0-9-]/g, '').replace(/(?!^)-/g, '').replace(/^(-?)0+(?=\d)/, '$1');
+      if (t !== inp.value) inp.value = t;
     });
+    inp.addEventListener('blur', () => { if (inp.value === '' || inp.value === '-') inp.value = 0; });
   });
 
   // ---- Read current form into a payload ----
@@ -1299,6 +1401,15 @@
 
   // ---- Confirmation sheet ----
   const scrim = document.getElementById('scrim');
+  // ---- New entry popup (Data tab → + Entry, top right) ----
+  const entryModal = document.getElementById('view-entry');
+  function openEntry() { entryModal.hidden = false; entryModal.scrollTop = 0; track('entry_open'); }
+  function closeEntry() { entryModal.hidden = true; }
+  document.getElementById('newEntryBtn').addEventListener('click', openEntry);
+  document.getElementById('entryClose').addEventListener('click', closeEntry);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !entryModal.hidden && !scrim.classList.contains('show')) closeEntry(); });
+
+
   let pending = null;
 
   document.getElementById('form').addEventListener('submit', e => {
@@ -1363,6 +1474,7 @@
     // reset for next entry
     document.querySelectorAll('.amt .val').forEach(v => v.value = 0);
     dt.value = nowPST();
+    closeEntry();
     renderDB();
   });
 
@@ -1616,7 +1728,7 @@
   }
 
   // ---- Tab switching ----
-  const VIEWS = { home: 'view-home', entry: 'view-entry', db: 'view-db', plan: 'view-plan' };
+  const VIEWS = { home: 'view-home', db: 'view-db', plan: 'view-plan' };
   document.querySelector('.tabbar').addEventListener('click', e => {
     const btn = e.target.closest('button'); if (!btn) return;
     const tab = btn.dataset.tab;
@@ -3536,7 +3648,7 @@
     SEASONAL = c.checked ? [...SEASONAL.filter(k => k !== c.dataset.sk), c.dataset.sk] : SEASONAL.filter(k => k !== c.dataset.sk);
     try { localStorage.setItem('seasonal.v1', JSON.stringify(SEASONAL)); } catch {}
   });
-  const seaClose = () => { document.getElementById('seaScrim').classList.remove('show'); renderBaking(); };
+  const seaClose = () => { document.getElementById('seaScrim').classList.remove('show'); if (document.getElementById('view-plan').classList.contains('active')) renderBaking(); };
   document.getElementById('seaDone').addEventListener('click', seaClose);
   document.getElementById('seaScrim').addEventListener('click', e => { if (e.target.id === 'seaScrim') seaClose(); });
   document.getElementById('bsAddAll').addEventListener('click', () => {

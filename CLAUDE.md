@@ -89,8 +89,10 @@ and via `sendBeacon` on `pagehide` / backgrounding.
 
 ## Tabs
 
-Home · Data · **Entry** (center, boxed in the accent colour via `.tab-entry` — it's the primary action) ·
-**Baking**. Four tabs; nav shows an inline-SVG icon + label.
+Home · Data · **Baking** — three tabs; nav shows an inline-SVG icon + label. **Entry is no longer a tab
+(2026-09-29)**: it's a popup (`#view-entry`, `.entry-modal`) opened by the **+ Entry** button at the top
+right of Data. Submit still goes through the confirm sheet (`#scrim`) that summarises the whole entry,
+and the popup closes on success.
 
 **Forecast was merged into Home (2026-09).** There is no `view-proj` and no `proj` tab.
 `renderHome()` writes the "last updated" strip to `#homeUpdated`, then calls `renderProj()`,
@@ -224,3 +226,13 @@ the single-label button on a recipe to pick another version or edit the net weig
 **Labels → PDF**: *Download PDF (to print)* on both label sheets uses `elementsToPdf()` — a small
 built-in PDF writer (no library): each label is rendered to a JPEG and placed whole on US-Letter
 pages (never split across a page). The bake sheet has no PDF button yet (image/print only).
+
+## Soft UI (2026-09-29)
+
+Buttons are neumorphic: one shared surface (`--bg` = `--card`), raised with paired light/dark shadows
+(`--neu-sm`, `--shadow`), sunk when pressed/selected (`--neu-in`), accent buttons raised in the accent
+colour (`--neu-acc`). The override block is the **last** thing in the stylesheet ("Soft UI") — it wins
+over the rules above it, so edit there. Spacing was tightened in the same block. No dotted underlines on
+inputs (quantity fields get a soft well only while focused). Entry amount fields select their contents
+on focus and strip leading zeros, so typing replaces the 0 instead of sitting next to it.
+**This season's recipes** are edited from Home only (*This season's recipes → Edit*).
