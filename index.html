@@ -1524,7 +1524,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v132 · Sep 30, 3:20 AM</div>
+<div class="ver-badge">v133 · Sep 30, 3:45 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -2603,6 +2603,10 @@
     document.getElementById('invPrices').innerHTML = PRODUCTS.map(p =>
       `<div class="inv-field"><span>${tok(p)} ${esc(p)}</span><input class="price" type="number" inputmode="decimal" step="0.01" min="0" data-inv-price="${esc(p)}" value="${pr[p]}" /></div>`).join('');
   }
+  const INV_BILL = {
+    'La Mirada': { name: 'Here&There Coffee', addr: ['12740 La Mirada Blvd.', 'La Mirada, CA 90638'] },
+    'Stanton':   { name: 'Here&There Coffee', addr: ['12885 Beach Blvd Ste 26', 'Stanton, CA 90680'] },
+  };
   async function buildInvoice() {
     const store = document.getElementById('invStore').value;
     let from = document.getElementById('invFrom').value, to = document.getElementById('invTo').value;
@@ -2638,12 +2642,12 @@
     const num = `KB-${to.replace(/-/g, '')}-${store.split(' ').map(w => w[0]).join('')}`;
     const issued = fmtD(nowPST().slice(0, 10));
 
-    invText = [`INVOICE ${num}`, `Kairos Baking → ${store}`, `Delivered: ${period}`, `Issued: ${issued}`, '',
+    invText = [`INVOICE ${num}`, `Kairos Baking → ${(INV_BILL[store] || {}).name || store}`, ...((INV_BILL[store] || { addr: [] }).addr), `Delivered: ${period}`, `Issued: ${issued}`, '',
       ...lines.map(l => `${l.p}: ${l.qty} × ${usd(l.unit)} = ${usd(l.amt)}`), '', `Total (${units} units): ${usd(total)}`].join('\n');
 
     document.getElementById('invDoc').innerHTML = `
       <h3>Invoice</h3>
-      <div class="inv-meta"><div><b>${esc(num)}</b>Issued ${esc(issued)}</div><div style="text-align:right"><b>Kairos Baking</b>to ${esc(store)}</div></div>
+      <div class="inv-meta"><div><b>${esc(num)}</b>Issued ${esc(issued)}</div><div style="text-align:right"><b>Bill to: ${esc((INV_BILL[store] || {}).name || store)}</b>${((INV_BILL[store] || {}).addr || []).map(l => esc(l)).join('<br>') || esc(store)}</div></div>
       <div class="inv-meta" style="margin-top:0"><div>Delivered<b>${esc(period)}</b></div></div>
       ${lines.length ? `<table class="inv-table"><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Amount</th></tr></thead><tbody>${
         lines.map(l => `<tr><td>${esc(l.p)}</td><td>${l.qty}</td><td>${usd(l.unit)}</td><td>${usd(l.amt)}</td></tr>`).join('')}</tbody></table>
