@@ -1574,7 +1574,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v148 · Sep 30, 10:00 AM</div>
+<div class="ver-badge">v149 · Sep 30, 10:40 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -3741,7 +3741,7 @@
     return `<div class="proj-card">
         <h3>${title}${infoBtn()}</h3>
         ${totNeed
-          ? `<div class="proj-runout">Make <span class="big">${totNeed}</span> <span style="color:var(--muted);font-weight:600">${batchLabel(totBatches)} · ${fmtDur(effAll.min || 0)} to book</span></div>`
+          ? `<div class="proj-runout"><span class="big">${fmtDur(effAll.min || 0)}</span> in the kitchen <span style="color:var(--muted);font-weight:600">· ${batchLabel(totBatches)} · ${totNeed} madeleines</span></div>`
           : `<div class="proj-runout" style="color:var(--green)">On hand covers you through ${fmtWhen(target)}</div>`}
         ${flavorRows}
         ${evRows}
@@ -3764,11 +3764,11 @@
       haveRows += `<div class="proj-row"><span class="k">${p}</span><span>have <b>${haveMap[p]}</b> · expected need ${Math.ceil(expMap[p])}</span></div>`;
     }
     const eff = bakeEffort(bakeMap);
-    const brief = bakeSafe > 0 ? `<div class="be-effort" style="margin:2px 0 6px">${batchLabel(eff.batches)} · ${fmtDur(eff.min)} to book</div>` : '';
     return `<div class="proj-card">
         <h3>${title}${infoBtn()}</h3>
-        <div class="proj-runout">Make <span class="big">${bakeSafe}</span></div>
-        ${brief}
+        ${bakeSafe > 0
+          ? `<div class="proj-runout"><span class="big">${fmtDur(eff.min)}</span> in the kitchen <span style="color:var(--muted);font-weight:600">· ${batchLabel(eff.batches)}</span></div>`
+          : `<div class="proj-runout" style="color:var(--green)">Enough on hand</div>`}
         ${rows}
         <div class="info-body" hidden>
           <div class="proj-sub">${subLine}</div>
@@ -3895,6 +3895,7 @@
     if (!html) html = `<div class="db-empty"><div class="big">${ic('calendar')}</div>Nothing to plan.</div>`;
     document.getElementById('planList').innerHTML = html;
     planBakeTotals = planTotals;
+    autoFillBakePlan();
 
     // Split slider (two dates only).
     const wrap = document.getElementById('planSplitWrap');
@@ -4630,6 +4631,21 @@
   // Which forecast product a recipe's batches come from (recipes with no product just start at 1 batch).
   const BS_PRODUCT = { 'mad:Lemon Poppy': 'Lemon Poppy', 'mad:Earl Grey': 'Earl Grey', 'mad:Classic': 'Sea Salt' };
   const bsProjectedBatches = key => { const p = BS_PRODUCT[key], n = p && planBakeTotals[p]; return n > 0 ? flavorBatches(n) : 0; };
+  // The bake plan follows the forecast: recipes whose product the plan says to bake are added, and their batches track the
+  // plan until you change them by hand (then they're yours). Removing one keeps it off until the page is reloaded.
+  const bsDismissed = new Set();
+  function autoFillBakePlan() {
+    try { void bakeSheet; } catch { return; }   // not initialised yet
+    let changed = false;
+    for (const key of Object.keys(BS_PRODUCT)) {
+      const proj = bsProjectedBatches(key), ex = bakeSheet.find(b => b.key === key);
+      if (proj > 0) {
+        if (!ex) { if (!bsDismissed.has(key)) { bakeSheet.push({ key, b: proj, plan: true }); changed = true; } }
+        else if (!ex.manual && (ex.b !== proj || !ex.plan)) { ex.b = proj; ex.plan = true; changed = true; }
+      } else if (ex && ex.plan && !ex.manual) { bakeSheet.splice(bakeSheet.indexOf(ex), 1); changed = true; }
+    }
+    if (changed) { saveBakeSheet(); renderBakeSheet(); }
+  }
   function renderBakeSheet() {
     const pick = document.getElementById('bsPick');
     const opts = COST_SECTIONS.flatMap(([sec, , get]) => get().filter(it => isSeasonal(sec, it)).map(it => ({ sec, it })));
@@ -4751,14 +4767,14 @@
   document.getElementById('bsList').addEventListener('click', e => {
     const btn = e.target.closest('[data-bs]'); if (!btn || btn.dataset.bs === 'n') return;
     const it = bakeSheet[Number(btn.closest('[data-bi]').dataset.bi)];
-    if (btn.dataset.bs === 'x') bakeSheet.splice(bakeSheet.indexOf(it), 1);
-    else it.b = Math.max(0.5, it.b + (btn.dataset.bs === '+' ? 1 : -1));
+    if (btn.dataset.bs === 'x') { if (it.plan) bsDismissed.add(it.key); bakeSheet.splice(bakeSheet.indexOf(it), 1); }
+    else { it.b = Math.max(0.5, it.b + (btn.dataset.bs === '+' ? 1 : -1)); it.plan = false; it.manual = true; }
     saveBakeSheet(); renderBakeSheet();
   });
   document.getElementById('bsList').addEventListener('change', e => {
     const inp = e.target.closest('input[data-bs="n"]'); if (!inp) return;
     const it = bakeSheet[Number(inp.closest('[data-bi]').dataset.bi)], n = parseFloat(inp.value);
-    it.b = n > 0 ? Math.round(n * 100) / 100 : it.b; saveBakeSheet(); renderBakeSheet();
+    if (n > 0) { it.b = Math.round(n * 100) / 100; it.plan = false; it.manual = true; } saveBakeSheet(); renderBakeSheet();
   });
   document.getElementById('bsOpen').addEventListener('click', () => { paintBakeSheetDoc(); document.getElementById('bsScrim').classList.add('show'); track('bake_sheet', { recipes: bakeSheet.length }); });
   const bsClose = () => { document.getElementById('bsScrim').classList.remove('show'); bsView = null; };
