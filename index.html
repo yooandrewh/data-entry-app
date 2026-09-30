@@ -1589,7 +1589,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.53.00 · Sep 30, 1:10 PM</div>
+<div class="ver-badge">v1.53.02 · Sep 30, 1:55 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -1777,6 +1777,7 @@
     swirl: c => `<path fill="${c}" d="M12 3.5c1.8 1.5 2.5 3 1.8 4.5 2.2.3 3.5 1.7 3.5 3.2 1.8.5 2.7 1.7 2.7 3.100 0 2-2 3.200-4.200 3.200H8.200C6 17.500 4 16.300 4 14.300c0-1.400.900-2.600 2.700-3.100C6.700 9.700 8 8.300 10.200 8 9.500 6.500 10.200 5 12 3.500z"/><path d="M6 20.500h12"/>`,
     swirl_pink: () => IC.swirl('#f7d9e3'), swirl_pumpkin: () => IC.swirl('#f9c98f'), swirl_butter: () => IC.swirl('#fbe7a1'),
     butter: () => `<path fill="#fbe7a1" d="M3.5 10 12 6.5l8.5 3.5-8.500 3.500z"/><path fill="#f6d774" d="M3.5 10v6l8.500 3.500v-6z"/><path fill="#f3cd5a" d="M20.5 10v6L12 19.500v-6z"/>`,
+    butter_brown: () => `<path fill="#c98a55" d="M3.5 10 12 6.5l8.5 3.5-8.500 3.500z"/><path fill="#a8683a" d="M3.5 10v6l8.500 3.500v-6z"/><path fill="#8a4f27" d="M20.5 10v6L12 19.500v-6z"/>`,
     drop: () => `<path fill="#c98a4b" d="M12 3.500c3 4 6 7 6 10.500a6 6 0 0 1-12 0c0-3.500 3-6.500 6-10.500z"/><path d="M9.500 14.500a2.500 2.500 0 0 0 2 2.500"/>`,
     bowl: () => `<path fill="#ece7db" d="M4 12h16a8 7 0 0 1-16 0z"/><path d="M8 12c0-3 2-4.500 4-4.500s4 1.500 4 4.500"/>`,
     milk: () => `<path fill="#e8eef5" d="M9.500 3.500h5v3l1.500 2.500v10.500a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V9l1.500-2.500z"/><path d="M8 12.500h8"/>`,
@@ -2608,6 +2609,12 @@
     }
     return null;
   };
+  // Belt and braces: an inert <select> can't be focused or tapped, so the platform's own menu has no way to open
+  // (pointer-events alone isn't honoured everywhere). Its value is still read and set by script as usual.
+  const spMakeInert = root => (root.querySelectorAll ? root.querySelectorAll('select:not([data-native])') : []).forEach(sel => { sel.inert = true; sel.setAttribute('aria-haspopup', 'listbox'); });
+  spMakeInert(document);
+  new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(n => { if (n.nodeType === 1) { if (n.matches && n.matches('select:not([data-native])')) { n.inert = true; } spMakeInert(n); } })))
+    .observe(document.body, { childList: true, subtree: true });
   let spWasOpenOn = null;
   document.addEventListener('mousedown', e => {
     const it = e.target.closest && e.target.closest('.sp-item');
@@ -4152,7 +4159,7 @@
       rows: [['Cream Cheese', 550], ['Blueberry', 550], ['Powdered Sugar', 65], ['Salt', 3]],
       notes: 'Freeze completely solid before wrapping into the scone dough.' },
   ];
-  const REC_ICON = { 'Pumpkin Pie Spice Muffin': 'pumpkin', 'Classic': 'madeleine', 'Peach Crumble': 'peach', 'Dot Cake': 'cake_dot', 'Earl Grey': 'teacup', 'Ube': 'ube', 'Lemon Poppy': 'lemon', 'Chocolate': 'choco', 'Brown Butter': 'butter', 'Matcha': 'matcha', 'Mugwort': 'leaf', 'Maple Pecan': 'nut', 'Pumpkin Pie Spice': 'pumpkin', 'Flat Chocolate Chip Chookie': 'cookie', 'Lemon Curd': 'jar_lemon', 'Cream Cheese Frosting': 'swirl_pink', 'Pumpkin Cream Cheese Frosting': 'swirl_pumpkin', 'Anglesie Buttercream': 'butter', 'Earl Grey Paste': 'jar_tea', 'Chocolate Ganache': 'jar_choc', 'Caramel': 'drop', 'Mascarpone Cream': 'bowl', 'Milk Cream': 'milk', 'Plain Scone': 'scone', 'Strawberry Cream Cheese': 'strawberry', 'Blueberry Cream Cheese': 'blueberry', 'Gluten Free Cake': 'cake_gf', 'Sable': 'cookie', 'Macarons': 'macaron', 'Salt Bread': 'bread', 'Vegan Donut': 'donut', 'Apricot Ricotta Cake': 'cake_apricot', 'Earl Grey Fig Cake': 'cake_fig' };
+  const REC_ICON = { 'Pumpkin Pie Spice Muffin': 'pumpkin', 'Classic': 'madeleine', 'Peach Crumble': 'peach', 'Dot Cake': 'cake_dot', 'Earl Grey': 'teacup', 'Ube': 'ube', 'Lemon Poppy': 'lemon', 'Chocolate': 'choco', 'Brown Butter': 'butter_brown', 'Matcha': 'matcha', 'Mugwort': 'leaf', 'Maple Pecan': 'nut', 'Pumpkin Pie Spice': 'pumpkin', 'Flat Chocolate Chip Chookie': 'cookie', 'Lemon Curd': 'jar_lemon', 'Cream Cheese Frosting': 'swirl_pink', 'Pumpkin Cream Cheese Frosting': 'swirl_pumpkin', 'Anglesie Buttercream': 'butter', 'Earl Grey Paste': 'jar_tea', 'Chocolate Ganache': 'jar_choc', 'Caramel': 'drop', 'Mascarpone Cream': 'bowl', 'Milk Cream': 'milk', 'Plain Scone': 'scone', 'Strawberry Cream Cheese': 'strawberry', 'Blueberry Cream Cheese': 'blueberry', 'Gluten Free Cake': 'cake_gf', 'Sable': 'cookie', 'Macarons': 'macaron', 'Salt Bread': 'bread', 'Vegan Donut': 'donut', 'Apricot Ricotta Cake': 'cake_apricot', 'Earl Grey Fig Cake': 'cake_fig' };
   const recKey = name => REC_ICON[name] || 'book';
   const recIc = (name, px) => ic(recKey(name), px);
 
