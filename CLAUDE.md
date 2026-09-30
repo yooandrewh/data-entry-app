@@ -331,3 +331,10 @@ labels, bake sheet); each has one **Download PDF** button built by `elementsToPd
 plus Print. Each label / recipe block / totals block is its own element so it stays whole on a page. The
 older notes above that mention image/PNG export are out of date; `domToCanvas()` remains only as the PDF's
 renderer.
+
+**Bake sheet PDF format (2026-09-29):** plain prep sheet — `RECIPE NAME` (bold, uppercase) with a small
+`2 batches · ≈ 36 pcs` line, then `190 grams Whole eggs` lines grouped **wet / dry / fat** with a gap
+between groups (`recMadRank`), then a *Total Ingredients Needed* block. `bakeSheetPages()` measures each
+block and packs them into **two columns per Letter page** (page 1 has the title) so no block is split;
+the on-screen preview is the same blocks in one column (`.bs2-*` styles). Titles across the app are
+Title Case (Bake Sheet, Baking Plan, Confirm Entry, …).

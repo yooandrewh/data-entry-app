@@ -1053,12 +1053,26 @@
   .tabbar button:focus, .tabbar button:focus-visible, .tabbar button:active { outline: none; }
   .home-season { min-width: 0; height: 36px; padding: 0 14px; font-size: var(--fs-caption); top: calc(var(--safe-top) + 12px); right: 14px; }
   .hero-kicker { padding-right: 110px; }
+
+  /* ---- Bake sheet (printed prep sheet: plain, two columns in the PDF) ---- */
+  .bs2-doc, .bs2-page { background: #fff; color: #111; font-family: Roboto, Arial, Helvetica, sans-serif; font-size: 14px; line-height: 1.7; }
+  .bs2-doc { padding: 6px 4px; }
+  .bs2-page { width: 640px; box-sizing: border-box; padding: 40px 36px; }
+  .bs2-title, .bs2-page-head .bs2-title { font-size: 22px; font-weight: 700; line-height: 1.3; }
+  .bs2-date { color: #666; font-size: 12px; margin-bottom: 16px; line-height: 1.4; }
+  .bs2-cols { display: flex; gap: 36px; }
+  .bs2-col { flex: 1; min-width: 0; }
+  .bs2-block { margin: 0 0 22px; }
+  .bs2-block h4 { margin: 0 0 2px; font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: .2px; line-height: 1.5; }
+  .bs2-block h4 small { display: block; font-weight: 400; text-transform: none; color: #666; font-size: 12px; letter-spacing: 0; }
+  .bs2-grp { margin-bottom: 12px; }
+  @media print { body.printing-bake .bs2-doc { font-size: 11pt; } }
 </style>
 </head>
 <body>
 
 <!-- Version badge — bump on every deploy (v = commit count, time = deploy time PST) -->
-<div class="ver-badge">v109 · Sep 29, 6:21 PM</div>
+<div class="ver-badge">v110 · Sep 29, 6:25 PM</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -1073,7 +1087,7 @@
 
     <div class="home-menu" id="homeMenu">
       <button type="button" data-hpage="forecast">Forecast</button>
-      <button type="button" data-hpage="plan">Baking plan</button>
+      <button type="button" data-hpage="plan">Baking Plan</button>
       <button type="button" data-hpage="invoice">Invoice</button>
     </div>
     <div class="home-ver" id="homeVer"></div>
@@ -1125,7 +1139,7 @@
       <div id="planList"></div>
 
       <div class="card bs-card">
-        <div class="bs-head"><b>Bake sheet</b><span>Pick recipes and batches, then print or download</span></div>
+        <div class="bs-head"><b>Bake Sheet</b><span>Pick recipes and batches, then print or download</span></div>
         <div class="filter-bar" style="padding:0 14px;margin:0 0 4px"><select id="bsPick" aria-label="Add a recipe"></select></div>
         <div class="bs-links"><button type="button" id="bsAddAll">Add all seasonal</button></div>
         <div id="bsList"></div>
@@ -1345,7 +1359,7 @@
 <!-- ===== Confirmation sheet ===== -->
 <div class="scrim" id="scrim">
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
-    <h2 id="sheetTitle">Confirm entry</h2>
+    <h2 id="sheetTitle">Confirm Entry</h2>
     <div class="warn">⚠️ Double-check before submitting. Deleting later needs the password.</div>
     <div class="sum" id="sheetSum"></div>
     <div class="actions">
@@ -1358,7 +1372,7 @@
 <!-- ===== Delete confirmation (password) ===== -->
 <div class="scrim alert" id="delScrim">
   <div class="alert-box" role="dialog" aria-modal="true" aria-labelledby="delTitle">
-    <h2 id="delTitle">Delete this entry?</h2>
+    <h2 id="delTitle">Delete This Entry?</h2>
     <p>This permanently removes it from the sheet — it can't be undone. Enter the password to confirm.</p>
     <input type="password" id="delPass" placeholder="Password" autocomplete="off" autocapitalize="off" autocorrect="off" />
     <div class="alert-err" id="delErr"></div>
@@ -1372,7 +1386,7 @@
 <!-- ===== Edit entry ===== -->
 <div class="scrim" id="editScrim">
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="editTitle">
-    <h2 id="editTitle">Edit entry</h2>
+    <h2 id="editTitle">Edit Entry</h2>
     <div class="warn" id="editWarn">Changes save straight to the sheet.</div>
     <div class="card">
       <div class="row"><span class="lbl">Date &amp; time</span><input type="datetime-local" id="editDatetime" /></div>
@@ -1409,7 +1423,7 @@
 <!-- ===== Ingredient label ===== -->
 <div class="scrim" id="lblScrim">
   <div class="sheet inv-sheet" role="dialog" aria-modal="true" aria-labelledby="lblTitleH">
-    <h2 id="lblTitleH" class="inv-noprint">Ingredient label</h2>
+    <h2 id="lblTitleH" class="inv-noprint">Ingredient Label</h2>
     <div class="sum inv-noprint">
       <div class="inv-field"><span>Manufactured</span><input type="date" id="lblMfg" /></div>
       <div class="inv-field"><span>Net weight</span><input type="text" id="lblNet" /></div>
@@ -1452,7 +1466,7 @@
 <!-- ===== Seasonal recipes ===== -->
 <div class="scrim" id="seaScrim">
   <div class="sheet inv-sheet" role="dialog" aria-modal="true" aria-labelledby="seaTitle">
-    <h2 id="seaTitle">This season's recipes</h2>
+    <h2 id="seaTitle">This Season's Recipes</h2>
     <div id="seaList"></div>
     <div class="actions" style="margin-top:14px"><button class="btn-primary" id="seaDone">Update</button></div>
   </div>
@@ -1462,7 +1476,7 @@
 <div class="scrim" id="mlScrim">
   <div class="sheet inv-sheet" role="dialog" aria-modal="true" aria-labelledby="mlTitle">
     <div id="mlPick">
-      <h2 id="mlTitle">Generate labels</h2>
+      <h2 id="mlTitle">Generate Labels</h2>
       <div class="warn">Tick the madeleines you're labelling. Best-by dates fill in from the manufactured date: fridge 7 days, freezer 2 weeks.</div>
       <div class="sum"><div class="inv-field"><span>Manufactured</span><input type="date" id="mlMfg" /></div></div>
       <div class="bs-links" style="padding:0 2px 4px"><button type="button" id="mlSeason">Seasonal</button><button type="button" id="mlAll">All</button><button type="button" id="mlNone">None</button></div>
@@ -2255,7 +2269,7 @@
   document.getElementById('dbMore').addEventListener('change', e => setDbFilter(e.target.value));
   // ---- Home: a landing screen with three buttons; each opens its own page ----
   let homeTab = null;   // null = landing | 'forecast' | 'plan' | 'invoice'
-  const HOME_TITLES = { forecast: 'Forecast', plan: 'Baking plan', invoice: 'Invoice' };
+  const HOME_TITLES = { forecast: 'Forecast', plan: 'Baking Plan', invoice: 'Invoice' };
   // The version line lives over the photo on Home's landing; everywhere else it is the fixed strip.
   function syncVer() {
     const onHome = (document.querySelector('.tabbar button.on') || {}).dataset?.tab === 'home';
@@ -3545,7 +3559,7 @@
     if (/flour|starch/.test(n)) return 10;
     if (/baking/.test(n)) return 11;
     if (/salt/.test(n)) return 12;
-    if (/honey|syrup|cream|milk|vanilla|extract|puree/.test(n)) return 2;
+    if (/honey|syrup|cream|milk|vanilla|extract|puree|juice|water/.test(n)) return 2;
     return 13;
   }
   const recMadSort = rows => rows.map((r, i) => [r, i]).sort((a, b) => recMadRank(a[0][0]) - recMadRank(b[0][0]) || a[1] - b[1]).map(x => x[0]);
@@ -4009,23 +4023,54 @@
     document.getElementById('bsList').innerHTML = rows || '<div class="bs-empty">Nothing added yet — choose a recipe above and it is added with the batches your plan calls for.</div>';
     document.getElementById('bsOpen').disabled = !bakeSheet.length;
   }
-  function paintBakeSheetDoc() {
-    const today = nowPST().slice(0, 10), fmt = ymd => { const [y, m, d] = ymd.split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }); };
-    const totals = new Map();   // name → { g, uses:Set }
+  // Ingredient line as it's written on the sheet: "190 grams Whole eggs" (sentence case, brackets → comma).
+  const bsLineName = n => {
+    let t = String(n).replace(/\*/g, '').replace(/\s*\((.*?)\)/g, ', $1').trim().toLowerCase();
+    t = t.charAt(0).toUpperCase() + t.slice(1);
+    return t.replace(/earl grey/i, 'Earl Grey').replace(/callebaut/i, 'Callebaut');
+  };
+  const bsLine = (name, g) => `${rFmt(g)} ${g === 1 ? 'gram' : 'grams'} ${bsLineName(name)}`;
+  // Recipes → blocks of grouped lines (wet / dry / fat, a blank gap between), plus combined totals.
+  function bsModel() {
+    const totals = new Map();
     const blocks = bakeSheet.map(b => {
-      const f = bsFind(b.key); if (!f) return '';
-      const rows = costRows(f.sec, f.it), y = f.sec === 'mad' ? BATCH_YIELD : costDefaultYield(f.sec, f.it);
+      const f = bsFind(b.key); if (!f) return null;
+      const rows = recMadSort(costRows(f.sec, f.it));
       rows.forEach(([n, g]) => { const c = bsCanon(n), t = totals.get(c) || { g: 0, uses: new Set() }; t.g += g * b.b; t.uses.add(b.key); totals.set(c, t); });
-      const lines = rows.map(([n, g]) => `<div class="r"><span>${esc(bsCanon(n) === titleCase(String(n).split(',')[0].replace(/\(.*?\)/g, '').trim()) || /^[a-z]/.test(n) ? titleCase(String(n).split(',')[0].replace(/\(.*?\)/g, '').trim()) : String(n).split(',')[0].replace(/\(.*?\)/g, '').trim())}</span><b>${rFmt(g * b.b)} g</b></div>`).join('');
-      return `<h4>${esc(costItemName(f.sec, f.it))}<span>${rFmt(b.b)} batch${b.b === 1 ? '' : 'es'}${y ? ` · ≈ ${rFmt(b.b * y)} pcs` : ''}</span></h4>${lines}`;
+      const groups = [[], [], []];
+      rows.forEach(([n, g]) => { const r = recMadRank(String(n)); groups[r <= 2 ? 0 : r <= 13 ? 1 : 2].push(bsLine(n, g * b.b)); });
+      const y = f.sec === 'mad' ? BATCH_YIELD : costDefaultYield(f.sec, f.it);
+      return { title: costItemName(f.sec, f.it), note: `${rFmt(b.b)} batch${b.b === 1 ? '' : 'es'}${y ? ` · ≈ ${rFmt(b.b * y)} pcs` : ''}`, groups: groups.filter(g => g.length) };
+    }).filter(Boolean);
+    const tot = BS_TOTALS.filter(n => totals.has(n)).map(n => bsLine(n, totals.get(n).g));   // for now: just butter, eggs and sugars
+    if (tot.length) blocks.push({ title: 'Total ingredients needed', note: 'all recipes', groups: [tot] });
+    return blocks;
+  }
+  const bsBlockHtml = bl => `<div class="bs2-block"><h4>${esc(bl.title)}<small>${esc(bl.note)}</small></h4>${bl.groups.map(g => `<div class="bs2-grp">${g.map(l => `<div>${esc(l)}</div>`).join('')}</div>`).join('')}</div>`;
+  const bsHeadHtml = () => { const [y, m, d] = nowPST().slice(0, 10).split('-').map(Number); return `<div class="bs2-title">Bake Sheet</div><div class="bs2-date">${esc(new Date(y, m - 1, d).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }))} · amounts are for the base version of each recipe</div>`; };
+  function paintBakeSheetDoc() {
+    document.getElementById('bsDoc').innerHTML = `<div class="bs2-doc">${bsHeadHtml()}${bsModel().map(bsBlockHtml).join('')}</div>`;
+  }
+  // The PDF is laid out in two columns per page, like a printed prep sheet; blocks are measured and packed so none is split.
+  async function bakeSheetPages() {
+    const blocks = bsModel(), COLW = 266, PAGE_H = 853, PAD = 40, GAP = 22;
+    const host = document.createElement('div'); host.style.cssText = `position:fixed;left:-99999px;top:0;width:${COLW}px;`; document.body.appendChild(host);
+    const meas = html => { host.innerHTML = html; return host.firstElementChild.offsetHeight; };
+    const headH = meas(`<div class="bs2-page-head" style="width:${COLW * 2 + 36}px">${bsHeadHtml()}</div>`) + 8;
+    const hs = blocks.map(bl => meas(`<div class="bs2-col" style="width:${COLW}px">${bsBlockHtml(bl)}</div>`) + GAP);
+    host.remove();
+    const cols = [[]]; let used = 0, limit = PAGE_H - 2 * PAD - headH;   // the first page's columns sit under the title
+    blocks.forEach((bl, i) => {
+      if (used + hs[i] > limit && cols[cols.length - 1].length) { cols.push([]); used = 0; limit = Math.floor((cols.length - 1) / 2) === 0 ? PAGE_H - 2 * PAD - headH : PAGE_H - 2 * PAD; }
+      cols[cols.length - 1].push(bl); used += hs[i];
     });
-    const sorted = BS_TOTALS.filter(n => totals.has(n)).map(n => [n, totals.get(n)]);   // for now: just butter, eggs and sugars
-    const totalRows = sorted.map(([n, t]) => {
-      const conv = n === 'Cake Flour' ? ` <i>(= AP ${rFmt(t.g * 436 / 500)} g + cornstarch ${rFmt(t.g * 64 / 500)} g)</i>` : '';
-      return `<div class="r"><span>${esc(n)}${conv}${t.uses.size > 1 ? ` <i>· in ${t.uses.size} recipes</i>` : ''}</span><b>${rFmt(t.g)} g</b></div>`;
-    }).join('');
-    const secs = [`<h3>Bake sheet</h3><div class="d">${fmt(today)} · amounts are for the base version of each recipe</div>`, ...blocks, `<h4 class="tot">Total ingredients needed<span>all recipes</span></h4>${totalRows}`];
-    document.getElementById('bsDoc').innerHTML = secs.map(x => `<div class="bs-doc">${x}</div>`).join('');
+    // a page holds two columns; only page 1 carries the title, so its columns are shorter
+    const pages = []; for (let i = 0; i < cols.length; i += 2) pages.push(cols.slice(i, i + 2));
+    return pages.map((pg, pi) => {
+      const el = document.createElement('div'); el.className = 'bs2-page';
+      el.innerHTML = (pi === 0 ? bsHeadHtml() : '') + `<div class="bs2-cols">${[0, 1].map(k => `<div class="bs2-col">${(pg[k] || []).map(bsBlockHtml).join('')}</div>`).join('')}</div>`;
+      return el;
+    });
   }
   document.getElementById('bsPick').addEventListener('change', e => {
     const key = e.target.value; if (!key) return;
@@ -4077,7 +4122,7 @@
     window.addEventListener('afterprint', () => document.body.classList.remove('printing-bake'), { once: true });
     window.print();
   });
-  document.getElementById('bsPdfBtn').addEventListener('click', () => downloadPdf(document.getElementById('bsPdfBtn'), [...document.querySelectorAll('#bsDoc .bs-doc')], `bake-sheet-${nowPST().slice(0, 10)}.pdf`, '.bs-'));
+  document.getElementById('bsPdfBtn').addEventListener('click', () => downloadPdf(document.getElementById('bsPdfBtn'), bakeSheetPages, `bake-sheet-${nowPST().slice(0, 10)}.pdf`, '.bs2-'));
 
   // ---- Minimal PDF writer: each element becomes a JPEG placed on US-Letter pages, never split across a page ----
   async function elementsToPdf(els, classPrefix, width) {
@@ -4118,7 +4163,7 @@
   }
   async function downloadPdf(btn, els, name, prefix = '.lbl-') {
     const label = btn.textContent; btn.disabled = true; btn.textContent = 'Preparing…';
-    try { await saveBlobAs(await elementsToPdf(els, prefix, 640), name); track('pdf_download', { n: els.length, what: prefix === '.bs-' ? 'bake_sheet' : 'labels' }); }
+    try { await saveBlobAs(await elementsToPdf(typeof els === 'function' ? await els() : els, prefix, 640), name); track('pdf_download', { n: els.length, what: prefix === '.bs2-' ? 'bake_sheet' : 'labels' }); }
     catch { rcpToast('Couldn’t make the PDF'); }
     finally { btn.disabled = false; btn.textContent = label; }
   }
