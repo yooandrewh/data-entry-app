@@ -1300,6 +1300,10 @@
   #seaScrim .sea-x { width: 38px; height: 38px; padding: 0; font-size: 20px; line-height: 1; background: #fbf9f5; border: 1px solid var(--text); color: var(--text); cursor: pointer; flex: none; }
   #seaScrim #seaList { flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; margin-top: 4px; }
   #seaScrim .sea-foot { flex: none; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--sep); background: #fbf9f5; }
+  /* Date & time reads from the right edge, like every other value */
+  #datetime, #editDatetime, input[type="datetime-local"] { text-align: right !important; text-align-last: right; -webkit-appearance: none; appearance: none; flex: 1; min-width: 0; display: block; }
+  input[type="datetime-local"]::-webkit-date-and-time-value { text-align: right !important; }
+  input[type="datetime-local"]::-webkit-datetime-edit { text-align: right; padding: 0; }
 </style>
 </head>
 <body>
@@ -1587,7 +1591,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.53.06 · Sep 30, 3:15 PM</div>
+<div class="ver-badge">v1.53.07 · Sep 30, 3:30 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
