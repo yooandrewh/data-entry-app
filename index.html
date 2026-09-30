@@ -1327,11 +1327,11 @@
       <div id="planList"></div>
 
       <div class="card bs-card">
-        <div class="bs-head"><b>Bake Sheet</b><span>Pick recipes and batches, then print or download</span></div>
+        <div class="bs-head"><b>Bake Plan</b><span>Pick recipes and batches, then print or download</span></div>
         <div class="filter-bar" style="padding:0 14px;margin:0 0 4px"><select id="bsPick" aria-label="Add a recipe"></select></div>
         <div class="bs-links"><button type="button" id="bsAddAll">Add all seasonal</button></div>
         <div id="bsList"></div>
-        <div class="bs-foot"><button type="button" class="btn-primary" id="bsOpen">Preview sheet</button><div class="bs-foot2"><button type="button" class="btn-ghost" id="bsSave">Save this sheet</button><button type="button" class="btn-ghost" id="bsHist">Saved sheets</button></div></div>
+        <div class="bs-foot"><button type="button" class="btn-primary" id="bsOpen">Preview plan</button><div class="bs-foot2"><button type="button" class="btn-ghost" id="bsSave">Save this plan</button><button type="button" class="btn-ghost" id="bsHist">Saved plans</button></div></div>
       </div>
       <button type="button" class="btn-ghost" data-gen-labels style="margin-top:4px">Generate Labels</button>
     </div>
@@ -1536,7 +1536,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v134 · Sep 30, 4:05 AM</div>
+<div class="ver-badge">v135 · Sep 30, 4:25 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -1642,7 +1642,7 @@
 
 <!-- ===== Bake sheet ===== -->
 <div class="scrim" id="bsScrim">
-  <div class="sheet inv-sheet" role="dialog" aria-modal="true" aria-label="Bake sheet">
+  <div class="sheet inv-sheet" role="dialog" aria-modal="true" aria-label="Bake plan">
     <div class="bs-top inv-noprint"><button class="btn-ghost" id="bsCloseBtn">Close</button></div>
     <div id="bsDoc"></div>
     <div class="actions inv-noprint" style="margin-top:16px">
@@ -1654,8 +1654,8 @@
 
 <!-- ===== Saved bake sheets ===== -->
 <div class="scrim" id="bhScrim">
-  <div class="sheet" role="dialog" aria-modal="true" aria-label="Saved bake sheets">
-    <h2>Saved Sheets</h2>
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="Saved bake plans">
+    <h2>Saved Plans</h2>
     <div id="bhList"></div>
     <div class="actions"><button class="btn-ghost" id="bhClose">Close</button></div>
   </div>
@@ -4543,7 +4543,7 @@
     return blocks;
   }
   const bsBlockHtml = bl => `<div class="bs2-block"><h4>${esc(bl.title)}<small>${esc(bl.note)}</small></h4>${bl.groups.map(g => `<div class="bs2-grp">${g.map(l => `<div>${esc(l)}</div>`).join('')}</div>`).join('')}</div>`;
-  const bsHeadHtml = () => { const [y, m, d] = (bsView ? bsView.day : nowPST().slice(0, 10)).split('-').map(Number); return `<div class="bs2-title">Bake Sheet</div><div class="bs2-date">${esc(new Date(y, m - 1, d).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }))} · amounts are for the base version of each recipe</div>`; };
+  const bsHeadHtml = () => { const [y, m, d] = (bsView ? bsView.day : nowPST().slice(0, 10)).split('-').map(Number); return `<div class="bs2-title">Bake Plan</div><div class="bs2-date">${esc(new Date(y, m - 1, d).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }))} · amounts are for the base version of each recipe</div>`; };
   function paintBakeSheetDoc() {
     document.getElementById('bsDoc').innerHTML = `<div class="bs2-doc">${bsHeadHtml()}${bsModel().map(bsBlockHtml).join('')}</div>`;
   }
@@ -4623,14 +4623,14 @@
     const now = new Date(), day = nowPST().slice(0, 10);
     BH.unshift({ id: Date.now().toString(36), day, at: now.getTime(), recipes: bakeSheet.map(b => { const f = bsFind(b.key); return f ? costItemName(f.sec, f.it) + ' × ' + rFmt(b.b) : ''; }).filter(Boolean), blocks });
     BH = BH.slice(0, 100); bhSave(); track('bake_sheet_save', { recipes: bakeSheet.length });
-    e.target.textContent = 'Saved ✓'; setTimeout(() => { e.target.textContent = 'Save this sheet'; }, 1600);
+    e.target.textContent = 'Saved ✓'; setTimeout(() => { e.target.textContent = 'Save this plan'; }, 1600);
   });
   document.getElementById('bsSave').disabled = false;
   function bhPaint() {
     const fmt = t => new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }).format(new Date(t));
     document.getElementById('bhList').innerHTML = BH.length ? BH.map(h =>
       `<div class="bh-row" data-bh="${h.id}"><div class="bh-main"><b>${fmt(h.at)}</b><small>${esc((h.recipes || []).join(' · '))}</small></div><button type="button" class="tm-x" data-bh-del="${h.id}" aria-label="Delete">✕</button></div>`).join('')
-      : '<div class="tm-empty">No saved sheets yet. Use “Save this sheet” under the bake sheet.</div>';
+      : '<div class="tm-empty">No saved plans yet. Use “Save this plan” under the bake plan.</div>';
   }
   document.getElementById('bsHist').addEventListener('click', () => { bhPaint(); document.getElementById('bhScrim').classList.add('show'); });
   document.getElementById('bhClose').addEventListener('click', () => document.getElementById('bhScrim').classList.remove('show'));
