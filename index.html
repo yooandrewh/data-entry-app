@@ -1184,8 +1184,8 @@
   body:not(.printing-bake) #bsScrim .bs2-grp > div { padding: 5px 0; border-bottom: 1px solid var(--sep); font-size: var(--fs-caption); }
   body:not(.printing-bake) #bsScrim .bs2-grp > div:last-child { border-bottom: none; }
   /* Close sits at the top of the sheet */
-  #bsScrim .bs-top { position: sticky; top: -1px; z-index: 3; display: flex; justify-content: flex-end; padding: 0 0 6px; margin: 0 0 4px; background: var(--card, #fbf9f5); }
-  #bsScrim .bs-top button { width: auto; margin: 0; padding: 8px 16px; }
+  #bsScrim .bs-top { position: sticky; top: 6px; z-index: 3; height: 0; display: flex; justify-content: flex-end; padding: 0; margin: 0; background: none; overflow: visible; }
+  #bsScrim .bs-top button { width: 38px; height: 38px; min-width: 0; margin: 0; padding: 0; font-size: 20px; line-height: 1; background: #fbf9f5; border: 1px solid var(--text); color: var(--text); box-shadow: none; }
   /* Phones: iOS draws its status bar / home-indicator over the page (env() can read 0 in Safari),
      so keep at least this much clear at the top and bottom — nothing sits under them. */
   @media (pointer: coarse) {
@@ -1557,7 +1557,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v142 · Sep 30, 8:00 AM</div>
+<div class="ver-badge">v143 · Sep 30, 8:20 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -1664,7 +1664,7 @@
 <!-- ===== Bake sheet ===== -->
 <div class="scrim" id="bsScrim">
   <div class="sheet inv-sheet" role="dialog" aria-modal="true" aria-label="Bake plan">
-    <div class="bs-top inv-noprint"><button class="btn-ghost" id="bsCloseBtn">Close</button></div>
+    <div class="bs-top inv-noprint"><button class="btn-ghost" id="bsCloseBtn" aria-label="Close">✕</button></div>
     <div id="bsDoc"></div>
     <div class="actions inv-noprint" style="margin-top:16px">
       <button class="btn-primary" id="bsPdfBtn">Download PDF</button>
