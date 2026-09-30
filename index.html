@@ -1174,6 +1174,14 @@
   body { font-weight: 600; }
   h1, .hero-title, .sheet h2, #hpTitle { font-weight: 400 !important; }
   .bs2-doc, .bs2-page { font-family: "Cormorant Garamond", Georgia, serif; }
+  /* Phones: iOS draws its status bar / home-indicator over the page (env() can read 0 in Safari),
+     so keep at least this much clear at the top and bottom — nothing sits under them. */
+  @media (pointer: coarse) {
+    :root { --safe-top: max(env(safe-area-inset-top, 0px), 56px); --safe-bottom: max(env(safe-area-inset-bottom, 0px), 30px); }
+    .tabbar, body.home-landing .tabbar { padding-bottom: 0; }
+    .tab-pill { height: var(--tabbar-h); }
+  }
+  .home-ver { display: none !important; }
 </style>
 </head>
 <body>
@@ -1197,7 +1205,7 @@
       <button type="button" data-hpage="invoice">Invoice</button>
       <a class="hm-link" href="https://app.thefoodcorridor.com/tfc_food_business_dashboard/69084-kairosbaking/bookings?locale=en" target="_blank" rel="noopener noreferrer">Book Commercial Kitchen ↗</a>
     </div>
-    <div class="home-ver" id="homeVer"></div>
+    
 
     <div class="home-card" id="homePage" hidden>
     <div class="hp-head"><button type="button" class="hp-back" id="homeBack">‹ Back</button><span id="hpTitle"></span><span class="hp-space"></span></div>
@@ -1453,7 +1461,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v124 · Sep 29, 11:50 PM</div>
+<div class="ver-badge">v125 · Sep 30, 12:20 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -2478,7 +2486,6 @@
     document.getElementById('view-home').classList.toggle('paged', paged);
     document.querySelector('#view-home .home-hero').hidden = paged;
     document.getElementById('homeMenu').hidden = paged;
-    document.getElementById('homeVer').hidden = paged;
     document.getElementById('homePage').hidden = !paged;
     document.getElementById('homeForecast').hidden = homeTab !== 'forecast';
     document.getElementById('homePlan').hidden = homeTab !== 'plan';
@@ -2488,7 +2495,6 @@
     if (homeTab === 'invoice') initInvoiceForm();
     syncVer(); window.scrollTo(0, 0);
   }
-  document.getElementById('homeVer').textContent = document.querySelector('.ver-badge').textContent;
   document.getElementById('homeMenu').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
     homeTab = b.dataset.hpage; track('home_tab', { tab: homeTab }); renderHomeTab();
