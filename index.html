@@ -816,26 +816,72 @@
   .home-season { position: absolute; top: 6px; right: 2px; border: none; cursor: pointer; border-radius: 999px; padding: 6px 12px; background: var(--bg); box-shadow: var(--neu-sm); color: var(--accent); font-size: var(--fs-caption); font-weight: 700; }
   .home-season:active { box-shadow: var(--neu-in); }
   #seaScrim .actions { position: sticky; bottom: calc(-1 * var(--safe-bottom)); background: var(--bg); padding: 10px 0 4px; margin-top: 6px; }
+  /* ================= Home in the Chick-fil-A app's layout, in the Kairos palette =================
+     Apricot hero with a big plum headline and the madeleine, one white card with underline tabs,
+     a floating rounded nav. Also deepens the whole palette — the soft surfaces were washing out. */
+  :root {
+    --apricot: #f0a875; --plum: #341f37; --mauve: #a067a2;
+    --bg: #f8e2d0; --card: #f8e2d0; --field: #efd3bd; --sep: #e6c8b0; --muted: #7d5f79;
+    --neu-lo: rgba(150,96,84,0.30); --neu-hi: rgba(255,250,244,0.95);
+    --grad: linear-gradient(180deg, #ad74af 0%, #8c5290 100%);
+    --fs-hero: 40px;
+    --tabbar-h: 80px;
+  }
+  .btn-primary, .submit, .db-new, .pill.on, .chip-row button.on, .rec-scale button.on, .bakedays button.on { background: var(--grad); }
+  .home-hero { position: relative; margin: calc(-1 * (var(--safe-top) + 4px)) -16px 0; padding: calc(var(--safe-top) + 16px) 20px 0;
+    background: linear-gradient(180deg, var(--apricot) 0%, #f6c6a0 62%, var(--bg) 100%); text-align: left; overflow: hidden; }
+  .hero-kicker { font-size: var(--fs-body); font-weight: 700; color: var(--plum); opacity: .8; padding-right: 96px; }
+  .hero-title { font-size: var(--fs-hero); line-height: 1.02; letter-spacing: -1px; font-weight: 800; color: var(--plum); margin: 6px 0 4px; }
+  .hero-tag { font-size: var(--fs-body); font-weight: 600; color: var(--plum); opacity: .75; }
+  .hero-img { display: block; height: 210px; width: auto; margin: 4px auto 14px; transform: rotate(-8deg);
+    filter: drop-shadow(0 16px 14px rgba(52,31,55,0.38)); position: relative; z-index: 1; }
+  .home-season { top: calc(var(--safe-top) + 14px); background: rgba(255,248,240,0.9); }
+  .home-card { position: relative; z-index: 2; background: #fff8f1; border-radius: 22px; box-shadow: 0 10px 28px rgba(90,50,60,0.20);
+    margin: 0 0 14px; overflow: hidden; }
+  .hc-tabs { display: flex; border-bottom: 1px solid var(--sep); }
+  .hc-tabs button { flex: 1; border: none; background: none; cursor: pointer; padding: 15px 4px 13px; font-size: var(--fs-lg); font-weight: 700;
+    color: var(--muted); border-bottom: 3px solid transparent; margin-bottom: -1px; }
+  .hc-tabs button.on { color: var(--accent); border-bottom-color: var(--accent); }
+  .hc-body { padding: 12px; }
+  .hc-foot { text-align: center; padding: 12px 12px 14px; border-top: 1px solid var(--sep); color: var(--muted); font-size: var(--fs-body); }
+  .hc-foot button { border: none; background: none; cursor: pointer; padding: 0; font-size: var(--fs-body); font-weight: 700; color: var(--accent); }
+  .home-card .card, .home-card .proj-card, .home-card .store-card { box-shadow: none; background: transparent; padding-left: 0; padding-right: 0; }
+  .home-card .proj-card, .home-card .store-card { border-bottom: 1px solid var(--sep); border-radius: 0; }
+  .home-card .filter-bar select { background-color: #fff8f1; }
+  .mini-mad { height: 20px; width: auto; vertical-align: -5px; }
+
+  /* floating rounded nav */
+  .tabbar { display: block; height: calc(var(--tabbar-h) + var(--safe-bottom)); padding: 8px 14px calc(var(--safe-bottom) + 10px);
+    background: linear-gradient(180deg, rgba(248,226,208,0) 0%, var(--bg) 38%); box-shadow: none; border-top: none; }
+  .tab-pill { display: flex; gap: 4px; height: 100%; max-width: 480px; margin: 0 auto; padding: 6px; border-radius: 32px;
+    background: rgba(255,248,240,0.96); box-shadow: 0 8px 22px rgba(90,50,60,0.24); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
+  .tabbar button { border-radius: 26px; }
+  .tabbar button.on { background: rgba(160,103,162,0.16); }
 </style>
 </head>
 <body>
 
 <!-- Version badge — bump on every deploy (v = commit count, time = deploy time PST) -->
-<div class="ver-badge">v99 · Sep 29, 5:33 PM</div>
+<div class="ver-badge">v100 · Sep 29, 5:42 PM</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
   <div class="wrap">
-    <header class="db-head-row">
-      <h1>Kairosbaking</h1>
-      <div class="sub" id="homeSub">—</div>
+    <div class="home-hero">
       <button type="button" class="home-season" data-seasonal-edit>This season</button>
-    </header>
-    <div class="db-filter" id="homeTabs">
+      <div class="hero-kicker" id="homeSub">—</div>
+      <h1 class="hero-title">Kairosbaking</h1>
+      <div class="hero-tag">Baking at God's perfect time</div>
+      <img class="hero-img" src="madeleine.png" alt="" width="200" height="262">
+    </div>
+
+    <div class="home-card">
+    <div class="hc-tabs" id="homeTabs">
       <button class="on" data-htab="forecast">Forecast</button>
       <button data-htab="plan">Baking plan</button>
       <button data-htab="invoice">Invoice</button>
     </div>
+    <div class="hc-body">
 
     <!-- Forecast: scenario dropdown + the same forecast the live site shows -->
     <div id="homeForecast">
@@ -900,6 +946,9 @@
       <div class="group-label">Price per unit</div>
       <div class="card"><div class="sum" style="margin:0 12px" id="invPrices"></div></div>
       <button class="btn-primary" id="invGenBtn">Generate invoice</button>
+    </div>
+    </div>
+    <div class="hc-foot">Printing today? <button type="button" data-gen-labels>Generate labels</button></div>
     </div>
   </div>
 </div>
@@ -1062,7 +1111,7 @@
     <div id="bakingRecipes" hidden>
       <div class="rec-beta-note">🧪 Beta — double-check amounts against your own recipes before baking.</div>
       <div class="db-filter" id="recSection">
-        <button class="on" data-sec="mad">🍰 Mads</button>
+        <button class="on" data-sec="mad"><img class="mini-mad" src="madeleine.png" alt=""> Mads</button>
         <button data-sec="fill">🍮 Fillings</button>
         <button data-sec="scone">🥐 Scones</button>
         <button data-sec="other">🧁 Other</button>
@@ -1088,11 +1137,11 @@
 </div>
 
 <!-- ===== Tab bar ===== -->
-<nav class="tabbar">
+<nav class="tabbar"><div class="tab-pill">
   <button data-tab="home" class="on"><span class="tic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.5 10.5 12 4l8.5 6.5V19a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1z"/><path d="M9.5 20v-6h5v6"/></svg></span><span class="tlabel">Home</span></button>
   <button data-tab="db"><span class="tic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.9" stroke-linecap="round" aria-hidden="true"><path d="M4 6.5h16M4 12h16M4 17.5h10"/></svg></span><span class="tlabel">Data</span></button>
   <button data-tab="plan"><span class="tic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15" rx="2.5"/><path d="M3.5 9.5h17M8.5 3.5v3M15.5 3.5v3"/></svg></span><span class="tlabel">Baking</span></button>
-</nav>
+</div></nav>
 
 <!-- ===== Confirmation sheet ===== -->
 <div class="scrim" id="scrim">

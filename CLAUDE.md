@@ -80,7 +80,7 @@ and via `sendBeacon` on `pagehide` / backgrounding.
 - **One type scale, as CSS variables on `:root`** — `--fs-micro` 11 / `--fs-nav` 12 /
   `--fs-caption` 13 / `--fs-body` 15 / `--fs-lg` 17 / `--fs-title` 20 / `--fs-figure` 26 /
   `--fs-display` 32. Every `font-size` in the sheet uses one of these. Deliberate exceptions:
-  `h1` (30px), `.tok` (sized to its box) and `.db-empty .big` (an emoji graphic). **Don't add a
+  `h1` (30px), `--fs-hero` (40px, Home's headline), `.tok` (sized to its box) and `.db-empty .big` (an emoji graphic). **Don't add a
   raw px font-size** — pick the nearest step, or the scale stops being one. It had drifted to 23
   distinct sizes before 2026-09-22.
 - **Emoji are gone from labels and controls.** They survive only where they carry meaning: the
@@ -254,3 +254,16 @@ Goodwill entries have a **Given to** pill (Customers / **Church**) and every ent
 `Goodwill — La Mirada · Church · Sunday service`. Only `Church` is accepted as a recipient (allow-list);
 notes are clipped to 200 chars and any `·` is stripped so the separator stays unambiguous. The Data list shows
 the extra text under the store name (`entryExtra()`). Edit is still refused for goodwill/transfer.
+
+## Home layout + palette depth (2026-09-29)
+
+Home copies the Chick-fil-A app's home screen: an **apricot hero** (`.home-hero`) with a big plum headline
+and the **madeleine cut-out** (`madeleine.png`, from IMG_0909.HEIC), one white **card** (`.home-card`)
+holding underline tabs (`.hc-tabs`: Forecast / Baking plan / Invoice), and a footer link (*Generate
+labels*). The bottom nav is a **floating rounded pill** (`.tab-pill`) with a soft highlight on the active
+tab; the version strip sits on top of it. The whole palette was **deepened** because the first soft
+version read pale: `--bg` is now an apricot tint (`#f8e2d0`), text is Deep Plum, primary buttons use
+`--grad` (a mauve gradient). Apricot `#f0a875` / Plum `#341f37` / Mauve `#a067a2` are still the only brand
+colours. `madeleine.png` was cut out with a colour-segmentation script (macOS's Vision subject-mask API
+isn't in this machine's SDK); redo it the same way if the photo changes. The small madeleine also marks
+the *Mads* segment in Recipes.
