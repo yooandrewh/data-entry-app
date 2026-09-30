@@ -1252,6 +1252,7 @@
   .bs-foot2 { display: flex; gap: 8px; margin-top: 8px; } .bs-foot2 button { flex: 1; margin: 0; }
   .bh-row { display: flex; align-items: center; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--sep); cursor: pointer; }
   .bh-main { flex: 1; min-width: 0; } .bh-main small { display: block; color: var(--muted); font-size: var(--fs-caption); }
+  #bsKitchen { padding: 0 14px; } #bsKitchen .be-section-label { margin-top: 10px; }
 </style>
 </head>
 <body>
@@ -1272,7 +1273,7 @@
     <div class="home-menu" id="homeMenu">
       <button type="button" data-hpage="forecast">Forecast</button>
       <button type="button" data-hpage="plan">Baking Plan</button>
-      <button type="button" data-hpage="invoice">Invoice</button>
+      <button type="button" data-hpage="invoice">Invoice / Labels</button>
       <button type="button" data-hpage="timers">Timers</button>
       <a class="hm-link" href="https://app.thefoodcorridor.com/tfc_food_business_dashboard/69084-kairosbaking/bookings?locale=en" target="_blank" rel="noopener noreferrer">Book Commercial Kitchen ↗</a>
     </div>
@@ -1331,9 +1332,9 @@
         <div class="filter-bar" style="padding:0 14px;margin:0 0 4px"><select id="bsPick" aria-label="Add a recipe"></select></div>
         <div class="bs-links"><button type="button" id="bsAddAll">Add all seasonal</button></div>
         <div id="bsList"></div>
+        <div id="bsKitchen"></div>
         <div class="bs-foot"><button type="button" class="btn-primary" id="bsOpen">Preview plan</button><div class="bs-foot2"><button type="button" class="btn-ghost" id="bsSave">Save this plan</button><button type="button" class="btn-ghost" id="bsHist">Saved plans</button></div></div>
       </div>
-      <button type="button" class="btn-ghost" data-gen-labels style="margin-top:4px">Generate Labels</button>
     </div>
     </div>
 
@@ -1350,6 +1351,8 @@
       <div class="group-label">Price per unit</div>
       <div class="card"><div class="sum" style="margin:0 12px" id="invPrices"></div></div>
       <button class="btn-primary" id="invGenBtn">Generate invoice</button>
+      <div class="group-label">Labels</div>
+      <button type="button" class="btn-ghost" data-gen-labels>Generate Labels</button>
     </div>
     </div>
     </div>
@@ -1536,7 +1539,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v135 · Sep 30, 4:25 AM</div>
+<div class="ver-badge">v136 · Sep 30, 5:05 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -2569,7 +2572,7 @@
 
   // ---- Home: a landing screen with three buttons; each opens its own page ----
   let homeTab = null;   // null = landing | 'forecast' | 'plan' | 'invoice'
-  const HOME_TITLES = { forecast: 'Forecast', plan: 'Baking Plan', invoice: 'Invoice', timers: 'Timers' };
+  const HOME_TITLES = { forecast: 'Forecast', plan: 'Baking Plan', invoice: 'Invoice / Labels', timers: 'Timers' };
   // The version line lives over the photo on Home's landing; everywhere else it is the fixed strip.
   function syncVer() {
     const onHome = (document.querySelector('.tabbar button.on') || {}).dataset?.tab === 'home';
@@ -4516,6 +4519,24 @@
         <button type="button" class="bs-x" data-bs="x" aria-label="Remove">✕</button></div>`; }).join('');
     document.getElementById('bsList').innerHTML = rows || '<div class="bs-empty">Nothing added yet — choose a recipe above and it is added with the batches your plan calls for.</div>';
     document.getElementById('bsOpen').disabled = !bakeSheet.length;
+    paintBsKitchen();
+  }
+  // Kitchen time for what's on the bake plan: only the madeleines are timed (batches × 18 pieces each);
+  // fillings, scones and the rest aren't part of the kitchen-time model.
+  function paintBsKitchen() {
+    const el = document.getElementById('bsKitchen'); if (!el) return;
+    let batches = 0, pieces = 0, glazed = 0;
+    for (const b of bakeSheet) {
+      const f = bsFind(b.key); if (!f || f.sec !== 'mad') continue;
+      const n = b.b * BATCH_YIELD; batches += b.b; pieces += n;
+      if (GLAZED.includes(f.it.name.replace(/\s*madeleines?$/i, '').trim())) glazed += n;
+    }
+    if (!pieces) { el.innerHTML = ''; return; }
+    const rounds = Math.ceil(Math.ceil(pieces / KT.perPan) / KT.pans);
+    const prep = Math.round(Math.ceil(batches / KT.prepGroup) * KT.prepMin);
+    const glaze = Math.round(glazed * KT.glazeSec / 60);
+    const baking = rounds * (KT.bakeMin + KT.coolMin) + glaze + KT.cleanMin;
+    el.innerHTML = kitchenRows({ pieces, prep, baking, min: prep + baking, rounds, glaze }).replace('be-section-label', 'be-section-label bs-kt-label');
   }
   // Ingredient line as it's written on the sheet: "190 grams Whole eggs" (sentence case, brackets → comma).
   const bsLineName = n => {
