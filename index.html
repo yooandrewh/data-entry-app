@@ -1579,7 +1579,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.51.00 · Sep 30, 11:50 AM</div>
+<div class="ver-badge">v1.52.00 · Sep 30, 12:20 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -4028,7 +4028,15 @@
       fillingNote: 'Top the glaze with a scatter of coconut flakes — a 1lb bag covers about 150 madeleines.' },
     { name: 'Lemon Poppy', flour: 174, salt: 2, note: '4g lemon emulsion + 6g poppy seed',
       glaze: [['Powdered Sugar', '100g'], ['Lemon Juice', '25g'], ['Unsalted Butter', '4g']] },
-    { name: 'Double Choco', flour: 146, salt: 3, note: '28g cocoa powder' },
+    { name: 'Chocolate', title: 'Chocolate Madeleine',
+      custom: [['Cake Flour', 98], ['Cocoa Powder', 10], ['Baking Powder', 3], ['Salt', 0.5], ['Unsalted Butter', 68], ['Milk', 4], ['Whole Eggs, strained', 55], ['Sugar', 52], ['Honey', 7]],
+      syrup: [['Sugar', '25g'], ['Water', '25g']],
+      glaze: [['Powdered Sugar', '85g'], ['Cocoa Powder', '7g'], ['Water', '25g']],
+      lblExtra: { topping: ['edible gold powder'] },
+      notes: 'Mould: Chiyoda cacao pod. Brush the warm madeleines with the simple syrup (dissolve the sugar in the water), then glaze once cool. To finish: edible gold powder. Whole eggs are strained. From the cookbook — the method page wasn’t captured, so add your own steps here if you want them.' },
+    { name: 'Caramelized Milk', title: 'Caramelized Milk Madeleine',
+      custom: [['Cake Flour', 125], ['Baking Powder', 5], ['Caramelized Milk Powder', 3], ['Salt', 0.5], ['Unsalted Butter', 105], ['Milk', 7], ['Whole Eggs, strained', 85], ['Sugar', 80], ['Honey', 10]],
+      notes: 'Mould: Woojung / Chiyoda madeleine, 22mm deep. Whole eggs are strained. Caramelized milk powder is made ahead. From the cookbook — the method page wasn’t captured, so add your own steps here if you want them.' },
     { name: 'Matcha', flour: 156, salt: 2, note: '14g matcha powder' },
     { name: 'Mugwort', title: 'Mugwort Madeleine', link: 'https://www.youtube.com/watch?v=vZBX4NI951A',
       custom: [['All Purpose Flour', 40], ['Cake Flour', 65], ['Baking Powder', 5], ['Baking Soda', 1], ['White Sugar', 25], ['Brown Sugar', 35], ['Unsalted Butter', 110], ['Eggs', 72], ['Salt', 1], ['White Chocolate', 120], ['Skim Milk Powder', 5], ['Milk', 25], ['Honey', 20], ['Mugwort Powder', 15]] },
@@ -4106,7 +4114,7 @@
       rows: [['Cream Cheese', 550], ['Blueberry', 550], ['Powdered Sugar', 65], ['Salt', 3]],
       notes: 'Freeze completely solid before wrapping into the scone dough.' },
   ];
-  const REC_ICON = { 'Pumpkin Pie Spice Muffin': 'pumpkin', 'Classic': 'madeleine', 'Peach Crumble': 'peach', 'Dot Cake': 'cake_dot', 'Earl Grey': 'teacup', 'Ube': 'ube', 'Lemon Poppy': 'lemon', 'Double Choco': 'choco', 'Matcha': 'matcha', 'Mugwort': 'leaf', 'Maple Pecan': 'nut', 'Pumpkin Pie Spice': 'pumpkin', 'Flat Chocolate Chip Chookie': 'cookie', 'Lemon Curd': 'jar_lemon', 'Cream Cheese Frosting': 'swirl_pink', 'Pumpkin Cream Cheese Frosting': 'swirl_pumpkin', 'Anglesie Buttercream': 'butter', 'Earl Grey Paste': 'jar_tea', 'Chocolate Ganache': 'jar_choc', 'Caramel': 'drop', 'Mascarpone Cream': 'bowl', 'Milk Cream': 'milk', 'Plain Scone': 'scone', 'Strawberry Cream Cheese': 'strawberry', 'Blueberry Cream Cheese': 'blueberry', 'Gluten Free Cake': 'cake_gf', 'Sable': 'cookie', 'Macarons': 'macaron', 'Salt Bread': 'bread', 'Vegan Donut': 'donut', 'Apricot Ricotta Cake': 'cake_apricot', 'Earl Grey Fig Cake': 'cake_fig' };
+  const REC_ICON = { 'Pumpkin Pie Spice Muffin': 'pumpkin', 'Classic': 'madeleine', 'Peach Crumble': 'peach', 'Dot Cake': 'cake_dot', 'Earl Grey': 'teacup', 'Ube': 'ube', 'Lemon Poppy': 'lemon', 'Chocolate': 'choco', 'Caramelized Milk': 'milk', 'Matcha': 'matcha', 'Mugwort': 'leaf', 'Maple Pecan': 'nut', 'Pumpkin Pie Spice': 'pumpkin', 'Flat Chocolate Chip Chookie': 'cookie', 'Lemon Curd': 'jar_lemon', 'Cream Cheese Frosting': 'swirl_pink', 'Pumpkin Cream Cheese Frosting': 'swirl_pumpkin', 'Anglesie Buttercream': 'butter', 'Earl Grey Paste': 'jar_tea', 'Chocolate Ganache': 'jar_choc', 'Caramel': 'drop', 'Mascarpone Cream': 'bowl', 'Milk Cream': 'milk', 'Plain Scone': 'scone', 'Strawberry Cream Cheese': 'strawberry', 'Blueberry Cream Cheese': 'blueberry', 'Gluten Free Cake': 'cake_gf', 'Sable': 'cookie', 'Macarons': 'macaron', 'Salt Bread': 'bread', 'Vegan Donut': 'donut', 'Apricot Ricotta Cake': 'cake_apricot', 'Earl Grey Fig Cake': 'cake_fig' };
   const recKey = name => REC_ICON[name] || 'book';
   const recIc = (name, px) => ic(recKey(name), px);
 
@@ -4184,6 +4192,7 @@
         ${verChips}${recBatchRow()}
         ${recIngRows(rows, b)}
         ${item.note ? `<div class="rec-box"><b>Flavoring</b>${rScaleNote(item.note, b)}</div>` : ''}
+        ${item.syrup ? `<div class="rec-box"><b>Simple Syrup</b>${item.syrup.map(g => `<div class="gl"><span>${g[0]}</span><span>${rScaleStr(g[1], b)}</span></div>`).join('')}</div>` : ''}
         ${item.glaze ? `<div class="rec-box"><b>Glaze</b>${item.glaze.map(g => `<div class="gl"><span>${g[0]}</span><span>${rScaleStr(g[1], b)}</span></div>`).join('')}</div>` : ''}
         ${item.topping ? `<div class="rec-box"><b>Topping</b>${item.topping.map(g => `<div class="gl"><span>${g[0]}</span><span>${rScaleStr(g[1], b)}</span></div>`).join('')}</div>` : ''}
         ${(item.fillingRefs || item.fillingNote) ? `<div class="rec-box"><b>Filling & Topping</b>${(item.fillingRefs || []).map(recFillingRef).join('')}${item.fillingNote ? `<p>${item.fillingNote}</p>` : ''}</div>` : ''}
@@ -4407,7 +4416,7 @@
       const base = it.versions ? it.versions[0].rows : it.custom ? it.custom
         : [['Cake Flour', it.flour], ['Baking Powder', REC_MAD_BASE['Baking Powder']], ['Salt', it.salt], ['Eggs', REC_MAD_BASE['Eggs']], ['Sugar', REC_MAD_BASE['Sugar']], ['Vanilla Extract', REC_MAD_BASE['Vanilla Extract']], ['Unsalted Butter', REC_MAD_BASE['Unsalted Butter']]];
       // flavoring, glaze and topping are part of the batch too (the old costing left them out)
-      rows = [...base, ...lblNoteRows(it.note), ...(it.glaze || []), ...(it.topping || [])].map(num);
+      rows = [...base, ...lblNoteRows(it.note), ...(it.syrup || []), ...(it.glaze || []), ...(it.topping || [])].map(num);
     } else if (sec === 'fill') {
       if (it.type === 'twocol') rows = it.rows.map(r => [r[0], r[1]]);
       else if (it.type === 'ratio') { const [a, b] = it.ratio.split(':').map(parseFloat); rows = [['Sugar', a], ['Heavy Cream', b]]; }
