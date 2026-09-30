@@ -382,3 +382,10 @@ bake sheet. The Home footer link, the Recipes-tab link and the per-recipe *Make 
 removed (the single-label sheet code, `openLabel()` / `#lblScrim`, is now unreachable — Generate Labels lets you
 tick just one recipe instead). **Bake days** are plain letters (no boxes) on the label's line; the chosen day is
 caramel with an underline.
+
+**Dropdown lists (latest):** every `<select>` opens an **app-styled list** (`openSelectPopup()`, `.sp-pop`:
+cream panel, thin outline, group labels, caramel current choice with ✓) instead of the browser's dark native
+picker. The `<select>` itself remains the button and holds the value; choosing an option sets it and fires a
+normal `change`, so existing handlers are untouched. It's wired by document-level delegation (mousedown +
+iOS touchend `preventDefault`, Enter/Space/↓ from the keyboard, Esc / outside-click / page scroll to close).
+Add `data-native` to a select to opt out. iPhone behaviour relies on the touchend `preventDefault` — verify on device.

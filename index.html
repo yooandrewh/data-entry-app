@@ -1143,6 +1143,15 @@
   .bakedays button { width: 28px; height: 32px; padding: 0; background: transparent; border: none; -webkit-backdrop-filter: none; backdrop-filter: none;
     color: var(--muted); font-weight: 700; font-size: var(--fs-body); border-bottom: 2px solid transparent; }
   .bakedays button.on { background: transparent; border: none; border-bottom: 2px solid var(--accent); color: var(--accent); }
+
+  /* ---- Dropdown list (replaces the browser's own picker): cream panel, thin outline, caramel current choice ---- */
+  .sp-pop { position: fixed; z-index: 90; overflow-y: auto; background: #fbf9f5; border: 1px solid rgba(35,42,51,0.35); padding: 4px 0; -webkit-overflow-scrolling: touch; }
+  .sp-grp { padding: 10px 14px 4px; font-size: var(--fs-micro); font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: var(--muted); }
+  .sp-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; font-size: var(--fs-body); color: var(--text); cursor: pointer; }
+  .sp-item:active, .sp-item:hover { background: rgba(35,42,51,0.07); }
+  .sp-item.on { background: rgba(164,90,34,0.14); color: var(--accent); font-weight: 700; }
+  .sp-item b { font-weight: 700; }
+  select:focus, select:focus-visible { outline: none; border-color: var(--accent); }
 </style>
 </head>
 <body>
@@ -1423,7 +1432,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v119 · Sep 29, 10:29 PM</div>
+<div class="ver-badge">v120 · Sep 29, 10:31 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -2348,6 +2357,42 @@
     const btn = e.target.closest('button'); if (btn) setDbFilter(btn.dataset.filter);
   });
   document.getElementById('dbMore').addEventListener('change', e => setDbFilter(e.target.value));
+  // ---- App-styled dropdown lists: every <select> opens this panel instead of the browser's own dark picker ----
+  // The <select> itself stays (it's the button and it holds the value); tapping it opens the list, choosing an
+  // option sets the value and fires a normal 'change' so all the existing handlers keep working.
+  let spOpen = null;
+  function closeSelectPopup() { if (spOpen) { spOpen.pop.remove(); spOpen = null; } }
+  function openSelectPopup(sel) {
+    closeSelectPopup();
+    const pop = document.createElement('div'); pop.className = 'sp-pop'; pop.setAttribute('role', 'listbox');
+    const item = o => `<div class="sp-item${o.value === sel.value ? ' on' : ''}" role="option" data-v="${esc(o.value)}"><span>${esc(o.textContent.trim())}</span>${o.value === sel.value ? '<b>✓</b>' : ''}</div>`;
+    pop.innerHTML = [...sel.children].map(n => n.tagName === 'OPTGROUP'
+      ? `<div class="sp-grp">${esc(n.label)}</div>` + [...n.children].filter(o => !o.hidden).map(item).join('')
+      : (n.hidden || (n.disabled && n.value === '') ? '' : item(n))).join('');
+    document.body.appendChild(pop);
+    const r = sel.getBoundingClientRect(), navH = 90, room = window.innerHeight - r.bottom - navH, above = room < 220 && r.top > room;
+    pop.style.left = Math.max(8, Math.min(r.left, window.innerWidth - Math.max(r.width, 200) - 8)) + 'px';
+    pop.style.minWidth = Math.max(r.width, 200) + 'px';
+    pop.style.maxHeight = Math.max(160, Math.min(above ? r.top - 16 : room - 8, window.innerHeight * 0.55)) + 'px';
+    if (above) pop.style.bottom = (window.innerHeight - r.top + 4) + 'px'; else pop.style.top = (r.bottom + 4) + 'px';
+    const on = pop.querySelector('.sp-item.on'); if (on) pop.scrollTop = Math.max(0, on.offsetTop - pop.clientHeight / 2 + on.offsetHeight / 2);
+    spOpen = { sel, pop };
+  }
+  const spTarget = e => { const s = e.target.closest && e.target.closest('select'); return s && !s.disabled && !s.hasAttribute('data-native') ? s : null; };
+  document.addEventListener('mousedown', e => {
+    const s = spTarget(e);
+    if (s) { e.preventDefault(); s.focus({ preventScroll: true }); spOpen && spOpen.sel === s ? closeSelectPopup() : openSelectPopup(s); return; }
+    const it = e.target.closest && e.target.closest('.sp-item');
+    if (it && spOpen) { const sel = spOpen.sel; sel.value = it.dataset.v; closeSelectPopup(); sel.dispatchEvent(new Event('change', { bubbles: true })); e.preventDefault(); return; }
+    if (!(e.target.closest && e.target.closest('.sp-pop'))) closeSelectPopup();
+  });
+  document.addEventListener('touchend', e => { if (spTarget(e)) e.preventDefault(); }, { passive: false });   // iOS: don't raise the wheel picker
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeSelectPopup();
+    else if ((e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') && e.target.tagName === 'SELECT' && !e.target.hasAttribute('data-native')) { e.preventDefault(); openSelectPopup(e.target); }
+  });
+  window.addEventListener('scroll', e => { if (spOpen && e.target instanceof Node && spOpen.pop.contains(e.target)) return; closeSelectPopup(); }, true);   // the list scrolling itself doesn't count
+
   // ---- Home: a landing screen with three buttons; each opens its own page ----
   let homeTab = null;   // null = landing | 'forecast' | 'plan' | 'invoice'
   const HOME_TITLES = { forecast: 'Forecast', plan: 'Baking Plan', invoice: 'Invoice' };
