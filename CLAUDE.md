@@ -376,3 +376,9 @@ Storage is unchanged (`Goodwill — La Mirada · Church · note`). The × / − 
 
 **Home's bottom bar (latest):** on the Home landing (`body.home-landing`) the nav is see-through and outlined
 in cream like the buttons over the photo; on every other screen it's the light bar.
+
+**Labels live only under Baking Plan (latest):** the *Generate Labels* button is on Home → Baking Plan, under the
+bake sheet. The Home footer link, the Recipes-tab link and the per-recipe *Make ingredient label* button were
+removed (the single-label sheet code, `openLabel()` / `#lblScrim`, is now unreachable — Generate Labels lets you
+tick just one recipe instead). **Bake days** are plain letters (no boxes) on the label's line; the chosen day is
+caramel with an underline.

@@ -1136,6 +1136,13 @@
   body.home-landing .tabbar button { color: #fff6ee; }
   body.home-landing .tabbar button + button { border-left: 1.5px solid rgba(255,246,238,0.45); }
   body.home-landing .tabbar button.on { background: rgba(255,255,255,0.20); color: #fff6ee; }
+
+  /* ---- Bake days: plain letters (no boxes) on the same line as the label; the chosen day is caramel + underlined ---- */
+  .row-stack { flex-wrap: wrap; align-items: center; }
+  .bakedays { flex: 0 0 auto; margin-left: auto; gap: 2px; }
+  .bakedays button { width: 28px; height: 32px; padding: 0; background: transparent; border: none; -webkit-backdrop-filter: none; backdrop-filter: none;
+    color: var(--muted); font-weight: 700; font-size: var(--fs-body); border-bottom: 2px solid transparent; }
+  .bakedays button.on { background: transparent; border: none; border-bottom: 2px solid var(--accent); color: var(--accent); }
 </style>
 </head>
 <body>
@@ -1215,6 +1222,7 @@
         <div id="bsList"></div>
         <div class="bs-foot"><button type="button" class="btn-primary" id="bsOpen">Preview sheet</button></div>
       </div>
+      <button type="button" class="btn-ghost" data-gen-labels style="margin-top:4px">Generate Labels</button>
     </div>
     </div>
 
@@ -1231,7 +1239,6 @@
       <button class="btn-primary" id="invGenBtn">Generate invoice</button>
     </div>
     </div>
-    <div class="hc-foot">Printing today? <button type="button" data-gen-labels>Generate labels</button></div>
     </div>
   </div>
 </div>
@@ -1398,7 +1405,6 @@
         <button data-sec="other">🧁 Other</button>
       </div>
       <div class="filter-bar"><select id="recPick" aria-label="Recipe"></select></div>
-      <div class="bs-links" style="margin:-6px 0 8px"><button type="button" data-gen-labels>Generate labels</button></div>
       <div id="recCard"></div>
     </div>
 
@@ -1417,7 +1423,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v118 · Sep 29, 7:24 PM</div>
+<div class="ver-badge">v119 · Sep 29, 10:29 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -3703,7 +3709,6 @@
         ${(item.fillingRefs || item.fillingNote) ? `<div class="rec-box"><b>Filling & Topping</b>${(item.fillingRefs || []).map(recFillingRef).join('')}${item.fillingNote ? `<p>${item.fillingNote}</p>` : ''}</div>` : ''}
         <div class="rec-box"><b>Notes</b>${item.notes || REC_MAD_NOTES}</div>
         ${recLink(item.link)}
-        <button class="btn-ghost rec-label-btn" data-rlabel="1">Make ingredient label</button>
       </div>`;
   }
   function recFillCard(item) {
