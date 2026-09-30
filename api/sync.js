@@ -62,7 +62,7 @@ function laDateTime(local) {
 }
 
 // Best-effort phone push via ntfy.sh. Never blocks/fails the sync.
-async function sendNotification({ type, location, to, dateOnly, amounts }) {
+async function sendNotification({ type, location, to, dateOnly, amounts, recipient }) {
   const topic = process.env.NTFY_TOPIC;
   if (!topic) return;
   const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
@@ -71,7 +71,7 @@ async function sendNotification({ type, location, to, dateOnly, amounts }) {
   const parts = Object.keys(PRODUCT_MAP)
     .map((p) => { const n = Math.abs(cleanAmount(amounts[p])); return n > 0 ? `${p} ${n}` : null; })
     .filter(Boolean);
-  const lead = isGoodwill ? 'Samples out: ' : isXfer ? 'Moved: ' : '';
+  const lead = isGoodwill ? (recipient ? `Samples out (${recipient}): ` : 'Samples out: ') : isXfer ? 'Moved: ' : '';
   const body = `${lead}${parts.length ? parts.join(', ') : 'No amounts'} · ${dateOnly}`;
   const tag = isGoodwill ? 'gift' : isXfer ? 'arrows_counterclockwise' : (type === 'delivery' ? 'truck' : 'package');
   const title = isXfer ? `Transfer - ${location} -> ${to}` : `${cap(type)} - ${location}`;  // ASCII only (HTTP header)
@@ -96,6 +96,10 @@ export default async function handler(req, res) {
 
   try {
     const { type, datetime, location, amounts } = req.body || {};
+    // Optional extras: who a goodwill entry went to (allow-listed) and a free-text note. Both end up
+    // in the notes column after "Goodwill — La Mirada", separated by " · ".
+    const recipient = ['Church'].includes(req.body && req.body.recipient) ? req.body.recipient : '';
+    const memo = String((req.body && req.body.memo) || '').replace(/[·\s]+/g, ' ').trim().slice(0, 200);
     if (!type || !location || !datetime) {
       return res.status(400).json({ error: 'Missing required fields (type, datetime, location)' });
     }
@@ -130,8 +134,8 @@ export default async function handler(req, res) {
         return r;
       };
       const srcId = crypto.randomUUID(), dstId = crypto.randomUUID();
-      await appendRow(DELIVERIES_TAB, mkRow(srcId, location, `Transfer → ${to}`, -1));
-      await appendRow(DELIVERIES_TAB, mkRow(dstId, to, `Transfer ← ${location}`, +1));
+      await appendRow(DELIVERIES_TAB, mkRow(srcId, location, `Transfer → ${to}${memo ? ' · ' + memo : ''}`, -1));
+      await appendRow(DELIVERIES_TAB, mkRow(dstId, to, `Transfer ← ${location}${memo ? ' · ' + memo : ''}`, +1));
       await sendNotification({ type, location, to, dateOnly, amounts: a }).catch(() => {});
       const url = `https://docs.google.com/spreadsheets/d/${sheetId()}/edit`;
       return res.status(200).json({ ok: true, id: srcId, ids: [srcId, dstId], url });
@@ -145,7 +149,7 @@ export default async function handler(req, res) {
       Date: startIso,
       Select: location,
       'Tagged for deletion': 'FALSE',
-      notes: `${cap(type)} — ${location}`,
+      notes: `${cap(type)} — ${location}${isGoodwill && recipient ? ' · ' + recipient : ''}${memo ? ' · ' + memo : ''}`,
     };
     for (const [appName, colName] of Object.entries(PRODUCT_MAP)) {
       // Goodwill removes stock: always store a negative number regardless of sign entered.
@@ -156,7 +160,7 @@ export default async function handler(req, res) {
     await appendRow(tab, row);
 
     // Push a phone notification (best-effort — a failure here never fails the sync).
-    await sendNotification({ type, location, dateOnly, amounts: a }).catch(() => {});
+    await sendNotification({ type, location, dateOnly, amounts: a, recipient }).catch(() => {});
 
     const url = `https://docs.google.com/spreadsheets/d/${sheetId()}/edit`;
     return res.status(200).json({ ok: true, id, url });

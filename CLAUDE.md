@@ -236,3 +236,20 @@ over the rules above it, so edit there. Spacing was tightened in the same block.
 inputs (quantity fields get a soft well only while focused). Entry amount fields select their contents
 on focus and strip leading zeros, so typing replaces the 0 instead of sitting next to it.
 **This season's recipes** are edited from Home only (*This season's recipes → Edit*).
+
+## Home is the planning screen (2026-09-29)
+
+Home (**Kairosbaking**) now holds: the forecast (scenario **dropdown** `#projScenario` — Bear / Expected /
+Bull — replacing the old segment toggle), the **baking plan** (`#bakingPlan`: make-it-last-until, bake
+days, plan cards, bake sheet), a **Generate invoice** button (`#invOpen`), the store analytics, and a small
+**This season** button top right (the only place seasonal recipes are edited). `renderHome()` calls
+`renderPlan()` + `renderBakeSheet()`, so Home costs one more entries fetch. The **Baking** tab is now just
+**Recipes | Costs** (`bakingMode` defaults to `'recipes'`; there is no Plan mode).
+
+## Goodwill "Given to" + notes
+
+Goodwill entries have a **Given to** pill (Customers / **Church**) and every entry type has an optional
+**Note**. `api/sync.js` writes them into the notes column after the title, separated by ` · `:
+`Goodwill — La Mirada · Church · Sunday service`. Only `Church` is accepted as a recipient (allow-list);
+notes are clipped to 200 chars and any `·` is stripped so the separator stays unambiguous. The Data list shows
+the extra text under the store name (`entryExtra()`). Edit is still refused for goodwill/transfer.

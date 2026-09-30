@@ -810,30 +810,72 @@
   .db-new { position: absolute; top: 4px; right: 2px; border: none; cursor: pointer; border-radius: 999px; padding: 9px 16px;
     background: var(--accent); color: #fff; font-size: var(--fs-body); font-weight: 700; box-shadow: var(--neu-acc); }
   .db-new:active { box-shadow: var(--neu-acc-in); }
+  .row-text { flex: 1; min-width: 0; border: none; background: transparent; color: var(--text); font-size: var(--fs-lg); text-align: right; padding: 6px 8px; border-radius: 8px; }
+  .row-text:focus { outline: none; background: var(--field); box-shadow: var(--neu-in); }
+  .db-note { font-size: var(--fs-caption); color: var(--muted); font-style: italic; margin: -6px 0 6px; }
+  .home-season { position: absolute; top: 6px; right: 2px; border: none; cursor: pointer; border-radius: 999px; padding: 6px 12px; background: var(--bg); box-shadow: var(--neu-sm); color: var(--accent); font-size: var(--fs-caption); font-weight: 700; }
+  .home-season:active { box-shadow: var(--neu-in); }
 </style>
 </head>
 <body>
 
 <!-- Version badge — bump on every deploy (v = commit count, time = deploy time PST) -->
-<div class="ver-badge">v97 · Sep 29, 5:20 PM</div>
+<div class="ver-badge">v98 · Sep 29, 5:29 PM</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
   <div class="wrap">
-    <header>
-      <h1>Kairos</h1>
+    <header class="db-head-row">
+      <h1>Kairosbaking</h1>
       <div class="sub" id="homeSub">—</div>
+      <button type="button" class="home-season" data-seasonal-edit>This season</button>
     </header>
     <div id="homeUpdated"></div>
-    <div class="db-filter" id="projScenario">
-      <button data-scn="bear">🐻 Bear</button>
-      <button class="on" data-scn="base">Expected</button>
-      <button data-scn="bull">🐂 Bull</button>
-    </div>
+    <div class="filter-bar"><select id="projScenario" aria-label="Forecast scenario">
+      <option value="bear">🐻 Bear</option>
+      <option value="base" selected>Expected</option>
+      <option value="bull">🐂 Bull</option>
+    </select></div>
     <div class="hint" id="projSub"></div>
     <div id="projList"></div>
+    <div class="group-label" style="margin-top:6px">Baking plan</div>
+    <div id="bakingPlan">
+      <div class="card">
+        <div class="row">
+          <span class="lbl">Make it last until</span>
+          <input type="date" id="planDate" />
+        </div>
+        <div class="row row-stack">
+          <span class="lbl">Bake days</span>
+          <div class="bakedays" id="bakeDays">
+            <button type="button" data-dow="1">M</button>
+            <button type="button" data-dow="2">T</button>
+            <button type="button" data-dow="3">W</button>
+            <button type="button" data-dow="4">T</button>
+            <button type="button" data-dow="5">F</button>
+            <button type="button" data-dow="6">S</button>
+            <button type="button" data-dow="0">S</button>
+          </div>
+          <div class="bakedate-add">
+            <input type="date" id="bakeDateInput" aria-label="Add a bake date" />
+            <button type="button" id="bakeDateAddBtn">➕ Add date</button>
+          </div>
+          <div class="bakedate-chips" id="bakeDateChips"></div>
+        </div>
+      </div>
+      <div id="planSplitWrap"></div>
+      <div id="planList"></div>
+
+      <div class="card bs-card">
+        <div class="bs-head"><b>Bake sheet</b><span>Pick recipes and batches, then print or download</span></div>
+        <div class="filter-bar" style="padding:0 14px;margin:0 0 4px"><select id="bsPick" aria-label="Add a recipe"></select></div>
+        <div class="bs-links"><button type="button" id="bsAddAll">Add all seasonal</button></div>
+        <div id="bsList"></div>
+        <div class="bs-foot"><button type="button" class="btn-primary" id="bsOpen">Preview sheet</button></div>
+      </div>
+    </div>
+    <button type="button" class="btn-ghost inv-open" id="invOpen">Generate invoice</button>
     <div id="homeContent"></div>
-    <div class="card"><div class="row"><span class="lbl">This season's recipes<span style="display:block;font-weight:400;color:var(--muted);font-size:var(--fs-caption)">Shown first in Baking and offered on the bake sheet</span></span><button type="button" class="btn-ghost" style="width:auto;padding:8px 16px" data-seasonal-edit>Edit</button></div></div>
   </div>
 </div>
 
@@ -875,6 +917,17 @@
             <button type="button" class="pill on" data-loc="La Mirada">La Mirada</button>
             <button type="button" class="pill" data-loc="Stanton">Stanton</button>
           </div>
+        </div>
+        <div class="row" id="giveRow" hidden>
+          <span class="lbl">Given to</span>
+          <div class="pills" id="givePills">
+            <button type="button" class="pill on" data-give="">Customers</button>
+            <button type="button" class="pill" data-give="Church">Church</button>
+          </div>
+        </div>
+        <div class="row">
+          <span class="lbl">Note</span>
+          <input type="text" id="entryNote" class="row-text" placeholder="Optional" maxlength="200" autocomplete="off" />
         </div>
       </div>
       <div class="hint" id="xferHint" hidden style="color:#7c3aed;font-weight:600"></div>
@@ -956,7 +1009,6 @@
         <option value="week">By week</option>
       </select>
     </div>
-    <button type="button" class="btn-ghost inv-open" id="invOpen" hidden>Create invoice</button>
     <div class="db-dates" id="dbDates" hidden>
       <input type="date" id="dateFrom" aria-label="From date" />
       <span class="db-dates-sep">–</span>
@@ -977,46 +1029,8 @@
       <div class="sub" id="planSub"></div>
     </header>
     <div class="db-filter" id="bakingMode">
-      <button class="on" data-mode="plan">Plan</button>
-      <button data-mode="recipes">Recipes</button>
+      <button class="on" data-mode="recipes">Recipes</button>
       <button data-mode="costs">Costs</button>
-    </div>
-
-    <!-- Plan mode -->
-    <div id="bakingPlan">
-      <div class="card">
-        <div class="row">
-          <span class="lbl">Make it last until</span>
-          <input type="date" id="planDate" />
-        </div>
-        <div class="row row-stack">
-          <span class="lbl">Bake days</span>
-          <div class="bakedays" id="bakeDays">
-            <button type="button" data-dow="1">M</button>
-            <button type="button" data-dow="2">T</button>
-            <button type="button" data-dow="3">W</button>
-            <button type="button" data-dow="4">T</button>
-            <button type="button" data-dow="5">F</button>
-            <button type="button" data-dow="6">S</button>
-            <button type="button" data-dow="0">S</button>
-          </div>
-          <div class="bakedate-add">
-            <input type="date" id="bakeDateInput" aria-label="Add a bake date" />
-            <button type="button" id="bakeDateAddBtn">➕ Add date</button>
-          </div>
-          <div class="bakedate-chips" id="bakeDateChips"></div>
-        </div>
-      </div>
-      <div id="planSplitWrap"></div>
-      <div id="planList"></div>
-
-      <div class="card bs-card">
-        <div class="bs-head"><b>Bake sheet</b><span>Pick recipes and batches, then print or download</span></div>
-        <div class="filter-bar" style="padding:0 14px;margin:0 0 4px"><select id="bsPick" aria-label="Add a recipe"></select></div>
-        <div class="bs-links"><button type="button" id="bsAddAll">Add all seasonal</button></div>
-        <div id="bsList"></div>
-        <div class="bs-foot"><button type="button" class="btn-primary" id="bsOpen">Preview sheet</button></div>
-      </div>
     </div>
 
     <!-- Recipes mode -->
@@ -1232,7 +1246,7 @@
   const SALES_FLAVORS = ['Lemon Poppy', 'Sea Salt', 'Ube', 'Dot', 'Earl Grey', 'Matcha', 'Chocolate', 'Unknown'];
   const PRICE_PER_UNIT = 2.50;   // $/madeleine (from Financial Dashboard: $192.50 / 77 units)
   const usd = n => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n);
-  const state = { type: 'delivery', location: 'La Mirada' };
+  const state = { type: 'delivery', location: 'La Mirada', give: '' };   // give: who a goodwill entry went to ('' = customers)
   const esc = s => String(s).replace(/[&<>"']/g, c =>
     ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
 
@@ -1314,6 +1328,7 @@
       state.type === 'goodwill' ? 'Samples given out (removed from stock)'
       : isXfer ? 'Quantity to move' : 'Amount';
     document.getElementById('locLabel').textContent = isXfer ? 'From' : 'Location';
+    document.getElementById('giveRow').hidden = state.type !== 'goodwill';
     const xh = document.getElementById('xferHint');
     xh.hidden = !isXfer;
     if (isXfer) xh.textContent = `Moves to ${otherLoc(state.location)}`;
@@ -1338,6 +1353,13 @@
     p.classList.add('on');
     state.location = p.dataset.loc;
     if (state.type === 'transfer') syncTypeUI();
+  });
+
+  // ---- Goodwill: who it went to ----
+  document.getElementById('givePills').addEventListener('click', e => {
+    const p = e.target.closest('.pill'); if (!p) return;
+    document.querySelectorAll('#givePills .pill').forEach(x => x.classList.toggle('on', x === p));
+    state.give = p.dataset.give;
   });
 
   // ---- Steppers ----
@@ -1373,6 +1395,8 @@
       timezone: 'America/Los_Angeles',
       location: state.location,
       to: state.type === 'transfer' ? otherLoc(state.location) : undefined,
+      recipient: state.type === 'goodwill' && state.give ? state.give : undefined,
+      memo: document.getElementById('entryNote').value.replace(/\s+/g, ' ').trim().slice(0, 200) || undefined,
       amounts
     };
   }
@@ -1429,6 +1453,8 @@
     const goodwillNote = isGoodwill
       ? `<div class="l"><span class="k">Goodwill</span><span class="v">samples given — removes from stock</span></div>`
       : '';
+    const extraRows = (pending.recipient ? `<div class="l"><span class="k">Given to</span><span class="v">${esc(pending.recipient)}</span></div>` : '') +
+      (pending.memo ? `<div class="l"><span class="k">Note</span><span class="v">${esc(pending.memo)}</span></div>` : '');
     const whereRow = isXfer
       ? `<div class="l"><span class="k">Move</span><span class="v">${esc(pending.location)} → ${esc(pending.to)}</span></div>`
       : `<div class="l"><span class="k">Location</span><span class="v">${esc(pending.location)}</span></div>`;
@@ -1436,6 +1462,7 @@
       `<div class="l"><span class="k">Type</span><span class="v">${esc(cap(pending.type))}</span></div>` +
       `<div class="l"><span class="k">When</span><span class="v">${esc(fmtWhen(pending.datetime))} PST</span></div>` +
       whereRow +
+      extraRows +
       goodwillNote +
       amtLines;
     scrim.classList.add('show');
@@ -1473,6 +1500,8 @@
 
     // reset for next entry
     document.querySelectorAll('.amt .val').forEach(v => v.value = 0);
+    document.getElementById('entryNote').value = '';
+    state.give = ''; document.querySelectorAll('#givePills .pill').forEach(x => x.classList.toggle('on', x.dataset.give === ''));
     dt.value = nowPST();
     closeEntry();
     renderDB();
@@ -1584,7 +1613,6 @@
 
   // Single entry point for the Data tab — dispatches to Sales or entries.
   function renderData() {
-    document.getElementById('invOpen').hidden = (dbFilter !== 'delivery');   // invoices come from deliveries
     document.getElementById('dbGroup').hidden = (dbFilter !== 'sales');   // grouping is a Sales-only control
     if (dbFilter === 'sales') renderSalesView();
     else renderDB();
@@ -1621,6 +1649,12 @@
     paintDB();
   }
 
+  // "Church · note text" — what was added after "Goodwill — La Mirada" (this device's own entries carry it as fields).
+  function entryExtra(e) {
+    if (e.recipient || e.memo) return [e.recipient, e.memo].filter(Boolean).join(' · ');
+    if (e.type === 'transfer') return '';
+    return String(e.note || '').split(' · ').slice(1).join(' · ');
+  }
   function paintDB() {
     const list = document.getElementById('dbList');
     const countEl = document.getElementById('dbCount');
@@ -1720,6 +1754,7 @@
              <span class="loc-name">${esc(e.location)}</span>
              <div class="db-tools">${editBtn}${trash}</div>
            </div>
+           ${entryExtra(e) ? `<div class="db-note">${esc(entryExtra(e))}</div>` : ''}
            <div class="db-amts">${chips}</div>
            ${footer}
          </div>`;
@@ -1742,12 +1777,10 @@
   });
   // Baking tab has two modes (Plan / Recipes) toggled by a segment control.
   function renderBaking() {
-    document.getElementById('bakingPlan').hidden = bakingMode !== 'plan';
     document.getElementById('bakingRecipes').hidden = bakingMode !== 'recipes';
     document.getElementById('bakingCosts').hidden = bakingMode !== 'costs';
     document.querySelectorAll('#bakingMode button').forEach(x => x.classList.toggle('on', x.dataset.mode === bakingMode));
-    if (bakingMode === 'plan') { renderPlan(); renderBakeSheet(); }
-    else if (bakingMode === 'recipes') { document.getElementById('planSub').textContent = 'Recipes · amounts scale with batches'; renderRecipes(); }
+    if (bakingMode === 'recipes') { document.getElementById('planSub').textContent = 'Recipes · amounts scale with batches'; renderRecipes(); }
     else { document.getElementById('planSub').textContent = 'Costs · what one item costs to make'; renderCosts(); }
   }
   document.getElementById('bakingMode').addEventListener('click', e => {
@@ -2265,7 +2298,7 @@
 
   // ===== Shared projection math (used by Home + Projections) =====
   let projLoc = 'La Mirada', homeLoc = 'La Mirada', planLoc = 'La Mirada';   // Stanton paused — La Mirada only (historical Stanton still in Data)
-  let bakingMode = 'plan';   // Baking tab sub-view: 'plan' | 'recipes' | 'costs'
+  let bakingMode = 'recipes';   // Baking tab sub-view: 'recipes' | 'costs' (planning lives on Home)
   let planSplit = 0;        // 0..1 — front-load fraction shifted onto the earlier of two bake dates
   let lastPlanSales = null, lastPlanEntries = null;   // cached for live slider re-paint
   let planBakeDates = [];   // specific 'YYYY-MM-DD' bake dates (vary week to week); empty = lump-sum mode
@@ -2518,6 +2551,7 @@
 
   // ===== Home / Overview tab =====
   async function renderHome() {
+    renderBakeSheet(); renderPlan();   // baking planning lives on Home now
     const content = document.getElementById('homeContent');
     const sub = document.getElementById('homeSub');
     sub.textContent = 'Loading…';
@@ -2977,11 +3011,9 @@
     planSplit = Number(e.target.value) / 100;
     paintPlan(false);
   });
-  document.getElementById('projScenario').addEventListener('click', e => {
-    const b = e.target.closest('button'); if (!b) return;
-    projScenario = b.dataset.scn;
+  document.getElementById('projScenario').addEventListener('change', e => {
+    projScenario = e.target.value;
     track('forecast_scenario', { scenario: projScenario });
-    document.querySelectorAll('#projScenario button').forEach(x => x.classList.toggle('on', x === b));
     renderProj();
   });
   // Tap an analytics card header to expand/collapse it.
@@ -3648,7 +3680,7 @@
     SEASONAL = c.checked ? [...SEASONAL.filter(k => k !== c.dataset.sk), c.dataset.sk] : SEASONAL.filter(k => k !== c.dataset.sk);
     try { localStorage.setItem('seasonal.v1', JSON.stringify(SEASONAL)); } catch {}
   });
-  const seaClose = () => { document.getElementById('seaScrim').classList.remove('show'); if (document.getElementById('view-plan').classList.contains('active')) renderBaking(); };
+  const seaClose = () => { document.getElementById('seaScrim').classList.remove('show'); renderBakeSheet(); if (document.getElementById('view-plan').classList.contains('active')) renderBaking(); };
   document.getElementById('seaDone').addEventListener('click', seaClose);
   document.getElementById('seaScrim').addEventListener('click', e => { if (e.target.id === 'seaScrim') seaClose(); });
   document.getElementById('bsAddAll').addEventListener('click', () => {
