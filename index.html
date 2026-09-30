@@ -1262,6 +1262,15 @@
   select:not([data-native]) { pointer-events: none; }
   .inv-actions { display: flex; flex-direction: column; gap: 10px; margin: 14px 0 6px; }
   .inv-actions button { width: 100%; margin: 0; box-sizing: border-box; }
+  /* Plan cards: tight */
+  #planList .proj-card, #planSplitWrap .proj-card { padding-top: 10px; padding-bottom: 6px; margin-bottom: 8px; }
+  #planList .proj-card h3 { margin: 0 0 2px; }
+  #planList .proj-runout { margin: 0 0 0; }
+  #planList .be-effort { margin: 0 0 4px !important; }
+  #planList .pr-fc { padding: 5px 0; min-height: 0; }
+  #planList .pr-fc .fc-v { display: flex; align-items: baseline; justify-content: flex-end; gap: 8px; }
+  #planList .pr-fc .fc-sub { display: inline; margin: 0; }
+  #planList .info-body { margin-top: 4px; }
 </style>
 </head>
 <body>
@@ -1549,7 +1558,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v140 · Sep 30, 7:20 AM</div>
+<div class="ver-badge">v141 · Sep 30, 7:40 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
