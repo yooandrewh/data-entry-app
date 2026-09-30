@@ -213,3 +213,10 @@ default Classic, Lemon Poppy, Pumpkin Pie Spice madeleines, Lemon Curd, Pumpkin 
 sort to the top of every recipe/cost dropdown ("This season" group) and are the only ones the bake
 sheet offers. Everything else stays reachable in the Recipes tab — nothing is hidden there.
 `BS_PRODUCT` maps recipe → forecast product for batch defaults (Classic→Sea Salt is a guess).
+
+**Generate labels** (Baking → Recipes → *Generate labels*): tick several madeleines (`mlSel`, saved in
+`labelSel.v1`; *Seasonal / All / None* shortcuts), set one manufactured date, and it lays them out as
+one page of stacked labels (`lblMarkup()` — the same markup as the single label). **Print** or
+**Download as image** (`domToBlob(…, 640)` lays out at a fixed 640px so the PNG isn't squeezed to the
+phone width). Multi-label always uses each recipe's first version and the computed net weight; use
+the single-label button on a recipe to pick another version or edit the net weight first.

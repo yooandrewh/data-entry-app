@@ -365,6 +365,7 @@
   .lbl-doc .k { color: #6f665c; font-weight: 700; text-transform: uppercase; }
   .lbl-contains { color: #7b2a45; font-weight: 700; text-transform: uppercase; }
   .lbl-note { font-size: 11px; font-style: italic; color: #6f665c; margin: 6px 0 0 !important; }
+  .lbl-page { background: #fff; padding: 12px; display: flex; flex-direction: column; gap: 14px; }
   .lbl-doc [contenteditable]:focus { outline: 1px dashed var(--accent); }
   @media print {
     body.printing-label > *:not(#lblScrim) { display: none !important; }
@@ -372,6 +373,11 @@
     body.printing-label .inv-sheet { transform: none; max-width: none; max-height: none; overflow: visible; padding: 0; border-radius: 0; background: none; }
     body.printing-label .inv-noprint { display: none !important; }
     body.printing-label .lbl-doc { font-size: 11pt; }
+    body.printing-labels > *:not(#mlScrim) { display: none !important; }
+    body.printing-labels #mlScrim { position: static; background: none; opacity: 1; display: block; }
+    body.printing-labels .inv-sheet { transform: none; max-width: none; max-height: none; overflow: visible; padding: 0; border-radius: 0; background: none; }
+    body.printing-labels .inv-noprint, body.printing-labels #mlPick { display: none !important; }
+    body.printing-labels .lbl-doc { break-inside: avoid; font-size: 11pt; }
   }
 
   /* ---- Costs ---- */
@@ -715,7 +721,7 @@
 <body>
 
 <!-- Version badge — bump on every deploy (v = commit count, time = deploy time PST) -->
-<div class="ver-badge">v94 · Sep 29, 5:08 PM</div>
+<div class="ver-badge">v95 · Sep 29, 5:10 PM</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -924,7 +930,7 @@
         <button data-sec="other">🧁 Other</button>
       </div>
       <div class="filter-bar"><select id="recPick" aria-label="Recipe"></select></div>
-      <div class="bs-links" style="margin:-6px 0 8px"><button type="button" data-seasonal-edit>Edit this season's recipes</button></div>
+      <div class="bs-links" style="margin:-6px 0 8px"><button type="button" data-seasonal-edit>Edit this season's recipes</button><button type="button" data-gen-labels>Generate labels</button></div>
       <div id="recCard"></div>
     </div>
 
@@ -1081,6 +1087,31 @@
     <div class="warn">These go to the top of every recipe dropdown and are the ones the bake sheet offers.</div>
     <div id="seaList"></div>
     <div class="actions" style="margin-top:14px"><button class="btn-primary" id="seaDone">Done</button></div>
+  </div>
+</div>
+
+<!-- ===== Generate labels (several at once) ===== -->
+<div class="scrim" id="mlScrim">
+  <div class="sheet inv-sheet" role="dialog" aria-modal="true" aria-labelledby="mlTitle">
+    <div id="mlPick">
+      <h2 id="mlTitle">Generate labels</h2>
+      <div class="warn">Tick the madeleines you're labelling. Best-by dates fill in from the manufactured date: fridge 7 days, freezer 2 weeks.</div>
+      <div class="sum"><div class="inv-field"><span>Manufactured</span><input type="date" id="mlMfg" /></div></div>
+      <div class="bs-links" style="padding:0 2px 4px"><button type="button" id="mlSeason">Seasonal</button><button type="button" id="mlAll">All</button><button type="button" id="mlNone">None</button></div>
+      <div id="mlList"></div>
+      <div class="actions" style="margin-top:14px">
+        <button class="btn-primary" id="mlGen">Generate</button>
+        <button class="btn-ghost" id="mlClose">Cancel</button>
+      </div>
+    </div>
+    <div id="mlResult" hidden>
+      <div class="lbl-page" id="mlDoc"></div>
+      <div class="actions inv-noprint" style="margin-top:16px">
+        <button class="btn-primary" id="mlPrint">Print</button>
+        <button class="btn-ghost" id="mlSave">Download as image</button>
+        <button class="btn-ghost" id="mlBack">Back</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -3006,11 +3037,12 @@
   }
   const recMadSort = rows => rows.map((r, i) => [r, i]).sort((a, b) => recMadRank(a[0][0]) - recMadRank(b[0][0]) || a[1] - b[1]).map(x => x[0]);
   // The batter rows of a madeleine in the currently selected version (unsorted).
-  function recMadRows(item) {
-    if (item.versions) return item.versions[recState.madVer].rows;
+  function recMadRowsV(item, v) {
+    if (item.versions) return item.versions[v || 0].rows;
     if (item.custom) return item.custom;
     return [['Cake Flour', item.flour], ['Baking Powder', REC_MAD_BASE['Baking Powder']], ['Salt', item.salt], ['Eggs', REC_MAD_BASE['Eggs']], ['Sugar', REC_MAD_BASE['Sugar']], ['Vanilla Extract', REC_MAD_BASE['Vanilla Extract']], ['Unsalted Butter', REC_MAD_BASE['Unsalted Butter']]];
   }
+  const recMadRows = item => recMadRowsV(item, recState.madVer);
   function recMadCard(item) {
     let verChips = '', verLbl = '';
     if (item.versions) {
@@ -3586,22 +3618,18 @@
   const lblDate = ymd => { const [y, m, d] = ymd.split('-'); return `${m}.${d}.${y}`; };
   const lblCap = s => s.charAt(0).toUpperCase() + s.slice(1);
   let lblItem = null;
-  function openLabel(item) {
-    lblItem = item;
-    const batter = [...recMadSort(recMadRows(item)), ...lblNoteRows(item.note)].map(r => [r[0], lblGrams(r[1])]);
+  // Ingredient groups + per-piece weight for one madeleine (ver = which recipe version's rows to use).
+  function lblCalc(item, ver) {
+    const batter = [...recMadSort(recMadRowsV(item, ver)), ...lblNoteRows(item.note)].map(r => [r[0], lblGrams(r[1])]);
     const glaze = (item.glaze || []).map(g => [g[0], lblGrams(g[1])]);
     const topping = (item.topping || []).map(g => [g[0], lblGrams(g[1])]);
     const filling = lblFillingRows(item);
     const total = [...batter, ...glaze, ...topping].reduce((a, r) => a + r[1], 0);
-    lblItem.calc = { batter, glaze, topping, filling, perPiece: total / BATCH_YIELD };
-    document.getElementById('lblMfg').value = nowPST().slice(0, 10);
-    const g = Math.round(lblItem.calc.perPiece);
-    document.getElementById('lblNet').value = `${g} g (${(lblItem.calc.perPiece / 28.3495).toFixed(1)} oz) each`;
-    paintLabel();
-    document.getElementById('lblScrim').classList.add('show');
+    return { batter, glaze, topping, filling, perPiece: total / BATCH_YIELD };
   }
-  function paintLabel() {
-    const item = lblItem, c = item.calc, ex = item.lblExtra || {};
+  const lblNetText = c => `${Math.round(c.perPiece)} g (${(c.perPiece / 28.3495).toFixed(1)} oz) each`;
+  function lblMarkup(item, c, mfg, netText) {
+    const ex = item.lblExtra || {};
     const line = (k, list) => list.length ? `<p contenteditable="true"><span class="k">${k}:</span> ${esc(lblCap(list.join(', ')))}.</p>` : '';
     const main = lblList(c.batter);
     const parts = [
@@ -3612,26 +3640,88 @@
     ].join('');
     const all = [...main, ...lblList(c.glaze), ...lblList(c.filling, ex.filling), ...lblList(c.topping, ex.topping)].join(', ');
     const al = lblAllergens(all);
-    const mfg = document.getElementById('lblMfg').value || nowPST().slice(0, 10);
-    document.getElementById('lblDoc').innerHTML = `
+    return `
       <div class="lbl-brand">[KAIROSBAKING]</div>
       <div class="lbl-title">${esc(item.title || item.name + ' Madeleine')} <small>(Perishable Keep Refrigerated)</small></div>
       ${parts}
       ${al.length ? `<p class="lbl-contains" contenteditable="true">Contains: ${al.join(', ')}.</p>` : ''}
-      <p><span class="k">Net wt.:</span> <span contenteditable="true">${esc(document.getElementById('lblNet').value)}</span></p>
+      <p><span class="k">Net wt.:</span> <span contenteditable="true">${esc(netText)}</span></p>
       <p><span class="k">Manufactured / packed by:</span> Kairosbaking, Fullerton, CA</p>
       <p><span class="k">Prepared in:</span> LGI Kitchen in Fullerton, CA</p>
       <p><span class="k">Manufactured:</span> ${lblDate(mfg)}</p>
       <p><span class="k">Best by / use by:</span> ${lblDate(addDays(mfg, LBL_FRIDGE_DAYS))} refrigerated · ${lblDate(addDays(mfg, LBL_FREEZER_DAYS))} frozen</p>
       <p class="lbl-note">Note: Product must be refrigerated or discarded after 2 hours of sitting at room temperature.</p>`;
   }
+  function openLabel(item) {
+    lblItem = item;
+    item.calc = lblCalc(item, recState.madVer);
+    document.getElementById('lblMfg').value = nowPST().slice(0, 10);
+    document.getElementById('lblNet').value = lblNetText(item.calc);
+    paintLabel();
+    document.getElementById('lblScrim').classList.add('show');
+  }
+  function paintLabel() {
+    const mfg = document.getElementById('lblMfg').value || nowPST().slice(0, 10);
+    document.getElementById('lblDoc').innerHTML = lblMarkup(lblItem, lblItem.calc, mfg, document.getElementById('lblNet').value);
+  }
+  // ---- Generate labels: tick several madeleines → one page of labels, printed or saved as one image ----
+  let mlSel = new Set(SEASONAL.filter(k => k.startsWith('mad:')).map(k => k.slice(4)));
+  try { const v = JSON.parse(localStorage.getItem('labelSel.v1')); if (Array.isArray(v)) mlSel = new Set(v); } catch {}
+  function mlPaintPick() {
+    document.getElementById('mlList').innerHTML = seasonalFirst('mad', REC_MADS).map(it =>
+      `<label class="sea-row"><input type="checkbox" data-ml="${esc(it.name)}" ${mlSel.has(it.name) ? 'checked' : ''}><span>${REC_ICON[it.name] || '🍰'} ${esc(it.title || it.name + ' Madeleine')}${isSeasonal('mad', it) ? ' <small style="color:var(--muted)">· this season</small>' : ''}</span></label>`).join('');
+    document.getElementById('mlGen').disabled = !mlSel.size;
+    document.getElementById('mlGen').textContent = mlSel.size ? `Generate ${mlSel.size} label${mlSel.size === 1 ? '' : 's'}` : 'Select at least one';
+  }
+  function mlOpen() {
+    document.getElementById('mlMfg').value = nowPST().slice(0, 10);
+    document.getElementById('mlPick').hidden = false; document.getElementById('mlResult').hidden = true;
+    mlPaintPick(); document.getElementById('mlScrim').classList.add('show');
+  }
+  document.addEventListener('click', e => { if (e.target.closest('[data-gen-labels]')) mlOpen(); });
+  document.getElementById('mlList').addEventListener('change', e => {
+    const c = e.target.closest('[data-ml]'); if (!c) return;
+    c.checked ? mlSel.add(c.dataset.ml) : mlSel.delete(c.dataset.ml);
+    try { localStorage.setItem('labelSel.v1', JSON.stringify([...mlSel])); } catch {}
+    mlPaintPick();
+  });
+  const mlSet = names => { mlSel = new Set(names); try { localStorage.setItem('labelSel.v1', JSON.stringify([...mlSel])); } catch {} mlPaintPick(); };
+  document.getElementById('mlSeason').addEventListener('click', () => mlSet(REC_MADS.filter(it => isSeasonal('mad', it)).map(it => it.name)));
+  document.getElementById('mlAll').addEventListener('click', () => mlSet(REC_MADS.map(it => it.name)));
+  document.getElementById('mlNone').addEventListener('click', () => mlSet([]));
+  document.getElementById('mlGen').addEventListener('click', () => {
+    const mfg = document.getElementById('mlMfg').value || nowPST().slice(0, 10);
+    const items = seasonalFirst('mad', REC_MADS).filter(it => mlSel.has(it.name));
+    document.getElementById('mlDoc').innerHTML = items.map(it => `<div class="lbl-doc">${lblMarkup(it, lblCalc(it, 0), mfg, lblNetText(lblCalc(it, 0)))}</div>`).join('');
+    document.getElementById('mlPick').hidden = true; document.getElementById('mlResult').hidden = false;
+    track('labels_generate', { n: items.length });
+  });
+  document.getElementById('mlBack').addEventListener('click', () => { document.getElementById('mlPick').hidden = false; document.getElementById('mlResult').hidden = true; });
+  document.getElementById('mlClose').addEventListener('click', () => document.getElementById('mlScrim').classList.remove('show'));
+  document.getElementById('mlScrim').addEventListener('click', e => { if (e.target.id === 'mlScrim') e.target.classList.remove('show'); });
+  document.getElementById('mlPrint').addEventListener('click', () => {
+    document.body.classList.add('printing-labels');
+    window.addEventListener('afterprint', () => document.body.classList.remove('printing-labels'), { once: true });
+    window.print();
+  });
+  document.getElementById('mlSave').addEventListener('click', async () => {
+    const btn = document.getElementById('mlSave'), label = btn.textContent; btn.disabled = true; btn.textContent = 'Preparing…';
+    try { await saveBlobAs(await domToBlob(document.getElementById('mlDoc'), '.lbl-', 2, 640), `labels-${document.getElementById('mlMfg').value || nowPST().slice(0, 10)}.png`); }
+    catch { rcpToast('Couldn’t make the image'); }
+    finally { btn.disabled = false; btn.textContent = label; }
+  });
   document.getElementById('lblMfg').addEventListener('input', paintLabel);
   document.getElementById('lblNet').addEventListener('input', paintLabel);
   document.getElementById('lblCloseBtn').addEventListener('click', () => document.getElementById('lblScrim').classList.remove('show'));
   document.getElementById('lblScrim').addEventListener('click', e => { if (e.target.id === 'lblScrim') e.target.classList.remove('show'); });
   // Render the label to a PNG: SVG <foreignObject> → canvas, so no library is needed.
-  async function domToBlob(doc, classPrefix, scale) {
-    const w = doc.offsetWidth, h = doc.offsetHeight;
+  async function domToBlob(doc, classPrefix, scale, fixedWidth) {
+    let w = doc.offsetWidth, h = doc.offsetHeight;
+    if (fixedWidth) {   // lay it out at a set width off-screen, so the saved image doesn't inherit the phone's narrow column
+      const host = document.createElement('div'); host.style.cssText = `position:fixed;left:-99999px;top:0;width:${fixedWidth}px;`;
+      const probe = doc.cloneNode(true); host.appendChild(probe); document.body.appendChild(host);
+      w = fixedWidth; h = probe.offsetHeight; host.remove();
+    }
     const css = [...document.styleSheets].flatMap(ss => { try { return [...ss.cssRules]; } catch { return []; } }).filter(r => r.selectorText && r.selectorText.includes(classPrefix)).map(r => r.cssText).join('');   // the Google Fonts sheet is cross-origin and unreadable
     const clone = doc.cloneNode(true);
     clone.removeAttribute('id'); clone.style.cssText = `box-sizing:border-box;width:${w}px;`;
