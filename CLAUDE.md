@@ -239,11 +239,12 @@ on focus and strip leading zeros, so typing replaces the 0 instead of sitting ne
 
 ## Home is the planning screen (2026-09-29)
 
-Home (**Kairosbaking**) now holds: the forecast (scenario **dropdown** `#projScenario` — Bear / Expected /
-Bull — replacing the old segment toggle), the **baking plan** (`#bakingPlan`: make-it-last-until, bake
-days, plan cards, bake sheet), a **Generate invoice** button (`#invOpen`), the store analytics, and a small
-**This season** button top right (the only place seasonal recipes are edited). `renderHome()` calls
-`renderPlan()` + `renderBakeSheet()`, so Home costs one more entries fetch. The **Baking** tab is now just
+Home (**Kairosbaking**) is three tabs (`#homeTabs`, `homeTab`): **Forecast** (scenario **dropdown**
+`#projScenario` — Bear / Expected / Bull — plus the forecast list and store analytics, i.e. what the live
+site shows), **Baking plan** (`#bakingPlan`: make-it-last-until, bake days, plan cards, bake sheet) and
+**Invoice** (inline form; the invoice itself opens in `#invScrim` with Print / Copy). A small **This season**
+button top right opens the seasonal-recipes sheet (the only place it's edited; its button reads *Update*).
+The plan only loads when its tab is opened, so Home doesn't pay for it on every visit. The **Baking** tab is now just
 **Recipes | Costs** (`bakingMode` defaults to `'recipes'`; there is no Plan mode).
 
 ## Goodwill "Given to" + notes

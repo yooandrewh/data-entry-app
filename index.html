@@ -815,12 +815,13 @@
   .db-note { font-size: var(--fs-caption); color: var(--muted); font-style: italic; margin: -6px 0 6px; }
   .home-season { position: absolute; top: 6px; right: 2px; border: none; cursor: pointer; border-radius: 999px; padding: 6px 12px; background: var(--bg); box-shadow: var(--neu-sm); color: var(--accent); font-size: var(--fs-caption); font-weight: 700; }
   .home-season:active { box-shadow: var(--neu-in); }
+  #seaScrim .actions { position: sticky; bottom: calc(-1 * var(--safe-bottom)); background: var(--bg); padding: 10px 0 4px; margin-top: 6px; }
 </style>
 </head>
 <body>
 
 <!-- Version badge — bump on every deploy (v = commit count, time = deploy time PST) -->
-<div class="ver-badge">v98 · Sep 29, 5:29 PM</div>
+<div class="ver-badge">v99 · Sep 29, 5:33 PM</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -830,15 +831,27 @@
       <div class="sub" id="homeSub">—</div>
       <button type="button" class="home-season" data-seasonal-edit>This season</button>
     </header>
-    <div id="homeUpdated"></div>
-    <div class="filter-bar"><select id="projScenario" aria-label="Forecast scenario">
-      <option value="bear">🐻 Bear</option>
-      <option value="base" selected>Expected</option>
-      <option value="bull">🐂 Bull</option>
-    </select></div>
-    <div class="hint" id="projSub"></div>
-    <div id="projList"></div>
-    <div class="group-label" style="margin-top:6px">Baking plan</div>
+    <div class="db-filter" id="homeTabs">
+      <button class="on" data-htab="forecast">Forecast</button>
+      <button data-htab="plan">Baking plan</button>
+      <button data-htab="invoice">Invoice</button>
+    </div>
+
+    <!-- Forecast: scenario dropdown + the same forecast the live site shows -->
+    <div id="homeForecast">
+      <div id="homeUpdated"></div>
+      <div class="filter-bar"><select id="projScenario" aria-label="Forecast scenario">
+        <option value="bear">🐻 Bear</option>
+        <option value="base" selected>Expected</option>
+        <option value="bull">🐂 Bull</option>
+      </select></div>
+      <div class="hint" id="projSub"></div>
+      <div id="projList"></div>
+      <div id="homeContent"></div>
+    </div>
+
+    <!-- Baking plan -->
+    <div id="homePlan" hidden>
     <div id="bakingPlan">
       <div class="card">
         <div class="row">
@@ -874,8 +887,20 @@
         <div class="bs-foot"><button type="button" class="btn-primary" id="bsOpen">Preview sheet</button></div>
       </div>
     </div>
-    <button type="button" class="btn-ghost inv-open" id="invOpen">Generate invoice</button>
-    <div id="homeContent"></div>
+    </div>
+
+    <!-- Invoice -->
+    <div id="homeInvoice" hidden>
+      <div class="warn" style="text-align:left;margin:2px 4px 8px">Built from delivery entries for one store. Goodwill, transfers and deleted entries are left out.</div>
+      <div class="card"><div class="sum" style="margin:0 12px">
+        <div class="inv-field"><span>Store</span><select id="invStore"><option>La Mirada</option><option>Stanton</option></select></div>
+        <div class="inv-field"><span>From</span><input type="date" id="invFrom" /></div>
+        <div class="inv-field"><span>To</span><input type="date" id="invTo" /></div>
+      </div></div>
+      <div class="group-label">Price per unit</div>
+      <div class="card"><div class="sum" style="margin:0 12px" id="invPrices"></div></div>
+      <button class="btn-primary" id="invGenBtn">Generate invoice</button>
+    </div>
   </div>
 </div>
 
@@ -1121,29 +1146,13 @@
 
 <!-- ===== Invoice ===== -->
 <div class="scrim" id="invScrim">
-  <div class="sheet inv-sheet" role="dialog" aria-modal="true" aria-labelledby="invTitle">
-    <div id="invForm">
-      <h2 id="invTitle">Create invoice</h2>
-      <div class="warn">Built from delivery entries for one store. Goodwill, transfers and deleted entries are left out.</div>
-      <div class="sum">
-        <div class="inv-field"><span>Store</span>
-          <select id="invStore"><option>La Mirada</option><option>Stanton</option></select></div>
-        <div class="inv-field"><span>From</span><input type="date" id="invFrom" /></div>
-        <div class="inv-field"><span>To</span><input type="date" id="invTo" /></div>
-      </div>
-      <div class="warn" style="margin-bottom:8px">Price per unit</div>
-      <div class="sum" id="invPrices"></div>
-      <div class="actions">
-        <button class="btn-primary" id="invGenBtn">Generate invoice</button>
-        <button class="btn-ghost" id="invCancelBtn">Cancel</button>
-      </div>
-    </div>
-    <div id="invResult" hidden>
+  <div class="sheet inv-sheet" role="dialog" aria-modal="true" aria-label="Invoice">
+    <div id="invResult">
       <div class="inv-doc" id="invDoc"></div>
       <div class="actions inv-noprint" style="margin-top:16px">
         <button class="btn-primary" id="invPrintBtn">Print / Save as PDF</button>
         <button class="btn-ghost" id="invCopyBtn">Copy as text</button>
-        <button class="btn-ghost" id="invBackBtn">Back</button>
+        <button class="btn-ghost" id="invBackBtn">Close</button>
       </div>
     </div>
   </div>
@@ -1197,9 +1206,8 @@
 <div class="scrim" id="seaScrim">
   <div class="sheet inv-sheet" role="dialog" aria-modal="true" aria-labelledby="seaTitle">
     <h2 id="seaTitle">This season's recipes</h2>
-    <div class="warn">These go to the top of every recipe dropdown and are the ones the bake sheet offers.</div>
     <div id="seaList"></div>
-    <div class="actions" style="margin-top:14px"><button class="btn-primary" id="seaDone">Done</button></div>
+    <div class="actions" style="margin-top:14px"><button class="btn-primary" id="seaDone">Update</button></div>
   </div>
 </div>
 
@@ -1998,6 +2006,102 @@
     const btn = e.target.closest('button'); if (btn) setDbFilter(btn.dataset.filter);
   });
   document.getElementById('dbMore').addEventListener('change', e => setDbFilter(e.target.value));
+  // ---- Home tabs: Forecast | Baking plan | Invoice ----
+  let homeTab = 'forecast';
+  function renderHomeTab() {
+    document.querySelectorAll('#homeTabs button').forEach(b => b.classList.toggle('on', b.dataset.htab === homeTab));
+    document.getElementById('homeForecast').hidden = homeTab !== 'forecast';
+    document.getElementById('homePlan').hidden = homeTab !== 'plan';
+    document.getElementById('homeInvoice').hidden = homeTab !== 'invoice';
+    if (homeTab === 'plan') { renderBakeSheet(); renderPlan(); }
+    if (homeTab === 'invoice') initInvoiceForm();
+  }
+  document.getElementById('homeTabs').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    homeTab = b.dataset.htab; track('home_tab', { tab: homeTab }); renderHomeTab();
+  });
+
+  // ---- Invoice: deliveries for one store over a date range, priced per unit ----
+  const INV_PRICE_KEY = 'invoicePrices.v1';
+  const invScrim = document.getElementById('invScrim');
+  let invText = '';
+  function invPrices() {
+    let saved = {};
+    try { saved = JSON.parse(localStorage.getItem(INV_PRICE_KEY)) || {}; } catch {}
+    return Object.fromEntries(PRODUCTS.map(p => [p, Number.isFinite(saved[p]) ? saved[p] : PRICE_PER_UNIT]));
+  }
+  function initInvoiceForm() {
+    const today = nowPST().slice(0, 10);
+    if (!document.getElementById('invFrom').value) document.getElementById('invFrom').value = today;
+    if (!document.getElementById('invTo').value) document.getElementById('invTo').value = today;
+    const pr = invPrices();
+    document.getElementById('invPrices').innerHTML = PRODUCTS.map(p =>
+      `<div class="inv-field"><span>${tok(p)} ${esc(p)}</span><input class="price" type="number" inputmode="decimal" step="0.01" min="0" data-inv-price="${esc(p)}" value="${pr[p]}" /></div>`).join('');
+  }
+  async function buildInvoice() {
+    const store = document.getElementById('invStore').value;
+    let from = document.getElementById('invFrom').value, to = document.getElementById('invTo').value;
+    if (!from && !to) { from = to = nowPST().slice(0, 10); }
+    if (!from) from = to; if (!to) to = from;
+    if (from > to) [from, to] = [to, from];
+    const prices = {};
+    document.querySelectorAll('[data-inv-price]').forEach(i => { prices[i.dataset.invPrice] = Math.max(0, parseFloat(i.value) || 0); });
+    try { localStorage.setItem(INV_PRICE_KEY, JSON.stringify(prices)); } catch {}
+
+    const btn = document.getElementById('invGenBtn');
+    btn.disabled = true; btn.textContent = 'Loading…';
+    let remote = [], ok = false;
+    try { remote = await fetchRemoteEntries(); ok = true; } catch {}
+    btn.disabled = false; btn.textContent = 'Generate invoice';
+    const entries = mergeEntries(remote, ok).filter(e => {
+      if (e.type !== 'delivery' || e.taggedForDeletion || e.location !== store) return false;
+      const d = String(e.datetime).slice(0, 10);
+      return d >= from && d <= to;
+    });
+
+    // Sum per product; retired flavors still bill if they were actually delivered.
+    const qty = Object.fromEntries(HIST_PRODUCTS.map(p => [p, 0]));
+    for (const e of entries) for (const p of HIST_PRODUCTS) qty[p] += e.amounts[p] || 0;
+    const lines = HIST_PRODUCTS.filter(p => qty[p] > 0).map(p => {
+      const unit = prices[p] != null ? prices[p] : PRICE_PER_UNIT;
+      return { p, qty: qty[p], unit, amt: qty[p] * unit };
+    });
+    const total = lines.reduce((a, l) => a + l.amt, 0);
+    const units = lines.reduce((a, l) => a + l.qty, 0);
+    const fmtD = ymd => { const [y, m, d] = ymd.split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); };
+    const period = from === to ? fmtD(from) : `${fmtD(from)} – ${fmtD(to)}`;
+    const num = `KB-${to.replace(/-/g, '')}-${store.split(' ').map(w => w[0]).join('')}`;
+    const issued = fmtD(nowPST().slice(0, 10));
+
+    invText = [`INVOICE ${num}`, `Kairos Baking → ${store}`, `Delivered: ${period}`, `Issued: ${issued}`, '',
+      ...lines.map(l => `${l.p}: ${l.qty} × ${usd(l.unit)} = ${usd(l.amt)}`), '', `Total (${units} units): ${usd(total)}`].join('\n');
+
+    document.getElementById('invDoc').innerHTML = `
+      <h3>Invoice</h3>
+      <div class="inv-meta"><div><b>${esc(num)}</b>Issued ${esc(issued)}</div><div style="text-align:right"><b>Kairos Baking</b>to ${esc(store)}</div></div>
+      <div class="inv-meta" style="margin-top:0"><div>Delivered<b>${esc(period)}</b></div></div>
+      ${lines.length ? `<table class="inv-table"><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Amount</th></tr></thead><tbody>${
+        lines.map(l => `<tr><td>${esc(l.p)}</td><td>${l.qty}</td><td>${usd(l.unit)}</td><td>${usd(l.amt)}</td></tr>`).join('')}</tbody></table>
+      <div class="inv-total"><span>Total</span><span>${usd(total)}</span></div>`
+      : `<div class="inv-empty">No deliveries for ${esc(store)} in this period.</div>`}
+      ${ok ? '' : '<div class="inv-empty inv-noprint">Offline — only entries on this device are included.</div>'}`;
+    document.getElementById('invPrintBtn').hidden = document.getElementById('invCopyBtn').hidden = !lines.length;
+    invScrim.classList.add('show');
+    track('invoice_create', { store, days: from === to ? 1 : 2, lines: lines.length });
+  }
+  document.getElementById('invGenBtn').addEventListener('click', buildInvoice);
+  document.getElementById('invBackBtn').addEventListener('click', () => invScrim.classList.remove('show'));
+  invScrim.addEventListener('click', e => { if (e.target === invScrim) invScrim.classList.remove('show'); });
+  document.getElementById('invPrintBtn').addEventListener('click', () => {
+    document.body.classList.add('printing-invoice');
+    window.addEventListener('afterprint', () => document.body.classList.remove('printing-invoice'), { once: true });
+    window.print();
+  });
+  document.getElementById('invCopyBtn').addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(invText); rcpToast('Invoice copied'); }
+    catch { rcpToast('Couldn’t copy'); }
+  });
+
   // ---- Location filter (All / La Mirada / Stanton) ----
   const locSel = document.getElementById('dbLoc');
   locSel.addEventListener('change', () => {
@@ -2551,7 +2655,7 @@
 
   // ===== Home / Overview tab =====
   async function renderHome() {
-    renderBakeSheet(); renderPlan();   // baking planning lives on Home now
+    if (homeTab === 'plan') { renderBakeSheet(); renderPlan(); }   // planning lives on Home; only load it when its tab is open
     const content = document.getElementById('homeContent');
     const sub = document.getElementById('homeSub');
     sub.textContent = 'Loading…';
