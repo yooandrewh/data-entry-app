@@ -314,3 +314,10 @@ fixed strip is hidden on the landing (`body.home-landing`) and shown everywhere 
 The look is now **sharp** (`border-radius: 0 !important`), **no shadows**, **no gradients** (`--grad` is a
 single flat plum; the nav is solid plum). This reverses the rounded gradient look of a few hours earlier —
 the final CSS block wins, so edit that one. Older Soft UI / Keys / Flat-gradient rules are dead weight.
+
+**Inverted colours (experiment, 2026-09-29):** Deep Plum ground (`--bg #341f37`), peach ink
+(`--text #f8e2d0`), apricot for selected/primary/nav. It is one clearly-marked block at the end of the
+stylesheet ("EXPERIMENT: inverted colours") — **delete it to get the peach-ground look back**. Note `--plum`
+is deliberately re-pointed to peach there (it means "the ink colour on tinted controls"). Paper documents
+(invoice, labels, bake sheet) keep their own dark-on-white colours. All big titles (`h1`, Home title, sheet
+`h2`, Home page titles) are **Italiana**; **This season** is a 46px solid peach button.

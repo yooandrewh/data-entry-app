@@ -8,7 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Italiana&display=swap" rel="stylesheet" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-<meta name="color-scheme" content="light" />
+<meta name="color-scheme" content="dark" />
 <meta name="apple-mobile-web-app-title" content="Kairos" />
 <link rel="apple-touch-icon" href="icon.png" />
 <link rel="icon" type="image/png" href="icon.png" />
@@ -1007,12 +1007,49 @@
   .hp-space { min-width: 72px; }
   .tab-pill { padding: 4px; }
   .hero-title { font-size: 48px; }
+  /* ================= Big titles in Italiana; a bigger "This season" button ================= */
+  h1, .hero-title, .sheet h2, #hpTitle { font-family: "Italiana", Georgia, "Times New Roman", serif; font-weight: 400; letter-spacing: 0; }
+  h1 { font-size: 36px; }
+  .sheet h2 { font-size: 26px; }
+  #hpTitle { font-size: 26px; }
+  .home-season { top: calc(var(--safe-top) + 10px); right: 12px; z-index: 5; min-width: 128px; height: 46px; padding: 0 20px; font-size: var(--fs-body); font-weight: 700;
+    background: #f8e2d0; color: #341f37; border: none; }
+  .hero-kicker { padding-right: 150px; }
+  .home-hero { padding-top: calc(var(--safe-top) + 64px); }
+  .hero-kicker { position: absolute; top: calc(var(--safe-top) + 24px); left: 20px; }
+
+  /* ================= EXPERIMENT: inverted colours — Deep Plum ground, peach ink =================
+     Delete this block to go back to the peach-ground look. */
+  :root {
+    color-scheme: dark;
+    --bg: #341f37; --card: #432a47; --field: rgba(248,226,208,0.10); --sep: rgba(248,226,208,0.16);
+    --text: #f8e2d0; --muted: rgba(248,226,208,0.62); --plum: #f8e2d0;
+    --accent: #f0a875; --tint: rgba(248,226,208,0.10);
+    --grad: linear-gradient(#f0a875, #f0a875);
+  }
+  input, select, textarea { color: var(--text); }
+  .home-card { background: var(--card); }
+  /* selected + primary: apricot with plum text */
+  .seg button.on, .seg button.on[data-type], .pill.on, .chip-row button.on, .rec-scale button.on, .bakedays button.on,
+  .btn-primary, .submit, .db-new, .db-filter button.on, .db-filter select.on { color: #341f37; }
+  .seg button.on .ic svg { stroke: #341f37; }
+  /* nav: an apricot bar with plum icons */
+  .tab-pill { background: #f0a875; }
+  .tabbar button { color: rgba(52,31,55,0.68); }
+  .tabbar button.on { background: rgba(52,31,55,0.16); color: #341f37; }
+  /* dropdown arrows: peach on the dark tint, plum on the apricot selected segment */
+  .filter-bar select, .home-card .filter-bar select { background-color: var(--tint); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23f8e2d0' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); color: var(--text); }
+  .db-filter select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23f8e2d0' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+  .db-filter select.on { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23341f37' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"), var(--grad); }
+  .rec-beta-note { color: #f0a875; background: rgba(240,168,117,0.14); }
+  .hp-head, .hp-back { color: var(--text); }
+  .db-day { background: var(--bg); }
 </style>
 </head>
 <body>
 
 <!-- Version badge — bump on every deploy (v = commit count, time = deploy time PST) -->
-<div class="ver-badge">v105 · Sep 29, 6:07 PM</div>
+<div class="ver-badge">v106 · Sep 29, 6:16 PM</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -2238,6 +2275,7 @@
     homeTab = b.dataset.hpage; track('home_tab', { tab: homeTab }); renderHomeTab();
   });
   document.getElementById('homeBack').addEventListener('click', () => { homeTab = null; renderHomeTab(); });
+  syncVer();   // first paint: landing → show the version over the photo, not the strip
 
   // ---- Invoice: deliveries for one store over a date range, priced per unit ----
   const INV_PRICE_KEY = 'invoicePrices.v1';
