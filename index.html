@@ -1116,6 +1116,15 @@
   .db-filter select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23232a33' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
   .db-filter button.on, .db-filter select.on { background-color: rgba(164,90,34,0.16); border: 1px solid var(--accent); color: var(--accent); }
   .db-filter select.on { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23a45a22' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+
+  /* ---- × − + need no border; goodwill's place is a dropdown ---- */
+  .em-close, .amt .step, .bs-step button { background: transparent; border: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .row-select { appearance: none; -webkit-appearance: none; cursor: pointer; min-width: 150px; font-size: var(--fs-body); font-weight: 600; text-align: left;
+    padding: 9px 32px 9px 12px; color: var(--text); background-color: rgba(255,255,255,0.30); border: 1px solid rgba(35,42,51,0.30);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23232a33' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-size: 10px 6px;
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+  .row-select[hidden] { display: none; }
+  #locPills[hidden] { display: none; }
 </style>
 </head>
 <body>
@@ -1254,13 +1263,11 @@
             <button type="button" class="pill on" data-loc="La Mirada">La Mirada</button>
             <button type="button" class="pill" data-loc="Stanton">Stanton</button>
           </div>
-        </div>
-        <div class="row" id="giveRow" hidden>
-          <span class="lbl">Given to</span>
-          <div class="pills" id="givePills">
-            <button type="button" class="pill on" data-give="">Customers</button>
-            <button type="button" class="pill" data-give="Church">Church</button>
-          </div>
+          <select id="goodwillLoc" class="row-select" hidden aria-label="Goodwill location">
+            <option value="La Mirada">La Mirada</option>
+            <option value="Stanton">Stanton</option>
+            <option value="Church">Church</option>
+          </select>
         </div>
         <div class="row">
           <span class="lbl">Note</span>
@@ -1399,7 +1406,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v115 · Sep 29, 6:49 PM</div>
+<div class="ver-badge">v116 · Sep 29, 6:53 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -1648,7 +1655,11 @@
       state.type === 'goodwill' ? 'Samples given out (removed from stock)'
       : isXfer ? 'Quantity to move' : 'Amount';
     document.getElementById('locLabel').textContent = isXfer ? 'From' : 'Location';
-    document.getElementById('giveRow').hidden = state.type !== 'goodwill';
+    // Goodwill picks its place from one dropdown (La Mirada / Stanton / Church) instead of the pills.
+    const gw = state.type === 'goodwill';
+    document.getElementById('locPills').hidden = gw;
+    document.getElementById('goodwillLoc').hidden = !gw;
+    if (gw) document.getElementById('goodwillLoc').value = state.give ? 'Church' : state.location; else state.give = '';
     const xh = document.getElementById('xferHint');
     xh.hidden = !isXfer;
     if (isXfer) xh.textContent = `Moves to ${otherLoc(state.location)}`;
@@ -1675,11 +1686,12 @@
     if (state.type === 'transfer') syncTypeUI();
   });
 
-  // ---- Goodwill: who it went to ----
-  document.getElementById('givePills').addEventListener('click', e => {
-    const p = e.target.closest('.pill'); if (!p) return;
-    document.querySelectorAll('#givePills .pill').forEach(x => x.classList.toggle('on', x === p));
-    state.give = p.dataset.give;
+  // ---- Goodwill place: a store, or Church (Church is taken out of La Mirada's stock and recorded as the recipient) ----
+  function syncLocPills() { document.querySelectorAll('#locPills .pill').forEach(x => x.classList.toggle('on', x.dataset.loc === state.location)); }
+  document.getElementById('goodwillLoc').addEventListener('change', e => {
+    if (e.target.value === 'Church') { state.give = 'Church'; state.location = 'La Mirada'; }
+    else { state.give = ''; state.location = e.target.value; }
+    syncLocPills();
   });
 
   // ---- Steppers ----
@@ -1773,10 +1785,10 @@
     const goodwillNote = isGoodwill
       ? `<div class="l"><span class="k">Goodwill</span><span class="v">samples given — removes from stock</span></div>`
       : '';
-    const extraRows = (pending.recipient ? `<div class="l"><span class="k">Given to</span><span class="v">${esc(pending.recipient)}</span></div>` : '') +
-      (pending.memo ? `<div class="l"><span class="k">Note</span><span class="v">${esc(pending.memo)}</span></div>` : '');
+    const extraRows = (pending.memo ? `<div class="l"><span class="k">Note</span><span class="v">${esc(pending.memo)}</span></div>` : '');
     const whereRow = isXfer
       ? `<div class="l"><span class="k">Move</span><span class="v">${esc(pending.location)} → ${esc(pending.to)}</span></div>`
+      : pending.recipient ? `<div class="l"><span class="k">Location</span><span class="v">${esc(pending.recipient)} · from ${esc(pending.location)} stock</span></div>`
       : `<div class="l"><span class="k">Location</span><span class="v">${esc(pending.location)}</span></div>`;
     document.getElementById('sheetSum').innerHTML =
       `<div class="l"><span class="k">Type</span><span class="v">${esc(cap(pending.type))}</span></div>` +
@@ -1821,7 +1833,7 @@
     // reset for next entry
     document.querySelectorAll('.amt .val').forEach(v => v.value = 0);
     document.getElementById('entryNote').value = '';
-    state.give = ''; document.querySelectorAll('#givePills .pill').forEach(x => x.classList.toggle('on', x.dataset.give === ''));
+    state.give = ''; document.getElementById('goodwillLoc').value = state.location;
     dt.value = nowPST();
     closeEntry();
     renderDB();

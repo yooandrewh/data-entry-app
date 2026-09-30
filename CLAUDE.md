@@ -368,3 +368,8 @@ content — like it already did on Home's landing (`#homeVer`, over the photo). 
 fill (`rgba(255,255,255,.30)`), a 1px navy outline and a light backdrop blur — instead of solid tints.
 Selected = caramel-tinted glass with a caramel outline and caramel text; primary buttons (Submit,
 Generate, + Entry) are caramel at 90% with an outline. Last CSS block ("Glass buttons + dropdowns").
+
+**Goodwill location (latest, replaces the *Given to* pills):** for Goodwill the Location row is one dropdown
+(`#goodwillLoc`): **La Mirada / Stanton / Church**. Choosing Church records `recipient: 'Church'` and takes
+the stock out of **La Mirada** (the only active store) — there is no separate *Given to* row any more.
+Storage is unchanged (`Goodwill — La Mirada · Church · note`). The × / − / + controls are borderless.
