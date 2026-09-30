@@ -1316,6 +1316,11 @@
   .buy-row.done .buy-main b { text-decoration: line-through; color: var(--muted); }
   .buy-add { display: flex; gap: 8px; padding: 10px 0; } .buy-add input { flex: 1; min-width: 0; } .buy-add button { width: auto; margin: 0; padding: 8px 14px; }
   .buy-total { display: flex; justify-content: space-between; align-items: baseline; padding: 12px 2px 4px; font-size: var(--fs-lg); } .buy-total small { display: block; color: var(--muted); font-size: var(--fs-caption); }
+  .te-items-h { padding: 10px 2px 4px; font-weight: 700; } .te-items-h small { color: var(--muted); font-weight: 500; font-size: var(--fs-caption); }
+  .te-items { max-height: 200px; overflow-y: auto; border: 1px solid var(--sep); margin-bottom: 8px; -webkit-overflow-scrolling: touch; }
+  .te-item { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-bottom: 1px solid var(--sep); }
+  .te-item input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--accent); flex: none; } .te-item span { flex: 1; min-width: 0; }
+  .te-b { width: 5.5em; text-align: right; }
 </style>
 </head>
 <body>
@@ -1603,7 +1608,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.56.00 · Sep 30, 6:00 PM</div>
+<div class="ver-badge">v1.57.00 · Sep 30, 6:30 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -3648,7 +3653,7 @@
     const now = Date.now();
     const running = TM.running.length ? TM.running.slice().reverse().map(r =>
       `<div class="tm-run"><div class="tm-clock" data-tm-clock="${r.id}">${tmClock(now - r.start)}</div>
-        <div class="tm-info"><b>${esc(r.task)}${r.item ? ' · ' + esc(r.item) : ''}</b>${r.qty ? ` · ${r.qty} ${TM_TASKS[r.task]?.unit || ''}` : ''}${r.plan ? `<div class="tm-note">Plan: ${fmtDur(r.plan)}</div>` : ''}${r.note ? `<div class="tm-note">${esc(r.note)}</div>` : ''}</div>
+        <div class="tm-info"><b>${esc(r.task)}</b>${tmItemsText(r) ? `<div class="tm-note">${esc(tmItemsText(r))}</div>` : ''}${r.qty ? ` · ${r.qty} ${TM_TASKS[r.task]?.unit || ''}` : ''}${r.plan ? `<div class="tm-note">Plan: ${fmtDur(r.plan)}</div>` : ''}${r.note ? `<div class="tm-note">${esc(r.note)}</div>` : ''}</div>
         <button type="button" class="btn-primary tm-stop" data-tm-stop="${r.id}">Stop</button>
         <button type="button" class="tm-x" data-tm-drop="${r.id}" aria-label="Discard timer">✕</button></div>`).join('')
       : `<div class="tm-empty">Nothing running.</div>`;
@@ -3660,8 +3665,8 @@
     }).join('');
     const canUse = avgs.some(a => a.mine != null);
     const log = TM.log.slice(0, 40).map(l =>
-      `<div class="tm-log" data-tm-edit="${l.id}"><div class="tm-l1"><b>${esc(l.task)}${l.item ? ' · ' + esc(l.item) : ''}</b><span class="tm-dur">${tmClock(l.end - l.start)}</span></div>
-        <div class="tm-note">${l.qty ? `${l.qty} ${TM_TASKS[l.task]?.unit || ''} · ` : ''}${tmFmtWhen(l.start)}${l.plan ? ` · planned ${fmtDur(l.plan)}` : ''}${l.note ? ' · ' + esc(l.note) : ''}</div>
+      `<div class="tm-log" data-tm-edit="${l.id}"><div class="tm-l1"><b>${esc(l.task)}</b><span class="tm-dur">${tmClock(l.end - l.start)}</span></div>
+        ${tmItemsText(l) ? `<div class="tm-note">${esc(tmItemsText(l))}</div>` : ''}<div class="tm-note">${l.qty ? `${l.qty} ${TM_TASKS[l.task]?.unit || ''} · ` : ''}${tmFmtWhen(l.start)}${l.plan ? ` · planned ${fmtDur(l.plan)}` : ''}${l.note ? ' · ' + esc(l.note) : ''}</div>
         <button type="button" class="tm-edit" data-tm-edit="${l.id}">Edit</button></div>`).join('') || `<div class="tm-empty">Timed tasks show up here.</div>`;
     const pe = bsEffort();
     const planStep = (task, label, qty, unit, min) => `<div class="tm-plan-row"><div class="tm-info"><b>${label}</b><div class="tm-note">${qty ? `${qty} ${unit}` : ''}${qty && min ? ' · ' : ''}${min ? 'plan ' + fmtDur(min) : (qty ? '' : 'start the clock')}</div></div><button type="button" class="btn-primary tm-stop" data-tm-plan="${task}|${qty}|${min}">Start</button></div>`;
@@ -3701,20 +3706,27 @@
       TM.running.forEach(r => { const el = root.querySelector(`[data-tm-clock="${r.id}"]`); if (el) el.textContent = tmClock(t2 - r.start); });
     }, 1000);
   }
-  // ---- Edit a logged timer: task, item, batches, duration, note ----
+  // Items on a timer: [{name, b}] (several recipes at once). Older entries kept a single `item` string.
+  const tmItemsText = x => (x.items && x.items.length) ? x.items.map(i => i.b ? `${i.name} ×${rFmt(i.b)}` : i.name).join(', ') : (x.item || '');
+  function tmPlanItems() {
+    return bakeSheet.map(b => { const f = bsFind(b.key); return f && f.sec === 'mad' ? { name: costItemName(f.sec, f.it), b: b.b } : null; }).filter(Boolean);
+  }
+  // ---- Edit a logged timer: task, items (several), batches, duration, note ----
   function tmEditOpen(id) {
     const l = TM.log.find(x => x.id === id); if (!l) return;
     let sc = document.getElementById('tmEditScrim');
     if (!sc) { sc = document.createElement('div'); sc.className = 'scrim'; sc.id = 'tmEditScrim'; document.body.appendChild(sc); }
-    const items = COST_SECTIONS.flatMap(([sec, , get]) => get().map(it => costItemName(sec, it)));
+    const names = [...new Set(COST_SECTIONS.flatMap(([sec, , get]) => get().map(it => costItemName(sec, it))))];
+    const cur = new Map((l.items && l.items.length ? l.items : (l.item ? [{ name: l.item, b: 0 }] : [])).map(i => [i.name, i.b]));
     const taskOpts = Object.keys(TM_TASKS).map(t => `<option${t === l.task ? ' selected' : ''}>${t}</option>`).join('');
-    const itemOpts = `<option value="">— none —</option>` + [...new Set(items)].map(n => `<option value="${esc(n)}"${n === l.item ? ' selected' : ''}>${esc(n)}</option>`).join('');
+    const itemRows = names.map(n => `<label class="te-item"><input type="checkbox" data-te-item="${esc(n)}"${cur.has(n) ? ' checked' : ''}><span>${esc(n)}</span><input type="number" inputmode="decimal" min="0" step="any" class="te-b" placeholder="batches" value="${cur.get(n) || ''}" data-te-b="${esc(n)}"></label>`).join('');
     const q = TM_TASKS[l.task] || {};
     sc.innerHTML = `<div class="sheet info-sheet" role="dialog" aria-modal="true" data-tm-id="${l.id}">
       <button type="button" class="info-x" data-tm-edit-close aria-label="Close">✕</button>
       <h2>Edit Timer</h2>
       <div class="inv-field"><span>Task</span><select id="teTask">${taskOpts}</select></div>
-      <div class="inv-field"><span>Item</span><select id="teItem">${itemOpts}</select></div>
+      <div class="te-items-h">Items <small>(tick one or several, add batches for each)</small></div>
+      <div class="te-items">${itemRows}</div>
       <div class="inv-field"><span id="teQtyLbl">${esc(q.ask || 'Count')}</span><input type="number" inputmode="decimal" min="0" step="any" id="teQty" value="${l.qty || ''}"></div>
       <div class="inv-field"><span>Minutes</span><input type="number" inputmode="decimal" min="0" step="any" id="teMin" value="${Number(((l.end - l.start) / 60000).toFixed(1))}"></div>
       <div class="inv-field"><span>Note</span><input type="text" id="teNote" maxlength="120" placeholder="Notes" value="${esc(l.note || '')}"></div>
@@ -3729,8 +3741,11 @@
     const l = TM.log.find(x => x.id === sheet.dataset.tmId); if (!l) { close(); return; }
     if (e.target.id === 'teDel') { TM.log = TM.log.filter(x => x !== l); tmSave(); close(); renderTimers(); }
     else if (e.target.id === 'teSave') {
-      l.task = document.getElementById('teTask').value; l.item = document.getElementById('teItem').value;
-      const q = parseFloat(document.getElementById('teQty').value); l.qty = q > 0 ? q : 0;
+      l.task = document.getElementById('teTask').value;
+      l.items = [...sheet.querySelectorAll('[data-te-item]')].filter(c => c.checked).map(c => ({ name: c.dataset.teItem, b: parseFloat(sheet.querySelector(`[data-te-b="${CSS.escape(c.dataset.teItem)}"]`).value) || 0 }));
+      delete l.item;
+      const q = parseFloat(document.getElementById('teQty').value), sum = l.items.reduce((a, i) => a + i.b, 0);
+      l.qty = q > 0 ? q : (TM_TASKS[l.task] && TM_TASKS[l.task].unit === 'batches' ? sum : 0);
       const m = parseFloat(document.getElementById('teMin').value); if (m >= 0) l.end = l.start + Math.round(m * 60000);
       l.note = document.getElementById('teNote').value.slice(0, 120);
       tmSave(); close(); renderTimers();
@@ -3745,8 +3760,8 @@
     const b = e.target.closest('button'); if (!b) return;
     if (b.dataset.tmPlan) {
       const [task, qty, min] = b.dataset.tmPlan.split('|'); const pe = bsEffort();
-      tmStart(task, pe && qty > 0 ? 'Bake plan: ' + pe.names.join(', ') : '', qty, parseFloat(min));
-      if (pe && qty > 0 && pe.names.length === 1) TM.running[TM.running.length - 1].item = pe.names[0].replace(/ ×[\d.]+$/, '');
+      tmStart(task, '', qty, parseFloat(min));
+      if (pe && qty > 0) TM.running[TM.running.length - 1].items = tmPlanItems();
       tmSave(); renderTimers(); return;
     }
     if (b.id === 'tmHist') { document.getElementById('bsHist').click(); return; }
