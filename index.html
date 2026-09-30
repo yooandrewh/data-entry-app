@@ -1205,6 +1205,11 @@
   .db-entry .db-amts .proj-row { padding: 4px 0; }
   .db-entry .db-sync { margin-top: 4px; }
   .db-amts .proj-row:only-child { grid-column: 1 / -1; }
+  .db-fold > summary { list-style: none; cursor: pointer; margin-bottom: 0; }
+  .db-fold > summary::-webkit-details-marker { display: none; }
+  .db-fold[open] > summary { margin-bottom: 4px; }
+  .db-fold > summary .db-daylabel::before { content: "›"; display: inline-block; margin-right: 8px; color: var(--muted); transition: transform .15s; }
+  .db-fold[open] > summary .db-daylabel::before { transform: rotate(90deg); }
 </style>
 </head>
 <body>
@@ -1484,7 +1489,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v127 · Sep 30, 1:05 AM</div>
+<div class="ver-badge">v128 · Sep 30, 1:25 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -2878,7 +2883,7 @@
       ? `<div class="ds-flights">${tok('Flights')}<b>${totalFlights}</b> flight${totalFlights === 1 ? '' : 's'} <span class="ds-note">(included in totals above)</span></div>`
       : '';
     let html = `<div class="db-summary"><div class="ds-total"><b>${grand}</b> sold · ${usd(grand * PRICE_PER_UNIT)}</div><div class="ds-rows">${breakdown}</div>${dataLoc === 'all' ? `<div class="ds-break ds-loc">${locBreak}</div>` : ''}${flightLine}</div>`;
-    for (const g of ordered) {
+    ordered.forEach((g, gi) => {
       const label = salesGroup === 'week'
         ? 'Week of ' + new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(parseEntryDate(g.key))
         : dayKey(g.key);
@@ -2887,11 +2892,13 @@
         .join('') || `<div class="proj-row"><span class="k">No sales</span></div>`;
       const flightChip = g.flights > 0
         ? kvRow(tok('Flights'), `Flight${g.flights === 1 ? '' : 's'}`, g.flights, '', 'pr-flight') : '';
-      html += `<div class="db-entry">
-          <div class="db-head"><span class="db-daylabel">${label}</span><span class="db-when">${g.total} total</span></div>
+      // Newest 7 days (or 2 weeks) open; older ones open when their date is tapped.
+      const open = gi < (salesGroup === 'week' ? 2 : 7);
+      html += `<details class="db-entry db-fold"${open ? ' open' : ''}>
+          <summary class="db-head"><span class="db-daylabel">${label}</span><span class="db-when">${g.total} total</span></summary>
           <div class="db-amts">${flavorChips}${flightChip}</div>
-        </div>`;
-    }
+        </details>`;
+    });
     list.innerHTML = html;
   }
   document.getElementById('dbGroup').addEventListener('change', e => {
