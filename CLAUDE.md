@@ -358,3 +358,8 @@ block ("Photo palette, bright") and wins over the older ones. The Home *landing*
 with transparent outlined buttons, centred vertically (`#view-home:not(.paged)` is a flex column with the
 menu on `margin: auto`); Home's sub-pages and every other screen use the bright theme. Apricot/plum/mauve
 from the first palette are no longer used.
+
+**Version line (latest):** it is no longer a fixed strip. `.ver-badge` sits in normal flow at the end of the
+content (just above the nav), so it only appears when you scroll to the bottom of a page and never overlays
+content — like it already did on Home's landing (`#homeVer`, over the photo). It is still hand-bumped in
+`.ver-badge`. The earlier notes about a fixed strip / `--footer-h` are superseded (`--footer-h` is 0).

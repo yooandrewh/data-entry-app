@@ -1089,12 +1089,16 @@
   #view-home:not(.paged) .home-hero { min-height: 0; padding-bottom: 8px; flex: none; }
   #view-home:not(.paged) .home-menu { margin: auto 0; }
   #view-home:not(.paged) .home-ver { margin: 0 0 8px; }
+
+  /* ---- Version line: part of the page (at the end of the content), not a strip fixed over it ---- */
+  :root { --footer-h: 0px; }
+  .ver-badge { position: static; display: block; height: auto; padding: 18px 0 6px; text-align: center; background: none; border: none; z-index: auto; pointer-events: auto; }
+  body.home-landing .ver-badge { display: none; }
 </style>
 </head>
 <body>
 
 <!-- Version badge — bump on every deploy (v = commit count, time = deploy time PST) -->
-<div class="ver-badge">v113 · Sep 29, 6:44 PM</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -1372,6 +1376,8 @@
     </div>
   </div>
 </div>
+
+<div class="ver-badge">v114 · Sep 29, 6:46 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
