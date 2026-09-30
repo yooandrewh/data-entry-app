@@ -296,3 +296,9 @@ Simple UI-kit style: **no shadows anywhere** (`* { box-shadow: none !important }
 primary (also the floating nav bar). It is the **final block of the stylesheet ("Flat gradient")** and
 wins over everything above it; the earlier Soft UI / Keys rules are dead weight kept underneath. Home's
 hero is still the real photo. Edit that last block to change the look.
+
+**Fonts + Home backdrop (2026-09-29):** the app font is **Roboto** (replaced Catamaran); only Home's
+*Kairosbaking* title uses **Italiana** (Google Fonts' serif — read "Italiano" as this). The Home photo is a
+**fixed full-screen backdrop** (`.home-bg`, `position: fixed`, only shown while Home is active) that stays put
+while the card scrolls over it; `.home-hero` is a transparent 500px spacer that keeps the madeleine visible
+above the card. Print label/invoice/bake-sheet documents keep Arial/Georgia on purpose.

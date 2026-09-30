@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Catamaran:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700;900&family=Italiana&display=swap" rel="stylesheet" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="color-scheme" content="light" />
@@ -51,7 +51,7 @@
     margin: 0; padding: 0;
     background: var(--bg);
     color: var(--text);
-    font-family: "Catamaran", -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+    font-family: "Roboto", -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
     font-size: var(--fs-lg);
     -webkit-font-smoothing: antialiased;
   }
@@ -977,15 +977,22 @@
   .tab-pill { background: var(--grad); border-radius: 22px; }
   .tabbar button { color: rgba(255,255,255,0.68); border-radius: 16px; }
   .tabbar button.on { background: rgba(255,255,255,0.22); color: #fff; }
+  /* ================= Roboto everywhere; Home's photo is a fixed full-screen backdrop ================= */
+  .hero-title { font-family: "Italiana", Georgia, "Times New Roman", serif; font-weight: 400; letter-spacing: 0; font-size: 46px; }
+  .home-bg { position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background: linear-gradient(180deg, rgba(22,12,26,0.60) 0%, rgba(22,12,26,0.18) 42%, rgba(22,12,26,0.40) 100%), url("hero.jpg") 50% 42% / cover no-repeat; }
+  #view-home .wrap { position: relative; z-index: 1; }
+  .home-hero { background: none; min-height: 500px; }
 </style>
 </head>
 <body>
 
 <!-- Version badge — bump on every deploy (v = commit count, time = deploy time PST) -->
-<div class="ver-badge">v103 · Sep 29, 5:51 PM</div>
+<div class="ver-badge">v104 · Sep 29, 5:55 PM</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
+  <div class="home-bg" aria-hidden="true"></div>
   <div class="wrap">
     <div class="home-hero">
       <button type="button" class="home-season" data-seasonal-edit>This season</button>
