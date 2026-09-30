@@ -1271,6 +1271,10 @@
   #planList .pr-fc .fc-v { display: flex; align-items: baseline; justify-content: flex-end; gap: 8px; }
   #planList .pr-fc .fc-sub { display: inline; margin: 0; }
   #planList .info-body { margin-top: 4px; }
+  body:not(.printing-bake) #bsScrim .bs2-summary { background: var(--card); border: 1px solid var(--accent); padding: 10px 12px; margin: 0 0 8px; font-size: var(--fs-caption); }
+  body:not(.printing-bake) #bsScrim .bs2-summary b { display: block; font-size: var(--fs-body); margin-bottom: 2px; }
+  body:not(.printing-bake) #bsScrim .bs2-sum-t { margin-top: 6px; padding-top: 6px; border-top: 1px solid var(--sep); color: var(--accent); font-weight: 700; }
+  @media print { .bs2-summary { display: none; } }
 </style>
 </head>
 <body>
@@ -1557,7 +1561,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v144 · Sep 30, 8:35 AM</div>
+<div class="ver-badge">v145 · Sep 30, 8:50 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -4658,7 +4662,11 @@
   const bsBlockHtml = bl => `<div class="bs2-block"><h4>${esc(bl.title)}<small>${esc(bl.note)}</small></h4>${bl.groups.map(g => `<div class="bs2-grp">${g.map(l => `<div>${esc(l)}</div>`).join('')}</div>`).join('')}</div>`;
   const bsHeadHtml = () => { const [y, m, d] = (bsView ? bsView.day : nowPST().slice(0, 10)).split('-').map(Number); return `<div class="bs2-title">Bake Plan</div><div class="bs2-date">${esc(new Date(y, m - 1, d).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }))} · amounts are for the base version of each recipe</div>`; };
   function paintBakeSheetDoc() {
-    document.getElementById('bsDoc').innerHTML = `<div class="bs2-doc">${bsHeadHtml()}${bsModel().map(bsBlockHtml).join('')}</div>`;
+    // Summary first: which recipes and how many batches, and the kitchen time they add up to.
+    const eff = bsView ? bsView.eff : bsEffort();
+    const recs = bsView ? (bsView.recipes || []) : bakeSheet.map(b => { const f = bsFind(b.key); return f ? costItemName(f.sec, f.it) + ' × ' + rFmt(b.b) : ''; }).filter(Boolean);
+    const summary = recs.length ? `<div class="bs2-summary"><b>Summary</b>${recs.map(r => `<div>${esc(r)}</div>`).join('')}${eff ? `<div class="bs2-sum-t">${rFmt(eff.batches)} batches · ${eff.pieces} pcs · ${fmtDur(eff.min)} to book<br>Prep ${fmtDur(eff.prep)} · Baking ${fmtDur(eff.baking)}</div>` : ''}</div>` : '';
+    document.getElementById('bsDoc').innerHTML = `<div class="bs2-doc">${bsHeadHtml()}${summary}${bsModel().map(bsBlockHtml).join('')}</div>`;
   }
   // The PDF is laid out in two columns per page, like a printed prep sheet; blocks are measured and packed so none is split.
   async function bakeSheetPages() {
@@ -4734,7 +4742,7 @@
   document.getElementById('bsSave').addEventListener('click', e => {
     const blocks = bsModel(); if (!blocks.length) return;
     const now = new Date(), day = nowPST().slice(0, 10);
-    BH.unshift({ id: Date.now().toString(36), day, at: now.getTime(), recipes: bakeSheet.map(b => { const f = bsFind(b.key); return f ? costItemName(f.sec, f.it) + ' × ' + rFmt(b.b) : ''; }).filter(Boolean), blocks });
+    BH.unshift({ id: Date.now().toString(36), day, at: now.getTime(), recipes: bakeSheet.map(b => { const f = bsFind(b.key); return f ? costItemName(f.sec, f.it) + ' × ' + rFmt(b.b) : ''; }).filter(Boolean), eff: bsEffort(), blocks });
     BH = BH.slice(0, 100); bhSave(); track('bake_sheet_save', { recipes: bakeSheet.length });
     e.target.textContent = 'Saved ✓'; setTimeout(() => { e.target.textContent = 'Save this plan'; }, 1600);
   });
