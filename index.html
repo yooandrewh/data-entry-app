@@ -1058,7 +1058,7 @@
 <body>
 
 <!-- Version badge — bump on every deploy (v = commit count, time = deploy time PST) -->
-<div class="ver-badge">v108 · Sep 29, 6:20 PM</div>
+<div class="ver-badge">v109 · Sep 29, 6:21 PM</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -1417,9 +1417,8 @@
     <div class="warn inv-noprint">Best-by dates fill in from the manufactured date: fridge 7 days, freezer 2 weeks. Tap any text on the label to edit it before printing.</div>
     <div class="lbl-doc" id="lblDoc"></div>
     <div class="actions inv-noprint" style="margin-top:16px">
-      <button class="btn-primary" id="lblPdfBtn">Download PDF (to print)</button>
+      <button class="btn-primary" id="lblPdfBtn">Download PDF</button>
       <button class="btn-ghost" id="lblPrintBtn">Print label</button>
-      <button class="btn-ghost" id="lblSaveBtn">Download as image</button>
       <button class="btn-ghost" id="lblCloseBtn">Close</button>
     </div>
   </div>
@@ -1441,10 +1440,10 @@
 <!-- ===== Bake sheet ===== -->
 <div class="scrim" id="bsScrim">
   <div class="sheet inv-sheet" role="dialog" aria-modal="true" aria-label="Bake sheet">
-    <div class="bs-doc" id="bsDoc"></div>
+    <div id="bsDoc"></div>
     <div class="actions inv-noprint" style="margin-top:16px">
-      <button class="btn-primary" id="bsPrintBtn">Print</button>
-      <button class="btn-ghost" id="bsSaveBtn">Download as image</button>
+      <button class="btn-primary" id="bsPdfBtn">Download PDF</button>
+      <button class="btn-ghost" id="bsPrintBtn">Print</button>
       <button class="btn-ghost" id="bsCloseBtn">Close</button>
     </div>
   </div>
@@ -1476,9 +1475,8 @@
     <div id="mlResult" hidden>
       <div class="lbl-page" id="mlDoc"></div>
       <div class="actions inv-noprint" style="margin-top:16px">
-        <button class="btn-primary" id="mlPdf">Download PDF (to print)</button>
+        <button class="btn-primary" id="mlPdf">Download PDF</button>
         <button class="btn-ghost" id="mlPrint">Print</button>
-        <button class="btn-ghost" id="mlSave">Download as image</button>
         <button class="btn-ghost" id="mlBack">Back</button>
       </div>
     </div>
@@ -4020,14 +4018,14 @@
       rows.forEach(([n, g]) => { const c = bsCanon(n), t = totals.get(c) || { g: 0, uses: new Set() }; t.g += g * b.b; t.uses.add(b.key); totals.set(c, t); });
       const lines = rows.map(([n, g]) => `<div class="r"><span>${esc(bsCanon(n) === titleCase(String(n).split(',')[0].replace(/\(.*?\)/g, '').trim()) || /^[a-z]/.test(n) ? titleCase(String(n).split(',')[0].replace(/\(.*?\)/g, '').trim()) : String(n).split(',')[0].replace(/\(.*?\)/g, '').trim())}</span><b>${rFmt(g * b.b)} g</b></div>`).join('');
       return `<h4>${esc(costItemName(f.sec, f.it))}<span>${rFmt(b.b)} batch${b.b === 1 ? '' : 'es'}${y ? ` · ≈ ${rFmt(b.b * y)} pcs` : ''}</span></h4>${lines}`;
-    }).join('');
+    });
     const sorted = BS_TOTALS.filter(n => totals.has(n)).map(n => [n, totals.get(n)]);   // for now: just butter, eggs and sugars
     const totalRows = sorted.map(([n, t]) => {
       const conv = n === 'Cake Flour' ? ` <i>(= AP ${rFmt(t.g * 436 / 500)} g + cornstarch ${rFmt(t.g * 64 / 500)} g)</i>` : '';
       return `<div class="r"><span>${esc(n)}${conv}${t.uses.size > 1 ? ` <i>· in ${t.uses.size} recipes</i>` : ''}</span><b>${rFmt(t.g)} g</b></div>`;
     }).join('');
-    document.getElementById('bsDoc').innerHTML = `<h3>Bake sheet</h3><div class="d">${fmt(today)} · amounts are for the base version of each recipe</div>${blocks}
-      <h4 class="tot">Total ingredients needed<span>all recipes</span></h4>${totalRows}`;
+    const secs = [`<h3>Bake sheet</h3><div class="d">${fmt(today)} · amounts are for the base version of each recipe</div>`, ...blocks, `<h4 class="tot">Total ingredients needed<span>all recipes</span></h4>${totalRows}`];
+    document.getElementById('bsDoc').innerHTML = secs.map(x => `<div class="bs-doc">${x}</div>`).join('');
   }
   document.getElementById('bsPick').addEventListener('change', e => {
     const key = e.target.value; if (!key) return;
@@ -4079,12 +4077,7 @@
     window.addEventListener('afterprint', () => document.body.classList.remove('printing-bake'), { once: true });
     window.print();
   });
-  document.getElementById('bsSaveBtn').addEventListener('click', async () => {
-    const btn = document.getElementById('bsSaveBtn'), label = btn.textContent; btn.disabled = true; btn.textContent = 'Preparing…';
-    try { await saveBlobAs(await domToBlob(document.getElementById('bsDoc'), '.bs-', 2), `bake-sheet-${nowPST().slice(0, 10)}.png`); }
-    catch { document.getElementById('toastMsg').textContent = 'Couldn’t make the image'; const t = document.getElementById('toast'); t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2200); }
-    finally { btn.disabled = false; btn.textContent = label; }
-  });
+  document.getElementById('bsPdfBtn').addEventListener('click', () => downloadPdf(document.getElementById('bsPdfBtn'), [...document.querySelectorAll('#bsDoc .bs-doc')], `bake-sheet-${nowPST().slice(0, 10)}.pdf`, '.bs-'));
 
   // ---- Minimal PDF writer: each element becomes a JPEG placed on US-Letter pages, never split across a page ----
   async function elementsToPdf(els, classPrefix, width) {
@@ -4123,9 +4116,9 @@
     str(`trailer\n<< /Size ${n} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`);
     return new Blob(parts, { type: 'application/pdf' });
   }
-  async function downloadPdf(btn, els, name) {
+  async function downloadPdf(btn, els, name, prefix = '.lbl-') {
     const label = btn.textContent; btn.disabled = true; btn.textContent = 'Preparing…';
-    try { await saveBlobAs(await elementsToPdf(els, '.lbl-', 640), name); track('labels_pdf', { n: els.length }); }
+    try { await saveBlobAs(await elementsToPdf(els, prefix, 640), name); track('pdf_download', { n: els.length, what: prefix === '.bs-' ? 'bake_sheet' : 'labels' }); }
     catch { rcpToast('Couldn’t make the PDF'); }
     finally { btn.disabled = false; btn.textContent = label; }
   }
@@ -4264,12 +4257,6 @@
     window.addEventListener('afterprint', () => document.body.classList.remove('printing-labels'), { once: true });
     window.print();
   });
-  document.getElementById('mlSave').addEventListener('click', async () => {
-    const btn = document.getElementById('mlSave'), label = btn.textContent; btn.disabled = true; btn.textContent = 'Preparing…';
-    try { await saveBlobAs(await domToBlob(document.getElementById('mlDoc'), '.lbl-', 2, 640), `labels-${document.getElementById('mlMfg').value || nowPST().slice(0, 10)}.png`); }
-    catch { rcpToast('Couldn’t make the image'); }
-    finally { btn.disabled = false; btn.textContent = label; }
-  });
   document.getElementById('lblMfg').addEventListener('input', paintLabel);
   document.getElementById('lblNet').addEventListener('input', paintLabel);
   document.getElementById('lblCloseBtn').addEventListener('click', () => document.getElementById('lblScrim').classList.remove('show'));
@@ -4295,8 +4282,6 @@
     ctx.drawImage(img, 0, 0, cv.width, cv.height);
     return cv;
   }
-  const domToBlob = async (doc, prefix, scale, fixedWidth) => { const cv = await domToCanvas(doc, prefix, scale, fixedWidth); return new Promise(res => cv.toBlob(res, 'image/png')); };
-  const lblToBlob = () => domToBlob(document.getElementById('lblDoc'), '.lbl-', 3);
   // Hand a PNG to the iPhone share sheet (Save Image), or fall back to a normal download.
   async function saveBlobAs(blob, name) {
     const file = new File([blob], name, { type: blob.type || 'image/png' });
@@ -4304,23 +4289,6 @@
     const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = name;
     document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
   }
-  document.getElementById('lblSaveBtn').addEventListener('click', async () => {
-    const btn = document.getElementById('lblSaveBtn'), label = btn.textContent;
-    btn.disabled = true; btn.textContent = 'Preparing…';
-    try {
-      const blob = await lblToBlob();
-      const slug = (lblItem.title || lblItem.name).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-      const file = new File([blob], `${slug}-label-${document.getElementById('lblMfg').value}.png`, { type: 'image/png' });
-      track('label_download', { name: lblItem.name });
-      // On iPhone the share sheet offers "Save Image"; elsewhere fall back to a normal download.
-      if (navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file] }); return; } catch (e) { if (e.name === 'AbortError') return; } }
-      const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = file.name;
-      document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-    } catch (e) {
-      document.getElementById('toastMsg').textContent = 'Couldn’t make the image';
-      const t = document.getElementById('toast'); t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2200);
-    } finally { btn.disabled = false; btn.textContent = label; }
-  });
   document.getElementById('lblPrintBtn').addEventListener('click', () => {
     track('label_print', { name: lblItem && lblItem.name });
     document.body.classList.add('printing-label');

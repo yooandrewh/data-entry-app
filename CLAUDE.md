@@ -325,3 +325,9 @@ is deliberately re-pointed to peach there (it means "the ink colour on tinted co
 **Bottom nav (latest):** one solid apricot bar, full width and flush to the bottom edge (not a floating
 pill) — `--tabbar-h` is 62px. The active tab is a darker tint; no focus outline. The earlier floating-pill
 notes above are superseded.
+
+**Downloads are PDF-only (2026-09-29):** every "Download as image" button is gone (single label, Generate
+labels, bake sheet); each has one **Download PDF** button built by `elementsToPdf()` (+ `downloadPdf()`),
+plus Print. Each label / recipe block / totals block is its own element so it stays whole on a page. The
+older notes above that mention image/PNG export are out of date; `domToCanvas()` remains only as the PDF's
+renderer.
