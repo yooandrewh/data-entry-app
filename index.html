@@ -1293,6 +1293,15 @@
   .db-month .db-mdays .db-entry { margin: 0 0 4px; padding: 6px 0 4px; border: none; background: none; }
   .bs2-kt { font-size: 13px; margin: -8px 0 14px; } .bs2-kt b { font-weight: 800; }
   body:not(.printing-bake) #bsScrim .bs2-kt { display: none; }
+  .tm-log { cursor: pointer; }
+  .tm-edit { position: absolute; right: 0; top: 6px; border: 1px solid var(--muted); background: transparent; color: var(--muted); font-family: inherit; font-size: var(--fs-micro); padding: 3px 9px; cursor: pointer; }
+  .tm-log { padding-right: 56px !important; }
+  #tmEditScrim .inv-field input[type=text] { flex: 1; min-width: 0; text-align: right; }
+  /* Distinct sections on Forecast and Timers: a header bar + a clear gap above each */
+  #homeForecast .group-label, #homeTimers .group-label { margin: 22px 0 8px; padding: 7px 12px; background: rgba(164,90,34,0.12); border-left: 3px solid var(--accent); color: var(--text); font-size: var(--fs-caption); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+  #homeForecast > .group-label:first-of-type, #homeTimers > .group-label:first-of-type { margin-top: 6px; }
+  #homeForecast .card, #homeTimers .card { border: 1px solid var(--sep); }
+  #homeContent .hint { margin-top: 6px; }
 </style>
 </head>
 <body>
@@ -1326,6 +1335,7 @@
     <!-- Forecast: scenario dropdown + the same forecast the live site shows -->
     <div id="homeForecast">
       <div id="homeUpdated"></div>
+      <div class="group-label">Stock &amp; run-out</div>
       <div class="filter-bar"><select id="projScenario" aria-label="Forecast scenario">
         <option value="bear">Bear</option>
         <option value="base" selected>Expected</option>
@@ -1579,7 +1589,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.52.01 · Sep 30, 12:35 PM</div>
+<div class="ver-badge">v1.53.00 · Sep 30, 1:10 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -3617,12 +3627,10 @@
   const tmFmtWhen = ms => new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }).format(new Date(ms));
   function renderTimers() {
     const root = document.getElementById('homeTimers');
-    const keep = { task: (document.getElementById('tmTask') || {}).value, note: (document.getElementById('tmNote') || {}).value, qty: (document.getElementById('tmQty') || {}).value };
     const now = Date.now();
-    const taskOpts = Object.keys(TM_TASKS).map(t => `<option${t === (keep.task || 'Batch prep') ? ' selected' : ''}>${t}</option>`).join('');
     const running = TM.running.length ? TM.running.slice().reverse().map(r =>
       `<div class="tm-run"><div class="tm-clock" data-tm-clock="${r.id}">${tmClock(now - r.start)}</div>
-        <div class="tm-info"><b>${esc(r.task)}</b>${r.qty ? ` · ${r.qty} ${TM_TASKS[r.task]?.unit || ''}` : ''}${r.plan ? `<div class="tm-note">Plan: ${fmtDur(r.plan)}</div>` : ''}${r.note ? `<div class="tm-note">${esc(r.note)}</div>` : ''}</div>
+        <div class="tm-info"><b>${esc(r.task)}${r.item ? ' · ' + esc(r.item) : ''}</b>${r.qty ? ` · ${r.qty} ${TM_TASKS[r.task]?.unit || ''}` : ''}${r.plan ? `<div class="tm-note">Plan: ${fmtDur(r.plan)}</div>` : ''}${r.note ? `<div class="tm-note">${esc(r.note)}</div>` : ''}</div>
         <button type="button" class="btn-primary tm-stop" data-tm-stop="${r.id}">Stop</button>
         <button type="button" class="tm-x" data-tm-drop="${r.id}" aria-label="Discard timer">✕</button></div>`).join('')
       : `<div class="tm-empty">Nothing running.</div>`;
@@ -3634,35 +3642,32 @@
     }).join('');
     const canUse = avgs.some(a => a.mine != null);
     const log = TM.log.slice(0, 40).map(l =>
-      `<div class="tm-log"><div class="tm-l1"><b>${esc(l.task)}</b>${l.qty ? ` · ${l.qty} ${TM_TASKS[l.task]?.unit || ''}` : ''}<span class="tm-dur">${tmClock(l.end - l.start)}</span></div>
-        <div class="tm-note">${tmFmtWhen(l.start)}${l.plan ? ` · planned ${fmtDur(l.plan)}` : ''}${l.note ? ' · ' + esc(l.note) : ''}</div>
-        <button type="button" class="tm-x" data-tm-del="${l.id}" aria-label="Delete">✕</button></div>`).join('') || `<div class="tm-empty">Timed tasks show up here.</div>`;
+      `<div class="tm-log" data-tm-edit="${l.id}"><div class="tm-l1"><b>${esc(l.task)}${l.item ? ' · ' + esc(l.item) : ''}</b><span class="tm-dur">${tmClock(l.end - l.start)}</span></div>
+        <div class="tm-note">${l.qty ? `${l.qty} ${TM_TASKS[l.task]?.unit || ''} · ` : ''}${tmFmtWhen(l.start)}${l.plan ? ` · planned ${fmtDur(l.plan)}` : ''}${l.note ? ' · ' + esc(l.note) : ''}</div>
+        <button type="button" class="tm-edit" data-tm-edit="${l.id}">Edit</button></div>`).join('') || `<div class="tm-empty">Timed tasks show up here.</div>`;
     const pe = bsEffort();
-    const planStep = (task, label, qty, unit, min) => `<div class="tm-plan-row"><div class="tm-info"><b>${label}</b><div class="tm-note">${qty ? `${qty} ${unit} · ` : ''}plan ${fmtDur(min)}</div></div><button type="button" class="btn-primary tm-stop" data-tm-plan="${task}|${qty}|${min}">Start</button></div>`;
-    const planCard = pe
-      ? `<div class="group-label">From my bake plan</div><div class="card"><div class="tm-list"><div class="tm-note" style="padding:4px 0 6px">${esc(pe.names.join(' · '))}</div>
+    const planStep = (task, label, qty, unit, min) => `<div class="tm-plan-row"><div class="tm-info"><b>${label}</b><div class="tm-note">${qty ? `${qty} ${unit}` : ''}${qty && min ? ' · ' : ''}${min ? 'plan ' + fmtDur(min) : (qty ? '' : 'start the clock')}</div></div><button type="button" class="btn-primary tm-stop" data-tm-plan="${task}|${qty}|${min}">Start</button></div>`;
+    const other = `${planStep('Batter resting', 'Batter resting', 0, '', 0)}${planStep('Setup', 'Setup', 0, '', KT.setupMin)}${planStep('Cleaning', 'Cleaning', 0, '', KT.cleanMin)}`;
+    const steps = pe
+      ? `<div class="tm-note" style="padding:4px 0 6px">${esc(pe.names.join(' · '))}</div>
           ${planStep('Batch prep', 'Batch prep', Math.ceil(pe.batches), 'batches', pe.prep)}
           ${planStep('Baking', 'Baking', pe.rounds, 'pan loads', pe.oven)}
-          ${pe.glazed ? planStep('Glazing', 'Glazing', pe.glazed, 'pieces', pe.glaze) : ''}
-          <button type="button" class="btn-ghost" id="tmHist" style="margin-top:8px">Saved plans</button></div></div>`
-      : `<div class="group-label">From my bake plan</div><div class="card"><div class="tm-list"><div class="tm-empty">Add madeleines to the bake plan (Home → Baking Plan) and prep, baking and glazing timers appear here, pre-filled with the counts and planned times.</div><button type="button" class="btn-ghost" id="tmHist">Saved plans</button></div></div>`;
+          ${pe.glazed ? planStep('Glazing', 'Glazing', pe.glazed, 'pieces', pe.glaze) : planStep('Glazing', 'Glazing', 0, '', 0)}`
+      : `<div class="tm-hint" style="padding:0 0 4px">No bake plan yet — timers start blank; tap a log entry afterwards to fill in the item and batches.</div>
+          ${planStep('Batch prep', 'Batch prep', 0, '', 0)}${planStep('Baking', 'Baking', 0, '', 0)}${planStep('Glazing', 'Glazing', 0, '', 0)}`;
+    const planCard = `<div class="group-label">Start a timer</div><div class="card"><div class="tm-list">${steps}${other}
+          <button type="button" class="btn-ghost" id="tmHist" style="margin-top:8px">Saved plans</button></div></div>`;
     const base = location.origin + location.pathname;
     const links = ['Batch prep', 'Baking', 'Glazing', 'Cleaning'].map(t => `<div class="tm-url"><b>Start ${t.toLowerCase()}</b><code>${base}?timer=start&amp;task=${encodeURIComponent(t)}</code></div>`).join('')
       + `<div class="tm-url"><b>Stop</b><code>${base}?timer=stop</code></div><div class="tm-url"><b>Stop one task</b><code>${base}?timer=stop&amp;task=Glazing</code></div>`;
     root.innerHTML = `
       <div class="bm-row"><button type="button" class="btn-ghost bm-btn" data-bm>Baking Mode: Off</button><span class="bm-hint">Keeps the screen on while you bake</span></div>
       ${planCard}
-      <div class="card"><div class="tm-form">
-        <div class="inv-field"><span>Task</span><select id="tmTask">${taskOpts}</select></div>
-        <div class="inv-field" id="tmQtyRow"><span id="tmQtyLbl"></span><input type="number" inputmode="decimal" min="0" step="any" id="tmQty" value="${esc(keep.qty || '')}" /></div>
-        <div class="inv-field"><span>Note</span><input type="text" id="tmNote" maxlength="120" placeholder="What it's for — e.g. Lemon Poppy, 6 batches" value="${esc(keep.note || '')}" /></div>
-        <button type="button" class="btn-primary" id="tmStart">Start timer</button>
-      </div></div>
       <div class="group-label">Running</div>
       <div class="card"><div class="tm-list">${running}</div></div>
       <div class="group-label">My averages → plan</div>
       <div class="card"><div class="tm-list">${avgRows}
-        <div class="tm-hint">Fill in the number (batches / pan loads / pieces) when you start, so the average per unit can be worked out.</div>
+        <div class="tm-hint">Tap a log entry to add the batches / pan loads / pieces, so the average per unit can be worked out.</div>
         <button type="button" class="btn-ghost" id="tmUse"${canUse ? '' : ' disabled'}>Use my averages in the plan</button></div></div>
       <div class="group-label">Log</div>
       <div class="card"><div class="tm-list">${log}</div></div>
@@ -3671,31 +3676,64 @@
         ${links}
         <p class="tm-hint">Add <code>&amp;note=Lemon%20Poppy</code> or <code>&amp;qty=6</code> to a start link to fill the note and count. The timer lives in whichever browser or home-screen app opens the link, so open it in the same one you use for the rest.</p>
       </div></details>`;
-    const sync = () => {
-      const t = document.getElementById('tmTask').value, q = TM_TASKS[t];
-      document.getElementById('tmQtyRow').hidden = !q.ask;
-      document.getElementById('tmQtyLbl').textContent = q.ask;
-    };
     if (typeof bmPaint === 'function') bmPaint();
-    sync();
-    document.getElementById('tmTask').addEventListener('change', sync);
     stopTick();
     if (TM.running.length) tmTick = setInterval(() => {
       const t2 = Date.now();
       TM.running.forEach(r => { const el = root.querySelector(`[data-tm-clock="${r.id}"]`); if (el) el.textContent = tmClock(t2 - r.start); });
     }, 1000);
   }
+  // ---- Edit a logged timer: task, item, batches, duration, note ----
+  function tmEditOpen(id) {
+    const l = TM.log.find(x => x.id === id); if (!l) return;
+    let sc = document.getElementById('tmEditScrim');
+    if (!sc) { sc = document.createElement('div'); sc.className = 'scrim'; sc.id = 'tmEditScrim'; document.body.appendChild(sc); }
+    const items = COST_SECTIONS.flatMap(([sec, , get]) => get().map(it => costItemName(sec, it)));
+    const taskOpts = Object.keys(TM_TASKS).map(t => `<option${t === l.task ? ' selected' : ''}>${t}</option>`).join('');
+    const itemOpts = `<option value="">— none —</option>` + [...new Set(items)].map(n => `<option value="${esc(n)}"${n === l.item ? ' selected' : ''}>${esc(n)}</option>`).join('');
+    const q = TM_TASKS[l.task] || {};
+    sc.innerHTML = `<div class="sheet info-sheet" role="dialog" aria-modal="true" data-tm-id="${l.id}">
+      <button type="button" class="info-x" data-tm-edit-close aria-label="Close">✕</button>
+      <h2>Edit Timer</h2>
+      <div class="inv-field"><span>Task</span><select id="teTask">${taskOpts}</select></div>
+      <div class="inv-field"><span>Item</span><select id="teItem">${itemOpts}</select></div>
+      <div class="inv-field"><span id="teQtyLbl">${esc(q.ask || 'Count')}</span><input type="number" inputmode="decimal" min="0" step="any" id="teQty" value="${l.qty || ''}"></div>
+      <div class="inv-field"><span>Minutes</span><input type="number" inputmode="decimal" min="0" step="any" id="teMin" value="${Number(((l.end - l.start) / 60000).toFixed(1))}"></div>
+      <div class="inv-field"><span>Note</span><input type="text" id="teNote" maxlength="120" placeholder="Notes" value="${esc(l.note || '')}"></div>
+      <div class="actions"><button class="btn-primary" id="teSave">Save</button><button class="btn-ghost" id="teDel">Delete</button></div></div>`;
+    sc.classList.add('show');
+  }
+  document.addEventListener('click', e => {
+    const sc = document.getElementById('tmEditScrim'); if (!sc || !sc.classList.contains('show')) return;
+    const close = () => sc.classList.remove('show');
+    if (e.target === sc || e.target.closest('[data-tm-edit-close]')) { close(); return; }
+    const sheet = e.target.closest('[data-tm-id]'); if (!sheet) return;
+    const l = TM.log.find(x => x.id === sheet.dataset.tmId); if (!l) { close(); return; }
+    if (e.target.id === 'teDel') { TM.log = TM.log.filter(x => x !== l); tmSave(); close(); renderTimers(); }
+    else if (e.target.id === 'teSave') {
+      l.task = document.getElementById('teTask').value; l.item = document.getElementById('teItem').value;
+      const q = parseFloat(document.getElementById('teQty').value); l.qty = q > 0 ? q : 0;
+      const m = parseFloat(document.getElementById('teMin').value); if (m >= 0) l.end = l.start + Math.round(m * 60000);
+      l.note = document.getElementById('teNote').value.slice(0, 120);
+      tmSave(); close(); renderTimers();
+    }
+  });
+  document.addEventListener('change', e => {
+    if (e.target.id === 'teTask') { const q = TM_TASKS[e.target.value] || {}; document.getElementById('teQtyLbl').textContent = q.ask || 'Count'; }
+  });
   document.getElementById('homeTimers').addEventListener('click', e => {
+    const row = e.target.closest('.tm-log');
+    if (row && !e.target.closest('button')) { tmEditOpen(row.dataset.tmEdit); return; }
     const b = e.target.closest('button'); if (!b) return;
     if (b.dataset.tmPlan) {
       const [task, qty, min] = b.dataset.tmPlan.split('|'); const pe = bsEffort();
-      tmStart(task, 'Bake plan: ' + (pe ? pe.names.join(', ') : ''), qty, parseFloat(min)); renderTimers(); return;
+      tmStart(task, pe && qty > 0 ? 'Bake plan: ' + pe.names.join(', ') : '', qty, parseFloat(min));
+      if (pe && qty > 0 && pe.names.length === 1) TM.running[TM.running.length - 1].item = pe.names[0].replace(/ ×[\d.]+$/, '');
+      tmSave(); renderTimers(); return;
     }
     if (b.id === 'tmHist') { document.getElementById('bsHist').click(); return; }
-    if (b.id === 'tmStart') {
-      tmStart(document.getElementById('tmTask').value, document.getElementById('tmNote').value, document.getElementById('tmQty').value);
-      document.getElementById('tmNote').value = ''; document.getElementById('tmQty').value = ''; renderTimers();
-    } else if (b.dataset.tmStop) { tmStop(b.dataset.tmStop); renderTimers(); }
+    if (b.dataset.tmEdit) { tmEditOpen(b.dataset.tmEdit); return; }
+    if (b.dataset.tmStop) { tmStop(b.dataset.tmStop); renderTimers(); }
     else if (b.dataset.tmDrop) { TM.running = TM.running.filter(r => r.id !== b.dataset.tmDrop); tmSave(); renderTimers(); }
     else if (b.dataset.tmDel) { TM.log = TM.log.filter(l => l.id !== b.dataset.tmDel); tmSave(); renderTimers(); }
     else if (b.id === 'tmUse') {
