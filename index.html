@@ -1557,7 +1557,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v143 · Sep 30, 8:20 AM</div>
+<div class="ver-badge">v144 · Sep 30, 8:35 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -4740,9 +4740,9 @@
   });
   document.getElementById('bsSave').disabled = false;
   function bhPaint() {
-    const fmt = t => new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }).format(new Date(t));
+    const fmt = t => new Intl.DateTimeFormat('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }).format(new Date(t));
     document.getElementById('bhList').innerHTML = BH.length ? BH.map(h =>
-      `<div class="bh-row" data-bh="${h.id}"><div class="bh-main"><b>${fmt(h.at)}</b><small>${esc((h.recipes || []).join(' · '))}</small></div><button type="button" class="tm-x" data-bh-del="${h.id}" aria-label="Delete">✕</button></div>`).join('')
+      `<div class="bh-row" data-bh="${h.id}"><div class="bh-main"><b>${fmt(h.at)}</b></div><button type="button" class="tm-x" data-bh-del="${h.id}" aria-label="Delete">✕</button></div>`).join('')
       : '<div class="tm-empty">No saved plans yet. Use “Save this plan” under the bake plan.</div>';
   }
   document.getElementById('bsHist').addEventListener('click', () => { bhPaint(); document.getElementById('bhScrim').classList.add('show'); });
