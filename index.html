@@ -1216,6 +1216,22 @@
   .db-fold[open] > summary { margin-bottom: 4px; }
   .db-fold > summary .db-daylabel::before { content: "›"; display: inline-block; margin-right: 8px; color: var(--muted); transition: transform .15s; }
   .db-fold[open] > summary .db-daylabel::before { transform: rotate(90deg); }
+  /* Timers */
+  .tm-form { margin: 0 12px; padding-bottom: 12px; } .tm-form .btn-primary { margin-top: 10px; }
+  .tm-form input[type=text] { flex: 1; min-width: 0; text-align: right; }
+  .tm-list { margin: 0 12px; padding: 4px 0 10px; }
+  .tm-run { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--sep); }
+  .tm-clock { font-size: var(--fs-figure); font-weight: 700; color: var(--accent); min-width: 92px; font-variant-numeric: tabular-nums lining-nums; }
+  .tm-info { flex: 1; min-width: 0; } .tm-note { font-size: var(--fs-caption); color: var(--muted); }
+  .tm-stop { width: auto; padding: 8px 16px; margin: 0; }
+  .tm-x { border: none; background: none; color: var(--muted); font-size: var(--fs-lg); cursor: pointer; padding: 4px 6px; }
+  .tm-empty, .tm-hint { color: var(--muted); font-size: var(--fs-caption); padding: 8px 0; }
+  .tm-log { position: relative; padding: 8px 28px 8px 0; border-bottom: 1px solid var(--sep); } .tm-log .tm-x { position: absolute; right: 0; top: 8px; }
+  .tm-l1 { display: flex; justify-content: space-between; gap: 8px; } .tm-dur { color: var(--accent); font-weight: 700; font-variant-numeric: tabular-nums lining-nums; }
+  .tm-n, .tm-cur { color: var(--muted); font-size: var(--fs-caption); }
+  .tm-siri summary { cursor: pointer; padding: 12px; font-weight: 600; } .tm-siri p { font-size: var(--fs-caption); }
+  .tm-url { padding: 6px 0; } .tm-url code { display: block; font-size: var(--fs-micro); word-break: break-all; color: var(--muted); user-select: all; }
+  #tmUse { margin-top: 8px; } #tmUse:disabled { opacity: .45; }
 </style>
 </head>
 <body>
@@ -1237,6 +1253,7 @@
       <button type="button" data-hpage="forecast">Forecast</button>
       <button type="button" data-hpage="plan">Baking Plan</button>
       <button type="button" data-hpage="invoice">Invoice</button>
+      <button type="button" data-hpage="timers">Timers</button>
       <a class="hm-link" href="https://app.thefoodcorridor.com/tfc_food_business_dashboard/69084-kairosbaking/bookings?locale=en" target="_blank" rel="noopener noreferrer">Book Commercial Kitchen ↗</a>
     </div>
     
@@ -1298,6 +1315,9 @@
       <button type="button" class="btn-ghost" data-gen-labels style="margin-top:4px">Generate Labels</button>
     </div>
     </div>
+
+    <!-- Timers -->
+    <div id="homeTimers" hidden></div>
 
     <!-- Invoice -->
     <div id="homeInvoice" hidden>
@@ -1495,7 +1515,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v129 · Sep 30, 1:50 AM</div>
+<div class="ver-badge">v130 · Sep 30, 2:30 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -2506,7 +2526,7 @@
 
   // ---- Home: a landing screen with three buttons; each opens its own page ----
   let homeTab = null;   // null = landing | 'forecast' | 'plan' | 'invoice'
-  const HOME_TITLES = { forecast: 'Forecast', plan: 'Baking Plan', invoice: 'Invoice' };
+  const HOME_TITLES = { forecast: 'Forecast', plan: 'Baking Plan', invoice: 'Invoice', timers: 'Timers' };
   // The version line lives over the photo on Home's landing; everywhere else it is the fixed strip.
   function syncVer() {
     const onHome = (document.querySelector('.tabbar button.on') || {}).dataset?.tab === 'home';
@@ -2521,9 +2541,11 @@
     document.getElementById('homeForecast').hidden = homeTab !== 'forecast';
     document.getElementById('homePlan').hidden = homeTab !== 'plan';
     document.getElementById('homeInvoice').hidden = homeTab !== 'invoice';
+    document.getElementById('homeTimers').hidden = homeTab !== 'timers';
     document.getElementById('hpTitle').textContent = HOME_TITLES[homeTab] || '';
     if (homeTab === 'plan') { renderBakeSheet(); renderPlan(); }
     if (homeTab === 'invoice') initInvoiceForm();
+    if (homeTab === 'timers') renderTimers(); else stopTick();
     syncVer(); window.scrollTo(0, 0);
   }
   document.getElementById('homeMenu').addEventListener('click', e => {
@@ -3414,6 +3436,144 @@
     paintKitchenTimes(); renderPlan();
   });
   paintKitchenTimes();
+
+  // ---- Timers: stopwatch per kitchen task, with a note; averages feed the plan's kitchen time ----
+  // State (this device): running = [{id, task, note, qty, start}], log = [{id, task, note, qty, start, end}]
+  const TM_KEY = 'timers.v1';
+  // qty means: batches for prep, pan loads (rounds) for baking/cooling, pieces for glazing.
+  const TM_TASKS = {
+    'Batch prep':    { unit: 'batches', ask: 'Batches' },
+    'Batter resting': { unit: '', ask: '' },
+    'Baking':        { unit: 'rounds', ask: 'Pan loads' },
+    'Cooling':       { unit: 'rounds', ask: 'Pan loads' },
+    'Glazing':       { unit: 'pieces', ask: 'Pieces' },
+    'Setup':         { unit: '', ask: '' },
+    'Cleaning':      { unit: '', ask: '' },
+    'Other':         { unit: '', ask: '' },
+  };
+  let TM = { running: [], log: [] };
+  try { const t = JSON.parse(localStorage.getItem(TM_KEY)); if (t && t.running && t.log) TM = t; } catch {}
+  const tmSave = () => { try { localStorage.setItem(TM_KEY, JSON.stringify(TM)); } catch {} };
+  let tmTick = null;
+  function stopTick() { if (tmTick) { clearInterval(tmTick); tmTick = null; } }
+  const tmClock = ms => { const t = Math.max(0, Math.floor(ms / 1000)); const h = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60), sec = t % 60; const p = n => String(n).padStart(2, '0'); return (h ? h + ':' : '') + p(m) + ':' + p(sec); };
+  const tmMin = ms => Math.round(ms / 6000) / 10;   // minutes, 1 decimal
+  function tmStart(task, note, qty) {
+    if (!TM_TASKS[task]) task = 'Other';
+    TM.running.push({ id: Date.now() + '-' + Math.random().toString(36).slice(2, 6), task, note: (note || '').slice(0, 120), qty: parseFloat(qty) > 0 ? parseFloat(qty) : 0, start: Date.now() });
+    tmSave(); track('timer_start', { task });
+  }
+  function tmStop(id, task) {
+    let i = -1;
+    if (id) i = TM.running.findIndex(r => r.id === id);
+    else if (task) { for (let k = TM.running.length - 1; k >= 0; k--) if (TM.running[k].task.toLowerCase() === task.toLowerCase()) { i = k; break; } }
+    else i = TM.running.length - 1;
+    if (i < 0) return false;
+    const r = TM.running.splice(i, 1)[0];
+    TM.log.unshift({ ...r, end: Date.now() });
+    TM.log = TM.log.slice(0, 300);
+    tmSave(); track('timer_stop', { task: r.task }); return true;
+  }
+  // Averages from the log → what each plan assumption would become.
+  function tmAverages() {
+    const by = t => TM.log.filter(l => l.task === t);
+    const avg = (arr, f) => arr.length ? arr.reduce((a, l) => a + f(l), 0) / arr.length : null;
+    const perUnit = (t, secs) => { const a = by(t).filter(l => l.qty > 0); if (!a.length) return null; const tot = a.reduce((x, l) => x + (l.end - l.start), 0), q = a.reduce((x, l) => x + l.qty, 0); return tot / q / (secs ? 1000 : 60000); };
+    const flat = t => { const v = avg(by(t), l => l.end - l.start); return v == null ? null : v / 60000; };
+    const prepPer = perUnit('Batch prep');
+    return [
+      { k: 'prepMin',  label: 'Prep, per group of ' + KT.prepGroup + ' batches', mine: prepPer == null ? null : prepPer * KT.prepGroup, n: by('Batch prep').filter(l => l.qty > 0).length, u: 'min' },
+      { k: 'bakeMin',  label: 'Bake, per pan load', mine: perUnit('Baking'), n: by('Baking').filter(l => l.qty > 0).length, u: 'min' },
+      { k: 'coolMin',  label: 'Cooling, per pan load', mine: perUnit('Cooling'), n: by('Cooling').filter(l => l.qty > 0).length, u: 'min' },
+      { k: 'glazeSec', label: 'Glazing, per madeleine', mine: perUnit('Glazing', true), n: by('Glazing').filter(l => l.qty > 0).length, u: 'sec' },
+      { k: 'setupMin', label: 'Setup', mine: flat('Setup'), n: by('Setup').length, u: 'min' },
+      { k: 'cleanMin', label: 'Cleaning', mine: flat('Cleaning'), n: by('Cleaning').length, u: 'min' },
+    ];
+  }
+  const tmFmtWhen = ms => new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }).format(new Date(ms));
+  function renderTimers() {
+    const root = document.getElementById('homeTimers');
+    const keep = { task: (document.getElementById('tmTask') || {}).value, note: (document.getElementById('tmNote') || {}).value, qty: (document.getElementById('tmQty') || {}).value };
+    const now = Date.now();
+    const taskOpts = Object.keys(TM_TASKS).map(t => `<option${t === (keep.task || 'Batch prep') ? ' selected' : ''}>${t}</option>`).join('');
+    const running = TM.running.length ? TM.running.slice().reverse().map(r =>
+      `<div class="tm-run"><div class="tm-clock" data-tm-clock="${r.id}">${tmClock(now - r.start)}</div>
+        <div class="tm-info"><b>${esc(r.task)}</b>${r.qty ? ` · ${r.qty} ${TM_TASKS[r.task]?.unit || ''}` : ''}${r.note ? `<div class="tm-note">${esc(r.note)}</div>` : ''}</div>
+        <button type="button" class="btn-primary tm-stop" data-tm-stop="${r.id}">Stop</button>
+        <button type="button" class="tm-x" data-tm-drop="${r.id}" aria-label="Discard timer">✕</button></div>`).join('')
+      : `<div class="tm-empty">Nothing running.</div>`;
+    const avgs = tmAverages();
+    const avgRows = avgs.map(a => {
+      const cur = KT[a.k];
+      const mine = a.mine == null ? '—' : (a.u === 'sec' ? Math.round(a.mine) + ' sec' : (Math.round(a.mine * 10) / 10) + ' min');
+      return `<div class="proj-row"><span class="k">${a.label}<span class="tm-n">${a.n ? ` · ${a.n} timed` : ''}</span></span><span>${mine}<span class="tm-cur"> · plan ${cur} ${a.u}</span></span></div>`;
+    }).join('');
+    const canUse = avgs.some(a => a.mine != null);
+    const log = TM.log.slice(0, 40).map(l =>
+      `<div class="tm-log"><div class="tm-l1"><b>${esc(l.task)}</b>${l.qty ? ` · ${l.qty} ${TM_TASKS[l.task]?.unit || ''}` : ''}<span class="tm-dur">${tmClock(l.end - l.start)}</span></div>
+        <div class="tm-note">${tmFmtWhen(l.start)}${l.note ? ' · ' + esc(l.note) : ''}</div>
+        <button type="button" class="tm-x" data-tm-del="${l.id}" aria-label="Delete">✕</button></div>`).join('') || `<div class="tm-empty">Timed tasks show up here.</div>`;
+    const base = location.origin + location.pathname;
+    const links = ['Batch prep', 'Baking', 'Glazing', 'Cleaning'].map(t => `<div class="tm-url"><b>Start ${t.toLowerCase()}</b><code>${base}?timer=start&amp;task=${encodeURIComponent(t)}</code></div>`).join('')
+      + `<div class="tm-url"><b>Stop</b><code>${base}?timer=stop</code></div><div class="tm-url"><b>Stop one task</b><code>${base}?timer=stop&amp;task=Glazing</code></div>`;
+    root.innerHTML = `
+      <div class="card"><div class="tm-form">
+        <div class="inv-field"><span>Task</span><select id="tmTask">${taskOpts}</select></div>
+        <div class="inv-field" id="tmQtyRow"><span id="tmQtyLbl"></span><input type="number" inputmode="decimal" min="0" step="any" id="tmQty" value="${esc(keep.qty || '')}" /></div>
+        <div class="inv-field"><span>Note</span><input type="text" id="tmNote" maxlength="120" placeholder="What it's for — e.g. Lemon Poppy, 6 batches" value="${esc(keep.note || '')}" /></div>
+        <button type="button" class="btn-primary" id="tmStart">Start timer</button>
+      </div></div>
+      <div class="group-label">Running</div>
+      <div class="card"><div class="tm-list">${running}</div></div>
+      <div class="group-label">My averages → plan</div>
+      <div class="card"><div class="tm-list">${avgRows}
+        <div class="tm-hint">Fill in the number (batches / pan loads / pieces) when you start, so the average per unit can be worked out.</div>
+        <button type="button" class="btn-ghost" id="tmUse"${canUse ? '' : ' disabled'}>Use my averages in the plan</button></div></div>
+      <div class="group-label">Log</div>
+      <div class="card"><div class="tm-list">${log}</div></div>
+      <details class="card tm-siri"><summary>Start and stop with Siri</summary><div class="tm-list">
+        <p>In the Shortcuts app, make a shortcut with one action, <b>Open URLs</b>, and paste a link below. Name the shortcut what you'll say, e.g. “Start glazing”. Then say “Hey Siri, start glazing”.</p>
+        ${links}
+        <p class="tm-hint">Add <code>&amp;note=Lemon%20Poppy</code> or <code>&amp;qty=6</code> to a start link to fill the note and count. The timer lives in whichever browser or home-screen app opens the link, so open it in the same one you use for the rest.</p>
+      </div></details>`;
+    const sync = () => {
+      const t = document.getElementById('tmTask').value, q = TM_TASKS[t];
+      document.getElementById('tmQtyRow').hidden = !q.ask;
+      document.getElementById('tmQtyLbl').textContent = q.ask;
+    };
+    sync();
+    document.getElementById('tmTask').addEventListener('change', sync);
+    stopTick();
+    if (TM.running.length) tmTick = setInterval(() => {
+      const t2 = Date.now();
+      TM.running.forEach(r => { const el = root.querySelector(`[data-tm-clock="${r.id}"]`); if (el) el.textContent = tmClock(t2 - r.start); });
+    }, 1000);
+  }
+  document.getElementById('homeTimers').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.id === 'tmStart') {
+      tmStart(document.getElementById('tmTask').value, document.getElementById('tmNote').value, document.getElementById('tmQty').value);
+      document.getElementById('tmNote').value = ''; document.getElementById('tmQty').value = ''; renderTimers();
+    } else if (b.dataset.tmStop) { tmStop(b.dataset.tmStop); renderTimers(); }
+    else if (b.dataset.tmDrop) { TM.running = TM.running.filter(r => r.id !== b.dataset.tmDrop); tmSave(); renderTimers(); }
+    else if (b.dataset.tmDel) { TM.log = TM.log.filter(l => l.id !== b.dataset.tmDel); tmSave(); renderTimers(); }
+    else if (b.id === 'tmUse') {
+      tmAverages().forEach(a => { if (a.mine != null) KT[a.k] = a.u === 'sec' ? Math.round(a.mine) : Math.round(a.mine * 10) / 10; });
+      try { localStorage.setItem('kitchenTimes.v1', JSON.stringify(KT)); } catch {}
+      paintKitchenTimes(); Promise.resolve(renderPlan()).catch(() => {}); renderTimers();
+      const u = document.getElementById('tmUse'); if (u) u.textContent = 'Plan updated ✓';
+    }
+  });
+  // Siri / Shortcuts: ?timer=start&task=Glazing&note=…&qty=…  or  ?timer=stop[&task=…]
+  (function tmFromUrl() {
+    const q = new URLSearchParams(location.search), act = q.get('timer');
+    if (!act) return;
+    if (act === 'start') tmStart(q.get('task') || 'Other', q.get('note') || '', q.get('qty'));
+    else if (act === 'stop') tmStop(null, q.get('task'));
+    try { history.replaceState(null, '', location.pathname); } catch {}
+    document.querySelector('.tabbar button[data-tab="home"]').click();
+    homeTab = 'timers'; renderHomeTab();
+  })();
 
   function fmtDur(min) {
     if (min <= 0) return '0 min';
