@@ -1515,7 +1515,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v130 · Sep 30, 2:30 AM</div>
+<div class="ver-badge">v131 · Sep 30, 2:50 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -2517,7 +2517,18 @@
     if (it && spOpen) { const sel = spOpen.sel; sel.value = it.dataset.v; closeSelectPopup(); sel.dispatchEvent(new Event('change', { bubbles: true })); e.preventDefault(); return; }
     if (!(e.target.closest && e.target.closest('.sp-pop'))) closeSelectPopup();
   });
-  document.addEventListener('touchend', e => { if (spTarget(e)) e.preventDefault(); }, { passive: false });   // iOS: don't raise the wheel picker
+  // iOS raises its own picker from the tap's click, so a plain mousedown handler never gets the chance:
+  // open our list from touchend (unless the finger scrolled), and cancel the click that would raise the picker.
+  let spTouch = null;
+  document.addEventListener('touchstart', e => { const t = e.touches[0]; spTouch = t ? { x: t.clientX, y: t.clientY } : null; }, { passive: true });
+  document.addEventListener('touchend', e => {
+    const s = spTarget(e); if (!s) return;
+    e.preventDefault();
+    const t = e.changedTouches[0];
+    if (spTouch && t && Math.hypot(t.clientX - spTouch.x, t.clientY - spTouch.y) > 10) return;   // it was a scroll
+    spOpen && spOpen.sel === s ? closeSelectPopup() : openSelectPopup(s);
+  }, { passive: false });
+  document.addEventListener('click', e => { if (spTarget(e)) e.preventDefault(); }, true);
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') closeSelectPopup();
     else if ((e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') && e.target.tagName === 'SELECT' && !e.target.hasAttribute('data-native')) { e.preventDefault(); openSelectPopup(e.target); }
