@@ -1285,6 +1285,9 @@
   #projList .info-body { margin-top: 4px; }
   #projList .info-body .pr-fc .fc-v { flex-direction: column; align-items: flex-end; gap: 0; }
   #projList .info-body .pr-fc .fc-sub { display: block; }
+  .info-sheet { max-height: 86vh; overflow-y: auto; position: relative; }
+  .info-x { position: sticky; top: 0; float: right; width: 38px; height: 38px; padding: 0; margin: 0 0 0 8px; font-size: 20px; line-height: 1; background: #fbf9f5; border: 1px solid var(--text); color: var(--text); cursor: pointer; z-index: 2; }
+  .info-pop .proj-row { font-size: var(--fs-caption); }
 </style>
 </head>
 <body>
@@ -1571,7 +1574,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v147 · Sep 30, 9:20 AM</div>
+<div class="ver-badge">v148 · Sep 30, 10:00 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -3776,10 +3779,17 @@
       </div>`;
   }
   function infoBtn() { return `<button type="button" class="info-btn" data-info aria-label="Details" aria-expanded="false">i</button>`; }
+  // The "i" opens the details in a popup window (the card itself stays simple).
   document.addEventListener('click', e => {
+    const x = e.target.closest('[data-info-close]');
+    if (x || (e.target.id === 'infoScrim')) { document.getElementById('infoScrim')?.classList.remove('show'); return; }
     const b = e.target.closest('[data-info]'); if (!b) return;
-    const body = b.closest('.proj-card').querySelector('.info-body'); if (!body) return;
-    body.hidden = !body.hidden; b.setAttribute('aria-expanded', String(!body.hidden)); b.classList.toggle('on', !body.hidden);
+    const card = b.closest('.proj-card'), body = card && card.querySelector('.info-body'); if (!body) return;
+    let sc = document.getElementById('infoScrim');
+    if (!sc) { sc = document.createElement('div'); sc.className = 'scrim'; sc.id = 'infoScrim'; document.body.appendChild(sc); }
+    const h = card.querySelector('h3'), title = h ? h.textContent.replace(/\s*i\s*$/, '').trim() : 'Details';
+    sc.innerHTML = `<div class="sheet info-sheet" role="dialog" aria-modal="true"><button type="button" class="info-x" data-info-close aria-label="Close">✕</button><h2>${esc(title)}</h2><div class="info-pop">${body.innerHTML}</div></div>`;
+    sc.classList.add('show');
   });
   // Redistribute a 2-date schedule: shift a fraction r of the later day's load onto
   // the earlier day (r=0 → bake as-needed; r=1 → bake it all on the first day). Every
@@ -3973,7 +3983,7 @@
     { name: 'Classic',
       versions: [
         { label: 'Original', rows: [['Cake Flour', 174], ['Baking Powder', 6], ['Salt', 2], ['Eggs', 200], ['Sugar', 140], ['Vanilla Extract', 5], ['Unsalted Butter', 200]] },
-        { label: 'Ver B', rows: [['Cake Flour', 174], ['Baking Powder', 6], ['Salt', 2], ['Eggs', 200], ['Sugar', 140], ['Honey', 20], ['Vanilla Extract', 5], ['Unsalted Butter', 200]] },
+        { label: 'Ver B', rows: [['Cake Flour', 174], ['Baking Powder', 6], ['Salt', 2], ['Eggs', 200], ['Sugar', 140], ['Vanilla Extract', 5], ['Unsalted Butter', 200], ['Avocado Oil', 20]] },
       ] },
     { name: 'Peach Crumble', flour: 174, salt: 2, lblExtra: { filling: ['peach jam'] },
       fillingRefs: ['Cream Cheese Frosting'],
@@ -4001,12 +4011,6 @@
     { name: 'Maple Pecan',
       custom: [['Cake Flour', 144], ['Toasted Pecans (ground fine)', 30], ['Baking Powder', 5], ['Salt', 2], ['Whole Eggs', 190], ['Brown Sugar', 70], ['Pure Maple Syrup (dark/robust)', 30], ['Vanilla Extract', 5], ['Unsalted Butter', 180], ['Avocado Oil', 20]],
       topping: [['Toasted Pecans, coarsely chopped', '30g'], ['Maple Syrup, for brushing', '15g']] },
-    { name: 'Pumpkin Pie Spice', title: 'Pumpkin Pie Spice Madeleine',
-      custom: [['Cake Flour', 182], ['Baking Powder', 7], ['Salt', 2], ['Eggs', 160], ['Granulated Sugar', 120], ['Light Brown Sugar', 20], ['Vanilla Extract', 5], ['Pumpkin Puree, well-drained', 100], ['Pumpkin Pie Spice', 7], ['Unsalted Butter, melted and cooled', 190]],
-      fillingRefs: ['Pumpkin Cream Cheese Frosting'],
-      fillingNote: 'Frosting mix: 90g of the base + 30g pumpkin puree + 10g powdered sugar + 5g spice = 135g. Frost each madeleine with 20g — 135g covers about 6, with 15g left over.',
-      lblExtra: { filling: ['pumpkin puree', 'pumpkin pie spice'] },
-      notes: '1. Whisk together the cake flour, baking powder, salt, and pumpkin pie spice. Set aside.<br>2. In a large bowl, whisk eggs, granulated sugar, and brown sugar for 2–3 minutes until pale and slightly thickened.<br>3. Whisk in vanilla extract and pumpkin puree until smooth.<br>4. Gently fold the dry mixture into the wet mixture just until no streaks remain.<br>5. Fold in melted butter until fully incorporated and glossy.<br>6. Cover and refrigerate the batter at least 1 hour (overnight best).<br>7. Butter and flour a madeleine pan. Preheat oven to 375°F (190°C).<br>8. Fill each mold about ¾ full with chilled batter.<br>9. Bake ~11 minutes, until edges are golden, a hump has formed, and a toothpick comes out clean.<br>10. Unmold immediately onto a wire rack and cool.<br><br>Drain the pumpkin puree in a fine sieve for 10–15 minutes first — excess water is the main risk to texture. Chilling the batter is essential for the classic hump.' },
   ];
   const REC_FILLINGS = [
     { name: 'Lemon Curd', type: 'single', rows: [['Eggs', '100g'], ['Sugar', '60g'], ['Lemon Juice', '40g'], ['Unsalted Butter', '60g']] },
@@ -4037,6 +4041,12 @@
     notes: 'Bake at 338°F (170°C) for 15 mins.<br><br>1. Soften the butter.<br>2. Cream in the powdered sugar and salt.<br>3. Mix in the egg yolk and vanilla extract.<br>4. Sift in the flours, then fold in any mix-ins.',
   };
   const REC_OTHER = [
+    { key: 'pumpkinmuffin', type: 'muffin', name: 'Pumpkin Pie Spice Muffin', title: 'Pumpkin Pie Spice Muffin',
+      custom: [['Cake Flour', 182], ['Baking Powder', 7], ['Salt', 2], ['Eggs', 160], ['Granulated Sugar', 120], ['Light Brown Sugar', 20], ['Vanilla Extract', 5], ['Pumpkin Puree, well-drained', 100], ['Pumpkin Pie Spice', 7], ['Unsalted Butter, melted and cooled', 190]],
+      fillingRefs: ['Pumpkin Cream Cheese Frosting'],
+      fillingNote: 'Frosting mix: 90g of the base + 30g pumpkin puree + 10g powdered sugar + 5g spice = 135g. Frost each madeleine with 20g — 135g covers about 6, with 15g left over.',
+      lblExtra: { filling: ['pumpkin puree', 'pumpkin pie spice'] },
+      notes: '1. Whisk together the cake flour, baking powder, salt, and pumpkin pie spice. Set aside.<br>2. In a large bowl, whisk eggs, granulated sugar, and brown sugar for 2–3 minutes until pale and slightly thickened.<br>3. Whisk in vanilla extract and pumpkin puree until smooth.<br>4. Gently fold the dry mixture into the wet mixture just until no streaks remain.<br>5. Fold in melted butter until fully incorporated and glossy.<br>6. Cover and refrigerate the batter at least 1 hour (overnight best).<br>7. Butter and flour a madeleine pan. Preheat oven to 375°F (190°C).<br>8. Fill each mold about ¾ full with chilled batter.<br>9. Bake ~11 minutes, until edges are golden, a hump has formed, and a toothpick comes out clean.<br>10. Unmold immediately onto a wire rack and cool.<br><br>Drain the pumpkin puree in a fine sieve for 10–15 minutes first — excess water is the main risk to texture. Chilling the batter is essential for the classic hump.' },
     { key: 'glutenfree', name: 'Gluten Free Cake', type: 'glutenfree', link: 'https://www.youtube.com/watch?v=W6Z2X49gHHU&t=13s',
       notes: '1. Whip the Swiss meringue at 122–140°F (50–60°C).<br>2. Mix in the egg yolk and 2g vanilla extract.<br>3. Sift in the almond flour.<br>4. Mix slowly.<br><br>Bake at 350°F (177°C) for 50–55 mins.',
       sizes: [
@@ -4072,16 +4082,16 @@
       rows: [['Cream Cheese', 550], ['Blueberry', 550], ['Powdered Sugar', 65], ['Salt', 3]],
       notes: 'Freeze completely solid before wrapping into the scone dough.' },
   ];
-  const REC_ICON = { 'Classic': 'madeleine', 'Peach Crumble': 'peach', 'Dot Cake': 'cake_dot', 'Earl Grey': 'teacup', 'Ube': 'ube', 'Lemon Poppy': 'lemon', 'Double Choco': 'choco', 'Matcha': 'matcha', 'Mugwort': 'leaf', 'Maple Pecan': 'nut', 'Pumpkin Pie Spice': 'pumpkin', 'Flat Chocolate Chip Chookie': 'cookie', 'Lemon Curd': 'jar_lemon', 'Cream Cheese Frosting': 'swirl_pink', 'Pumpkin Cream Cheese Frosting': 'swirl_pumpkin', 'Anglesie Buttercream': 'butter', 'Earl Grey Paste': 'jar_tea', 'Chocolate Ganache': 'jar_choc', 'Caramel': 'drop', 'Mascarpone Cream': 'bowl', 'Milk Cream': 'milk', 'Plain Scone': 'scone', 'Strawberry Cream Cheese': 'strawberry', 'Blueberry Cream Cheese': 'blueberry', 'Gluten Free Cake': 'cake_gf', 'Sable': 'cookie', 'Macarons': 'macaron', 'Salt Bread': 'bread', 'Vegan Donut': 'donut', 'Apricot Ricotta Cake': 'cake_apricot', 'Earl Grey Fig Cake': 'cake_fig' };
+  const REC_ICON = { 'Pumpkin Pie Spice Muffin': 'pumpkin', 'Classic': 'madeleine', 'Peach Crumble': 'peach', 'Dot Cake': 'cake_dot', 'Earl Grey': 'teacup', 'Ube': 'ube', 'Lemon Poppy': 'lemon', 'Double Choco': 'choco', 'Matcha': 'matcha', 'Mugwort': 'leaf', 'Maple Pecan': 'nut', 'Pumpkin Pie Spice': 'pumpkin', 'Flat Chocolate Chip Chookie': 'cookie', 'Lemon Curd': 'jar_lemon', 'Cream Cheese Frosting': 'swirl_pink', 'Pumpkin Cream Cheese Frosting': 'swirl_pumpkin', 'Anglesie Buttercream': 'butter', 'Earl Grey Paste': 'jar_tea', 'Chocolate Ganache': 'jar_choc', 'Caramel': 'drop', 'Mascarpone Cream': 'bowl', 'Milk Cream': 'milk', 'Plain Scone': 'scone', 'Strawberry Cream Cheese': 'strawberry', 'Blueberry Cream Cheese': 'blueberry', 'Gluten Free Cake': 'cake_gf', 'Sable': 'cookie', 'Macarons': 'macaron', 'Salt Bread': 'bread', 'Vegan Donut': 'donut', 'Apricot Ricotta Cake': 'cake_apricot', 'Earl Grey Fig Cake': 'cake_fig' };
   const recKey = name => REC_ICON[name] || 'book';
   const recIc = (name, px) => ic(recKey(name), px);
 
   const recState = { sec: 'mad', idx: 0, batches: 1, madVer: 0, sableType: 0, sableFlav: 0, macScale: 1, macCustom: null, gfSize: 0 };
   function recResetVariants() { recState.batches = 1; recState.madVer = 0; recState.sableType = 0; recState.sableFlav = 0; recState.macScale = 1; recState.macCustom = null; recState.gfSize = 0; }
   // This season's recipes — pulled to the top of every recipe dropdown, and the only ones the bake sheet offers.
-  const SEASONAL_DEFAULT = ['mad:Classic', 'mad:Lemon Poppy', 'mad:Pumpkin Pie Spice', 'mad:Maple Pecan', 'fill:Lemon Curd', 'fill:Pumpkin Cream Cheese Frosting'];
+  const SEASONAL_DEFAULT = ['mad:Classic', 'mad:Lemon Poppy', 'other:pumpkinmuffin', 'mad:Maple Pecan', 'fill:Lemon Curd', 'fill:Pumpkin Cream Cheese Frosting'];
   let SEASONAL = SEASONAL_DEFAULT;   // editable in the app ("This season's recipes"), saved on this device
-  try { const v = JSON.parse(localStorage.getItem('seasonal.v1')); if (Array.isArray(v)) SEASONAL = v; } catch {}
+  try { const v = JSON.parse(localStorage.getItem('seasonal.v1')); if (Array.isArray(v)) SEASONAL = v.map(k => k === 'mad:Pumpkin Pie Spice' ? 'other:pumpkinmuffin' : k); } catch {}
   const seasonRank = (sec, it) => { const i = SEASONAL.indexOf(`${sec}:${it.key || it.name}`); return i < 0 ? 99 : i; };
   const isSeasonal = (sec, it) => seasonRank(sec, it) < 99;
   const seasonalFirst = (sec, arr) => [...arr].sort((a, b) => seasonRank(sec, a) - seasonRank(sec, b));   // stable: the rest keep their order
@@ -4146,7 +4156,7 @@
     const b = recState.batches;
     return `<div class="proj-card">
         <h3>${recIc(item.name)} ${item.title || item.name + ' Madeleine'}</h3>
-        <div class="proj-sub">1 batch ≈ ${BATCH_YIELD} madeleines${verLbl}${b !== 1 ? ` · scaled ${rFmt(b)}×` : ''}</div>
+        <div class="proj-sub">1 batch ≈ ${BATCH_YIELD} ${item.type === 'muffin' ? 'pieces' : 'madeleines'}${verLbl}${b !== 1 ? ` · scaled ${rFmt(b)}×` : ''}</div>
         ${verChips}${recBatchRow()}
         ${recIngRows(rows, b)}
         ${item.note ? `<div class="rec-box"><b>Flavoring</b>${rScaleNote(item.note, b)}</div>` : ''}
@@ -4240,6 +4250,7 @@
     let html;
     if (recState.sec === 'mad') html = recMadCard(item);
     else if (recState.sec === 'fill') html = recFillCard(item);
+    else if (item.type === 'muffin') html = recMadCard(item);
     else if (item.type === 'sable') html = recSableCard();
     else if (item.type === 'macaron') html = recMacCard(item);
     else if (item.type === 'glutenfree') html = recGfCard(item);
@@ -4336,7 +4347,7 @@
     'mad:Dot Cake': { toppings: [{ label: 'Cream Cheese Frosting filling', refFilling: 'Cream Cheese Frosting', coversItems: 200 }, { label: 'Nonpareil Sprinkles', ingredient: 'Nonpareil Sprinkles', coversItems: 100 }] },
     'mad:Earl Grey': { toppings: [{ label: 'Anglesie Buttercream filling', refFilling: 'Anglesie Buttercream', coversItems: 33 }, { label: 'Earl Grey Paste filling', refFilling: 'Earl Grey Paste', coversItems: 33 }] },
     'mad:Ube': { toppings: [{ label: 'Coconut Flakes topping', ingredient: 'Coconut Flakes', coversItems: 150 }] },
-    'mad:Pumpkin Pie Spice': { toppings: [{ label: 'Pumpkin Cream Cheese Frosting (20g)', refFilling: 'Pumpkin Cream Cheese Frosting', grams: 20 }] },
+    'other:pumpkinmuffin': { yield: 18, toppings: [{ label: 'Pumpkin Cream Cheese Frosting (20g)', refFilling: 'Pumpkin Cream Cheese Frosting', grams: 20 }] },
     'scone:plainscone': { yield: 797 / 90, toppings: [{ label: 'Strawberry Cream Cheese filling (60g)', refRecipe: { section: 'scone', key: 'strawberrycc', grams: 60 } }] },
     'scone:strawberrycc': { yield: 1368 / 60 },
   };
@@ -4377,7 +4388,8 @@
       if (it.type === 'twocol') rows = it.rows.map(r => [r[0], r[1]]);
       else if (it.type === 'ratio') { const [a, b] = it.ratio.split(':').map(parseFloat); rows = [['Sugar', a], ['Heavy Cream', b]]; }
       else rows = it.rows.map(num);
-    } else if (it.type === 'sable') rows = [...REC_SABLE.types[0].rows, ...REC_SABLE.types[0].addins].map(num);
+    } else if (it.type === 'muffin') rows = [...it.custom, ...(it.glaze || []), ...(it.topping || [])].map(num);
+    else if (it.type === 'sable') rows = [...REC_SABLE.types[0].rows, ...REC_SABLE.types[0].addins].map(num);
     else if (it.type === 'macaron') rows = it.base.map(num);
     else if (it.type === 'glutenfree') rows = it.sizes[0].rows.map(num);
     else rows = [...it.rows, ...(it.soak || [])].map(num);
@@ -4608,7 +4620,7 @@
 
   // ===== Bake sheet: pick recipes + batches → printable list with combined ingredient totals =====
   let bakeSheet = [];
-  try { bakeSheet = JSON.parse(localStorage.getItem('bakeSheet.v1')) || []; } catch {}
+  try { bakeSheet = (JSON.parse(localStorage.getItem('bakeSheet.v1')) || []).map(b => b.key === 'mad:Pumpkin Pie Spice' ? { ...b, key: 'other:pumpkinmuffin' } : b); } catch {}
   const saveBakeSheet = () => { try { localStorage.setItem('bakeSheet.v1', JSON.stringify(bakeSheet)); } catch {} };
   // Light merge only (spelling variants of the same thing) — unlike pricing, egg yolk stays separate from whole eggs.
   const BS_ALIAS = { 'whole eggs': 'Eggs', 'egg': 'Eggs', 'granulated sugar': 'Sugar', 'white sugar': 'Sugar', 'light brown sugar': 'Brown Sugar', 'all-purpose flour': 'All Purpose Flour', 'pure vanilla extract': 'Vanilla Extract', 'kosher salt': 'Salt' };
