@@ -1072,7 +1072,7 @@
 <body>
 
 <!-- Version badge — bump on every deploy (v = commit count, time = deploy time PST) -->
-<div class="ver-badge">v110 · Sep 29, 6:25 PM</div>
+<div class="ver-badge">v111 · Sep 29, 6:29 PM</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -3429,7 +3429,7 @@
     { name: 'Ube', flour: 134, salt: 2, note: '20g ube powder + 1/2 tsp ube extract',
       glaze: [['Powdered Sugar', '100g'], ['Coconut Milk', '50g'], ['Ube Extract', '1g']],
       fillingNote: 'Top the glaze with a scatter of coconut flakes — a 1lb bag covers about 150 madeleines.' },
-    { name: 'Lemon Poppy', flour: 174, salt: 2, note: '4g lemon extract + 6g lemon poppy seed',
+    { name: 'Lemon Poppy', flour: 174, salt: 2, note: '4g lemon emulsion + 6g poppy seed',
       glaze: [['Powdered Sugar', '100g'], ['Lemon Juice', '25g'], ['Unsalted Butter', '4g']] },
     { name: 'Double Choco', flour: 146, salt: 3, note: '28g cocoa powder' },
     { name: 'Matcha', flour: 156, salt: 2, note: '14g matcha powder' },
@@ -3706,7 +3706,7 @@
     'all-purpose flour': 'All Purpose Flour', 'white sugar': 'Sugar', 'granulated sugar': 'Sugar',
     'light brown sugar': 'Brown Sugar', 'egg': 'Eggs', 'whole eggs': 'Eggs', 'egg whites': 'Eggs', 'egg white': 'Eggs', 'egg yolk': 'Eggs',
     'earl grey': 'Earl Grey Tea Leaves', 'fresh cream': 'Heavy Cream', 'vanilla bean paste': 'Vanilla Extract',
-    'pure vanilla extract': 'Vanilla Extract', 'kosher salt': 'Salt', 'flaked sea salt': 'Salt',
+    'pure vanilla extract': 'Vanilla Extract', 'lemon poppy seed': 'Poppy Seed', 'lemon extract': 'Lemon Emulsion', 'kosher salt': 'Salt', 'flaked sea salt': 'Salt',
     'semisweet chocolate chips': 'Chocolate Chips', 'toasted pecans': 'Pecans', 'pure maple syrup': 'Maple Syrup',
   };
   // amt = package size (g, or ml for liquids); price = package price in USD; null = not entered yet.
@@ -3757,6 +3757,12 @@
     'Nonpareil Sprinkles': { amt: 998, unit: 'g', price: 16.27, note: '2.2lb bag — tops about 100 Dot Cake madeleines' },
     'Coconut Flakes': { amt: 453.6, unit: 'g', price: 8.59, note: '1lb bag — tops about 150 Ube madeleines' },
     'Peach Jam': { amt: 374, unit: 'g', price: 8.99, note: '374g jar — use about 10g per madeleine' },
+    'Pumpkin Puree': { amt: 425, unit: 'g', price: 1.99, link: 'https://www.target.com/p/100-pure-pumpkin-15oz-good-38-gather-8482/-/A-81647715', note: 'Target Good & Gather 100% Pure Pumpkin, 15oz' },
+    'Pumpkin Pie Spice': { amt: 454, unit: 'g', price: 15.87, link: 'https://www.amazon.com/dp/B005D8U33S', note: 'McCormick Culinary, 16 oz. Price is Walmart\'s — confirm the Amazon price' },
+    'Poppy Seed': { amt: 227, unit: 'g', price: 8.19, link: 'https://www.amazon.com/dp/B09C35F9GN', note: 'Frontier Co-op whole, 8 oz. Price is Frontier\'s own site — confirm the Amazon price' },
+    'Lemon Emulsion': { amt: 118, unit: 'ml', price: 6.99, link: 'https://www.amazon.com/dp/B002HQKDH0', note: 'LorAnn Lemon Emulsion, 4 fl oz. About $6.49–$7.99 elsewhere — confirm the Amazon price. Used instead of lemon extract' },
+    'Maple Syrup': { amt: 1330, unit: 'g', price: 12.59, link: 'https://www.costco.com/kirkland-signature-organic-pure-maple-syrup-338-oz.product.100333884.html', note: 'Costco Kirkland Organic Pure Maple Syrup, 33.8 fl oz (1 L ≈ 1.33 kg). $12.59 in warehouse, $14.99 online — confirm' },
+    'Pecans': { amt: 907, unit: 'g', price: null, link: 'https://www.costco.com/.product.100115257.html', note: 'Costco Kirkland Pecan Halves, 2 lb — price not found; enter it or scan a receipt' },
   };
   // Per-recipe extras, keyed "section:key". Fillings/toppings are costed per finished item.
   const COST_META = {
