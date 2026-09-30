@@ -281,3 +281,9 @@ Keys block, don't the older ones. Mauve/apricot are secondary (apricot page tint
 Home's hero is the **actual photo** (`hero.jpg`, resized from IMG_0909.HEIC) with the name over its dark
 corner; the background-removed madeleine (`madeleine.png`) is only the small logo beside the name and the
 Mads button icon.
+
+**Sharp + flat (2026-09-29):** every corner is square (`* { border-radius: 0 !important }` in the final
+"Sharp + flat" block) and there are no glows (no text-shadow / icon drop-shadow on selected keys). The
+hero has no logo any more — `madeleine.png` is only the small icon on the Mads button. Selects layer their
+chevron over the key gradient (`background-image: chevron, gradient` with per-layer size/position) — a
+plain `background:` shorthand on a select wipes the arrow's sizing and it tiles across the field.
