@@ -1603,7 +1603,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.55.01 · Sep 30, 5:10 PM</div>
+<div class="ver-badge">v1.55.02 · Sep 30, 5:30 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -4642,7 +4642,7 @@
   const BS_TOTALS = ['Unsalted Butter', 'Eggs', 'Sugar', 'Powdered Sugar'];
   const bsFind = key => { const [sec, k] = key.split(/:(.*)/s); const it = (COST_SECTIONS.find(x => x[0] === sec) || [])[2]?.().find(x => (x.key || x.name) === k); return it ? { sec, it } : null; };
   // Which forecast product a recipe's batches come from (recipes with no product just start at 1 batch).
-  const BS_PRODUCT = { 'mad:Lemon Poppy': 'Lemon Poppy', 'mad:Maple Pecan': 'Maple Pecan', 'mad:Classic': 'Sea Salt' };
+  const BS_PRODUCT = { 'mad:Lemon Poppy': 'Lemon Poppy', 'mad:Maple Pecan': 'Maple Pecan', 'mad:Classic': 'Sea Salt', 'other:pumpkinmuffin': 'Pumpkin Muffin' };
   const bsProjectedBatches = key => { const p = BS_PRODUCT[key], n = p && planBakeTotals[p]; return n > 0 ? flavorBatches(n) : 0; };
   // The bake plan follows the forecast: recipes whose product the plan says to bake are added, and their batches track the
   // plan until you change them by hand (then they're yours). Removing one keeps it off until the page is reloaded.
