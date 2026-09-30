@@ -1193,6 +1193,18 @@
   .db-summary .ds-flights { margin-top: 6px; }
   .db-summary .ds-flights .tok { width: 18px; height: 18px; flex-basis: 18px; margin-right: 4px; }
   .db-summary .ds-flights .tok .ic2 { width: 18px !important; height: 18px !important; }
+  /* Data entry card: type · store · time · edit/delete on one line, tight */
+  .db-entry { padding: 8px 10px; margin-bottom: 6px; }
+  .db-line { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; flex-wrap: nowrap; }
+  .db-line .db-type { flex: none; padding: 3px 8px; font-size: var(--fs-caption); }
+  .db-line .loc-name { flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: var(--fs-body); color: var(--text); font-weight: 600; }
+  .db-line .db-when { flex: none; font-size: var(--fs-micro); white-space: nowrap; }
+  .db-line .db-tools { flex: none; display: flex; gap: 2px; }
+  .db-line .db-edit, .db-line .db-del { width: 28px; height: 28px; min-width: 0; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
+  .db-line .db-edit .ic2, .db-line .db-del .ic2 { width: 16px; height: 16px; }
+  .db-entry .db-amts .proj-row { padding: 4px 0; }
+  .db-entry .db-sync { margin-top: 4px; }
+  .db-amts .proj-row:only-child { grid-column: 1 / -1; }
 </style>
 </head>
 <body>
@@ -1472,7 +1484,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v126 · Sep 30, 12:40 AM</div>
+<div class="ver-badge">v127 · Sep 30, 1:05 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -2183,7 +2195,6 @@
       if (e.taggedForDeletion) {
         footer = `<div class="db-sync tagged">${ic('tag', 16)} Tagged for deletion</div>`;
       } else if (e.notionId) {
-        footer = `<div class="db-sync ok">✓ Synced to Sheets</div>`;
         // Editable only for delivery/inventory (goodwill/transfer are signed/paired).
         if (e.type === 'delivery' || e.type === 'inventory') {
           editBtn = `<button class="db-edit" data-edit="${esc(e.notionId)}" aria-label="Edit entry" title="Edit">${ic('pencil', 18)}</button>`;
@@ -2195,12 +2206,10 @@
       }
       html +=
         `<div class="db-entry${e.taggedForDeletion ? ' tagged' : ''}">
-           <div class="db-head">
+           <div class="db-head db-line">
              <span class="db-type ${e.type}">${cap(e.type)}</span>
-             <span class="db-when">${fmtWhen(e.datetime)}</span>
-           </div>
-           <div class="db-loc">
              <span class="loc-name">${esc(e.location)}</span>
+             <span class="db-when">${fmtWhen(e.datetime)}</span>
              <div class="db-tools">${editBtn}${trash}</div>
            </div>
            ${entryExtra(e) ? `<div class="db-note">${esc(entryExtra(e))}</div>` : ''}
