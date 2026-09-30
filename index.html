@@ -1291,6 +1291,8 @@
   .db-month > summary .db-daylabel { font-weight: 800; }
   .db-month .db-mdays { margin-top: 8px; padding-top: 4px; border-top: 1px solid var(--sep); }
   .db-month .db-mdays .db-entry { margin: 0 0 4px; padding: 6px 0 4px; border: none; background: none; }
+  .bs2-kt { font-size: 13px; margin: -8px 0 14px; } .bs2-kt b { font-weight: 800; }
+  body:not(.printing-bake) #bsScrim .bs2-kt { display: none; }
 </style>
 </head>
 <body>
@@ -1577,7 +1579,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v150 · Sep 30, 11:10 AM</div>
+<div class="ver-badge">v151 · Sep 30, 11:30 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -4726,7 +4728,7 @@
     return blocks;
   }
   const bsBlockHtml = bl => `<div class="bs2-block"><h4>${esc(bl.title)}<small>${esc(bl.note)}</small></h4>${bl.groups.map(g => `<div class="bs2-grp">${g.map(l => `<div>${esc(l)}</div>`).join('')}</div>`).join('')}</div>`;
-  const bsHeadHtml = () => { const [y, m, d] = (bsView ? bsView.day : nowPST().slice(0, 10)).split('-').map(Number); return `<div class="bs2-title">Bake Plan</div><div class="bs2-date">${esc(new Date(y, m - 1, d).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }))} · amounts are for the base version of each recipe</div>`; };
+  const bsHeadHtml = () => { const [y, m, d] = (bsView ? bsView.day : nowPST().slice(0, 10)).split('-').map(Number); const eff = bsView ? bsView.eff : bsEffort(); const kt = eff ? `<div class="bs2-kt">Expected kitchen time: <b>${fmtDur(eff.min)}</b> · prep ${fmtDur(eff.prep)} · baking ${fmtDur(eff.baking)}</div>` : ''; return `<div class="bs2-title">Bake Plan</div><div class="bs2-date">${esc(new Date(y, m - 1, d).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }))} · amounts are for the base version of each recipe</div>${kt}`; };
   function paintBakeSheetDoc() {
     // Summary first: which recipes and how many batches, and the kitchen time they add up to.
     const eff = bsView ? bsView.eff : bsEffort();
