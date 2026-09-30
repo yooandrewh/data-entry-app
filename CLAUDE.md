@@ -406,3 +406,14 @@ recipe name via `REC_ICON` (name → icon key). Static markup uses `<span data-i
 `<option>`s can't hold SVG, so they carry `data-icon` and the app's dropdown list (`.sp-pop`) draws the icon;
 the closed `<select>` shows the name only. To add an icon: add it to `IC`, map it in `REC_ICON`. Only the
 typographic ✓ / ✕ glyphs remain. Nav icons (house / bar chart / madeleine shell) are separate inline SVGs.
+
+
+## Version numbers (2026-09-30, latest — replaces the commit-count badge)
+
+`.ver-badge` now reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>`, bumped **by hand** in every deploy
+commit (no more `git rev-list --count`). Pick the bump by how big the change is:
+- **major** (`v2.00.00`): a redesign or a change of how the app works (new look, new data model, a tab restructure).
+- **minor** (`v1.52.00`): a new feature or page (Timers, saved plans, labor/wholesale) — resets the patch to 00.
+- **patch** (`v1.51.01`): a fix, spacing/wording tweak, copy or price/recipe data change.
+It started at `v1.51.00` (continuing from build 151, which was the old commit count). Check the live version with
+`curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
