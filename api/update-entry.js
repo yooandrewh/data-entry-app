@@ -23,6 +23,7 @@ const PRODUCT_MAP = {
   'Earl Grey': 'Earl Grey',
   'Dubai Ball': 'Dubai Ball',
   'Pumpkin Muffin': 'Pumpkin Muffin',
+  'Maple Pecan': 'Maple Pecan',   // column is added to the tab automatically the first time it is written (see _sheets.js AUTO_COLUMNS)
 };
 const ALLOWED_LOCATIONS = ['La Mirada', 'Stanton'];
 

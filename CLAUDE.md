@@ -425,3 +425,14 @@ The *Scan a receipt* feature (and `api/receipt.js`, the `#rcpScrim` review sheet
 **deleted** — not worth paying for the API right now. Earlier sections that describe it are out of date; the env vars can be
 removed from Vercel if they were ever set. Ingredient prices are entered by hand under Baking → Costs → Ingredient prices.
 `rcpToast()` survives only as a small message toast (invoice copy, PDF errors).
+
+
+## Earl Grey retired, Maple Pecan added (2026-09-30)
+
+`PRODUCTS` (Entry / Forecast / Plan) is now **Lemon Poppy, Sea Salt, Maple Pecan, Pumpkin Muffin**. Earl Grey is out of those views but
+stays in `HIST_PRODUCTS` / `SALES_FLAVORS`, so its history is still in Data (same handling as Ube/Dot). Maple Pecan has a **Maple Pecan**
+column in the Deliveries and Inventory tabs: `api/_sheets.js` adds that header cell automatically the first time a row is written
+(`AUTO_COLUMNS`), so nobody edits the sheet by hand. Like Pumpkin Muffin, it has **no sales source** (the OCR pipeline only reads the old
+madeleine flavors), so its forecast rate is 0 and run-out reads ∞ until one exists — deliveries, inventory and stock on hand work.
+The bake plan's auto-fill maps `mad:Maple Pecan` → Maple Pecan (`BS_PRODUCT`), but with no sales rate the plan won't ask for any.
+To add another product later, follow the checklist at the top of this file and, for the sheet column, add its name to `AUTO_COLUMNS`.

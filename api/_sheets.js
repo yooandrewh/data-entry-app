@@ -122,9 +122,23 @@ async function getHeader(tab) {
   return (data.values && data.values[0]) || [];
 }
 
+// Product columns the app may need that the sheet might not have yet. Writing one adds its header cell at the
+// end of row 1 first, so nobody has to edit the sheet by hand. Only names listed here are ever auto-created.
+const AUTO_COLUMNS = ['Maple Pecan'];
+async function addMissingColumns(tab, header, wanted) {
+  const missing = AUTO_COLUMNS.filter((c) => wanted.includes(c) && !header.includes(c));
+  if (!missing.length) return;
+  await api(
+    `/values/${encodeURIComponent(tab)}!${colLetter(header.length + 1)}1?valueInputOption=RAW`,
+    { method: 'PUT', body: JSON.stringify({ values: [missing] }) },
+  );
+  header.push(...missing);
+}
+
 // Append one row built from an object, ordered to match the tab's header.
 export async function appendRow(tab, obj) {
   const header = await getHeader(tab);
+  await addMissingColumns(tab, header, Object.keys(obj));
   const row = header.map((h) => (obj[h] !== undefined && obj[h] !== null ? obj[h] : ''));
   await api(
     `/values/${encodeURIComponent(tab)}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
@@ -137,6 +151,7 @@ export async function appendRow(tab, obj) {
 export async function appendRows(tab, objs) {
   if (!objs.length) return 0;
   const header = await getHeader(tab);
+  await addMissingColumns(tab, header, objs.flatMap((o) => Object.keys(o)));
   const values = objs.map((o) => header.map((h) => (o[h] !== undefined && o[h] !== null ? o[h] : '')));
   await api(
     `/values/${encodeURIComponent(tab)}:append?valueInputOption=RAW&insertDataOption=INSERT_ROWS`,
@@ -170,6 +185,7 @@ export function colLetter(n) {
 
 // Set a single cell by header name on a given sheet row number.
 export async function updateCell(tab, header, rowNumber, colName, value) {
+  await addMissingColumns(tab, header, [colName]);
   const idx = header.indexOf(colName);
   if (idx < 0) throw new Error(`Column "${colName}" not found in ${tab}`);
   const a1 = `${colLetter(idx + 1)}${rowNumber}`;

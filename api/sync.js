@@ -34,6 +34,7 @@ const PRODUCT_MAP = {
   'Earl Grey': 'Earl Grey',
   'Dubai Ball': 'Dubai Ball',
   'Pumpkin Muffin': 'Pumpkin Muffin',
+  'Maple Pecan': 'Maple Pecan',   // column is added to the tab automatically the first time it is written (see _sheets.js AUTO_COLUMNS)
 };
 
 // Allowed locations (must match the Select column values in the sheet).

@@ -1480,8 +1480,8 @@
           </div>
         </div>
         <div class="row">
-          <span class="lbl lbl-flavor"><span class="tok" data-tok="Earl Grey"></span>Earl Grey</span>
-          <div class="amt" data-product="Earl Grey">
+          <span class="lbl lbl-flavor"><span class="tok" data-tok="Maple Pecan"></span>Maple Pecan</span>
+          <div class="amt" data-product="Maple Pecan">
             <button type="button" class="step minus">−</button>
             <input class="val" type="number" inputmode="numeric" value="0" min="0" />
             <button type="button" class="step plus">+</button>
@@ -1590,7 +1590,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.53.08 · Sep 30, 4:00 PM</div>
+<div class="ver-badge">v1.54.00 · Sep 30, 4:30 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -1793,14 +1793,14 @@
   const ic = (name, px) => `<svg class="ic2" viewBox="0 0 24 24" aria-hidden="true"${px ? ` style="width:${px}px;height:${px}px"` : ''}>${(IC[name] || IC.book)()}</svg>`;
   document.querySelectorAll('[data-ic]').forEach(el => { el.innerHTML = ic(el.dataset.ic, Number(el.dataset.size) || 0); });
 
-  const PRODUCTS = ['Lemon Poppy', 'Sea Salt', 'Earl Grey', 'Pumpkin Muffin'];   // actively logged/forecast (Ube/Dot/Dubai Ball retired — history kept in Data)
-  const HIST_PRODUCTS = ['Lemon Poppy', 'Sea Salt', 'Ube', 'Dot', 'Earl Grey', 'Dubai Ball', 'Pumpkin Muffin'];   // every flavor ever tracked — for the Data delivery/inventory history
+  const PRODUCTS = ['Lemon Poppy', 'Sea Salt', 'Maple Pecan', 'Pumpkin Muffin'];   // actively logged/forecast (Ube/Dot/Dubai Ball retired — history kept in Data)
+  const HIST_PRODUCTS = ['Lemon Poppy', 'Sea Salt', 'Ube', 'Dot', 'Earl Grey', 'Dubai Ball', 'Pumpkin Muffin', 'Maple Pecan'];   // every flavor ever tracked — for the Data delivery/inventory history
   // Two-letter monogram + a fixed colour per flavour, used everywhere a flavour
   // is listed. Emoji were ambiguous at small sizes (🫖 for Earl Grey, 🟤 for
   // Dubai Ball) and rendered at different widths, so rows never lined up.
-  const PRODUCT_TOKEN = { 'Lemon Poppy': 'LP', 'Sea Salt': 'SS', 'Earl Grey': 'EG', 'Pumpkin Muffin': 'PM', 'Dubai Ball': 'DB', 'Ube': 'UB', 'Dot': 'DT', 'Matcha': 'MA', 'Chocolate': 'CH', 'Unknown': '?', 'Flights': 'FL' };
-  const PRODUCT_COLOR = { 'Lemon Poppy': '#c99306', 'Sea Salt': '#4a7ba7', 'Earl Grey': '#6b7280', 'Pumpkin Muffin': '#d4620a', 'Dubai Ball': '#a0662d', 'Ube': '#7c5aa6', 'Dot': '#c2557a', 'Matcha': '#5a8f4e', 'Chocolate': '#7b4b2a', 'Unknown': '#9a9ba3', 'Flights': '#8a8d96' };
-  const TOK_IC = { 'Lemon Poppy': 'lemon', 'Sea Salt': 'madeleine', 'Earl Grey': 'teacup', 'Pumpkin Muffin': 'pumpkin', 'Dubai Ball': 'nut', 'Ube': 'ube', 'Dot': 'cake_dot', 'Matcha': 'matcha', 'Chocolate': 'choco', 'Flights': 'box' };
+  const PRODUCT_TOKEN = { 'Lemon Poppy': 'LP', 'Sea Salt': 'SS', 'Earl Grey': 'EG', 'Maple Pecan': 'MP', 'Pumpkin Muffin': 'PM', 'Dubai Ball': 'DB', 'Ube': 'UB', 'Dot': 'DT', 'Matcha': 'MA', 'Chocolate': 'CH', 'Unknown': '?', 'Flights': 'FL' };
+  const PRODUCT_COLOR = { 'Lemon Poppy': '#c99306', 'Sea Salt': '#4a7ba7', 'Earl Grey': '#6b7280', 'Maple Pecan': '#8a5a2b', 'Pumpkin Muffin': '#d4620a', 'Dubai Ball': '#a0662d', 'Ube': '#7c5aa6', 'Dot': '#c2557a', 'Matcha': '#5a8f4e', 'Chocolate': '#7b4b2a', 'Unknown': '#9a9ba3', 'Flights': '#8a8d96' };
+  const TOK_IC = { 'Lemon Poppy': 'lemon', 'Sea Salt': 'madeleine', 'Earl Grey': 'teacup', 'Maple Pecan': 'nut', 'Pumpkin Muffin': 'pumpkin', 'Dubai Ball': 'nut', 'Ube': 'ube', 'Dot': 'cake_dot', 'Matcha': 'matcha', 'Chocolate': 'choco', 'Flights': 'box' };
   const tok = p => `<span class="tok">${ic(TOK_IC[p] || 'madeleine', 22)}</span>`;
   document.querySelectorAll('[data-tok]').forEach(el => { el.outerHTML = tok(el.dataset.tok); });   // Entry's amount rows: logo left of the name
   const LOCATIONS = ['La Mirada', 'Stanton'];
@@ -4620,7 +4620,7 @@
   const BS_TOTALS = ['Unsalted Butter', 'Eggs', 'Sugar', 'Powdered Sugar'];
   const bsFind = key => { const [sec, k] = key.split(/:(.*)/s); const it = (COST_SECTIONS.find(x => x[0] === sec) || [])[2]?.().find(x => (x.key || x.name) === k); return it ? { sec, it } : null; };
   // Which forecast product a recipe's batches come from (recipes with no product just start at 1 batch).
-  const BS_PRODUCT = { 'mad:Lemon Poppy': 'Lemon Poppy', 'mad:Earl Grey': 'Earl Grey', 'mad:Classic': 'Sea Salt' };
+  const BS_PRODUCT = { 'mad:Lemon Poppy': 'Lemon Poppy', 'mad:Maple Pecan': 'Maple Pecan', 'mad:Classic': 'Sea Salt' };
   const bsProjectedBatches = key => { const p = BS_PRODUCT[key], n = p && planBakeTotals[p]; return n > 0 ? flavorBatches(n) : 0; };
   // The bake plan follows the forecast: recipes whose product the plan says to bake are added, and their batches track the
   // plan until you change them by hand (then they're yours). Removing one keeps it off until the page is reloaded.
