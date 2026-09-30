@@ -1094,6 +1094,28 @@
   :root { --footer-h: 0px; }
   .ver-badge { position: static; display: block; height: auto; padding: 18px 0 6px; text-align: center; background: none; border: none; z-index: auto; pointer-events: auto; }
   body.home-landing .ver-badge { display: none; }
+
+  /* ================= Glass buttons + dropdowns (final block) =================
+     Same idea as the Home buttons: a see-through fill, a thin outline and a touch of blur, instead of solid
+     fills. Selected = caramel-tinted glass with a caramel outline; primary = slightly stronger caramel. */
+  .seg button, .pill, .amt .step, .chip-row button, .rec-scale button, .bakedays button, .bakedate-add button,
+  .db-date-clear, .bs-step button, .btn-ghost, .em-close, .filter-bar select, .home-card .filter-bar select {
+    background-color: rgba(255,255,255,0.30); background-image: none; border: 1px solid rgba(35,42,51,0.30); color: var(--text);
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  }
+  .filter-bar select, .home-card .filter-bar select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23232a33' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+  .seg button.on, .seg button.on[data-type], .pill.on, .chip-row button.on, .rec-scale button.on, .bakedays button.on {
+    background: rgba(164,90,34,0.16); border: 1px solid var(--accent); color: var(--accent);
+  }
+  .seg button.on .ic svg { stroke: var(--accent); }
+  .btn-primary, .submit, .db-new { background: rgba(164,90,34,0.90); border: 1px solid var(--accent); color: #fff;
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+  /* segmented control: an outlined track, the current option as caramel glass */
+  .db-filter { background: transparent; border: 1px solid rgba(35,42,51,0.30); padding: 3px; }
+  .db-filter button, .db-filter select { background-color: transparent; background-image: none; border: 1px solid transparent; color: var(--text); }
+  .db-filter select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23232a33' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+  .db-filter button.on, .db-filter select.on { background-color: rgba(164,90,34,0.16); border: 1px solid var(--accent); color: var(--accent); }
+  .db-filter select.on { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23a45a22' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
 </style>
 </head>
 <body>
@@ -1377,7 +1399,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v114 · Sep 29, 6:46 PM</div>
+<div class="ver-badge">v115 · Sep 29, 6:49 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">

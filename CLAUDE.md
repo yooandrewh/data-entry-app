@@ -363,3 +363,8 @@ from the first palette are no longer used.
 content (just above the nav), so it only appears when you scroll to the bottom of a page and never overlays
 content — like it already did on Home's landing (`#homeVer`, over the photo). It is still hand-bumped in
 `.ver-badge`. The earlier notes about a fixed strip / `--footer-h` are superseded (`--footer-h` is 0).
+
+**Glass buttons + dropdowns (latest):** all buttons and dropdowns use the Home buttons' idea — a see-through
+fill (`rgba(255,255,255,.30)`), a 1px navy outline and a light backdrop blur — instead of solid tints.
+Selected = caramel-tinted glass with a caramel outline and caramel text; primary buttons (Submit,
+Generate, + Entry) are caramel at 90% with an outline. Last CSS block ("Glass buttons + dropdowns").
