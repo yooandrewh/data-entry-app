@@ -394,3 +394,15 @@ Add `data-native` to a select to opt out. iPhone behaviour relies on the touchen
 Home = a house with a chimney, Data = the bar-chart-with-trend-line (bars are masked so the line has a gap
 around it, `#dataMask`), Baking = an outlined madeleine shell with ridges. Inline SVG with `currentColor`, so
 they follow the active/landing colours. Sized 28px.
+
+## Icon set replaces every emoji (2026-09-29, latest)
+
+All emoji are gone. `IC` (top of the script) holds ~48 hand-drawn **line icons with a colour fill** — one per
+recipe (madeleine, peach, cake variants, teacup, ube, lemon, chocolate bar, matcha bowl, leaf, pecan, pumpkin,
+cookie, jars, frosting swirls, butter, caramel drop, bowl, milk, scone, strawberry, blueberries, macaron, bread,
+donut…), plus section/empty-state/action icons (cupcake, chart, calendar, box, house, flame, snow, trash,
+pencil, tag, refresh, warning, flask). `ic(name, px)` returns inline SVG; `recIc(name)` / `recKey(name)` map a
+recipe name via `REC_ICON` (name → icon key). Static markup uses `<span data-ic="name">` (filled at load).
+`<option>`s can't hold SVG, so they carry `data-icon` and the app's dropdown list (`.sp-pop`) draws the icon;
+the closed `<select>` shows the name only. To add an icon: add it to `IC`, map it in `REC_ICON`. Only the
+typographic ✓ / ✕ glyphs remain. Nav icons (house / bar chart / madeleine shell) are separate inline SVGs.
