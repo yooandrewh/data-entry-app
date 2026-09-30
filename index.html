@@ -1258,6 +1258,8 @@
   .info-btn.on { color: var(--accent); border-color: var(--accent); background: rgba(164,90,34,0.16); }
   .info-body { margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--sep); }
   .info-body[hidden] { display: none; }
+  .cost-hint { color: var(--muted); font-size: var(--fs-micro); font-weight: 500; }
+  select:not([data-native]) { pointer-events: none; }
 </style>
 </head>
 <body>
@@ -1544,7 +1546,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v138 · Sep 30, 6:00 AM</div>
+<div class="ver-badge">v139 · Sep 30, 7:00 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -2549,26 +2551,35 @@
     const on = pop.querySelector('.sp-item.on'); if (on) pop.scrollTop = Math.max(0, on.offsetTop - pop.clientHeight / 2 + on.offsetHeight / 2);
     spOpen = { sel, pop };
   }
-  const spTarget = e => { const s = e.target.closest && e.target.closest('select'); return s && !s.disabled && !s.hasAttribute('data-native') ? s : null; };
+  // Every <select> is made click-through (CSS: pointer-events none), so the browser's own picker — iOS raises it
+  // on touch, before any script can stop it — never gets the tap. We find the select under the point ourselves.
+  const spAt = e => {
+    if (e.clientX == null) return null;
+    const under = document.elementFromPoint(e.clientX, e.clientY); if (!under) return null;
+    for (const sel of document.querySelectorAll('select:not([data-native])')) {
+      if (sel.disabled || !sel.offsetParent) continue;
+      const r = sel.getBoundingClientRect();
+      if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) continue;
+      const box = sel.parentElement;
+      if (under === sel || under.contains(sel) || box.contains(under)) return sel;
+    }
+    return null;
+  };
+  let spWasOpenOn = null;
   document.addEventListener('mousedown', e => {
-    const s = spTarget(e);
-    if (s) { e.preventDefault(); s.focus({ preventScroll: true }); spOpen && spOpen.sel === s ? closeSelectPopup() : openSelectPopup(s); return; }
     const it = e.target.closest && e.target.closest('.sp-item');
     if (it && spOpen) { const sel = spOpen.sel; sel.value = it.dataset.v; closeSelectPopup(); sel.dispatchEvent(new Event('change', { bubbles: true })); e.preventDefault(); return; }
-    if (!(e.target.closest && e.target.closest('.sp-pop'))) closeSelectPopup();
+    if (e.target.closest && e.target.closest('.sp-pop')) return;
+    spWasOpenOn = spOpen ? spOpen.sel : null;
+    closeSelectPopup();
   });
-  // iOS raises its own picker from the tap's click, so a plain mousedown handler never gets the chance:
-  // open our list from touchend (unless the finger scrolled), and cancel the click that would raise the picker.
-  let spTouch = null;
-  document.addEventListener('touchstart', e => { const t = e.touches[0]; spTouch = t ? { x: t.clientX, y: t.clientY } : null; }, { passive: true });
-  document.addEventListener('touchend', e => {
-    const s = spTarget(e); if (!s) return;
+  document.addEventListener('click', e => {
+    if (e.target.closest && e.target.closest('.sp-pop')) return;
+    const s = spAt(e); if (!s) return;
     e.preventDefault();
-    const t = e.changedTouches[0];
-    if (spTouch && t && Math.hypot(t.clientX - spTouch.x, t.clientY - spTouch.y) > 10) return;   // it was a scroll
-    spOpen && spOpen.sel === s ? closeSelectPopup() : openSelectPopup(s);
-  }, { passive: false });
-  document.addEventListener('click', e => { if (spTarget(e)) e.preventDefault(); }, true);
+    if (spWasOpenOn === s) { spWasOpenOn = null; return; }   // tapping the same select again just closes its list
+    s.focus({ preventScroll: true }); openSelectPopup(s);
+  }, true);
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape') closeSelectPopup();
     else if ((e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') && e.target.tagName === 'SELECT' && !e.target.hasAttribute('data-native')) { e.preventDefault(); openSelectPopup(e.target); }
@@ -4390,6 +4401,16 @@
     document.getElementById('costPrices').hidden = costTab !== 'prices';
     if (costTab === 'recipes') renderCostCard(); else renderCostPrices();
   }
+  // Labor + wholesale: hourly rate and margin are global; minutes per batch default from Kitchen Times (per-recipe override).
+  const LAB_KEY = 'laborCfg.v1', LAB_SESSION_BATCHES = 4;   // cleaning is shared across a typical session of 4 batches
+  let LAB = { rate: 35, margin: 40, mins: {} };
+  try { Object.assign(LAB, JSON.parse(localStorage.getItem(LAB_KEY)) || {}); } catch {}
+  const saveLab = () => { try { localStorage.setItem(LAB_KEY, JSON.stringify(LAB)); } catch {} };
+  function labDefaultMins(sec, it, pieces) {
+    if (sec !== 'mad' || !pieces) return 30;   // fillings, scones, cookies…: a flat guess until you time them
+    const glaze = GLAZED.includes(it.name) ? KT.glazeSec * pieces / 60 : 0;
+    return Math.round(KT.prepMin / KT.prepGroup + (KT.bakeMin + KT.coolMin) * pieces / (KT.perPan * KT.pans) + glaze + KT.cleanMin / LAB_SESSION_BATCHES);
+  }
   function renderCostCard() {
     const pick = document.getElementById('costPick');
     pick.innerHTML = COST_SECTIONS.map(([sec, label, get]) =>
@@ -4412,6 +4433,20 @@
     let tTotal = 0, tMissing = false;
     const topHtml = tops.map(t => { const c = costTopping(t); if (c == null) { tMissing = true; return `<div class="proj-row"><span class="k">${esc(t.label)}</span><span class="cost-miss">add price</span></div>`; } tTotal += c; return `<div class="proj-row"><span class="k">${esc(t.label)}</span><span><b>${money(c)}</b></span></div>`; }).join('');
     const finished = per != null && !tMissing ? per + tTotal : null;
+    const unitCost = finished != null ? finished : (tops.length ? null : per);
+    const labMinsDef = labDefaultMins(sec, it, yv), labMins = LAB.mins[costSel] != null ? LAB.mins[costSel] : labMinsDef;
+    const labItem = yv ? labMins / 60 * LAB.rate / yv : null;
+    const totalItem = unitCost != null && labItem != null ? unitCost + labItem : null;
+    const mg = Math.min(90, Math.max(0, LAB.margin)) / 100;
+    const wholesale = totalItem != null ? Math.ceil(totalItem / (1 - mg) * 20) / 20 : null;   // to the next 5¢
+    const laborHtml = `<div class="cost-sub">Labor &amp; wholesale</div>
+      <div class="proj-row"><span class="k">Labor minutes per batch<span class="cost-hint"> · from Kitchen Times: ${labMinsDef}</span></span><span><input class="cost-in" type="number" inputmode="decimal" step="any" min="0" value="${rFmt(labMins)}" data-clab="1"></span></div>
+      <div class="proj-row"><span class="k">Labor rate per hour</span><span>$<input class="cost-in" type="number" inputmode="decimal" step="any" min="0" value="${rFmt(LAB.rate)}" data-lrate="1"></span></div>
+      <div class="proj-row"><span class="k">Labor per item</span><span><b>${labItem != null ? money(labItem) : '—'}</b></span></div>
+      <div class="proj-row"><span class="k cost-total">Total cost per item</span><span class="cost-total">${totalItem != null ? money(totalItem) : '—'}</span></div>
+      <div class="proj-row"><span class="k">Margin on wholesale</span><span><input class="cost-in" type="number" inputmode="decimal" step="any" min="0" max="90" value="${rFmt(LAB.margin)}" data-lmargin="1">%</span></div>
+      <div class="proj-row"><span class="k cost-total">Suggested wholesale price</span><span class="cost-total">${wholesale != null ? '$' + wholesale.toFixed(2) : '—'}</span></div>
+      ${wholesale != null && sec === 'mad' ? `<div class="cost-hint" style="padding:4px 0">Retail price in the app is ${money(PRICE_PER_UNIT)}${wholesale > PRICE_PER_UNIT ? ' — this wholesale price is above it' : ''}.</div>` : ''}`;
     document.getElementById('costCard').innerHTML = `<div class="proj-card">
       <h3>${recIc(it.name)} ${esc(costItemName(sec, it))}</h3>
       <div class="proj-sub">ingredient cost for 1 batch of the base recipe</div>
@@ -4422,6 +4457,7 @@
       <div class="proj-row"><span class="k cost-total">Batter cost per item</span><span class="cost-total">${per != null ? money(per) : '—'}</span></div>
       ${tops.length ? `<div class="cost-sub">Filling &amp; topping, per item</div>${topHtml}
         <div class="proj-row"><span class="k cost-total">Cost per item, finished</span><span class="cost-total">${finished != null ? money(finished) : '—'}</span></div>` : ''}
+      ${laborHtml}
     </div>`;
   }
   function renderCostPrices() {
@@ -4445,6 +4481,14 @@
   document.getElementById('costPick').addEventListener('change', e => { costSel = e.target.value; renderCostCard(); });
   document.getElementById('bakingCosts').addEventListener('change', e => {
     const y = e.target.closest('[data-cyield]');
+    const lab = e.target.closest('[data-clab],[data-lrate],[data-lmargin]');
+    if (lab) {
+      const n = parseFloat(lab.value);
+      if (lab.dataset.clab) { if (n >= 0) LAB.mins[costSel] = n; else delete LAB.mins[costSel]; }
+      else if (lab.dataset.lrate) { if (n >= 0) LAB.rate = n; }
+      else if (n >= 0) LAB.margin = n;
+      saveLab(); renderCostCard(); return;
+    }
     if (y) { const n = parseFloat(y.value); costYields[costSel] = isNaN(n) || n <= 0 ? null : n; saveCosts(); renderCostCard(); return; }
     const f = e.target.closest('[data-cf]'); if (!f) return;
     const name = f.closest('[data-cname]').dataset.cname, n = parseFloat(f.value);
