@@ -398,6 +398,37 @@
   .rcp-row .nums input { width: 5.5em; text-align: right; }
   .rcp-scan { width: 100%; margin: 4px 0 6px; }
 
+  /* ---- Bake sheet ---- */
+  .bs-card { padding: 14px 0 6px; }
+  .bs-head { padding: 0 14px 10px; display: flex; flex-direction: column; gap: 2px; }
+  .bs-head b { font-size: var(--fs-lg); }
+  .bs-head span { font-size: var(--fs-caption); color: var(--muted); }
+  .bs-add { flex: none; padding: 0 18px; }
+  .bs-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-top: 1px solid var(--sep); }
+  .bs-item .nm { flex: 1; min-width: 0; font-size: var(--fs-body); font-weight: 600; }
+  .bs-item .nm small { display: block; font-weight: 400; color: var(--muted); font-size: var(--fs-caption); }
+  .bs-step { display: flex; align-items: center; gap: 6px; }
+  .bs-step button { width: 30px; height: 30px; border-radius: 50%; border: none; background: var(--field); color: var(--text); font-size: var(--fs-lg); font-family: inherit; cursor: pointer; padding: 0; }
+  .bs-step input { width: 3.2em; text-align: center; font-family: inherit; font-size: var(--fs-body); font-weight: 600; color: var(--accent); border: none; border-bottom: 1.5px dashed var(--accent); background: transparent; padding: 0 0 1px; }
+  .bs-x { border: none; background: none; color: var(--muted); font-size: var(--fs-lg); cursor: pointer; padding: 4px; font-family: inherit; }
+  .bs-foot { padding: 10px 14px 8px; }
+  .bs-empty { padding: 10px 14px 4px; font-size: var(--fs-caption); color: var(--muted); border-top: 1px solid var(--sep); }
+  .bs-doc { background: #fff; color: #1a1a1a; font-family: Arial, Helvetica, sans-serif; font-size: 13px; line-height: 1.4; padding: 4px 2px; }
+  .bs-doc h3 { margin: 0 0 2px; font-size: 20px; }
+  .bs-doc .d { color: #666; font-size: 12px; margin-bottom: 12px; }
+  .bs-doc h4 { margin: 14px 0 4px; font-size: 14px; padding-bottom: 3px; border-bottom: 1.5px solid #1a1a1a; display: flex; justify-content: space-between; gap: 8px; }
+  .bs-doc h4 span { font-weight: 400; color: #555; }
+  .bs-doc .r { display: flex; justify-content: space-between; gap: 12px; padding: 3px 0; border-bottom: 1px dotted #ccc; }
+  .bs-doc .r b { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .bs-doc .r i { color: #777; font-size: 11px; font-style: normal; }
+  .bs-doc h4.tot { margin-top: 20px; font-size: 15px; border-bottom-width: 2px; }
+  @media print {
+    body.printing-bake > *:not(#bsScrim) { display: none !important; }
+    body.printing-bake #bsScrim { position: static; background: none; opacity: 1; display: block; }
+    body.printing-bake .inv-sheet { transform: none; max-width: none; max-height: none; overflow: visible; padding: 0; border-radius: 0; background: none; }
+    body.printing-bake .inv-noprint { display: none !important; }
+  }
+
   /* ---- Confirmation sheet ---- */
   .scrim {
     position: fixed; inset: 0; z-index: 60; background: rgba(0,0,0,0.4);
@@ -551,12 +582,13 @@
   .proj-runout { font-size: var(--fs-body); font-weight: 700; margin-bottom: 10px; }
   .proj-runout .big { font-size: var(--fs-figure); }
   /* Bake-days selector (Plan) */
-  .row-stack { flex-direction: column; align-items: flex-start; gap: 10px; }
-  .row-stack .bakedays { width: 100%; justify-content: space-between; }
-  .bakedays { display: flex; gap: 5px; flex: 1; }
+  /* Bake days: label and the seven weekday dots share one line; the add-a-date row wraps below. */
+  .row-stack { flex-wrap: wrap; align-items: center; gap: 10px 12px; }
+  .row-stack .bakedate-add, .row-stack .bakedate-chips { flex-basis: 100%; }
+  .bakedays { display: flex; gap: 4px; flex: 0 0 auto; margin-left: auto; }
   .bakedays button {
-    flex: 1; min-width: 0; height: 44px; border-radius: 999px; appearance: none; border: none;
-    background: var(--field); color: var(--muted); font-weight: 700; font-size: var(--fs-body);
+    flex: none; width: 30px; height: 30px; padding: 0; border-radius: 999px; appearance: none; border: none;
+    background: var(--field); color: var(--muted); font-weight: 700; font-size: var(--fs-caption);
     cursor: pointer; font-family: inherit; transition: background .15s ease, color .15s ease;
   }
   .bakedays button.on { background: var(--accent); color: #fff; }
@@ -679,7 +711,7 @@
 <body>
 
 <!-- Version badge — bump on every deploy (v = commit count, time = deploy time PST) -->
-<div class="ver-badge">v92 · Sep 29, 4:59 PM</div>
+<div class="ver-badge">v93 · Sep 29, 5:02 PM</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -849,7 +881,7 @@
           <input type="date" id="planDate" />
         </div>
         <div class="row row-stack">
-          <span class="lbl">Bake days<span style="display:block;font-weight:400;color:var(--muted);font-size:12px;margin-top:1px">Tap weekdays, or add one date</span></span>
+          <span class="lbl">Bake days</span>
           <div class="bakedays" id="bakeDays">
             <button type="button" data-dow="1">M</button>
             <button type="button" data-dow="2">T</button>
@@ -868,6 +900,13 @@
       </div>
       <div id="planSplitWrap"></div>
       <div id="planList"></div>
+
+      <div class="card bs-card">
+        <div class="bs-head"><b>Bake sheet</b><span>Pick recipes and batches, then print or download</span></div>
+        <div class="filter-bar" style="padding:0 14px;margin:0 0 4px"><select id="bsPick" aria-label="Recipe to add"></select><button type="button" class="btn-ghost bs-add" id="bsAdd">Add</button></div>
+        <div id="bsList"></div>
+        <div class="bs-foot"><button type="button" class="btn-primary" id="bsOpen">Preview sheet</button></div>
+      </div>
     </div>
 
     <!-- Recipes mode -->
@@ -1013,6 +1052,18 @@
     <div class="actions" style="margin-top:14px">
       <button class="btn-primary" id="rcpApply">Update prices</button>
       <button class="btn-ghost" id="rcpCancel">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Bake sheet ===== -->
+<div class="scrim" id="bsScrim">
+  <div class="sheet inv-sheet" role="dialog" aria-modal="true" aria-label="Bake sheet">
+    <div class="bs-doc" id="bsDoc"></div>
+    <div class="actions inv-noprint" style="margin-top:16px">
+      <button class="btn-primary" id="bsPrintBtn">Print</button>
+      <button class="btn-ghost" id="bsSaveBtn">Download as image</button>
+      <button class="btn-ghost" id="bsCloseBtn">Close</button>
     </div>
   </div>
 </div>
@@ -1534,7 +1585,7 @@
     document.getElementById('bakingRecipes').hidden = bakingMode !== 'recipes';
     document.getElementById('bakingCosts').hidden = bakingMode !== 'costs';
     document.querySelectorAll('#bakingMode button').forEach(x => x.classList.toggle('on', x.dataset.mode === bakingMode));
-    if (bakingMode === 'plan') renderPlan();
+    if (bakingMode === 'plan') { renderPlan(); renderBakeSheet(); }
     else if (bakingMode === 'recipes') { document.getElementById('planSub').textContent = 'Recipes · amounts scale with batches'; renderRecipes(); }
     else { document.getElementById('planSub').textContent = 'Costs · what one item costs to make'; renderCosts(); }
   }
@@ -3360,6 +3411,74 @@
     rcpToast(n ? `Updated ${n} price${n === 1 ? '' : 's'}` : 'Nothing to update');
   });
 
+  // ===== Bake sheet: pick recipes + batches → printable list with combined ingredient totals =====
+  let bakeSheet = [];
+  try { bakeSheet = JSON.parse(localStorage.getItem('bakeSheet.v1')) || []; } catch {}
+  const saveBakeSheet = () => { try { localStorage.setItem('bakeSheet.v1', JSON.stringify(bakeSheet)); } catch {} };
+  // Light merge only (spelling variants of the same thing) — unlike pricing, egg yolk stays separate from whole eggs.
+  const BS_ALIAS = { 'whole eggs': 'Eggs', 'egg': 'Eggs', 'granulated sugar': 'Sugar', 'white sugar': 'Sugar', 'light brown sugar': 'Brown Sugar', 'all-purpose flour': 'All Purpose Flour', 'pure vanilla extract': 'Vanilla Extract', 'kosher salt': 'Salt' };
+  const bsCanon = n => { const b = String(n).split(',')[0].replace(/\(.*?\)/g, '').replace(/\*/g, '').trim(); return BS_ALIAS[b.toLowerCase()] || titleCase(b); };
+  const bsFind = key => { const [sec, k] = key.split(/:(.*)/s); const it = (COST_SECTIONS.find(x => x[0] === sec) || [])[2]?.().find(x => (x.key || x.name) === k); return it ? { sec, it } : null; };
+  function renderBakeSheet() {
+    const pick = document.getElementById('bsPick');
+    pick.innerHTML = COST_SECTIONS.map(([sec, label, get]) => `<optgroup label="${label}">${get().map(it => `<option value="${esc(costItemKey(sec, it))}">${REC_ICON[it.name] || '📖'} ${esc(costItemName(sec, it))}</option>`).join('')}</optgroup>`).join('');
+    const rows = bakeSheet.map((b, i) => { const f = bsFind(b.key); if (!f) return ''; const y = f.sec === 'mad' ? BATCH_YIELD : costDefaultYield(f.sec, f.it);
+      return `<div class="bs-item" data-bi="${i}"><div class="nm">${esc(costItemName(f.sec, f.it))}${y ? `<small>≈ ${rFmt(b.b * y)} pieces</small>` : ''}</div>
+        <div class="bs-step"><button type="button" data-bs="-">−</button><input type="number" inputmode="decimal" step="0.5" min="0.5" value="${rFmt(b.b)}" data-bs="n" aria-label="Batches"><button type="button" data-bs="+">+</button></div>
+        <button type="button" class="bs-x" data-bs="x" aria-label="Remove">✕</button></div>`; }).join('');
+    document.getElementById('bsList').innerHTML = rows || '<div class="bs-empty">Nothing added yet — choose a recipe above.</div>';
+    document.getElementById('bsOpen').disabled = !bakeSheet.length;
+  }
+  function paintBakeSheetDoc() {
+    const today = nowPST().slice(0, 10), fmt = ymd => { const [y, m, d] = ymd.split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }); };
+    const totals = new Map();   // name → { g, uses:Set }
+    const blocks = bakeSheet.map(b => {
+      const f = bsFind(b.key); if (!f) return '';
+      const rows = costRows(f.sec, f.it), y = f.sec === 'mad' ? BATCH_YIELD : costDefaultYield(f.sec, f.it);
+      rows.forEach(([n, g]) => { const c = bsCanon(n), t = totals.get(c) || { g: 0, uses: new Set() }; t.g += g * b.b; t.uses.add(b.key); totals.set(c, t); });
+      const lines = rows.map(([n, g]) => `<div class="r"><span>${esc(bsCanon(n) === titleCase(String(n).split(',')[0].replace(/\(.*?\)/g, '').trim()) || /^[a-z]/.test(n) ? titleCase(String(n).split(',')[0].replace(/\(.*?\)/g, '').trim()) : String(n).split(',')[0].replace(/\(.*?\)/g, '').trim())}</span><b>${rFmt(g * b.b)} g</b></div>`).join('');
+      return `<h4>${esc(costItemName(f.sec, f.it))}<span>${rFmt(b.b)} batch${b.b === 1 ? '' : 'es'}${y ? ` · ≈ ${rFmt(b.b * y)} pcs` : ''}</span></h4>${lines}`;
+    }).join('');
+    const sorted = [...totals].sort((a, b) => b[1].g - a[1].g);
+    const totalRows = sorted.map(([n, t]) => {
+      const conv = n === 'Cake Flour' ? ` <i>(= AP ${rFmt(t.g * 436 / 500)} g + cornstarch ${rFmt(t.g * 64 / 500)} g)</i>` : '';
+      return `<div class="r"><span>${esc(n)}${conv}${t.uses.size > 1 ? ` <i>· in ${t.uses.size} recipes</i>` : ''}</span><b>${rFmt(t.g)} g</b></div>`;
+    }).join('');
+    document.getElementById('bsDoc').innerHTML = `<h3>Bake sheet</h3><div class="d">${fmt(today)} · amounts are for the base version of each recipe</div>${blocks}
+      <h4 class="tot">Total ingredients needed<span>all recipes</span></h4>${totalRows}`;
+  }
+  document.getElementById('bsAdd').addEventListener('click', () => {
+    const key = document.getElementById('bsPick').value, ex = bakeSheet.find(b => b.key === key);
+    if (ex) ex.b += 1; else bakeSheet.push({ key, b: 1 });
+    saveBakeSheet(); renderBakeSheet();
+  });
+  document.getElementById('bsList').addEventListener('click', e => {
+    const btn = e.target.closest('[data-bs]'); if (!btn || btn.dataset.bs === 'n') return;
+    const it = bakeSheet[Number(btn.closest('[data-bi]').dataset.bi)];
+    if (btn.dataset.bs === 'x') bakeSheet.splice(bakeSheet.indexOf(it), 1);
+    else it.b = Math.max(0.5, it.b + (btn.dataset.bs === '+' ? 1 : -1));
+    saveBakeSheet(); renderBakeSheet();
+  });
+  document.getElementById('bsList').addEventListener('change', e => {
+    const inp = e.target.closest('input[data-bs="n"]'); if (!inp) return;
+    const it = bakeSheet[Number(inp.closest('[data-bi]').dataset.bi)], n = parseFloat(inp.value);
+    it.b = n > 0 ? Math.round(n * 100) / 100 : it.b; saveBakeSheet(); renderBakeSheet();
+  });
+  document.getElementById('bsOpen').addEventListener('click', () => { paintBakeSheetDoc(); document.getElementById('bsScrim').classList.add('show'); track('bake_sheet', { recipes: bakeSheet.length }); });
+  document.getElementById('bsCloseBtn').addEventListener('click', () => document.getElementById('bsScrim').classList.remove('show'));
+  document.getElementById('bsScrim').addEventListener('click', e => { if (e.target.id === 'bsScrim') e.target.classList.remove('show'); });
+  document.getElementById('bsPrintBtn').addEventListener('click', () => {
+    document.body.classList.add('printing-bake');
+    window.addEventListener('afterprint', () => document.body.classList.remove('printing-bake'), { once: true });
+    window.print();
+  });
+  document.getElementById('bsSaveBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('bsSaveBtn'), label = btn.textContent; btn.disabled = true; btn.textContent = 'Preparing…';
+    try { await saveBlobAs(await domToBlob(document.getElementById('bsDoc'), '.bs-', 2), `bake-sheet-${nowPST().slice(0, 10)}.png`); }
+    catch { document.getElementById('toastMsg').textContent = 'Couldn’t make the image'; const t = document.getElementById('toast'); t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2200); }
+    finally { btn.disabled = false; btn.textContent = label; }
+  });
+
   // ---- Ingredient label: mix order → weight order, allergens, net weight, best-by dates ----
   const LBL_FRIDGE_DAYS = 7, LBL_FREEZER_DAYS = 14;
   const LBL_SUB = { 'white chocolate': 'sugar, fractionated palm kernel oil, milk, nonfat milk, hydrogenated palm oil, soy lecithin, and natural flavor' };
@@ -3451,9 +3570,9 @@
   document.getElementById('lblCloseBtn').addEventListener('click', () => document.getElementById('lblScrim').classList.remove('show'));
   document.getElementById('lblScrim').addEventListener('click', e => { if (e.target.id === 'lblScrim') e.target.classList.remove('show'); });
   // Render the label to a PNG: SVG <foreignObject> → canvas, so no library is needed.
-  async function lblToBlob() {
-    const doc = document.getElementById('lblDoc'), w = doc.offsetWidth, h = doc.offsetHeight, scale = 3;
-    const css = [...document.styleSheets].flatMap(ss => { try { return [...ss.cssRules]; } catch { return []; } }).filter(r => r.selectorText && r.selectorText.includes('.lbl-')).map(r => r.cssText).join('');
+  async function domToBlob(doc, classPrefix, scale) {
+    const w = doc.offsetWidth, h = doc.offsetHeight;
+    const css = [...document.styleSheets].flatMap(ss => { try { return [...ss.cssRules]; } catch { return []; } }).filter(r => r.selectorText && r.selectorText.includes(classPrefix)).map(r => r.cssText).join('');   // the Google Fonts sheet is cross-origin and unreadable
     const clone = doc.cloneNode(true);
     clone.removeAttribute('id'); clone.style.cssText = `box-sizing:border-box;width:${w}px;`;
     clone.querySelectorAll('[contenteditable]').forEach(e => e.removeAttribute('contenteditable'));
@@ -3465,6 +3584,14 @@
     const ctx = cv.getContext('2d'); ctx.fillStyle = '#fffdf8'; ctx.fillRect(0, 0, cv.width, cv.height);
     ctx.drawImage(img, 0, 0, cv.width, cv.height);
     return new Promise(res => cv.toBlob(res, 'image/png'));
+  }
+  const lblToBlob = () => domToBlob(document.getElementById('lblDoc'), '.lbl-', 3);
+  // Hand a PNG to the iPhone share sheet (Save Image), or fall back to a normal download.
+  async function saveBlobAs(blob, name) {
+    const file = new File([blob], name, { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file] }); return; } catch (e) { if (e.name === 'AbortError') return; } }
+    const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = name;
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
   }
   document.getElementById('lblSaveBtn').addEventListener('click', async () => {
     const btn = document.getElementById('lblSaveBtn'), label = btn.textContent;

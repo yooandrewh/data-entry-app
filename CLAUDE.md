@@ -198,3 +198,12 @@ user confirms. Needs Vercel env **`ANTHROPIC_API_KEY`**. The app URL is public, 
 **`RECEIPT_CODE`** — the client prompts for it once and remembers it (`localStorage.receiptCode`);
 without it anyone with the link can spend the API credits. Optional `RECEIPT_MODEL`.
 The receipt image is not stored, but it does leave for Anthropic's API.
+
+## Bake sheet (Baking → Plan, bottom card)
+
+Pick any recipe + number of batches (`bakeSheet.v1` in localStorage), **Preview sheet** → per-recipe
+scaled ingredient lists, then **Total ingredients needed** merged across recipes (`bsCanon` only
+merges spelling variants — egg yolk stays separate from whole eggs). Print (`printing-bake`) or
+**Download as image** (`domToBlob()`, shared with the label). Amounts are the base version of each
+recipe from `costRows()` (flavoring, glaze and topping rows included). It is independent of the
+forecast — it doesn't prefill from the Plan numbers.
