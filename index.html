@@ -1129,6 +1129,13 @@
   /* Fix: the selected Data-filter button kept an older solid image fill that hid its label. */
   .db-filter button.on { background-image: none; background-color: rgba(164,90,34,0.16); color: var(--accent); }
   .db-filter button:focus, .db-filter button:focus-visible { outline: none; }
+
+  /* ---- Home landing: the bottom bar is see-through too, outlined like the buttons over the photo ---- */
+  body.home-landing .tabbar { background: rgba(255,255,255,0.06); border-top: 1.5px solid rgba(255,246,238,0.85);
+    -webkit-backdrop-filter: blur(1.5px); backdrop-filter: blur(1.5px); }
+  body.home-landing .tabbar button { color: #fff6ee; }
+  body.home-landing .tabbar button + button { border-left: 1.5px solid rgba(255,246,238,0.45); }
+  body.home-landing .tabbar button.on { background: rgba(255,255,255,0.20); color: #fff6ee; }
 </style>
 </head>
 <body>
@@ -1410,7 +1417,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v117 · Sep 29, 7:23 PM</div>
+<div class="ver-badge">v118 · Sep 29, 7:24 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">

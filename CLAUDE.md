@@ -373,3 +373,6 @@ Generate, + Entry) are caramel at 90% with an outline. Last CSS block ("Glass bu
 (`#goodwillLoc`): **La Mirada / Stanton / Church**. Choosing Church records `recipient: 'Church'` and takes
 the stock out of **La Mirada** (the only active store) — there is no separate *Given to* row any more.
 Storage is unchanged (`Goodwill — La Mirada · Church · note`). The × / − / + controls are borderless.
+
+**Home's bottom bar (latest):** on the Home landing (`body.home-landing`) the nav is see-through and outlined
+in cream like the buttons over the photo; on every other screen it's the light bar.
