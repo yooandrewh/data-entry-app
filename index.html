@@ -1303,6 +1303,19 @@
   #datetime, #editDatetime, input[type="datetime-local"] { text-align: right !important; text-align-last: right; -webkit-appearance: none; appearance: none; flex: 1; min-width: 0; display: block; }
   input[type="datetime-local"]::-webkit-date-and-time-value { text-align: right !important; }
   input[type="datetime-local"]::-webkit-datetime-edit { text-align: right; padding: 0; }
+  #buyScrim .sea-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex: none; }
+  #buyScrim .sea-head h2 { margin: 0; }
+  #buyScrim .sea-x { width: 38px; height: 38px; padding: 0; font-size: 20px; line-height: 1; background: #fbf9f5; border: 1px solid var(--text); color: var(--text); cursor: pointer; flex: none; }
+  #buyScrim .sea-foot { flex: none; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--sep); background: #fbf9f5; }
+  #buyScrim .sheet { display: flex; flex-direction: column; max-height: 88vh; overflow: hidden; padding-bottom: calc(var(--safe-bottom) + 12px); }
+  #buyScrim #buyBody { flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+  .buy-row { display: flex; align-items: center; gap: 12px; padding: 9px 2px; border-bottom: 1px solid var(--sep); cursor: pointer; }
+  .buy-row input { width: 20px; height: 20px; accent-color: var(--accent); flex: none; }
+  .buy-main { flex: 1; min-width: 0; } .buy-main b { display: block; font-size: var(--fs-body); } .buy-main small { color: var(--muted); font-size: var(--fs-caption); }
+  .buy-r { font-weight: 700; color: var(--accent); white-space: nowrap; }
+  .buy-row.done .buy-main b { text-decoration: line-through; color: var(--muted); }
+  .buy-add { display: flex; gap: 8px; padding: 10px 0; } .buy-add input { flex: 1; min-width: 0; } .buy-add button { width: auto; margin: 0; padding: 8px 14px; }
+  .buy-total { display: flex; justify-content: space-between; align-items: baseline; padding: 12px 2px 4px; font-size: var(--fs-lg); } .buy-total small { display: block; color: var(--muted); font-size: var(--fs-caption); }
 </style>
 </head>
 <body>
@@ -1382,7 +1395,7 @@
         <div class="bs-links"><button type="button" id="bsAddAll">Add all seasonal</button></div>
         <div id="bsList"></div>
         <div id="bsKitchen"></div>
-        <div class="bs-foot"><button type="button" class="btn-primary" id="bsOpen">Preview plan</button><div class="bs-foot2"><button type="button" class="btn-ghost" id="bsSave">Save this plan</button><button type="button" class="btn-ghost" id="bsHist">Saved plans</button></div></div>
+        <div class="bs-foot"><button type="button" class="btn-primary" id="bsOpen">Preview plan</button><div class="bs-foot2"><button type="button" class="btn-ghost" id="bsSave">Save this plan</button><button type="button" class="btn-ghost" id="bsHist">Saved plans</button></div><button type="button" class="btn-ghost" id="bsBuy" style="margin-top:8px;width:100%">Buy List</button></div>
       </div>
     </div>
       <details class="kt"><summary>Kitchen Times</summary><div class="kt-grid" id="ktGrid"></div></details>
@@ -1590,7 +1603,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.54.00 · Sep 30, 4:30 PM</div>
+<div class="ver-badge">v1.55.01 · Sep 30, 5:10 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -1690,6 +1703,15 @@
       <button class="btn-primary" id="bsPdfBtn">Download PDF</button>
       <button class="btn-ghost" id="bsPrintBtn">Print</button>
     </div>
+  </div>
+</div>
+
+<!-- ===== Ingredient buy list ===== -->
+<div class="scrim" id="buyScrim">
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="Buy list">
+    <div class="sea-head"><h2>Buy List</h2><button type="button" class="sea-x" id="buyX" aria-label="Close">✕</button></div>
+    <div id="buyBody"></div>
+    <div class="actions sea-foot"><button class="btn-primary" id="buyCopy">Copy list</button><button class="btn-ghost" id="buyClear">Clear ticks</button></div>
   </div>
 </div>
 
@@ -4800,6 +4822,68 @@
     bsView = BH.find(h => h.id === row.dataset.bh); if (!bsView) return;
     document.getElementById('bhScrim').classList.remove('show');
     paintBakeSheetDoc(); document.getElementById('bsScrim').classList.add('show');
+  });
+
+  // ---- Buy list: every ingredient the bake plan needs, with packages to buy and what they cost ----
+  const BUY_KEY = 'buyChecked.v1', BUY_EXTRA = 'buyExtras.v1';
+  let buyChecked = {}, buyExtras = [];
+  try { buyChecked = JSON.parse(localStorage.getItem(BUY_KEY)) || {}; } catch {}
+  try { buyExtras = JSON.parse(localStorage.getItem(BUY_EXTRA)) || []; } catch {}
+  const buySave = () => { try { localStorage.setItem(BUY_KEY, JSON.stringify(buyChecked)); localStorage.setItem(BUY_EXTRA, JSON.stringify(buyExtras)); } catch {} };
+  const money2 = n => '$' + n.toFixed(2);
+  function buyItems() {
+    if (!Object.keys(costPrices).length) loadCosts();
+    const need = new Map();
+    const add = (name, g) => need.set(name, (need.get(name) || 0) + g);
+    for (const b of bakeSheet) {
+      const f = bsFind(b.key); if (!f) continue;
+      for (const [n, g] of costRows(f.sec, f.it)) {
+        if (/^water$/i.test(n)) continue;
+        const c = costCanon(n), q = g * b.b;
+        if (c === 'Cake Flour') { add('All Purpose Flour', q * 436 / 500); add('Cornstarch', q * 64 / 500); }
+        else if (c === 'Tea Bags') add('Earl Grey Tea Leaves', q * 2);
+        else add(c, q);
+      }
+    }
+    return [...need.entries()].map(([name, qty]) => {
+      const p = costPrices[name] || {}, unit = p.unit === 'ml' ? 'ml' : 'g';
+      const pk = p.amt > 0 && p.price > 0 ? Math.max(1, Math.ceil(qty / p.amt - 1e-9)) : null;
+      return { name, qty, unit, pk, pkAmt: p.amt, cost: pk ? pk * p.price : null };
+    }).sort((a, b) => a.name.localeCompare(b.name));
+  }
+  const buyFmt = (n, u) => n >= 1000 ? `${(Math.round(n / 10) / 100).toLocaleString()} k${u === 'ml' ? 'l' : 'g'}` : `${Math.round(n).toLocaleString()} ${u}`;
+  function buyPaint() {
+    const items = buyItems();
+    const total = items.reduce((a, i) => a + (i.cost || 0), 0), unpriced = items.filter(i => i.cost == null).length;
+    const row = (key, main, sub, right) => `<label class="buy-row${buyChecked[key] ? ' done' : ''}"><input type="checkbox" data-buy="${esc(key)}"${buyChecked[key] ? ' checked' : ''}><span class="buy-main"><b>${main}</b><small>${sub}</small></span><span class="buy-r">${right}</span></label>`;
+    let html = items.length
+      ? items.map(i => row(i.name, esc(i.name), `need ${buyFmt(i.qty, i.unit)}${i.pk ? ` · ${i.pk} × ${buyFmt(i.pkAmt, i.unit)} pack${i.pk === 1 ? '' : 's'}` : ' · no price yet'}`, i.cost != null ? money2(i.cost) : '')).join('')
+      : '<div class="tm-empty">Nothing in the bake plan yet. Add recipes to the Bake Plan and their ingredients show up here.</div>';
+    html += `<div class="sea-sec">Other things to buy</div>` + buyExtras.map((t, k) => row('x:' + t, esc(t), 'added by hand', `<button type="button" class="tm-x" data-buy-del="${k}" aria-label="Remove">✕</button>`)).join('')
+      + `<div class="buy-add"><input type="text" id="buyNew" maxlength="60" placeholder="Add an item (e.g. parchment, gloves)"><button type="button" class="btn-ghost" id="buyAdd">Add</button></div>`;
+    if (items.length) html += `<div class="buy-total"><span>Estimated total${unpriced ? `<small>${unpriced} item${unpriced === 1 ? '' : 's'} without a price</small>` : ''}</span><b>${money2(total)}</b></div>`;
+    document.getElementById('buyBody').innerHTML = html;
+  }
+  document.getElementById('bsBuy').addEventListener('click', () => { buyPaint(); document.getElementById('buyScrim').classList.add('show'); track('buy_list', { items: bakeSheet.length }); });
+  const buyClose = () => document.getElementById('buyScrim').classList.remove('show');
+  document.getElementById('buyX').addEventListener('click', buyClose);
+  document.getElementById('buyScrim').addEventListener('click', e => { if (e.target.id === 'buyScrim') buyClose(); });
+  document.getElementById('buyBody').addEventListener('change', e => {
+    const c = e.target.closest('[data-buy]'); if (!c) return;
+    if (c.checked) buyChecked[c.dataset.buy] = 1; else delete buyChecked[c.dataset.buy];
+    buySave(); c.closest('.buy-row').classList.toggle('done', c.checked);
+  });
+  document.getElementById('buyBody').addEventListener('click', e => {
+    const del = e.target.closest('[data-buy-del]');
+    if (del) { e.preventDefault(); buyExtras.splice(Number(del.dataset.buyDel), 1); buySave(); buyPaint(); return; }
+    if (e.target.id === 'buyAdd') { const i = document.getElementById('buyNew'), t = i.value.trim(); if (t && !buyExtras.includes(t)) { buyExtras.push(t); buySave(); buyPaint(); } }
+  });
+  document.getElementById('buyClear').addEventListener('click', () => { buyChecked = {}; buySave(); buyPaint(); });
+  document.getElementById('buyCopy').addEventListener('click', async e => {
+    const lines = buyItems().filter(i => !buyChecked[i.name]).map(i => `☐ ${i.name} — ${buyFmt(i.qty, i.unit)}${i.pk ? ` (${i.pk} × ${buyFmt(i.pkAmt, i.unit)})` : ''}`)
+      .concat(buyExtras.filter(t => !buyChecked['x:' + t]).map(t => `☐ ${t}`));
+    try { await navigator.clipboard.writeText('Buy list\n' + lines.join('\n')); e.target.textContent = 'Copied ✓'; } catch { e.target.textContent = 'Couldn’t copy'; }
+    setTimeout(() => { e.target.textContent = 'Copy list'; }, 1600);
   });
   // ---- Baking Mode: keep the screen awake (Screen Wake Lock) ----
   let bmLock = null, bmOn = false;
