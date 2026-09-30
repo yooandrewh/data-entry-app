@@ -1044,12 +1044,19 @@
   .rec-beta-note { color: #f0a875; background: rgba(240,168,117,0.14); }
   .hp-head, .hp-back { color: var(--text); }
   .db-day { background: var(--bg); }
+  /* ================= Bottom nav: one solid bar, flush to the screen edges (not a floating pill) ================= */
+  :root { --tabbar-h: 62px; }
+  .tabbar, body.home-landing .tabbar { padding: 0; height: calc(var(--tabbar-h) + var(--safe-bottom)); background: #f0a875; border-top: none; }
+  .tab-pill { max-width: none; width: 100%; height: var(--tabbar-h); margin: 0; padding: 0; gap: 0; background: transparent; }
+  .tabbar button { border-radius: 0; }
+  .tabbar button.on { background: rgba(52,31,55,0.16); color: #341f37; }
+  .tabbar button:focus, .tabbar button:focus-visible, .tabbar button:active { outline: none; }
 </style>
 </head>
 <body>
 
 <!-- Version badge — bump on every deploy (v = commit count, time = deploy time PST) -->
-<div class="ver-badge">v106 · Sep 29, 6:16 PM</div>
+<div class="ver-badge">v107 · Sep 29, 6:20 PM</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
