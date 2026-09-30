@@ -302,3 +302,15 @@ hero is still the real photo. Edit that last block to change the look.
 **fixed full-screen backdrop** (`.home-bg`, `position: fixed`, only shown while Home is active) that stays put
 while the card scrolls over it; `.home-hero` is a transparent 500px spacer that keeps the madeleine visible
 above the card. Print label/invoice/bake-sheet documents keep Arial/Georgia on purpose.
+
+## Home = landing + pages; sharp, flat, no gradation (2026-09-29, latest)
+
+Home opens on the photo with three **transparent outlined buttons** (Forecast / Baking plan / Invoice,
+`#homeMenu`); each opens its own page (`#homePage`, `homeTab`) with a **‹ Back** header. The Home tab in
+the nav always returns to the landing. The **version line** is shown over the photo below the buttons
+(`#homeVer`, copied from `.ver-badge` at load — so the hand-bump in `.ver-badge` still covers both); the
+fixed strip is hidden on the landing (`body.home-landing`) and shown everywhere else.
+
+The look is now **sharp** (`border-radius: 0 !important`), **no shadows**, **no gradients** (`--grad` is a
+single flat plum; the nav is solid plum). This reverses the rounded gradient look of a few hours earlier —
+the final CSS block wins, so edit that one. Older Soft UI / Keys / Flat-gradient rules are dead weight.
