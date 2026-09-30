@@ -1260,6 +1260,8 @@
   .info-body[hidden] { display: none; }
   .cost-hint { color: var(--muted); font-size: var(--fs-micro); font-weight: 500; }
   select:not([data-native]) { pointer-events: none; }
+  .inv-actions { display: flex; flex-direction: column; gap: 10px; margin: 14px 0 6px; }
+  .inv-actions button { width: 100%; margin: 0; box-sizing: border-box; }
 </style>
 </head>
 <body>
@@ -1357,9 +1359,10 @@
       </div></div>
       <div class="group-label">Price per unit</div>
       <div class="card"><div class="sum" style="margin:0 12px" id="invPrices"></div></div>
-      <button class="btn-primary" id="invGenBtn">Generate invoice</button>
-      <div class="group-label">Labels</div>
-      <button type="button" class="btn-ghost" data-gen-labels>Generate Labels</button>
+      <div class="inv-actions">
+        <button class="btn-primary" id="invGenBtn">Generate invoice</button>
+        <button type="button" class="btn-ghost" data-gen-labels>Generate Labels</button>
+      </div>
     </div>
     </div>
     </div>
@@ -1546,7 +1549,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v139 · Sep 30, 7:00 AM</div>
+<div class="ver-badge">v140 · Sep 30, 7:20 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
