@@ -1125,6 +1125,10 @@
     -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
   .row-select[hidden] { display: none; }
   #locPills[hidden] { display: none; }
+
+  /* Fix: the selected Data-filter button kept an older solid image fill that hid its label. */
+  .db-filter button.on { background-image: none; background-color: rgba(164,90,34,0.16); color: var(--accent); }
+  .db-filter button:focus, .db-filter button:focus-visible { outline: none; }
 </style>
 </head>
 <body>
@@ -1406,7 +1410,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v116 · Sep 29, 6:53 PM</div>
+<div class="ver-badge">v117 · Sep 29, 7:23 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
