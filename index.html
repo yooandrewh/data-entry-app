@@ -721,7 +721,7 @@
 <body>
 
 <!-- Version badge — bump on every deploy (v = commit count, time = deploy time PST) -->
-<div class="ver-badge">v95 · Sep 29, 5:10 PM</div>
+<div class="ver-badge">v96 · Sep 29, 5:12 PM</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
@@ -1048,7 +1048,8 @@
     <div class="warn inv-noprint">Best-by dates fill in from the manufactured date: fridge 7 days, freezer 2 weeks. Tap any text on the label to edit it before printing.</div>
     <div class="lbl-doc" id="lblDoc"></div>
     <div class="actions inv-noprint" style="margin-top:16px">
-      <button class="btn-primary" id="lblPrintBtn">Print label</button>
+      <button class="btn-primary" id="lblPdfBtn">Download PDF (to print)</button>
+      <button class="btn-ghost" id="lblPrintBtn">Print label</button>
       <button class="btn-ghost" id="lblSaveBtn">Download as image</button>
       <button class="btn-ghost" id="lblCloseBtn">Close</button>
     </div>
@@ -1107,7 +1108,8 @@
     <div id="mlResult" hidden>
       <div class="lbl-page" id="mlDoc"></div>
       <div class="actions inv-noprint" style="margin-top:16px">
-        <button class="btn-primary" id="mlPrint">Print</button>
+        <button class="btn-primary" id="mlPdf">Download PDF (to print)</button>
+        <button class="btn-ghost" id="mlPrint">Print</button>
         <button class="btn-ghost" id="mlSave">Download as image</button>
         <button class="btn-ghost" id="mlBack">Back</button>
       </div>
@@ -2987,7 +2989,7 @@
   const recState = { sec: 'mad', idx: 0, batches: 1, madVer: 0, sableType: 0, sableFlav: 0, macScale: 1, macCustom: null, gfSize: 0 };
   function recResetVariants() { recState.batches = 1; recState.madVer = 0; recState.sableType = 0; recState.sableFlav = 0; recState.macScale = 1; recState.macCustom = null; recState.gfSize = 0; }
   // This season's recipes — pulled to the top of every recipe dropdown, and the only ones the bake sheet offers.
-  const SEASONAL_DEFAULT = ['mad:Classic', 'mad:Lemon Poppy', 'mad:Pumpkin Pie Spice', 'fill:Lemon Curd', 'fill:Pumpkin Cream Cheese Frosting'];
+  const SEASONAL_DEFAULT = ['mad:Classic', 'mad:Lemon Poppy', 'mad:Pumpkin Pie Spice', 'mad:Maple Pecan', 'fill:Lemon Curd', 'fill:Pumpkin Cream Cheese Frosting'];
   let SEASONAL = SEASONAL_DEFAULT;   // editable in the app ("This season's recipes"), saved on this device
   try { const v = JSON.parse(localStorage.getItem('seasonal.v1')); if (Array.isArray(v)) SEASONAL = v; } catch {}
   const seasonRank = (sec, it) => { const i = SEASONAL.indexOf(`${sec}:${it.key || it.name}`); return i < 0 ? 99 : i; };
@@ -3571,6 +3573,49 @@
     finally { btn.disabled = false; btn.textContent = label; }
   });
 
+  // ---- Minimal PDF writer: each element becomes a JPEG placed on US-Letter pages, never split across a page ----
+  async function elementsToPdf(els, classPrefix, width) {
+    const PW = 612, PH = 792, M = 36, GAP = 14, CW = PW - 2 * M, enc = new TextEncoder();
+    const imgs = [];
+    for (const el of els) {
+      const cv = await domToCanvas(el, classPrefix, 2, width);
+      const bin = atob(cv.toDataURL('image/jpeg', 0.92).split(',')[1]), bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      imgs.push({ bytes, w: cv.width, h: cv.height });
+    }
+    const pages = [[]]; let y = PH - M;
+    imgs.forEach((im, idx) => {
+      const dh = im.h * CW / im.w;
+      if (y - dh < M && pages[pages.length - 1].length) { pages.push([]); y = PH - M; }
+      pages[pages.length - 1].push({ idx, dh, y: y - dh }); y -= dh + GAP;
+    });
+    const parts = [], off = []; let pos = 0;
+    const push = u8 => { parts.push(u8); pos += u8.length; }, str = t => push(enc.encode(t));
+    const obj = (n, body) => { off[n] = pos; str(`${n} 0 obj\n`); body(); str('\nendobj\n'); };
+    const imgObj = i => 3 + i, pageObj = k => 3 + imgs.length + 2 * k;
+    str('%PDF-1.4\n');
+    obj(1, () => str('<< /Type /Catalog /Pages 2 0 R >>'));
+    obj(2, () => str(`<< /Type /Pages /Count ${pages.length} /Kids [${pages.map((_, k) => pageObj(k) + ' 0 R').join(' ')}] >>`));
+    imgs.forEach((im, i) => obj(imgObj(i), () => {
+      str(`<< /Type /XObject /Subtype /Image /Width ${im.w} /Height ${im.h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${im.bytes.length} >>\nstream\n`);
+      push(im.bytes); str('\nendstream');
+    }));
+    pages.forEach((pg, k) => {
+      const content = pg.map(pl => `q ${CW} 0 0 ${pl.dh.toFixed(2)} ${M} ${pl.y.toFixed(2)} cm /I${pl.idx} Do Q`).join('\n');
+      obj(pageObj(k), () => str(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${PW} ${PH}] /Resources << /XObject << ${pg.map(pl => `/I${pl.idx} ${imgObj(pl.idx)} 0 R`).join(' ')} >> >> /Contents ${pageObj(k) + 1} 0 R >>`));
+      obj(pageObj(k) + 1, () => str(`<< /Length ${enc.encode(content).length} >>\nstream\n${content}\nendstream`));
+    });
+    const n = 3 + imgs.length + 2 * pages.length, xref = pos;
+    str(`xref\n0 ${n}\n0000000000 65535 f \n` + Array.from({ length: n - 1 }, (_, i) => String(off[i + 1]).padStart(10, '0') + ' 00000 n \n').join(''));
+    str(`trailer\n<< /Size ${n} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`);
+    return new Blob(parts, { type: 'application/pdf' });
+  }
+  async function downloadPdf(btn, els, name) {
+    const label = btn.textContent; btn.disabled = true; btn.textContent = 'Preparing…';
+    try { await saveBlobAs(await elementsToPdf(els, '.lbl-', 640), name); track('labels_pdf', { n: els.length }); }
+    catch { rcpToast('Couldn’t make the PDF'); }
+    finally { btn.disabled = false; btn.textContent = label; }
+  }
   // ---- Ingredient label: mix order → weight order, allergens, net weight, best-by dates ----
   const LBL_FRIDGE_DAYS = 7, LBL_FREEZER_DAYS = 14;
   const LBL_SUB = { 'white chocolate': 'sugar, fractionated palm kernel oil, milk, nonfat milk, hydrogenated palm oil, soy lecithin, and natural flavor' };
@@ -3699,6 +3744,8 @@
   document.getElementById('mlBack').addEventListener('click', () => { document.getElementById('mlPick').hidden = false; document.getElementById('mlResult').hidden = true; });
   document.getElementById('mlClose').addEventListener('click', () => document.getElementById('mlScrim').classList.remove('show'));
   document.getElementById('mlScrim').addEventListener('click', e => { if (e.target.id === 'mlScrim') e.target.classList.remove('show'); });
+  document.getElementById('mlPdf').addEventListener('click', () => downloadPdf(document.getElementById('mlPdf'), [...document.querySelectorAll('#mlDoc .lbl-doc')], `kairos-labels-${document.getElementById('mlMfg').value || nowPST().slice(0, 10)}.pdf`));
+  document.getElementById('lblPdfBtn').addEventListener('click', () => downloadPdf(document.getElementById('lblPdfBtn'), [document.getElementById('lblDoc')], `kairos-label-${(lblItem.name || 'label').toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${document.getElementById('lblMfg').value}.pdf`));
   document.getElementById('mlPrint').addEventListener('click', () => {
     document.body.classList.add('printing-labels');
     window.addEventListener('afterprint', () => document.body.classList.remove('printing-labels'), { once: true });
@@ -3715,7 +3762,7 @@
   document.getElementById('lblCloseBtn').addEventListener('click', () => document.getElementById('lblScrim').classList.remove('show'));
   document.getElementById('lblScrim').addEventListener('click', e => { if (e.target.id === 'lblScrim') e.target.classList.remove('show'); });
   // Render the label to a PNG: SVG <foreignObject> → canvas, so no library is needed.
-  async function domToBlob(doc, classPrefix, scale, fixedWidth) {
+  async function domToCanvas(doc, classPrefix, scale, fixedWidth) {
     let w = doc.offsetWidth, h = doc.offsetHeight;
     if (fixedWidth) {   // lay it out at a set width off-screen, so the saved image doesn't inherit the phone's narrow column
       const host = document.createElement('div'); host.style.cssText = `position:fixed;left:-99999px;top:0;width:${fixedWidth}px;`;
@@ -3733,12 +3780,13 @@
     const cv = document.createElement('canvas'); cv.width = w * scale; cv.height = h * scale;
     const ctx = cv.getContext('2d'); ctx.fillStyle = '#fffdf8'; ctx.fillRect(0, 0, cv.width, cv.height);
     ctx.drawImage(img, 0, 0, cv.width, cv.height);
-    return new Promise(res => cv.toBlob(res, 'image/png'));
+    return cv;
   }
+  const domToBlob = async (doc, prefix, scale, fixedWidth) => { const cv = await domToCanvas(doc, prefix, scale, fixedWidth); return new Promise(res => cv.toBlob(res, 'image/png')); };
   const lblToBlob = () => domToBlob(document.getElementById('lblDoc'), '.lbl-', 3);
   // Hand a PNG to the iPhone share sheet (Save Image), or fall back to a normal download.
   async function saveBlobAs(blob, name) {
-    const file = new File([blob], name, { type: 'image/png' });
+    const file = new File([blob], name, { type: blob.type || 'image/png' });
     if (navigator.canShare && navigator.canShare({ files: [file] })) { try { await navigator.share({ files: [file] }); return; } catch (e) { if (e.name === 'AbortError') return; } }
     const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = name;
     document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);

@@ -209,7 +209,7 @@ recipe from `costRows()` (flavoring, glaze and topping rows included). It is ind
 forecast — it doesn't prefill from the Plan numbers.
 
 **Seasonal recipes** (`SEASONAL`, editable via *Edit this season's recipes*, saved in `seasonal.v1`;
-default Classic, Lemon Poppy, Pumpkin Pie Spice madeleines, Lemon Curd, Pumpkin Cream Cheese Frosting)
+default Classic, Lemon Poppy, Pumpkin Pie Spice, Maple Pecan madeleines, Lemon Curd, Pumpkin Cream Cheese Frosting)
 sort to the top of every recipe/cost dropdown ("This season" group) and are the only ones the bake
 sheet offers. Everything else stays reachable in the Recipes tab — nothing is hidden there.
 `BS_PRODUCT` maps recipe → forecast product for batch defaults (Classic→Sea Salt is a guess).
@@ -220,3 +220,7 @@ one page of stacked labels (`lblMarkup()` — the same markup as the single labe
 **Download as image** (`domToBlob(…, 640)` lays out at a fixed 640px so the PNG isn't squeezed to the
 phone width). Multi-label always uses each recipe's first version and the computed net weight; use
 the single-label button on a recipe to pick another version or edit the net weight first.
+
+**Labels → PDF**: *Download PDF (to print)* on both label sheets uses `elementsToPdf()` — a small
+built-in PDF writer (no library): each label is rendered to a JPEG and placed whole on US-Letter
+pages (never split across a page). The bake sheet has no PDF button yet (image/print only).
