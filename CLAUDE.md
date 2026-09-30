@@ -287,3 +287,12 @@ Mads button icon.
 hero has no logo any more — `madeleine.png` is only the small icon on the Mads button. Selects layer their
 chevron over the key gradient (`background-image: chevron, gradient` with per-layer size/position) — a
 plain `background:` shorthand on a select wipes the arrow's sizing and it tiles across the field.
+
+## Flat gradient (2026-09-29) — the current look; supersedes Soft UI, Keys and Sharp
+
+Simple UI-kit style: **no shadows anywhere** (`* { box-shadow: none !important }`), rounded shapes
+(12px controls, pills for chips/pickers, 16px cards, 18px Home card), a faint plum tint
+(`--tint`) for unselected controls and a **plum→mauve gradient** (`--grad`) for anything selected or
+primary (also the floating nav bar). It is the **final block of the stylesheet ("Flat gradient")** and
+wins over everything above it; the earlier Soft UI / Keys rules are dead weight kept underneath. Home's
+hero is still the real photo. Edit that last block to change the look.

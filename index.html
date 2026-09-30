@@ -925,33 +925,64 @@
   .hero-tag { color: #fff6ee; opacity: .9; }
   .home-season { background: rgba(38,21,42,0.72); color: #fff6ee; box-shadow: inset 0 1px 0 rgba(255,255,255,0.18); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); border-radius: 10px; }
   .home-card { margin-top: -34px; }
-  /* ================= Sharp + flat: square corners everywhere, no glows =================
-     Last block. Chevrons on selects are layered with the key gradient, because the `background`
-     shorthand on the keys above would otherwise wipe out the arrow's size and position. */
-  *, *::before, *::after { border-radius: 0 !important; }
-  :root { --glow: none; }
-  .seg button.on, .seg button.on[data-type], .pill.on, .chip-row button.on, .rec-scale button.on, .bakedays button.on,
-  .btn-primary, .submit, .db-new, .hero-title, .hero-kicker, .hero-tag { text-shadow: none; }
+  /* ================= Flat gradient (final block — wins over everything above) =================
+     Simple, flat components in the style of a UI kit: no shadows anywhere, soft rounded shapes,
+     a plum→mauve gradient fill for anything selected or primary, a faint plum tint for the rest.
+     Replaces the earlier neumorphic / elevator-key looks. */
+  :root {
+    --grad: linear-gradient(135deg, #5b3461 0%, #a067a2 100%);
+    --tint: rgba(52,31,55,0.08);
+    --r: 12px;
+    --card: #fff6ee;
+  }
+  *, *::before, *::after { box-shadow: none !important; text-shadow: none !important; }
   .seg button.on .ic svg { filter: none; }
-  .hero-name { gap: 0; }
-  .filter-bar select {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23341f37' stroke-width='1.6'/%3E%3C/svg%3E"), var(--key-light);
-    background-color: #f6e8da; background-repeat: no-repeat, no-repeat; background-position: right 10px center, 0 0; background-size: 10px 6px, 100% 100%; padding-right: 30px;
+  /* unselected controls: a flat tint */
+  .seg button, .pill, .amt .step, .chip-row button, .rec-scale button, .bakedays button, .bakedate-add button,
+  .db-date-clear, .bs-step button, .btn-ghost, .em-close {
+    background: var(--tint); color: var(--plum); border: none; border-radius: var(--r); transform: none;
   }
-  .db-filter select {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23ecdccb' stroke-width='1.6'/%3E%3C/svg%3E"), linear-gradient(transparent, transparent);
-    text-align: center; text-align-last: center; padding-left: 8px; background-repeat: no-repeat, no-repeat; background-position: right 10px center, 0 0; background-size: 10px 6px, 100% 100%; padding-right: 26px;
+  .chip-row button, .pill, .bakedays button, .rec-scale button { border-radius: 999px; }
+  .amt .step, .bs-step button { border-radius: 10px; }
+  /* selected + primary: gradient */
+  .seg button.on, .seg button.on[data-type], .pill.on, .chip-row button.on, .rec-scale button.on, .bakedays button.on,
+  .btn-primary, .submit, .db-new {
+    background: var(--grad); color: #fff; border: none;
   }
-  .db-filter select.on {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23341f37' stroke-width='1.6'/%3E%3C/svg%3E"), var(--key-light);
-    background-repeat: no-repeat, no-repeat; background-position: right 10px center, 0 0; background-size: 10px 6px, 100% 100%; padding-right: 26px;
+  .btn-primary, .submit { border-radius: 14px; }
+  .db-new { border-radius: 12px; }
+  .seg button:active, .pill:active, .amt .step:active, .chip-row button:active, .rec-scale button:active, .bakedays button:active,
+  .bakedate-add button:active, .bs-step button:active, .btn-ghost:active, .btn-primary:active, .submit:active, .db-new:active, .em-close:active {
+    transform: none; opacity: 0.8;
   }
+  /* dropdowns */
+  .filter-bar select { background-color: var(--tint); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23341f37' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-size: 10px 6px; color: var(--plum); border: none; border-radius: var(--r); padding-right: 32px; }
+  .db-filter { background: var(--tint); border-radius: 14px; padding: 3px; }
+  .db-filter button, .db-filter select { background-color: transparent; color: var(--plum); border-radius: 11px; }
+  .db-filter select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23341f37' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; background-size: 10px 6px; padding-right: 26px; text-align: center; text-align-last: center; padding-left: 8px; }
+  .db-filter button.on, .db-filter select.on { background-color: transparent; background-image: var(--grad); color: #fff; }
+  .db-filter select.on { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23ffffff' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"), var(--grad); background-repeat: no-repeat, no-repeat; background-position: right 10px center, 0 0; background-size: 10px 6px, 100% 100%; }
+  /* fields */
+  input[type="date"], .inv-field input, .inv-field select, .cp-ins input, .rcp-row input[type=number], .rcp-row select {
+    background: var(--tint); border: none; border-radius: 10px;
+  }
+  /* surfaces */
+  .card, .proj-card, .db-entry, .store-card, .hstore { border-radius: 16px; }
+  .rec-box, .store-note, .smetric { border-radius: 12px; }
+  .home-card { border-radius: 18px; }
+  .sheet { border-radius: 20px 20px 0 0; }
+  .tok { border-radius: 8px; }
+  .home-season { background: rgba(38,21,42,0.66); color: #fff6ee; border-radius: 12px; }
+  /* nav: a gradient bar, the current tab is a soft white pill */
+  .tab-pill { background: var(--grad); border-radius: 22px; }
+  .tabbar button { color: rgba(255,255,255,0.68); border-radius: 16px; }
+  .tabbar button.on { background: rgba(255,255,255,0.22); color: #fff; }
 </style>
 </head>
 <body>
 
 <!-- Version badge — bump on every deploy (v = commit count, time = deploy time PST) -->
-<div class="ver-badge">v102 · Sep 29, 5:48 PM</div>
+<div class="ver-badge">v103 · Sep 29, 5:51 PM</div>
 
 <!-- ===== HOME VIEW ===== -->
 <div class="view active" id="view-home">
