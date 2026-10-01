@@ -1535,6 +1535,14 @@
             <button type="button" class="step plus">+</button>
           </div>
         </div>
+        <div class="row" id="dubaiRow" hidden>
+          <span class="lbl lbl-flavor"><span class="tok" data-tok="Dubai Ball"></span>Dubai Chewy Ball</span>
+          <div class="amt" data-product="Dubai Ball">
+            <button type="button" class="step minus">−</button>
+            <input class="val" type="number" inputmode="numeric" value="0" min="0" />
+            <button type="button" class="step plus">+</button>
+          </div>
+        </div>
       </div>
 
       <button type="submit" class="submit" id="submitBtn">Submit Entry</button>
@@ -1630,7 +1638,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.64.00 · Oct 1, 3:30 PM</div>
+<div class="ver-badge">v1.65.00 · Oct 1, 4:30 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -1843,6 +1851,9 @@
   document.querySelectorAll('[data-ic]').forEach(el => { el.innerHTML = ic(el.dataset.ic, Number(el.dataset.size) || 0); });
 
   const PRODUCTS = ['Lemon Poppy', 'Sea Salt', 'Maple Pecan', 'Pumpkin Muffin'];   // actively logged/forecast (Ube/Dot/Dubai Ball retired — history kept in Data)
+  // Dubai Ball is back, but only for Stanton: it is logged, invoiced and counted there (Entry, Invoice, Data, Sales, Goodwill) and
+  // never appears for La Mirada or in the forecast / plan (it has no sales-rate source).
+  const ENTRY_PRODUCTS = [...PRODUCTS, 'Dubai Ball'];
   const HIST_PRODUCTS = ['Lemon Poppy', 'Sea Salt', 'Ube', 'Dot', 'Earl Grey', 'Dubai Ball', 'Pumpkin Muffin', 'Maple Pecan'];   // every flavor ever tracked — for the Data delivery/inventory history
   // Two-letter monogram + a fixed colour per flavour, used everywhere a flavour
   // is listed. Emoji were ambiguous at small sizes (🫖 for Earl Grey, 🟤 for
@@ -1854,7 +1865,7 @@
   document.querySelectorAll('[data-tok]').forEach(el => { el.outerHTML = tok(el.dataset.tok); });   // Entry's amount rows: logo left of the name
   const LOCATIONS = ['La Mirada', 'Stanton'];
   // Flavors the app stocks (PRODUCTS) plus extra ones that show up in sales.
-  const SALES_FLAVORS = ['Lemon Poppy', 'Sea Salt', 'Ube', 'Dot', 'Earl Grey', 'Matcha', 'Chocolate', 'Unknown'];
+  const SALES_FLAVORS = ['Lemon Poppy', 'Sea Salt', 'Ube', 'Dot', 'Earl Grey', 'Matcha', 'Chocolate', 'Dubai Ball', 'Unknown'];
   const PRICE_PER_UNIT = 2.50;   // $/madeleine (from Financial Dashboard: $192.50 / 77 units)
   const UNIT_PRICE = { 'Pumpkin Muffin': 2.75 };   // items that sell for something other than PRICE_PER_UNIT
   // Extra revenue over PRICE_PER_UNIT for sales rows (assumes those units are already counted in each row's total).
@@ -1936,6 +1947,11 @@
 
   // The other store (transfers move stock from the selected location to this one).
   const otherLoc = l => LOCATIONS.find(x => x !== l) || l;
+  // Dubai Chewy Ball is a Stanton item: its row only shows when the entry's store is Stanton (and is zeroed when it hides).
+  function syncDubai() {
+    const row = document.getElementById('dubaiRow'), on = state.location === 'Stanton';
+    row.hidden = !on; if (!on) row.querySelector('.val').value = 0;
+  }
   function syncTypeUI() {
     const isXfer = state.type === 'transfer';
     document.getElementById('amtLabel').textContent =
@@ -1950,6 +1966,7 @@
     const xh = document.getElementById('xferHint');
     xh.hidden = !isXfer;
     if (isXfer) xh.textContent = `Moves to ${otherLoc(state.location)}`;
+    syncDubai();
   }
 
   // ---- Type selector ----
@@ -1970,6 +1987,7 @@
     document.querySelectorAll('#locPills .pill').forEach(x => x.classList.remove('on'));
     p.classList.add('on');
     state.location = p.dataset.loc;
+    syncDubai();
     if (state.type === 'transfer') syncTypeUI();
   });
 
@@ -1978,7 +1996,7 @@
   document.getElementById('goodwillLoc').addEventListener('change', e => {
     if (e.target.value === 'Church') { state.give = 'Church'; state.location = 'La Mirada'; }
     else { state.give = ''; state.location = e.target.value; }
-    syncLocPills();
+    syncLocPills(); syncDubai();
   });
 
   // ---- Steppers ----
@@ -2101,8 +2119,8 @@
     const cap = s => s[0].toUpperCase() + s.slice(1);
     const isGoodwill = pending.type === 'goodwill';
     const isXfer = pending.type === 'transfer';
-    const amtLines = PRODUCTS
-      .filter(p => pending.amounts[p] !== 0)
+    const amtLines = ENTRY_PRODUCTS
+      .filter(p => pending.amounts[p] !== 0 && pending.amounts[p] !== undefined)
       .map(p => {
         const n = pending.amounts[p];
         const shown = isGoodwill ? `−${Math.abs(n)}` : isXfer ? Math.abs(n) : n;
@@ -2161,6 +2179,7 @@
     document.querySelectorAll('.amt .val').forEach(v => v.value = 0);
     document.getElementById('entryNote').value = '';
     state.give = ''; document.getElementById('goodwillLoc').value = state.location;
+    syncDubai();
     dt.value = nowPST();
     closeEntry();
     renderDB();
@@ -2759,15 +2778,19 @@
     try { saved = JSON.parse(localStorage.getItem(INV_PRICE_KEY)) || {}; } catch {}
     // Pumpkin Muffin sells at $2.75 (2026-10-01). A price saved earlier on this device (it saved the old $2.50 default) is replaced once.
     try { if (!localStorage.getItem('invPriceMuffin275')) { saved['Pumpkin Muffin'] = 2.75; localStorage.setItem(INV_PRICE_KEY, JSON.stringify(saved)); localStorage.setItem('invPriceMuffin275', '1'); } } catch {}
-    return Object.fromEntries(PRODUCTS.map(p => [p, Number.isFinite(saved[p]) ? saved[p] : (INV_DEFAULT_PRICE[p] ?? PRICE_PER_UNIT)]));
+    return Object.fromEntries(ENTRY_PRODUCTS.map(p => [p, Number.isFinite(saved[p]) ? saved[p] : (INV_DEFAULT_PRICE[p] ?? PRICE_PER_UNIT)]));
   }
+  // Dubai Ball's price row only matters for Stanton invoices.
+  function syncInvDubai() { const r = document.getElementById('invDubaiRow'); if (r) r.hidden = document.getElementById('invStore').value !== 'Stanton'; }
   function initInvoiceForm() {
     const today = nowPST().slice(0, 10);
     if (!document.getElementById('invFrom').value) document.getElementById('invFrom').value = today;
     if (!document.getElementById('invTo').value) document.getElementById('invTo').value = today;
     const pr = invPrices();
-    document.getElementById('invPrices').innerHTML = PRODUCTS.map(p =>
-      `<div class="inv-field"><span>${tok(p)} ${esc(p)}</span><input class="price" type="number" inputmode="decimal" step="0.01" min="0" data-inv-price="${esc(p)}" value="${pr[p]}" /></div>`).join('');
+    document.getElementById('invPrices').innerHTML = ENTRY_PRODUCTS.map(p =>
+      `<div class="inv-field"${p === 'Dubai Ball' ? ' id="invDubaiRow"' : ''}><span>${tok(p)} ${esc(p === 'Dubai Ball' ? 'Dubai Chewy Ball' : p)}</span><input class="price" type="number" inputmode="decimal" step="0.01" min="0" data-inv-price="${esc(p)}" value="${pr[p]}" /></div>`).join('');
+    syncInvDubai();
+    document.getElementById('invStore').onchange = syncInvDubai;
   }
   // Who the invoice is from: the commercial kitchen's address (public business address from The Food Corridor listing), not a home address.
   const INV_FROM = { name: 'Kairosbaking', addr: ['3519 W Commonwealth Ave, Suite L', 'Fullerton, CA 92833'] };
@@ -2981,6 +3004,12 @@
   const editDatetime = document.getElementById('editDatetime');
   let editingId = null, editLoc = 'La Mirada';
 
+  // Dubai Ball only shows when editing a Stanton entry (or one that already has some).
+  function syncEditDubai() {
+    const r = document.getElementById('editDubaiRow'); if (!r) return;
+    const has = Number(r.querySelector('.val').value) !== 0;
+    r.hidden = !(editLoc === 'Stanton' || has);
+  }
   function openEdit(ent) {
     editingId = ent.notionId;
     editErr.textContent = '';
@@ -2988,8 +3017,8 @@
     editDatetime.value = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}/.test(dtVal) ? dtVal.slice(0, 16) : nowPST();
     editLoc = ent.location || 'La Mirada';
     document.querySelectorAll('#editLocPills .pill').forEach(p => p.classList.toggle('on', p.dataset.loc === editLoc));
-    document.getElementById('editAmounts').innerHTML = PRODUCTS.map(p => `
-      <div class="row">
+    document.getElementById('editAmounts').innerHTML = ENTRY_PRODUCTS.map(p => `
+      <div class="row"${p === 'Dubai Ball' ? ' id="editDubaiRow"' : ''}>
         <span class="lbl">${tok(p)}${p}</span>
         <div class="amt" data-product="${p}">
           <button type="button" class="step minus">−</button>
@@ -2997,6 +3026,7 @@
           <button type="button" class="step plus">+</button>
         </div>
       </div>`).join('');
+    syncEditDubai();
     editScrim.classList.add('show');
   }
   function closeEdit() { editScrim.classList.remove('show'); editingId = null; }
@@ -3004,7 +3034,7 @@
   document.getElementById('editLocPills').addEventListener('click', e => {
     const p = e.target.closest('.pill'); if (!p) return;
     document.querySelectorAll('#editLocPills .pill').forEach(x => x.classList.remove('on'));
-    p.classList.add('on'); editLoc = p.dataset.loc;
+    p.classList.add('on'); editLoc = p.dataset.loc; syncEditDubai();
   });
   document.getElementById('editAmounts').addEventListener('click', e => {
     const btn = e.target.closest('.step'); if (!btn) return;

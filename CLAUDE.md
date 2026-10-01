@@ -444,3 +444,14 @@ The Bake Plan's *Add a recipe* dropdown lists **every** recipe — a "This seaso
 The plan itself **starts from this season's recipes on every app load** (`bakeSheet` is no longer restored from `bakeSheet.v1`); anything
 added by hand lasts until the next reload — use *Save this plan* to keep one. The forecast still fills/updates batches for mapped products
 (`BS_PRODUCT`) unless you've edited that recipe by hand.
+
+
+## Dubai Chewy Ball is back — Stanton only (2026-10-01)
+
+`ENTRY_PRODUCTS = PRODUCTS + 'Dubai Ball'` is used by Entry, the Edit Entry sheet, the confirm sheet and the invoice price list; `PRODUCTS` itself
+(forecast / plan) is unchanged, so La Mirada never sees it and it has no forecast. The Entry row (`#dubaiRow`) only shows when the entry's store
+is Stanton (also goodwill-from-Stanton and transfers from Stanton) and is zeroed when hidden; the Edit sheet and the invoice form do the same.
+`SALES_FLAVORS` includes it so Data → Sales shows it if the Sales tab ever has numbers (the OCR pipeline doesn't read it yet). The server already
+maps `Dubai Ball` → its sheet column. The **recipe** (`REC_OTHER` key `dubaiball`, seasonal): filling 1,400 g pistachio butter + 1,000 g white
+chocolate + 1,134 g kataifi (2.5 lb) at 30 g each ≈ 117 balls; outer layer = 1 lb marshmallow + butter / cocoa / milk powder at 10% each, 20 g each
+(≈ 29 balls per 1 lb batch) — a full filling batch uses **4 outer batches** (`outerTimes`), dusted with cocoa. No marshmallow price is set yet.
