@@ -1610,7 +1610,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.57.04 · Oct 1, 8:30 AM</div>
+<div class="ver-badge">v1.57.05 · Oct 1, 9:00 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -4101,7 +4101,7 @@
       fillingNote: 'Top the glaze with a scatter of coconut flakes — a 1lb bag covers about 150 madeleines.' },
     { name: 'Lemon Poppy', flour: 174, salt: 2, note: '4g lemon emulsion + 6g poppy seed',
       glaze: [['Powdered Sugar', '100g'], ['Lemon Juice', '25g'], ['Unsalted Butter', '4g']] },
-    { name: 'Chocolate', title: 'Chocolate Madeleine', yield: 7,
+    { name: 'Chocolate', title: 'Chocolate Madeleine', yield: 7, finishFor: 14,
       custom: [['Cake Flour', 98], ['Cocoa Powder', 10], ['Baking Powder', 3], ['Salt', 0.5], ['Unsalted Butter', 68], ['Milk', 4], ['Whole Eggs, strained', 55], ['Sugar', 52], ['Honey', 7]],
       syrup: [['Sugar', '25g'], ['Water', '25g']],
       glaze: [['Powdered Sugar', '85g'], ['Cocoa Powder', '7g'], ['Water', '25g']],
@@ -4265,6 +4265,7 @@
         ${verChips}${recBatchRow()}
         ${recIngRows(rows, b)}
         ${item.note ? `<div class="rec-box"><b>Flavoring</b>${rScaleNote(item.note, b)}</div>` : ''}
+        ${item.finishFor ? `<div class="rec-box"><b>Syrup &amp; glaze yield</b>The syrup and glaze below are enough for ${item.finishFor} pieces (${rFmt(item.finishFor / (item.yield || BATCH_YIELD))} batches). Cost, the bake plan and the buy list use the share for one batch.</div>` : ''}
         ${item.syrup ? `<div class="rec-box"><b>Simple Syrup</b>${item.syrup.map(g => `<div class="gl"><span>${g[0]}</span><span>${rScaleStr(g[1], b)}</span></div>`).join('')}</div>` : ''}
         ${item.glaze ? `<div class="rec-box"><b>Glaze</b>${item.glaze.map(g => `<div class="gl"><span>${g[0]}</span><span>${rScaleStr(g[1], b)}</span></div>`).join('')}</div>` : ''}
         ${item.topping ? `<div class="rec-box"><b>Topping</b>${item.topping.map(g => `<div class="gl"><span>${g[0]}</span><span>${rScaleStr(g[1], b)}</span></div>`).join('')}</div>` : ''}
@@ -4493,8 +4494,9 @@
       // Syrup / glaze / topping rows keep their own section's label when the same ingredient is already used earlier in the recipe
       // (Chocolate: sugar and cocoa appear in the batter, the syrup and the glaze) — so they read as separate lines, as in the book.
       const seen = new Set([...base, ...lblNoteRows(it.note)].map(r => costCanon(r[0])));
-      const tag = (list, label, always) => (list || []).map(r => { const c = costCanon(r[0]), dup = always || seen.has(c); seen.add(c); return dup ? [`${r[0]} (${label})`, r[1]] : r; });
-      rows = [...base, ...lblNoteRows(it.note), ...tag(it.syrup, 'syrup', true), ...tag(it.glaze, 'glaze', !!it.syrup), ...tag(it.topping, 'topping')].map(num);
+      const fk = (it.finishFor ? (it.yield || BATCH_YIELD) / it.finishFor : 1);   // syrup/glaze amounts are for `finishFor` pieces; costs are per batch
+      const tag = (list, label, always, k = 1) => (list || []).map(r => { const c = costCanon(r[0]), dup = always || seen.has(c); seen.add(c); const amt = k === 1 ? r[1] : num(r)[1] * k; return dup ? [`${r[0]} (${label})`, amt] : [r[0], amt]; });
+      rows = [...base, ...lblNoteRows(it.note), ...tag(it.syrup, 'syrup', true, fk), ...tag(it.glaze, 'glaze', !!it.syrup, fk), ...tag(it.topping, 'topping')].map(num);
     } else if (sec === 'fill') {
       if (it.type === 'twocol') rows = it.rows.map(r => [r[0], r[1]]);
       else if (it.type === 'ratio') { const [a, b] = it.ratio.split(':').map(parseFloat); rows = [['Sugar', a], ['Heavy Cream', b]]; }
@@ -4735,9 +4737,10 @@
       // Madeleines / muffins: the batter is its own list; syrup, glaze and topping go underneath as separate sections (not part of the batter).
       const split = f.sec === 'mad' || f.it.type === 'muffin';
       const rows = recMadSort(split ? costRows(f.sec, { ...f.it, syrup: null, glaze: null, topping: null }) : costRows(f.sec, f.it));
+      const fkb = f.it.finishFor ? (f.it.yield || BATCH_YIELD) / f.it.finishFor : 1;   // syrup + glaze are written for `finishFor` pieces
       const numr = r => [r[0], typeof r[1] === 'number' ? r[1] : lblGrams(r[1]) || parseFloat(r[1]) || 0];
       const subs = split ? [['Simple syrup', f.it.syrup], ['Glaze', f.it.glaze], ['Topping', f.it.topping]].filter(([, l]) => l && l.length)
-        .map(([label, l]) => ({ label, rows: l.map(numr).filter(r => r[1] > 0) })) : [];
+        .map(([label, l]) => ({ label, rows: l.map(numr).map(r => [r[0], label === 'Topping' ? r[1] : r[1] * fkb]).filter(r => r[1] > 0) })) : [];
       [...rows, ...subs.flatMap(sb => sb.rows)].forEach(([n, g]) => { const c = bsCanon(n), t = totals.get(c) || { g: 0, uses: new Set() }; t.g += g * b.b; t.uses.add(b.key); totals.set(c, t); });
       const groups = [[], [], []];
       rows.forEach(([n, g]) => { const r = recMadRank(String(n)); groups[r <= 2 ? 0 : r <= 13 ? 1 : 2].push(bsLine(n, g * b.b)); });
@@ -5038,10 +5041,11 @@
   // Ingredient groups + per-piece weight for one madeleine (ver = which recipe version's rows to use).
   function lblCalc(item, ver) {
     const batter = [...recMadSort(recMadRowsV(item, ver)), ...lblNoteRows(item.note)].map(r => [r[0], lblGrams(r[1])]);
-    const glaze = (item.glaze || []).map(g => [g[0], lblGrams(g[1])]);
+    const fk = item.finishFor ? (item.yield || BATCH_YIELD) / item.finishFor : 1;
+    const glaze = (item.glaze || []).map(g => [g[0], lblGrams(g[1]) * fk]);
     const topping = (item.topping || []).map(g => [g[0], lblGrams(g[1])]);
     const filling = lblFillingRows(item);
-    const syrup = (item.syrup || []).map(g => [g[0], lblGrams(g[1])]);
+    const syrup = (item.syrup || []).map(g => [g[0], lblGrams(g[1]) * fk]);
     const total = [...batter, ...syrup, ...glaze, ...topping].reduce((a, r) => a + r[1], 0);
     return { batter, glaze, topping, filling, perPiece: total / (item.yield || BATCH_YIELD) };
   }
