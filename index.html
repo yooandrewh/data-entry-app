@@ -1330,6 +1330,17 @@
   .forgot-p { margin: 8px 0; line-height: 1.4; }
   .pop-x { position: sticky; top: 0; float: right; z-index: 5; width: 38px; height: 38px; padding: 0; margin: 0 0 0 8px; font-size: 20px; line-height: 1; background: #fbf9f5; border: 1px solid var(--text); color: var(--text); cursor: pointer; }
   .scrim .sheet, .scrim .alert-box { position: relative; }
+  /* Invoice PDF page (fixed sizes — it is drawn outside the app's theme) */
+  .inv-pdf { width: 640px; box-sizing: border-box; padding: 52px 48px; background: #fff; color: #111; font-family: Arial, Helvetica, sans-serif; font-size: 14px; line-height: 1.45; }
+  .inv-pdf h3 { margin: 0 0 18px; font-size: 28px; letter-spacing: 3px; text-transform: uppercase; font-weight: 700; }
+  .inv-pdf .inv-meta { display: flex; justify-content: space-between; gap: 24px; font-size: 12px; color: #555; margin: 0 0 18px; }
+  .inv-pdf .inv-meta b { display: block; color: #111; font-size: 14px; }
+  .inv-pdf .inv-table { width: 100%; border-collapse: collapse; font-size: 14px; margin-top: 8px; }
+  .inv-pdf .inv-table th { text-align: right; font-size: 11px; text-transform: uppercase; letter-spacing: .6px; color: #555; padding: 8px 0; border-bottom: 2px solid #111; }
+  .inv-pdf .inv-table td { text-align: right; padding: 11px 0; border-bottom: 1px solid #ddd; }
+  .inv-pdf .inv-table th:first-child, .inv-pdf .inv-table td:first-child { text-align: left; }
+  .inv-pdf .inv-total { display: flex; justify-content: space-between; font-size: 18px; font-weight: 700; padding: 16px 0 4px; border-top: 2px solid #111; margin-top: 10px; }
+  .inv-pdf .inv-empty { text-align: center; color: #555; padding: 24px 0; }
 </style>
 </head>
 <body>
@@ -1619,7 +1630,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.61.02 · Oct 1, 12:10 PM</div>
+<div class="ver-badge">v1.62.00 · Oct 1, 12:40 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -1684,7 +1695,7 @@
     <div id="invResult">
       <div class="inv-doc" id="invDoc"></div>
       <div class="actions inv-noprint" style="margin-top:16px">
-        <button class="btn-primary" id="invPrintBtn">Print / Save as PDF</button>
+        <button class="btn-primary" id="invPrintBtn">Download PDF</button>
         <button class="btn-ghost" id="invCopyBtn">Copy as text</button>
         <button class="btn-ghost" id="invBackBtn">Close</button>
       </div>
@@ -2738,7 +2749,7 @@
   // ---- Invoice: deliveries for one store over a date range, priced per unit ----
   const INV_PRICE_KEY = 'invoicePrices.v1';
   const invScrim = document.getElementById('invScrim');
-  let invText = '';
+  let invText = '', invNum = 'invoice';
   function invPrices() {
     let saved = {};
     try { saved = JSON.parse(localStorage.getItem(INV_PRICE_KEY)) || {}; } catch {}
@@ -2803,6 +2814,7 @@
       <div class="inv-total"><span>Total</span><span>${usd(total)}</span></div>`
       : `<div class="inv-empty">No deliveries for ${esc(store)} in this period.</div>`}
       ${ok ? '' : '<div class="inv-empty inv-noprint">Offline — only entries on this device are included.</div>'}`;
+    invNum = num;
     document.getElementById('invPrintBtn').hidden = document.getElementById('invCopyBtn').hidden = !lines.length;
     invScrim.classList.add('show');
     track('invoice_create', { store, days: from === to ? 1 : 2, lines: lines.length });
@@ -2810,10 +2822,12 @@
   document.getElementById('invGenBtn').addEventListener('click', buildInvoice);
   document.getElementById('invBackBtn').addEventListener('click', () => invScrim.classList.remove('show'));
   invScrim.addEventListener('click', e => { if (e.target === invScrim) invScrim.classList.remove('show'); });
+  // A real PDF page (same renderer as the labels and bake plan), not the browser's print preview of the whole screen.
   document.getElementById('invPrintBtn').addEventListener('click', () => {
-    document.body.classList.add('printing-invoice');
-    window.addEventListener('afterprint', () => document.body.classList.remove('printing-invoice'), { once: true });
-    window.print();
+    const el = document.createElement('div'); el.className = 'inv-pdf';
+    el.innerHTML = document.getElementById('invDoc').innerHTML;
+    el.querySelectorAll('.inv-noprint').forEach(n => n.remove());
+    downloadPdf(document.getElementById('invPrintBtn'), [el], `${invNum.toLowerCase()}.pdf`, '.inv-');
   });
   document.getElementById('invCopyBtn').addEventListener('click', async () => {
     try { await navigator.clipboard.writeText(invText); rcpToast('Invoice copied'); }
