@@ -1326,6 +1326,8 @@
   .buy-recipes { padding-bottom: 8px; border-bottom: 2px solid var(--sep); margin-bottom: 4px; }
   .buy-h { font-weight: 700; padding: 4px 2px 6px; } .buy-h small { color: var(--muted); font-weight: 500; font-size: var(--fs-caption); }
   .buy-rec { display: flex; align-items: center; gap: 8px; padding: 6px 2px; border-top: 1px solid var(--sep); } .buy-rec > span:first-child { flex: 1; min-width: 0; font-weight: 600; }
+  .inv-forgot { display: block; margin: 4px auto 14px; border: none; background: none; color: var(--accent); font-family: inherit; font-size: var(--fs-body); font-weight: 600; text-decoration: underline; cursor: pointer; padding: 8px; }
+  .forgot-p { margin: 8px 0; line-height: 1.4; }
 </style>
 </head>
 <body>
@@ -1428,6 +1430,7 @@
         <button class="btn-primary" id="invGenBtn">Generate invoice</button>
         <button type="button" class="btn-ghost" data-gen-labels>Generate Labels</button>
       </div>
+      <button type="button" class="inv-forgot" id="invForgot">Forgot an entry?</button>
     </div>
     </div>
     </div>
@@ -1614,7 +1617,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.59.00 · Oct 1, 10:15 AM</div>
+<div class="ver-badge">v1.60.00 · Oct 1, 10:45 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -2030,6 +2033,29 @@
   function openEntry() { entryModal.hidden = false; entryModal.scrollTop = 0; track('entry_open'); }
   function closeEntry() { entryModal.hidden = true; }
   document.getElementById('newEntryBtn').addEventListener('click', openEntry);
+  // Invoice page → "Forgot an entry?": a short popup that sends you to the entry window with Delivery and the invoice's store preselected.
+  document.getElementById('invForgot').addEventListener('click', () => {
+    let sc = document.getElementById('forgotScrim');
+    if (!sc) { sc = document.createElement('div'); sc.className = 'scrim'; sc.id = 'forgotScrim'; document.body.appendChild(sc); }
+    const store = document.getElementById('invStore').value;
+    sc.innerHTML = `<div class="sheet" role="dialog" aria-modal="true"><button type="button" class="info-x" data-forgot-close aria-label="Close">✕</button>
+      <h2>Forgot An Entry?</h2>
+      <p class="forgot-p">Missed a delivery? Add it with the day it actually happened, then come back here and generate the invoice again.</p>
+      <p class="forgot-p">It opens a new delivery for <b>${esc(store)}</b>. Change the date and amounts, then submit.</p>
+      <div class="actions"><button class="btn-primary" data-forgot-go>Add a delivery</button><button class="btn-ghost" data-forgot-close>Not now</button></div></div>`;
+    sc.classList.add('show');
+  });
+  document.addEventListener('click', e => {
+    const sc = document.getElementById('forgotScrim'); if (!sc || !sc.classList.contains('show')) return;
+    if (e.target === sc || e.target.closest('[data-forgot-close]')) { sc.classList.remove('show'); return; }
+    if (e.target.closest('[data-forgot-go]')) {
+      sc.classList.remove('show');
+      const store = document.getElementById('invStore').value;
+      const d = document.querySelector('#view-entry .seg [data-type="delivery"]'); if (d) d.click();
+      const p = document.querySelector(`#locPills .pill[data-loc="${store}"]`); if (p) p.click();
+      openEntry(); track('invoice_forgot_entry', { store });
+    }
+  });
   document.getElementById('entryClose').addEventListener('click', closeEntry);
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && !entryModal.hidden && !scrim.classList.contains('show')) closeEntry(); });
 
