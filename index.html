@@ -1344,6 +1344,7 @@
       <button type="button" data-hpage="forecast">Forecast</button>
       <button type="button" data-hpage="plan">Baking Plan</button>
       <button type="button" data-hpage="timers">Timers</button>
+      <button type="button" data-hbuy>Buy List</button>
       <button type="button" data-hpage="invoice">Invoice / Labels</button>
       <a class="hm-link" href="https://app.thefoodcorridor.com/tfc_food_business_dashboard/69084-kairosbaking/bookings?locale=en" target="_blank" rel="noopener noreferrer">Book Commercial Kitchen ↗</a>
     </div>
@@ -1610,7 +1611,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.57.05 · Oct 1, 9:00 AM</div>
+<div class="ver-badge">v1.58.01 · Oct 1, 9:45 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -2680,6 +2681,7 @@
   }
   document.getElementById('homeMenu').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
+    if ('hbuy' in b.dataset) { openBuyList(); return; }
     homeTab = b.dataset.hpage; track('home_tab', { tab: homeTab }); renderHomeTab();
   });
   document.getElementById('homeBack').addEventListener('click', () => { homeTab = null; renderHomeTab(); });
@@ -4885,7 +4887,7 @@
       return { name, qty, unit, pk, pkAmt: p.amt, cost: pk ? pk * p.price : null };
     }).sort((a, b) => a.name.localeCompare(b.name));
   }
-  const buyFmt = (n, u) => n >= 1000 ? `${(Math.round(n / 10) / 100).toLocaleString()} k${u === 'ml' ? 'l' : 'g'}` : `${Math.round(n).toLocaleString()} ${u}`;
+  const buyFmt = (n, u) => n >= 1000 ? `${(Math.round(n / 10) / 100).toLocaleString()} ${u === 'ml' ? 'L' : 'kg'}` : `${Math.round(n).toLocaleString()} ${u}`;
   function buyPaint() {
     const items = buyItems();
     const total = items.reduce((a, i) => a + (i.cost || 0), 0), unpriced = items.filter(i => i.cost == null).length;
@@ -4898,7 +4900,13 @@
     if (items.length) html += `<div class="buy-total"><span>Estimated total${unpriced ? `<small>${unpriced} item${unpriced === 1 ? '' : 's'} without a price</small>` : ''}</span><b>${money2(total)}</b></div>`;
     document.getElementById('buyBody').innerHTML = html;
   }
-  document.getElementById('bsBuy').addEventListener('click', () => { buyPaint(); document.getElementById('buyScrim').classList.add('show'); track('buy_list', { items: bakeSheet.length }); });
+  // Opens from the bake plan or straight from Home. From Home the plan may not have been calculated yet, so do that first and
+  // refresh the list once the forecast batches have filled in.
+  async function openBuyList() {
+    buyPaint(); document.getElementById('buyScrim').classList.add('show'); track('buy_list', { items: bakeSheet.length });
+    try { await renderPlan(); if (document.getElementById('buyScrim').classList.contains('show') && !document.getElementById('buyNew').value) buyPaint(); } catch {}
+  }
+  document.getElementById('bsBuy').addEventListener('click', openBuyList);
   const buyClose = () => document.getElementById('buyScrim').classList.remove('show');
   document.getElementById('buyX').addEventListener('click', buyClose);
   document.getElementById('buyScrim').addEventListener('click', e => { if (e.target.id === 'buyScrim') buyClose(); });
