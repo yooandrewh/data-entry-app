@@ -1328,6 +1328,8 @@
   .buy-rec { display: flex; align-items: center; gap: 8px; padding: 6px 2px; border-top: 1px solid var(--sep); } .buy-rec > span:first-child { flex: 1; min-width: 0; font-weight: 600; }
   .inv-forgot { display: block; margin: 4px auto 14px; border: none; background: none; color: var(--accent); font-family: inherit; font-size: var(--fs-body); font-weight: 600; text-decoration: underline; cursor: pointer; padding: 8px; }
   .forgot-p { margin: 8px 0; line-height: 1.4; }
+  .pop-x { position: sticky; top: 0; float: right; z-index: 5; width: 38px; height: 38px; padding: 0; margin: 0 0 0 8px; font-size: 20px; line-height: 1; background: #fbf9f5; border: 1px solid var(--text); color: var(--text); cursor: pointer; }
+  .scrim .sheet, .scrim .alert-box { position: relative; }
 </style>
 </head>
 <body>
@@ -1617,7 +1619,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.60.00 · Oct 1, 10:45 AM</div>
+<div class="ver-badge">v1.61.00 · Oct 1, 11:30 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -1754,7 +1756,7 @@
   <div class="sheet inv-sheet" role="dialog" aria-modal="true" aria-labelledby="mlTitle">
     <div id="mlPick">
       <h2 id="mlTitle">Generate Labels</h2>
-      <div class="warn">Tick the madeleines you're labelling. Best-by dates fill in from the manufactured date: fridge 7 days, freezer 2 weeks.</div>
+      <div class="warn">Tick the items you're labelling. Best-by dates fill in from the manufactured date: fridge 7 days, freezer 2 weeks.</div>
       <div class="sum"><div class="inv-field"><span>Manufactured</span><input type="date" id="mlMfg" /></div></div>
       <div class="bs-links" style="padding:0 2px 4px"><button type="button" id="mlSeason">Seasonal</button><button type="button" id="mlAll">All</button><button type="button" id="mlNone">None</button></div>
       <div id="mlList"></div>
@@ -2057,6 +2059,23 @@
     }
   });
   document.getElementById('entryClose').addEventListener('click', closeEntry);
+  // Every popup gets a boxed X at its top right (the ones that already have one are left alone). The X presses the popup's own
+  // Close / Cancel / Go back button when it has one, so each popup's normal clean-up still runs.
+  const POP_HAS_X = '.info-x, .sea-x, .pop-x, #bsCloseBtn, [data-tm-edit-close], [data-forgot-close]';
+  function addPopX(sheet) {
+    if (!sheet || sheet.querySelector(POP_HAS_X)) return;
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'pop-x'; b.setAttribute('aria-label', 'Close'); b.textContent = '✕';
+    sheet.insertBefore(b, sheet.firstChild);
+  }
+  document.querySelectorAll('.scrim .sheet, .scrim .alert-box').forEach(addPopX);
+  new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(n => { if (n.nodeType === 1) { if (n.matches && n.matches('.scrim')) addPopX(n.querySelector('.sheet, .alert-box')); n.querySelectorAll && n.querySelectorAll('.scrim .sheet, .scrim .alert-box').forEach(addPopX); } })))
+    .observe(document.body, { childList: true });
+  document.addEventListener('click', e => {
+    const x = e.target.closest('.pop-x'); if (!x) return;
+    const sheet = x.closest('.sheet, .alert-box'), scrim = x.closest('.scrim');
+    const own = [...sheet.querySelectorAll('button')].find(b => b !== x && !b.hidden && b.offsetParent && /^(close|cancel|go back|not now|done)$/i.test(b.textContent.trim()));
+    if (own) own.click(); else if (scrim) scrim.classList.remove('show');
+  });
   document.addEventListener('keydown', e => { if (e.key === 'Escape' && !entryModal.hidden && !scrim.classList.contains('show')) closeEntry(); });
 
 
@@ -5101,8 +5120,16 @@
     const total = [...batter, ...syrup, ...glaze, ...topping].reduce((a, r) => a + r[1], 0);
     return { batter, glaze, topping, filling, perPiece: total / (item.yield || BATCH_YIELD) };
   }
-  const lblNetText = c => `${Math.round(c.perPiece)} g (${(c.perPiece / 28.3495).toFixed(1)} oz) each`;
-  function lblMarkup(item, c, mfg, netText) {
+  const lblNetText = c => c.perPiece > 0 ? `${Math.round(c.perPiece)} g (${(c.perPiece / 28.3495).toFixed(1)} oz) each` : '— g';
+  // Any recipe except fillings can be labelled. Madeleines and muffins use their full batter / glaze / topping data; the rest use their ingredient rows.
+  function lblCalcAny(c) {
+    if (c.sec === 'mad' || c.it.type === 'muffin') return lblCalc(c.it, 0);
+    const batter = costRows(c.sec, c.it).map(r => [r[0], r[1]]);
+    const y = costDefaultYield(c.sec, c.it);
+    return { batter, glaze: [], topping: [], filling: [], perPiece: y ? batter.reduce((a, r) => a + r[1], 0) / y : 0 };
+  }
+  const mlCands = () => COST_SECTIONS.filter(([sec]) => sec !== 'fill').flatMap(([sec, label, get]) => get().map(it => ({ key: costItemKey(sec, it), sec, it, group: label, title: costItemName(sec, it) })));
+  function lblMarkup(item, c, mfg, netText, title) {
     const ex = item.lblExtra || {};
     const line = (k, list) => list.length ? `<p contenteditable="true"><span class="k">${k}:</span> ${esc(lblCap(list.join(', ')))}.</p>` : '';
     const main = lblList(c.batter);
@@ -5116,7 +5143,7 @@
     const al = lblAllergens(all);
     return `
       <div class="lbl-brand">[KAIROSBAKING]</div>
-      <div class="lbl-title">${esc(item.title || item.name + ' Madeleine')} <small>(Perishable Keep Refrigerated)</small></div>
+      <div class="lbl-title">${esc(title || item.title || item.name + ' Madeleine')} <small>(Perishable Keep Refrigerated)</small></div>
       ${parts}
       ${al.length ? `<p class="lbl-contains" contenteditable="true">Contains: ${al.join(', ')}.</p>` : ''}
       <p><span class="k">Net wt.:</span> <span contenteditable="true">${esc(netText)}</span></p>
@@ -5139,11 +5166,14 @@
     document.getElementById('lblDoc').innerHTML = lblMarkup(lblItem, lblItem.calc, mfg, document.getElementById('lblNet').value);
   }
   // ---- Generate labels: tick several madeleines → one page of labels, printed or saved as one image ----
-  let mlSel = new Set(SEASONAL.filter(k => k.startsWith('mad:')).map(k => k.slice(4)));
-  try { const v = JSON.parse(localStorage.getItem('labelSel.v1')); if (Array.isArray(v)) mlSel = new Set(v); } catch {}
+  let mlSel = new Set(SEASONAL.filter(k => !k.startsWith('fill:')));   // item keys like 'mad:Classic'
+  try { const v = JSON.parse(localStorage.getItem('labelSel.v1')); if (Array.isArray(v)) mlSel = new Set(v.map(k => k.includes(':') ? k : 'mad:' + k)); } catch {}   // older saves held bare madeleine names
   function mlPaintPick() {
-    document.getElementById('mlList').innerHTML = seasonalFirst('mad', REC_MADS).map(it =>
-      `<label class="sea-row"><input type="checkbox" data-ml="${esc(it.name)}" ${mlSel.has(it.name) ? 'checked' : ''}><span>${recIc(it.name)} ${esc(it.title || it.name + ' Madeleine')}${isSeasonal('mad', it) ? ' <small style="color:var(--muted)">· this season</small>' : ''}</span></label>`).join('');
+    let last = '';
+    document.getElementById('mlList').innerHTML = mlCands().map(c => {
+      const head = c.group !== last ? `<div class="sea-sec">${esc(c.group)}</div>` : ''; last = c.group;
+      return head + `<label class="sea-row"><input type="checkbox" data-ml="${esc(c.key)}" ${mlSel.has(c.key) ? 'checked' : ''}><span>${recIc(c.it.name)} ${esc(c.title)}${isSeasonal(c.sec, c.it) ? ' <small style="color:var(--muted)">· this season</small>' : ''}</span></label>`;
+    }).join('');
     document.getElementById('mlGen').disabled = !mlSel.size;
     document.getElementById('mlGen').textContent = mlSel.size ? `Generate ${mlSel.size} label${mlSel.size === 1 ? '' : 's'}` : 'Select at least one';
   }
@@ -5160,13 +5190,13 @@
     mlPaintPick();
   });
   const mlSet = names => { mlSel = new Set(names); try { localStorage.setItem('labelSel.v1', JSON.stringify([...mlSel])); } catch {} mlPaintPick(); };
-  document.getElementById('mlSeason').addEventListener('click', () => mlSet(REC_MADS.filter(it => isSeasonal('mad', it)).map(it => it.name)));
-  document.getElementById('mlAll').addEventListener('click', () => mlSet(REC_MADS.map(it => it.name)));
+  document.getElementById('mlSeason').addEventListener('click', () => mlSet(mlCands().filter(c => isSeasonal(c.sec, c.it)).map(c => c.key)));
+  document.getElementById('mlAll').addEventListener('click', () => mlSet(mlCands().map(c => c.key)));
   document.getElementById('mlNone').addEventListener('click', () => mlSet([]));
   document.getElementById('mlGen').addEventListener('click', () => {
     const mfg = document.getElementById('mlMfg').value || nowPST().slice(0, 10);
-    const items = seasonalFirst('mad', REC_MADS).filter(it => mlSel.has(it.name));
-    document.getElementById('mlDoc').innerHTML = items.map(it => `<div class="lbl-doc">${lblMarkup(it, lblCalc(it, 0), mfg, lblNetText(lblCalc(it, 0)))}</div>`).join('');
+    const items = mlCands().filter(c => mlSel.has(c.key));
+    document.getElementById('mlDoc').innerHTML = items.map(c => { const k = lblCalcAny(c); return `<div class="lbl-doc">${lblMarkup(c.it, k, mfg, lblNetText(k), c.title)}</div>`; }).join('');
     document.getElementById('mlPick').hidden = true; document.getElementById('mlResult').hidden = false;
     track('labels_generate', { n: items.length });
   });
