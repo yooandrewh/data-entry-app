@@ -1619,7 +1619,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.61.01 · Oct 1, 11:50 AM</div>
+<div class="ver-badge">v1.61.02 · Oct 1, 12:10 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -5141,6 +5141,8 @@
     ].join('');
     const all = [...main, ...lblList(c.glaze), ...lblList(c.filling, ex.filling), ...lblList(c.topping, ex.topping)].join(', ');
     const al = lblAllergens(all);
+    // The room-temperature note only applies to products with a dairy filling (cream cheese frosting, cream…), not dairy in the batter.
+    const dairyFilling = /butter|cream|milk|cheese|mascarpone/.test(lblList(c.filling, ex.filling).join(', ').toLowerCase().replace(/coconut milk/g, ''));
     return `
       <div class="lbl-brand">[KAIROSBAKING]</div>
       <div class="lbl-title">${esc(title || item.title || item.name + ' Madeleine')} <small>(Perishable Keep Refrigerated)</small></div>
@@ -5151,7 +5153,7 @@
       <p><span class="k">Prepared in:</span> LGI Kitchen in Fullerton, CA</p>
       <p><span class="k">Manufactured:</span> ${lblDate(mfg)}</p>
       <p><span class="k">Best by / use by:</span> ${lblDate(addDays(mfg, LBL_FRIDGE_DAYS))} refrigerated · ${lblDate(addDays(mfg, LBL_FREEZER_DAYS))} frozen</p>
-      <p class="lbl-note">Note: Product must be refrigerated or discarded after 2 hours of sitting at room temperature.</p>`;
+      ${dairyFilling ? '<p class="lbl-note">Note: Product must be refrigerated or discarded after 4 hours of sitting at room temperature.</p>' : ''}`;
   }
   function openLabel(item) {
     lblItem = item;
