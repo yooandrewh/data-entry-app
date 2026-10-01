@@ -1638,7 +1638,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.65.00 · Oct 1, 4:30 PM</div>
+<div class="ver-badge">v1.65.03 · Oct 1, 5:30 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -1867,7 +1867,7 @@
   // Flavors the app stocks (PRODUCTS) plus extra ones that show up in sales.
   const SALES_FLAVORS = ['Lemon Poppy', 'Sea Salt', 'Ube', 'Dot', 'Earl Grey', 'Matcha', 'Chocolate', 'Dubai Ball', 'Unknown'];
   const PRICE_PER_UNIT = 2.50;   // $/madeleine (from Financial Dashboard: $192.50 / 77 units)
-  const UNIT_PRICE = { 'Pumpkin Muffin': 2.75 };   // items that sell for something other than PRICE_PER_UNIT
+  const UNIT_PRICE = { 'Pumpkin Muffin': 2.75, 'Dubai Ball': 3.50 };   // items that sell for something other than PRICE_PER_UNIT
   // Extra revenue over PRICE_PER_UNIT for sales rows (assumes those units are already counted in each row's total).
   const salesAdj = rows => rows.reduce((a, s) => a + Object.entries(UNIT_PRICE).reduce((b, [p, pr]) => b + ((s.amounts && s.amounts[p]) || 0) * (pr - PRICE_PER_UNIT), 0), 0);
   const usd = n => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n);
@@ -2778,6 +2778,8 @@
     try { saved = JSON.parse(localStorage.getItem(INV_PRICE_KEY)) || {}; } catch {}
     // Pumpkin Muffin sells at $2.75 (2026-10-01). A price saved earlier on this device (it saved the old $2.50 default) is replaced once.
     try { if (!localStorage.getItem('invPriceMuffin275')) { saved['Pumpkin Muffin'] = 2.75; localStorage.setItem(INV_PRICE_KEY, JSON.stringify(saved)); localStorage.setItem('invPriceMuffin275', '1'); } } catch {}
+    // Dubai Ball is $3.50 (2026-10-01); replace a $2.50 default saved earlier on this device, once.
+    try { if (!localStorage.getItem('invPriceDubai350')) { saved['Dubai Ball'] = 3.5; localStorage.setItem(INV_PRICE_KEY, JSON.stringify(saved)); localStorage.setItem('invPriceDubai350', '1'); } } catch {}
     return Object.fromEntries(ENTRY_PRODUCTS.map(p => [p, Number.isFinite(saved[p]) ? saved[p] : (INV_DEFAULT_PRICE[p] ?? PRICE_PER_UNIT)]));
   }
   // Dubai Ball's price row only matters for Stanton invoices.
@@ -4250,13 +4252,13 @@
   };
   const REC_OTHER = [
     // Dubai chewy ball: pistachio-kataifi filling (30 g each) inside a cocoa-marshmallow outer layer (20 g each), dusted with cocoa.
-    // One filling batch = 3,534 g → ~117 balls; one 1 lb marshmallow batch coats ~29, so a full filling batch uses 4 outer batches.
-    { key: 'dubaiball', type: 'dubai', name: 'Dubai Chewy Ball', title: 'Dubai Chewy Ball', yield: 117, outerTimes: 4,
-      yieldText: 'Filling batch ≈ 117 balls at 30 g · outer layer 20 g each',
-      rows: [['Pistachio Butter', 1400], ['White Chocolate', 1000], ['Kataifi', 1134]],
-      outer: [['Marshmallow', 453.6], ['Unsalted Butter', 45.4], ['Cocoa Powder', 45.4], ['Skim Milk Powder', 45.4]],
-      outerNote: 'One batch of the outer layer: 1 lb (453.6 g) marshmallow, with the butter, cocoa powder and milk powder each 10% of the marshmallow (45.4 g). Portion 20 g. One batch coats about 29 balls, so a full filling batch needs about 4 outer batches. Dust the finished balls with cocoa powder.',
-      notes: 'Filling: 1,400 g pistachio butter + 1,000 g white chocolate + 2.5 lb (1,134 g) kataifi, portioned 30 g each (≈ 117). Wrap each filling in the outer layer (20 g), then dust with cocoa powder.' },
+    // One filling batch = 3,703.5 g → ~123 balls; one outer batch (283 g marshmallow = two bags) coats ~19.8, so a full filling batch uses ~6.2 outer batches.
+    { key: 'dubaiball', type: 'dubai', name: 'Dubai Chewy Ball', title: 'Dubai Chewy Ball', yield: 123, outerTimes: 6.2,
+      yieldText: 'Filling batch ≈ 123 balls at 30 g · outer layer 20 g each',
+      rows: [['Pistachio Butter', 1400], ['White Chocolate', 1000], ['Kataifi', 1134], ['Unsalted Butter (kataifi)', 169.5]],
+      outer: [['Marshmallow', 283], ['Unsalted Butter (outer layer)', 56.5], ['Cocoa Powder', 28.3], ['Skim Milk Powder', 28.3]],
+      outerNote: 'One batch of the outer layer: two bags of marshmallow (283 g) with 56.5 g butter (113 ÷ 2), and cocoa powder and milk powder each 10% of the marshmallow (28.3 g). Portion 20 g — one batch coats about 20 balls, so a full filling batch needs about 6 outer batches. Dust the finished balls with cocoa powder.',
+      notes: 'Filling: 1,400 g pistachio butter + 1,000 g white chocolate + 2.5 lb (1,134 g) kataifi + 169.5 g butter (113 + 113 ÷ 2) with the kataifi, portioned 30 g each (≈ 123). Wrap each filling in the outer layer (20 g), then dust with cocoa powder.' },
     { key: 'pumpkinmuffin', type: 'muffin', name: 'Pumpkin Pie Spice Muffin', title: 'Pumpkin Pie Spice Muffin',
       custom: [['Cake Flour', 182], ['Baking Powder', 7], ['Salt', 2], ['Eggs', 160], ['Granulated Sugar', 120], ['Light Brown Sugar', 20], ['Vanilla Extract', 5], ['Pumpkin Puree, well-drained', 100], ['Pumpkin Pie Spice', 7], ['Unsalted Butter, melted and cooled', 190]],
       fillingRefs: ['Pumpkin Cream Cheese Frosting'],
@@ -4410,7 +4412,7 @@
         <div class="proj-sub">${item.yieldText || 'base recipe'}${b !== 1 ? ` · scaled ${rFmt(b)}×` : ''}</div>
         ${recBatchRow()}
         ${recIngRows(item.rows, b)}
-        ${item.outer ? `<div class="rec-box"><b>Outer Layer · per 1 lb marshmallow</b>${item.outer.map(g => `<div class="gl"><span>${g[0]}</span><span>${rFmt(g[1] * b)}g</span></div>`).join('')}${item.outerNote ? `<p>${item.outerNote}</p>` : ''}</div>` : ''}
+        ${item.outer ? `<div class="rec-box"><b>Outer Layer · per outer batch</b>${item.outer.map(g => `<div class="gl"><span>${g[0]}</span><span>${rFmt(g[1] * b)}g</span></div>`).join('')}${item.outerNote ? `<p>${item.outerNote}</p>` : ''}</div>` : ''}
         ${item.soak ? `<div class="rec-box"><b>Soak (2+ hrs)</b>${item.soak.map(s => `<div class="gl"><span>${s[0]}</span><span>${rFmt(s[1] * b)}g</span></div>`).join('')}</div>` : ''}
         ${item.notes ? `<div class="rec-box"><b>Notes</b>${item.notes}</div>` : ''}
         ${recLink(item.link)}
@@ -4525,6 +4527,7 @@
     'Skim Milk Powder': { amt: 272, unit: 'g', price: 4.59, note: 'Target brand' },
     'Yeast': { amt: 113.4, unit: 'g', price: 6.29, link: 'https://www.target.com/p/fleischmann-s-active-dry-yeast-4oz/-/A-14771430', note: 'Target Fleischmann\'s Active Dry Yeast, 4oz' },
     'Mugwort Powder': { amt: 300, unit: 'g', price: 26.31, link: 'https://www.amazon.com/dp/B081756F27' },
+    'Marshmallow': { amt: 283.5, unit: 'g', price: 1.29, link: 'https://www.target.com/p/mini-marshmallows-10oz-good-38-gather-8482/-/A-77640518', note: 'Target Good & Gather mini marshmallows, 10 oz' },
     'Kataifi': { amt: 453.6, unit: 'g', price: 4.99, link: 'https://www.instacart.com/products/244980-indo-european-kataifi-shredded-dough-16-oz?retailerSlug=super-king', note: 'Instacart / Super King, 16oz' },
     'Pistachio Butter': { amt: 18143.7, unit: 'g', price: 600, note: '40lb pail' },
     'Honey': { amt: 2041.2, unit: 'g', price: 21.99, link: 'https://www.costco.com/p/-/kirkland-signature-organic-raw-honey-24-oz-3-count/100334136?bvstate=pg:4/ct:r', note: 'Costco Kirkland Organic Raw Honey, 24oz x3' },
