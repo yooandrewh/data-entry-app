@@ -1630,7 +1630,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.62.00 · Oct 1, 12:40 PM</div>
+<div class="ver-badge">v1.63.00 · Oct 1, 1:10 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -5034,7 +5034,7 @@
   document.getElementById('bsPdfBtn').addEventListener('click', () => downloadPdf(document.getElementById('bsPdfBtn'), bakeSheetPages, `bake-sheet-${nowPST().slice(0, 10)}.pdf`, '.bs2-'));
 
   // ---- Minimal PDF writer: each element becomes a JPEG placed on US-Letter pages, never split across a page ----
-  async function elementsToPdf(els, classPrefix, width) {
+  async function elementsToPdf(els, classPrefix, width, cols = 1, rowsMax = Infinity) {
     const PW = 612, PH = 792, M = 36, GAP = 14, CW = PW - 2 * M, enc = new TextEncoder();
     const imgs = [];
     for (const el of els) {
@@ -5043,12 +5043,16 @@
       for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
       imgs.push({ bytes, w: cv.width, h: cv.height });
     }
-    const pages = [[]]; let y = PH - M;
-    imgs.forEach((im, idx) => {
-      const dh = im.h * CW / im.w;
-      if (y - dh < M && pages[pages.length - 1].length) { pages.push([]); y = PH - M; }
-      pages[pages.length - 1].push({ idx, dh, y: y - dh }); y -= dh + GAP;
-    });
+    // `cols` > 1 lays the pieces out in a grid (e.g. 2 across × 2 down = 4 labels per page); rows break across pages whole.
+    const cw = (CW - GAP * (cols - 1)) / cols;
+    const pages = [[]]; let y = PH - M, rowsOnPage = 0;
+    for (let i = 0; i < imgs.length; i += cols) {
+      const row = imgs.slice(i, i + cols), dhs = row.map(im => im.h * cw / im.w), rh = Math.max(...dhs);
+      if ((y - rh < M || rowsOnPage >= rowsMax) && pages[pages.length - 1].length) { pages.push([]); y = PH - M; rowsOnPage = 0; }
+      rowsOnPage++;
+      row.forEach((im, j) => pages[pages.length - 1].push({ idx: i + j, dh: dhs[j], y: y - dhs[j], x: M + j * (cw + GAP), w: cw }));
+      y -= rh + GAP;
+    }
     const parts = [], off = []; let pos = 0;
     const push = u8 => { parts.push(u8); pos += u8.length; }, str = t => push(enc.encode(t));
     const obj = (n, body) => { off[n] = pos; str(`${n} 0 obj\n`); body(); str('\nendobj\n'); };
@@ -5061,7 +5065,7 @@
       push(im.bytes); str('\nendstream');
     }));
     pages.forEach((pg, k) => {
-      const content = pg.map(pl => `q ${CW} 0 0 ${pl.dh.toFixed(2)} ${M} ${pl.y.toFixed(2)} cm /I${pl.idx} Do Q`).join('\n');
+      const content = pg.map(pl => `q ${pl.w.toFixed(2)} 0 0 ${pl.dh.toFixed(2)} ${pl.x.toFixed(2)} ${pl.y.toFixed(2)} cm /I${pl.idx} Do Q`).join('\n');
       obj(pageObj(k), () => str(`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${PW} ${PH}] /Resources << /XObject << ${pg.map(pl => `/I${pl.idx} ${imgObj(pl.idx)} 0 R`).join(' ')} >> >> /Contents ${pageObj(k) + 1} 0 R >>`));
       obj(pageObj(k) + 1, () => str(`<< /Length ${enc.encode(content).length} >>\nstream\n${content}\nendstream`));
     });
@@ -5070,13 +5074,14 @@
     str(`trailer\n<< /Size ${n} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`);
     return new Blob(parts, { type: 'application/pdf' });
   }
-  async function downloadPdf(btn, els, name, prefix = '.lbl-') {
+  async function downloadPdf(btn, els, name, prefix = '.lbl-', opts = {}) {
     const label = btn.textContent; btn.disabled = true; btn.textContent = 'Preparing…';
-    try { await saveBlobAs(await elementsToPdf(typeof els === 'function' ? await els() : els, prefix, 640), name); track('pdf_download', { n: els.length, what: prefix === '.bs2-' ? 'bake_sheet' : 'labels' }); }
+    try { await saveBlobAs(await elementsToPdf(typeof els === 'function' ? await els() : els, prefix, opts.width || 640, opts.cols || 1, opts.rows || Infinity), name); track('pdf_download', { n: els.length, what: prefix === '.bs2-' ? 'bake_sheet' : 'labels' }); }
     catch { rcpToast('Couldn’t make the PDF'); }
     finally { btn.disabled = false; btn.textContent = label; }
   }
   // ---- Ingredient label: mix order → weight order, allergens, net weight, best-by dates ----
+  const LBL_PDF_W = 400;   // layout width (px) each label is drawn at for the PDF
   const LBL_FRIDGE_DAYS = 7, LBL_FREEZER_DAYS = 14;
   const LBL_SUB = { 'white chocolate': 'sugar, fractionated palm kernel oil, milk, nonfat milk, hydrogenated palm oil, soy lecithin, and natural flavor' };
   const lblClean = n => {
@@ -5219,7 +5224,7 @@
   document.getElementById('mlBack').addEventListener('click', () => { document.getElementById('mlPick').hidden = false; document.getElementById('mlResult').hidden = true; });
   document.getElementById('mlClose').addEventListener('click', () => document.getElementById('mlScrim').classList.remove('show'));
   document.getElementById('mlScrim').addEventListener('click', e => { if (e.target.id === 'mlScrim') e.target.classList.remove('show'); });
-  document.getElementById('mlPdf').addEventListener('click', () => downloadPdf(document.getElementById('mlPdf'), [...document.querySelectorAll('#mlDoc .lbl-doc')], `kairos-labels-${document.getElementById('mlMfg').value || nowPST().slice(0, 10)}.pdf`));
+  document.getElementById('mlPdf').addEventListener('click', () => downloadPdf(document.getElementById('mlPdf'), [...document.querySelectorAll('#mlDoc .lbl-doc')], `kairos-labels-${document.getElementById('mlMfg').value || nowPST().slice(0, 10)}.pdf`, '.lbl-', { width: LBL_PDF_W, cols: 2, rows: 2 }));   // 2 across × 2 down = 4 labels a page
   document.getElementById('lblPdfBtn').addEventListener('click', () => downloadPdf(document.getElementById('lblPdfBtn'), [document.getElementById('lblDoc')], `kairos-label-${(lblItem.name || 'label').toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${document.getElementById('lblMfg').value}.pdf`));
   document.getElementById('mlPrint').addEventListener('click', () => {
     document.body.classList.add('printing-labels');
