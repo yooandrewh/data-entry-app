@@ -1619,7 +1619,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.61.00 · Oct 1, 11:30 AM</div>
+<div class="ver-badge">v1.61.01 · Oct 1, 11:50 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -2787,17 +2787,17 @@
     const total = lines.reduce((a, l) => a + l.amt, 0);
     const units = lines.reduce((a, l) => a + l.qty, 0);
     const fmtD = ymd => { const [y, m, d] = ymd.split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); };
-    const period = from === to ? fmtD(from) : `${fmtD(from)} – ${fmtD(to)}`;
+    const period = fmtD(to);   // the range only picks which deliveries are included; the document shows just the end date
     const num = `KB-${to.replace(/-/g, '')}-${store.split(' ').map(w => w[0]).join('')}`;
     const issued = fmtD(nowPST().slice(0, 10));
 
-    invText = [`INVOICE ${num}`, `Kairos Baking → ${(INV_BILL[store] || {}).name || store}`, ...((INV_BILL[store] || { addr: [] }).addr), `Delivered: ${period}`, `Issued: ${issued}`, '',
+    invText = [`INVOICE ${num}`, `Kairos Baking → ${(INV_BILL[store] || {}).name || store}`, ...((INV_BILL[store] || { addr: [] }).addr), `Delivery date: ${period}`, `Issued: ${issued}`, '',
       ...lines.map(l => `${l.p}: ${l.qty} × ${usd(l.unit)} = ${usd(l.amt)}`), '', `Total (${units} units): ${usd(total)}`].join('\n');
 
     document.getElementById('invDoc').innerHTML = `
       <h3>Invoice</h3>
       <div class="inv-meta"><div><b>${esc(num)}</b>Issued ${esc(issued)}</div><div style="text-align:right"><b>Bill to: ${esc((INV_BILL[store] || {}).name || store)}</b>${((INV_BILL[store] || {}).addr || []).map(l => esc(l)).join('<br>') || esc(store)}</div></div>
-      <div class="inv-meta" style="margin-top:0"><div>Delivered<b>${esc(period)}</b></div></div>
+      <div class="inv-meta" style="margin-top:0"><div>Delivery date<b>${esc(period)}</b></div></div>
       ${lines.length ? `<table class="inv-table"><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Amount</th></tr></thead><tbody>${
         lines.map(l => `<tr><td>${esc(l.p)}</td><td>${l.qty}</td><td>${usd(l.unit)}</td><td>${usd(l.amt)}</td></tr>`).join('')}</tbody></table>
       <div class="inv-total"><span>Total</span><span>${usd(total)}</span></div>`
