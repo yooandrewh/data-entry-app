@@ -1630,7 +1630,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.63.02 · Oct 1, 2:00 PM</div>
+<div class="ver-badge">v1.63.03 · Oct 1, 2:20 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -1856,6 +1856,9 @@
   // Flavors the app stocks (PRODUCTS) plus extra ones that show up in sales.
   const SALES_FLAVORS = ['Lemon Poppy', 'Sea Salt', 'Ube', 'Dot', 'Earl Grey', 'Matcha', 'Chocolate', 'Unknown'];
   const PRICE_PER_UNIT = 2.50;   // $/madeleine (from Financial Dashboard: $192.50 / 77 units)
+  const UNIT_PRICE = { 'Pumpkin Muffin': 2.75 };   // items that sell for something other than PRICE_PER_UNIT
+  // Extra revenue over PRICE_PER_UNIT for sales rows (assumes those units are already counted in each row's total).
+  const salesAdj = rows => rows.reduce((a, s) => a + Object.entries(UNIT_PRICE).reduce((b, [p, pr]) => b + ((s.amounts && s.amounts[p]) || 0) * (pr - PRICE_PER_UNIT), 0), 0);
   const usd = n => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n);
   const state = { type: 'delivery', location: 'La Mirada', give: '' };   // give: who a goodwill entry went to ('' = customers)
   const esc = s => String(s).replace(/[&<>"']/g, c =>
@@ -2748,7 +2751,7 @@
 
   // ---- Invoice: deliveries for one store over a date range, priced per unit ----
   const INV_PRICE_KEY = 'invoicePrices.v1';
-  const INV_DEFAULT_PRICE = { 'Pumpkin Muffin': 2.75 };   // everything else defaults to PRICE_PER_UNIT
+  const INV_DEFAULT_PRICE = UNIT_PRICE;   // everything else defaults to PRICE_PER_UNIT
   const invScrim = document.getElementById('invScrim');
   let invText = '', invNum = 'invoice';
   function invPrices() {
@@ -3113,7 +3116,7 @@
     const flightLine = totalFlights > 0
       ? `<div class="ds-flights">${tok('Flights')}<b>${totalFlights}</b> flight${totalFlights === 1 ? '' : 's'} <span class="ds-note">(included in totals above)</span></div>`
       : '';
-    let html = `<div class="db-summary"><div class="ds-total"><b>${grand}</b> sold · ${usd(grand * PRICE_PER_UNIT)}</div><div class="ds-rows">${breakdown}</div>${dataLoc === 'all' ? `<div class="ds-break ds-loc">${locBreak}</div>` : ''}${flightLine}</div>`;
+    let html = `<div class="db-summary"><div class="ds-total"><b>${grand}</b> sold · ${usd(grand * PRICE_PER_UNIT + salesAdj(rows))}</div><div class="ds-rows">${breakdown}</div>${dataLoc === 'all' ? `<div class="ds-break ds-loc">${locBreak}</div>` : ''}${flightLine}</div>`;
     const dayHtml = (g, open) => {
       const label = salesGroup === 'week'
         ? 'Week of ' + new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(parseEntryDate(g.key))
@@ -3140,11 +3143,12 @@
       if (!months.has(ym)) months.set(ym, []);
       months.get(ym).push(g);
     }
+    const allRows = rows;   // the loop below has its own `rows` (the month's flavour lines)
     for (const [ym, gs] of months) {
       const tot = gs.reduce((a, g) => a + g.total, 0), fl = gs.reduce((a, g) => a + (g.flights || 0), 0);
       const amt = {}; SALES_FLAVORS.forEach(f => amt[f] = gs.reduce((a, g) => a + (g.amounts[f] || 0), 0));
       const rows = SALES_FLAVORS.filter(f => amt[f] > 0).map(f => kvRow(tok(f), f, amt[f])).join('') + (fl ? kvRow(tok('Flights'), 'Flights', fl, '', 'pr-flight') : '');
-      html += `<details class="db-entry db-fold db-month"><summary class="db-head"><span class="db-daylabel">${monthName(ym)}</span><span class="db-when">${tot} sold · ${usd(tot * PRICE_PER_UNIT)}</span></summary>
+      html += `<details class="db-entry db-fold db-month"><summary class="db-head"><span class="db-daylabel">${monthName(ym)}</span><span class="db-when">${tot} sold · ${usd(tot * PRICE_PER_UNIT + salesAdj(allRows.filter(r => (salesGroup === 'week' ? weekStart(r.date) : r.date).slice(0, 7) === ym)))}</span></summary>
           <div class="db-amts">${rows}</div>
           <div class="db-mdays">${gs.map(g => dayHtml(g, false)).join('')}</div></details>`;
     }
@@ -3458,17 +3462,17 @@
 
     // Sales — madeleines sold + revenue over the last 7 and 30 days.
     const from7 = ymdMinus(6), from30 = ymdMinus(29);
-    let qty7 = 0, qty30 = 0;
+    let qty7 = 0, qty30 = 0, adj7 = 0, adj30 = 0;
     for (const s of sales) {
       if (homeLoc !== 'all' && s.location !== homeLoc) continue;
       const n = (typeof s.total === 'number' ? s.total : SALES_FLAVORS.reduce((t, f) => t + (s.amounts[f] || 0), 0));
-      if (s.date >= from30) qty30 += n;
-      if (s.date >= from7) qty7 += n;
+      if (s.date >= from30) { qty30 += n; adj30 += salesAdj([s]); }
+      if (s.date >= from7) { qty7 += n; adj7 += salesAdj([s]); }
     }
     html += `<div class="group-label">Sales</div>
       <div class="card">
-        <div class="row"><span class="lbl">Last 7 days</span><span class="db-when"><b style="color:var(--text)">${qty7}</b> sold · ${usd(qty7 * PRICE_PER_UNIT)}</span></div>
-        <div class="row"><span class="lbl">Last 30 days</span><span class="db-when"><b style="color:var(--text)">${qty30}</b> sold · ${usd(qty30 * PRICE_PER_UNIT)}</span></div>
+        <div class="row"><span class="lbl">Last 7 days</span><span class="db-when"><b style="color:var(--text)">${qty7}</b> sold · ${usd(qty7 * PRICE_PER_UNIT + adj7)}</span></div>
+        <div class="row"><span class="lbl">Last 30 days</span><span class="db-when"><b style="color:var(--text)">${qty30}</b> sold · ${usd(qty30 * PRICE_PER_UNIT + adj30)}</span></div>
       </div>`;
 
     // Full store + madeleine analytics (weekly growth, whole-store, flavor mix,
