@@ -124,7 +124,7 @@ async function getHeader(tab) {
 
 // Product columns the app may need that the sheet might not have yet. Writing one adds its header cell at the
 // end of row 1 first, so nobody has to edit the sheet by hand. Only names listed here are ever auto-created.
-const AUTO_COLUMNS = ['Maple Pecan'];
+const AUTO_COLUMNS = ['Maple Pecan', 'Pumpkin Muffin'];
 async function addMissingColumns(tab, header, wanted) {
   const missing = AUTO_COLUMNS.filter((c) => wanted.includes(c) && !header.includes(c));
   if (!missing.length) return;
