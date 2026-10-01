@@ -1630,7 +1630,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.63.01 · Oct 1, 1:40 PM</div>
+<div class="ver-badge">v1.63.02 · Oct 1, 2:00 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -2748,12 +2748,15 @@
 
   // ---- Invoice: deliveries for one store over a date range, priced per unit ----
   const INV_PRICE_KEY = 'invoicePrices.v1';
+  const INV_DEFAULT_PRICE = { 'Pumpkin Muffin': 2.75 };   // everything else defaults to PRICE_PER_UNIT
   const invScrim = document.getElementById('invScrim');
   let invText = '', invNum = 'invoice';
   function invPrices() {
     let saved = {};
     try { saved = JSON.parse(localStorage.getItem(INV_PRICE_KEY)) || {}; } catch {}
-    return Object.fromEntries(PRODUCTS.map(p => [p, Number.isFinite(saved[p]) ? saved[p] : PRICE_PER_UNIT]));
+    // Pumpkin Muffin sells at $2.75 (2026-10-01). A price saved earlier on this device (it saved the old $2.50 default) is replaced once.
+    try { if (!localStorage.getItem('invPriceMuffin275')) { saved['Pumpkin Muffin'] = 2.75; localStorage.setItem(INV_PRICE_KEY, JSON.stringify(saved)); localStorage.setItem('invPriceMuffin275', '1'); } } catch {}
+    return Object.fromEntries(PRODUCTS.map(p => [p, Number.isFinite(saved[p]) ? saved[p] : (INV_DEFAULT_PRICE[p] ?? PRICE_PER_UNIT)]));
   }
   function initInvoiceForm() {
     const today = nowPST().slice(0, 10);
