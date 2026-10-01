@@ -1323,6 +1323,9 @@
   .te-b { width: 5.5em; text-align: right; }
   .bs2-sub { margin-top: 8px; } .bs2-subh { font-weight: 800; text-transform: uppercase; font-size: 12px; letter-spacing: .3px; margin-bottom: 1px; }
   body:not(.printing-bake) #bsScrim .bs2-subh { font-size: var(--fs-micro); color: var(--muted); border-bottom: none !important; padding: 6px 0 2px !important; letter-spacing: .6px; }
+  .buy-recipes { padding-bottom: 8px; border-bottom: 2px solid var(--sep); margin-bottom: 4px; }
+  .buy-h { font-weight: 700; padding: 4px 2px 6px; } .buy-h small { color: var(--muted); font-weight: 500; font-size: var(--fs-caption); }
+  .buy-rec { display: flex; align-items: center; gap: 8px; padding: 6px 2px; border-top: 1px solid var(--sep); } .buy-rec > span:first-child { flex: 1; min-width: 0; font-weight: 600; }
 </style>
 </head>
 <body>
@@ -1611,7 +1614,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.58.01 · Oct 1, 9:45 AM</div>
+<div class="ver-badge">v1.59.00 · Oct 1, 10:15 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -4861,17 +4864,18 @@
   });
 
   // ---- Buy list: every ingredient the bake plan needs, with packages to buy and what they cost ----
-  const BUY_KEY = 'buyChecked.v1', BUY_EXTRA = 'buyExtras.v1';
-  let buyChecked = {}, buyExtras = [];
+  const BUY_KEY = 'buyChecked.v1', BUY_EXTRA = 'buyExtras.v1', BUY_RECIPES = 'buyRecipes.v1';
+  let buyChecked = {}, buyExtras = [], buyRecipes = [];   // buyRecipes: extra recipes (any, not just seasonal) chosen on the buy list: [{key, b}]
+  try { buyRecipes = JSON.parse(localStorage.getItem(BUY_RECIPES)) || []; } catch {}
   try { buyChecked = JSON.parse(localStorage.getItem(BUY_KEY)) || {}; } catch {}
   try { buyExtras = JSON.parse(localStorage.getItem(BUY_EXTRA)) || []; } catch {}
-  const buySave = () => { try { localStorage.setItem(BUY_KEY, JSON.stringify(buyChecked)); localStorage.setItem(BUY_EXTRA, JSON.stringify(buyExtras)); } catch {} };
+  const buySave = () => { try { localStorage.setItem(BUY_KEY, JSON.stringify(buyChecked)); localStorage.setItem(BUY_EXTRA, JSON.stringify(buyExtras)); localStorage.setItem(BUY_RECIPES, JSON.stringify(buyRecipes)); } catch {} };
   const money2 = n => '$' + n.toFixed(2);
   function buyItems() {
     if (!Object.keys(costPrices).length) loadCosts();
     const need = new Map();
     const add = (name, g) => need.set(name, (need.get(name) || 0) + g);
-    for (const b of bakeSheet) {
+    for (const b of [...bakeSheet, ...buyRecipes]) {
       const f = bsFind(b.key); if (!f) continue;
       for (const [n, g] of costRows(f.sec, f.it)) {
         if (/^water$/i.test(String(n).split(',')[0].replace(/\(.*?\)/g, '').trim())) continue;
@@ -4892,7 +4896,14 @@
     const items = buyItems();
     const total = items.reduce((a, i) => a + (i.cost || 0), 0), unpriced = items.filter(i => i.cost == null).length;
     const row = (key, main, sub, right) => `<label class="buy-row${buyChecked[key] ? ' done' : ''}"><input type="checkbox" data-buy="${esc(key)}"${buyChecked[key] ? ' checked' : ''}><span class="buy-main"><b>${main}</b><small>${sub}</small></span><span class="buy-r">${right}</span></label>`;
-    let html = items.length
+    const optHtml = ({ sec, it }) => `<option value="${esc(costItemKey(sec, it))}" data-icon="${recKey(it.name)}">${esc(costItemName(sec, it))}</option>`;
+    const have = new Set(buyRecipes.map(r => r.key));
+    const groups = COST_SECTIONS.map(([sec, label, get]) => [label, get().filter(it => !isSeasonal(sec, it) && !have.has(costItemKey(sec, it))).map(it => ({ sec, it }))]).filter(([, l]) => l.length);
+    let html = `<div class="buy-recipes"><div class="buy-h">Add other recipes <small>(not in this season's plan)</small></div>
+        <div class="filter-bar" style="padding:0;margin:0 0 6px"><select id="buyPick" aria-label="Add a recipe to the buy list"><option value="" selected disabled>Choose a recipe…</option>${groups.map(([label, l]) => `<optgroup label="${label}">${l.map(optHtml).join('')}</optgroup>`).join('')}</select></div>`
+      + buyRecipes.map((r, k) => { const f = bsFind(r.key); return f ? `<div class="buy-rec"><span>${esc(costItemName(f.sec, f.it))}</span><span class="bs-step"><button type="button" data-brb="${k}|-">−</button><input type="number" inputmode="decimal" step="0.5" min="0.5" value="${rFmt(r.b)}" data-brn="${k}" aria-label="Batches"><button type="button" data-brb="${k}|+">+</button></span><button type="button" class="bs-x" data-brd="${k}" aria-label="Remove">✕</button></div>` : ''; }).join('')
+      + `</div>`;
+    html += items.length
       ? items.map(i => row(i.name, esc(i.name), `need ${buyFmt(i.qty, i.unit)}${i.pk ? ` · ${i.pk} × ${buyFmt(i.pkAmt, i.unit)} pack${i.pk === 1 ? '' : 's'}` : ' · no price yet'}`, i.cost != null ? money2(i.cost) : '')).join('')
       : '<div class="tm-empty">Nothing in the bake plan yet. Add recipes to the Bake Plan and their ingredients show up here.</div>';
     html += `<div class="sea-sec">Other things to buy</div>` + buyExtras.map((t, k) => row('x:' + t, esc(t), 'added by hand', `<button type="button" class="tm-x" data-buy-del="${k}" aria-label="Remove">✕</button>`)).join('')
@@ -4911,11 +4922,18 @@
   document.getElementById('buyX').addEventListener('click', buyClose);
   document.getElementById('buyScrim').addEventListener('click', e => { if (e.target.id === 'buyScrim') buyClose(); });
   document.getElementById('buyBody').addEventListener('change', e => {
+    if (e.target.id === 'buyPick') { if (e.target.value) { buyRecipes.push({ key: e.target.value, b: 1 }); buySave(); buyPaint(); } return; }
+    const rn = e.target.closest('[data-brn]');
+    if (rn) { const r = buyRecipes[Number(rn.dataset.brn)], n = parseFloat(rn.value); if (r && n > 0) { r.b = Math.round(n * 100) / 100; buySave(); } buyPaint(); return; }
     const c = e.target.closest('[data-buy]'); if (!c) return;
     if (c.checked) buyChecked[c.dataset.buy] = 1; else delete buyChecked[c.dataset.buy];
     buySave(); c.closest('.buy-row').classList.toggle('done', c.checked);
   });
   document.getElementById('buyBody').addEventListener('click', e => {
+    const rb = e.target.closest('[data-brb]');
+    if (rb) { const [k, d] = rb.dataset.brb.split('|'); const r = buyRecipes[Number(k)]; if (r) { r.b = Math.max(0.5, r.b + (d === '+' ? 1 : -1)); buySave(); buyPaint(); } return; }
+    const rd = e.target.closest('[data-brd]');
+    if (rd) { buyRecipes.splice(Number(rd.dataset.brd), 1); buySave(); buyPaint(); return; }
     const del = e.target.closest('[data-buy-del]');
     if (del) { e.preventDefault(); buyExtras.splice(Number(del.dataset.buyDel), 1); buySave(); buyPaint(); return; }
     if (e.target.id === 'buyAdd') { const i = document.getElementById('buyNew'), t = i.value.trim(); if (t && !buyExtras.includes(t)) { buyExtras.push(t); buySave(); buyPaint(); } }
