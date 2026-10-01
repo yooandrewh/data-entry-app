@@ -1630,7 +1630,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.63.00 · Oct 1, 1:10 PM</div>
+<div class="ver-badge">v1.63.01 · Oct 1, 1:40 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -2763,6 +2763,8 @@
     document.getElementById('invPrices').innerHTML = PRODUCTS.map(p =>
       `<div class="inv-field"><span>${tok(p)} ${esc(p)}</span><input class="price" type="number" inputmode="decimal" step="0.01" min="0" data-inv-price="${esc(p)}" value="${pr[p]}" /></div>`).join('');
   }
+  // Who the invoice is from: the commercial kitchen's address (public business address from The Food Corridor listing), not a home address.
+  const INV_FROM = { name: 'Kairosbaking', addr: ['3519 W Commonwealth Ave, Suite L', 'Fullerton, CA 92833'] };
   const INV_BILL = {
     'La Mirada': { name: 'Here&There Coffee', addr: ['12740 La Mirada Blvd.', 'La Mirada, CA 90638'] },
     'Stanton':   { name: 'Here&There Coffee', addr: ['12885 Beach Blvd Ste 26', 'Stanton, CA 90680'] },
@@ -2802,13 +2804,13 @@
     const num = `KB-${to.replace(/-/g, '')}-${store.split(' ').map(w => w[0]).join('')}`;
     const issued = fmtD(nowPST().slice(0, 10));
 
-    invText = [`INVOICE ${num}`, `Kairos Baking → ${(INV_BILL[store] || {}).name || store}`, ...((INV_BILL[store] || { addr: [] }).addr), `Delivery date: ${period}`, `Issued: ${issued}`, '',
+    invText = [`INVOICE ${num}`, `From: ${INV_FROM.name}, ${INV_FROM.addr.join(', ')}`, `Bill to: ${(INV_BILL[store] || {}).name || store}`, ...((INV_BILL[store] || { addr: [] }).addr), `Delivery date: ${period}`, `Issued: ${issued}`, '',
       ...lines.map(l => `${l.p}: ${l.qty} × ${usd(l.unit)} = ${usd(l.amt)}`), '', `Total (${units} units): ${usd(total)}`].join('\n');
 
     document.getElementById('invDoc').innerHTML = `
       <h3>Invoice</h3>
-      <div class="inv-meta"><div><b>${esc(num)}</b>Issued ${esc(issued)}</div><div style="text-align:right"><b>Bill to: ${esc((INV_BILL[store] || {}).name || store)}</b>${((INV_BILL[store] || {}).addr || []).map(l => esc(l)).join('<br>') || esc(store)}</div></div>
-      <div class="inv-meta" style="margin-top:0"><div>Delivery date<b>${esc(period)}</b></div></div>
+      <div class="inv-meta"><div><b>From: ${esc(INV_FROM.name)}</b>${INV_FROM.addr.map(l => esc(l)).join('<br>')}</div><div style="text-align:right"><b>Bill to: ${esc((INV_BILL[store] || {}).name || store)}</b>${((INV_BILL[store] || {}).addr || []).map(l => esc(l)).join('<br>') || esc(store)}</div></div>
+      <div class="inv-meta" style="margin-top:0"><div>Invoice<b>${esc(num)}</b></div><div style="text-align:center">Issued<b>${esc(issued)}</b></div><div style="text-align:right">Delivery date<b>${esc(period)}</b></div></div>
       ${lines.length ? `<table class="inv-table"><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Amount</th></tr></thead><tbody>${
         lines.map(l => `<tr><td>${esc(l.p)}</td><td>${l.qty}</td><td>${usd(l.unit)}</td><td>${usd(l.amt)}</td></tr>`).join('')}</tbody></table>
       <div class="inv-total"><span>Total</span><span>${usd(total)}</span></div>`
