@@ -1610,7 +1610,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.57.02 · Sep 30, 7:30 PM</div>
+<div class="ver-badge">v1.57.03 · Oct 1, 8:00 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -4101,13 +4101,13 @@
       fillingNote: 'Top the glaze with a scatter of coconut flakes — a 1lb bag covers about 150 madeleines.' },
     { name: 'Lemon Poppy', flour: 174, salt: 2, note: '4g lemon emulsion + 6g poppy seed',
       glaze: [['Powdered Sugar', '100g'], ['Lemon Juice', '25g'], ['Unsalted Butter', '4g']] },
-    { name: 'Chocolate', title: 'Chocolate Madeleine',
+    { name: 'Chocolate', title: 'Chocolate Madeleine', yield: 7,
       custom: [['Cake Flour', 98], ['Cocoa Powder', 10], ['Baking Powder', 3], ['Salt', 0.5], ['Unsalted Butter', 68], ['Milk', 4], ['Whole Eggs, strained', 55], ['Sugar', 52], ['Honey', 7]],
       syrup: [['Sugar', '25g'], ['Water', '25g']],
       glaze: [['Powdered Sugar', '85g'], ['Cocoa Powder', '7g'], ['Water', '25g']],
       lblExtra: { topping: ['edible gold powder'] },
       notes: 'Mould: Chiyoda cacao pod. Brush the warm madeleines with the simple syrup (dissolve the sugar in the water), then glaze once cool. To finish: edible gold powder. Whole eggs are strained. From the cookbook — the method page wasn’t captured, so add your own steps here if you want them.' },
-    { name: 'Brown Butter', title: 'Brown Butter Madeleine',
+    { name: 'Brown Butter', title: 'Brown Butter Madeleine', yield: 12,
       custom: [['Cake Flour', 125], ['Baking Powder', 5], ['Caramelized Milk Powder', 3], ['Salt', 0.5], ['Unsalted Butter', 105], ['Milk', 7], ['Whole Eggs, strained', 85], ['Sugar', 80], ['Honey', 10]],
       notes: 'Mould: Woojung / Chiyoda madeleine, 22mm deep. Whole eggs are strained. Caramelized milk powder is made ahead. From the cookbook — the method page wasn’t captured, so add your own steps here if you want them.' },
     { name: 'Matcha', flour: 156, salt: 2, note: '14g matcha powder' },
@@ -4261,7 +4261,7 @@
     const b = recState.batches;
     return `<div class="proj-card">
         <h3>${recIc(item.name)} ${item.title || item.name + ' Madeleine'}</h3>
-        <div class="proj-sub">1 batch ≈ ${BATCH_YIELD} ${item.type === 'muffin' ? 'pieces' : 'madeleines'}${verLbl}${b !== 1 ? ` · scaled ${rFmt(b)}×` : ''}</div>
+        <div class="proj-sub">1 batch ≈ ${item.yield || BATCH_YIELD} ${item.type === 'muffin' ? 'pieces' : 'madeleines'}${verLbl}${b !== 1 ? ` · scaled ${rFmt(b)}×` : ''}</div>
         ${verChips}${recBatchRow()}
         ${recIngRows(rows, b)}
         ${item.note ? `<div class="rec-box"><b>Flavoring</b>${rScaleNote(item.note, b)}</div>` : ''}
@@ -4533,7 +4533,7 @@
   }
   function costDefaultYield(sec, it) {
     const m = COST_META[costItemKey(sec, it)]; if (m && m.yield) return m.yield;
-    if (sec === 'mad') return BATCH_YIELD;
+    if (sec === 'mad') return it.yield || BATCH_YIELD;   // a recipe can say how many it makes (Chocolate 7, Brown Butter 12); the rest use the standard 18
     const y = String(it.yieldText || '').match(/makes (?:about )?(\d+)/); return y ? Number(y[1]) : '';
   }
   const money = n => '$' + n.toFixed(3);
@@ -4689,7 +4689,7 @@
     pick.innerHTML = `<option value="" selected disabled>Add a recipe…</option>`
       + (seasonal.length ? `<optgroup label="This season">${seasonal.map(optHtml).join('')}</optgroup>` : '')
       + rest.map(([label, l]) => `<optgroup label="${label}">${l.map(optHtml).join('')}</optgroup>`).join('');
-    const rows = bakeSheet.map((b, i) => { const f = bsFind(b.key); if (!f) return ''; const y = f.sec === 'mad' ? BATCH_YIELD : costDefaultYield(f.sec, f.it);
+    const rows = bakeSheet.map((b, i) => { const f = bsFind(b.key); if (!f) return ''; const y = costDefaultYield(f.sec, f.it);
       return `<div class="bs-item" data-bi="${i}"><div class="nm">${esc(costItemName(f.sec, f.it))}<small>${y ? `≈ ${rFmt(b.b * y)} pieces` : ''}${b.plan ? `${y ? ' · ' : ''}from plan` : ''}</small></div>
         <div class="bs-step"><button type="button" data-bs="-">−</button><input type="number" inputmode="decimal" step="0.5" min="0.5" value="${rFmt(b.b)}" data-bs="n" aria-label="Batches"><button type="button" data-bs="+">+</button></div>
         <button type="button" class="bs-x" data-bs="x" aria-label="Remove">✕</button></div>`; }).join('');
@@ -4703,7 +4703,7 @@
     let batches = 0, pieces = 0, glazed = 0; const names = [];
     for (const b of bakeSheet) {
       const f = bsFind(b.key); if (!f || f.sec !== 'mad') continue;
-      const n = b.b * BATCH_YIELD; batches += b.b; pieces += n; names.push(`${f.it.name} ×${rFmt(b.b)}`);
+      const n = b.b * (f.it.yield || BATCH_YIELD); batches += b.b; pieces += n; names.push(`${f.it.name} ×${rFmt(b.b)}`);
       if (GLAZED.includes(f.it.name.replace(/\s*madeleines?$/i, '').trim())) glazed += n;
     }
     if (!pieces) return null;
@@ -4741,7 +4741,7 @@
       [...rows, ...subs.flatMap(sb => sb.rows)].forEach(([n, g]) => { const c = bsCanon(n), t = totals.get(c) || { g: 0, uses: new Set() }; t.g += g * b.b; t.uses.add(b.key); totals.set(c, t); });
       const groups = [[], [], []];
       rows.forEach(([n, g]) => { const r = recMadRank(String(n)); groups[r <= 2 ? 0 : r <= 13 ? 1 : 2].push(bsLine(n, g * b.b)); });
-      const y = f.sec === 'mad' ? BATCH_YIELD : costDefaultYield(f.sec, f.it);
+      const y = costDefaultYield(f.sec, f.it);
       return { title: costItemName(f.sec, f.it), note: `${rFmt(b.b)} batch${b.b === 1 ? '' : 'es'}${y ? ` · ≈ ${rFmt(b.b * y)} pcs` : ''}`, groups: groups.filter(g => g.length), subs: subs.map(sb => ({ label: sb.label, lines: sb.rows.map(([n, g]) => bsLine(n, g * b.b)) })) };
     }).filter(Boolean);
     const tot = BS_TOTALS.filter(n => totals.has(n)).map(n => bsLine(n, totals.get(n).g));   // for now: just butter, eggs and sugars
@@ -5041,8 +5041,9 @@
     const glaze = (item.glaze || []).map(g => [g[0], lblGrams(g[1])]);
     const topping = (item.topping || []).map(g => [g[0], lblGrams(g[1])]);
     const filling = lblFillingRows(item);
-    const total = [...batter, ...glaze, ...topping].reduce((a, r) => a + r[1], 0);
-    return { batter, glaze, topping, filling, perPiece: total / BATCH_YIELD };
+    const syrup = (item.syrup || []).map(g => [g[0], lblGrams(g[1])]);
+    const total = [...batter, ...syrup, ...glaze, ...topping].reduce((a, r) => a + r[1], 0);
+    return { batter, glaze, topping, filling, perPiece: total / (item.yield || BATCH_YIELD) };
   }
   const lblNetText = c => `${Math.round(c.perPiece)} g (${(c.perPiece / 28.3495).toFixed(1)} oz) each`;
   function lblMarkup(item, c, mfg, netText) {
