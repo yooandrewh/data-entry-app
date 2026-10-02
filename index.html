@@ -1638,7 +1638,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.65.04 · Oct 1, 5:50 PM</div>
+<div class="ver-badge">v1.65.05 · Oct 1, 7:39 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -1719,7 +1719,7 @@
       <div class="inv-field"><span>Manufactured</span><input type="date" id="lblMfg" /></div>
       <div class="inv-field"><span>Net weight</span><input type="text" id="lblNet" /></div>
     </div>
-    <div class="warn inv-noprint">Best-by dates fill in from the manufactured date: fridge 7 days, freezer 2 weeks. Tap any text on the label to edit it before printing.</div>
+    <div class="warn inv-noprint">Best-by dates fill in from the manufactured date: fridge 7 days, freezer 3 weeks. Tap any text on the label to edit it before printing.</div>
     <div class="lbl-doc" id="lblDoc"></div>
     <div class="actions inv-noprint" style="margin-top:16px">
       <button class="btn-primary" id="lblPdfBtn">Download PDF</button>
@@ -1775,7 +1775,7 @@
   <div class="sheet inv-sheet" role="dialog" aria-modal="true" aria-labelledby="mlTitle">
     <div id="mlPick">
       <h2 id="mlTitle">Generate Labels</h2>
-      <div class="warn">Tick the items you're labelling. Best-by dates fill in from the manufactured date: fridge 7 days, freezer 2 weeks.</div>
+      <div class="warn">Tick the items you're labelling. Best-by dates fill in from the manufactured date: fridge 7 days, freezer 3 weeks.</div>
       <div class="sum"><div class="inv-field"><span>Manufactured</span><input type="date" id="mlMfg" /></div></div>
       <div class="bs-links" style="padding:0 2px 4px"><button type="button" id="mlSeason">Seasonal</button><button type="button" id="mlAll">All</button><button type="button" id="mlNone">None</button></div>
       <div id="mlList"></div>
@@ -5139,7 +5139,7 @@
   }
   // ---- Ingredient label: mix order → weight order, allergens, net weight, best-by dates ----
   const LBL_PDF_W = 400;   // layout width (px) each label is drawn at for the PDF
-  const LBL_FRIDGE_DAYS = 7, LBL_FREEZER_DAYS = 14;
+  const LBL_FRIDGE_DAYS = 7, LBL_FREEZER_DAYS = 21;
   const LBL_SUB = { 'white chocolate': 'sugar, fractionated palm kernel oil, milk, nonfat milk, hydrogenated palm oil, soy lecithin, and natural flavor' };
   const lblClean = n => {
     let t = String(n).split(',')[0].replace(/\(.*?\)/g, '').replace(/\*/g, '').trim().toLowerCase()
