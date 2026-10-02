@@ -1440,6 +1440,7 @@
         <div class="inv-field"><span>Store</span><div class="inv-store" id="invStoreBtns"><button type="button" data-store="La Mirada" class="on">La Mirada</button><button type="button" data-store="Stanton">Stanton</button></div><select id="invStore" hidden data-native><option>La Mirada</option><option>Stanton</option></select></div>
         <div class="inv-field"><span>From</span><input type="date" id="invFrom" /></div>
         <div class="inv-field"><span>To</span><input type="date" id="invTo" /></div>
+        <div class="inv-field"><span>Due date</span><input type="date" id="invDue" /></div>
       </div></div>
       <div class="group-label">Price per unit</div>
       <div class="card"><div class="sum" style="margin:0 12px" id="invPrices"></div></div>
@@ -1642,7 +1643,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.65.07 · Oct 1, 7:43 PM</div>
+<div class="ver-badge">v1.65.08 · Oct 1, 7:46 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -2852,14 +2853,15 @@
     const period = fmtD(to);   // the range only picks which deliveries are included; the document shows just the end date
     const num = `KB-${to.replace(/-/g, '')}-${store.split(' ').map(w => w[0]).join('')}`;
     const issued = fmtD(nowPST().slice(0, 10));
+    const dueV = document.getElementById('invDue').value, due = dueV ? fmtD(dueV) : 'Upon receipt';
 
-    invText = [`INVOICE ${num}`, `From: ${INV_FROM.name}, ${INV_FROM.addr.join(', ')}`, `Bill to: ${(INV_BILL[store] || {}).name || store}`, ...((INV_BILL[store] || { addr: [] }).addr), `Delivery date: ${period}`, `Issued: ${issued}`, '',
+    invText = [`INVOICE ${num}`, `From: ${INV_FROM.name}, ${INV_FROM.addr.join(', ')}`, `Bill to: ${(INV_BILL[store] || {}).name || store}`, ...((INV_BILL[store] || { addr: [] }).addr), `Due date: ${due}`, `Issued: ${issued}`, '',
       ...lines.map(l => `${l.p}: ${l.qty} × ${usd(l.unit)} = ${usd(l.amt)}`), '', `Total (${units} units): ${usd(total)}`].join('\n');
 
     document.getElementById('invDoc').innerHTML = `
       <h3>Invoice</h3>
       <div class="inv-meta"><div><b>From: ${esc(INV_FROM.name)}</b>${INV_FROM.addr.map(l => esc(l)).join('<br>')}</div><div style="text-align:right"><b>Bill to: ${esc((INV_BILL[store] || {}).name || store)}</b>${((INV_BILL[store] || {}).addr || []).map(l => esc(l)).join('<br>') || esc(store)}</div></div>
-      <div class="inv-meta" style="margin-top:0"><div>Invoice<b>${esc(num)}</b></div><div style="text-align:center">Issued<b>${esc(issued)}</b></div><div style="text-align:right">Delivery date<b>${esc(period)}</b></div></div>
+      <div class="inv-meta" style="margin-top:0"><div>Invoice<b>${esc(num)}</b></div><div style="text-align:center">Issued<b>${esc(issued)}</b></div><div style="text-align:right">Due date<b>${esc(due)}</b></div></div>
       ${lines.length ? `<table class="inv-table"><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Amount</th></tr></thead><tbody>${
         lines.map(l => `<tr><td>${esc(l.p)}</td><td>${l.qty}</td><td>${usd(l.unit)}</td><td>${usd(l.amt)}</td></tr>`).join('')}</tbody></table>
       <div class="inv-total"><span>Total</span><span>${usd(total)}</span></div>`
