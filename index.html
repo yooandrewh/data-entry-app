@@ -1345,6 +1345,17 @@
   .inv-store { display: flex; gap: 8px; }
   .inv-store button { padding: 8px 14px; font: inherit; font-size: var(--fs-body); color: var(--text); background: rgba(255,255,255,.30); border: 1px solid rgba(35,42,51,.35); cursor: pointer; touch-action: manipulation; }
   .inv-store button.on { color: var(--accent); border-color: var(--accent); background: rgba(164,90,34,.14); font-weight: 700; }
+  /* Home buttons: frosted glass rows with an icon and chevron */
+  .home-menu { gap: 10px; }
+  .home-menu button, .home-menu a.hm-link { border-radius: 18px !important; height: 60px; display: flex; align-items: center; gap: 14px; padding: 0 18px; text-align: left;
+    background: linear-gradient(180deg, rgba(255,255,255,0.20), rgba(255,255,255,0.09)); border: 1px solid rgba(255,246,238,0.55);
+    -webkit-backdrop-filter: blur(14px) saturate(1.2); backdrop-filter: blur(14px) saturate(1.2); letter-spacing: 0.4px; }
+  .home-menu button:active, .home-menu a.hm-link:active { background: rgba(255,255,255,0.30); transform: scale(0.985); }
+  .home-menu .hm-ic { display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; flex: none; border-radius: 12px !important; background: rgba(255,246,238,0.92); }
+  .home-menu .hm-ic svg { width: 24px; height: 24px; }
+  .home-menu .hm-t { flex: 1; }
+  .home-menu .hm-go { font-size: 26px; line-height: 1; opacity: .8; }
+  .home-menu a.hm-link { justify-content: center; height: 48px; margin-top: 4px; font-size: var(--fs-body); background: transparent; border-color: rgba(255,246,238,0.4); }
 </style>
 </head>
 <body>
@@ -1363,11 +1374,11 @@
     </div>
 
     <div class="home-menu" id="homeMenu">
-      <button type="button" data-hpage="forecast">Forecast</button>
-      <button type="button" data-hpage="plan">Baking Plan</button>
-      <button type="button" data-hpage="timers">Timers</button>
-      <button type="button" data-hbuy>Buy List</button>
-      <button type="button" data-hpage="invoice">Invoice / Labels</button>
+      <button type="button" data-hpage="forecast"><span class="hm-ic" data-ic="chart"></span><span class="hm-t">Forecast</span><span class="hm-go">›</span></button>
+      <button type="button" data-hpage="plan"><span class="hm-ic" data-ic="book"></span><span class="hm-t">Baking Plan</span><span class="hm-go">›</span></button>
+      <button type="button" data-hpage="timers"><span class="hm-ic" data-ic="flame"></span><span class="hm-t">Timers</span><span class="hm-go">›</span></button>
+      <button type="button" data-hbuy><span class="hm-ic" data-ic="bowl"></span><span class="hm-t">Buy List</span><span class="hm-go">›</span></button>
+      <button type="button" data-hpage="invoice"><span class="hm-ic" data-ic="tag"></span><span class="hm-t">Invoice / Labels</span><span class="hm-go">›</span></button>
       <a class="hm-link" href="https://app.thefoodcorridor.com/tfc_food_business_dashboard/69084-kairosbaking/bookings?locale=en" target="_blank" rel="noopener noreferrer">Book Commercial Kitchen ↗</a>
     </div>
     
@@ -1642,7 +1653,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.66.03 · Oct 1, 8:25 PM</div>
+<div class="ver-badge">v1.66.04 · Oct 2, 8:30 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
