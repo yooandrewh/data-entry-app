@@ -1642,7 +1642,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.66.00 · Oct 1, 8:00 PM</div>
+<div class="ver-badge">v1.66.01 · Oct 1, 8:10 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -2718,7 +2718,7 @@
     pop.style.maxHeight = Math.max(160, Math.min(above ? r.top - 16 : room - 8, window.innerHeight * 0.55)) + 'px';
     if (above) pop.style.bottom = (window.innerHeight - r.top + 4) + 'px'; else pop.style.top = (r.bottom + 4) + 'px';
     const on = pop.querySelector('.sp-item.on'); if (on) pop.scrollTop = Math.max(0, on.offsetTop - pop.clientHeight / 2 + on.offsetHeight / 2);
-    spOpen = { sel, pop };
+    spOpen = { sel, pop, at: Date.now() };
   }
   // Every <select> is made click-through (CSS: pointer-events none), so the browser's own picker — iOS raises it
   // on touch, before any script can stop it — never gets the tap. We find the select under the point ourselves.
@@ -2741,16 +2741,16 @@
   new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(n => { if (n.nodeType === 1) { if (n.matches && n.matches('select:not([data-native])')) { n.inert = true; } spMakeInert(n); } })))
     .observe(document.body, { childList: true, subtree: true });
   let spWasOpenOn = null;
-  // iPhone: pick on pointerup (fires for every tap, even where a synthesized mousedown doesn't), then swallow the click that
-  // follows so it can't land on whatever field sits under the closed list.
-  let spSwallow = 0;
-  document.addEventListener('pointerup', e => {
-    const it = e.target.closest && e.target.closest('.sp-item');
-    if (!it || !spOpen) return;
-    const sel = spOpen.sel; sel.value = it.dataset.v; closeSelectPopup(); spSwallow = Date.now();
-    sel.dispatchEvent(new Event('change', { bubbles: true })); e.preventDefault();
-  }, true);
-  document.addEventListener('click', e => { if (spSwallow && Date.now() - spSwallow < 600) { spSwallow = 0; e.preventDefault(); e.stopImmediatePropagation(); } }, true);
+  // iPhone: a tap on a list item is picked on touchend (if the finger barely moved) and the follow-up mouse/click events are
+  // cancelled so they can't land on a field underneath. Click and mousedown below stay as the desktop / fallback paths.
+  let spTouch = null;
+  const spChoose = it => { if (!it || !spOpen) return false; const sel = spOpen.sel; sel.value = it.dataset.v; closeSelectPopup(); sel.dispatchEvent(new Event('change', { bubbles: true })); return true; };
+  document.addEventListener('touchstart', e => { const it = e.target.closest && e.target.closest('.sp-item'); spTouch = it ? { x: e.touches[0].clientX, y: e.touches[0].clientY, it } : null; }, { capture: true, passive: true });
+  document.addEventListener('touchend', e => {
+    const t = spTouch; spTouch = null; if (!t || !spOpen) return;
+    const c = e.changedTouches[0];
+    if (Math.abs(c.clientX - t.x) < 12 && Math.abs(c.clientY - t.y) < 12) { spChoose(t.it); e.preventDefault(); }
+  }, { capture: true, passive: false });
   document.addEventListener('mousedown', e => {
     const it = e.target.closest && e.target.closest('.sp-item');
     if (it && spOpen) { const sel = spOpen.sel; sel.value = it.dataset.v; closeSelectPopup(); sel.dispatchEvent(new Event('change', { bubbles: true })); e.preventDefault(); return; }
@@ -2759,6 +2759,8 @@
     closeSelectPopup();
   });
   document.addEventListener('click', e => {
+    const pit = e.target.closest && e.target.closest('.sp-item');
+    if (pit && spChoose(pit)) { e.preventDefault(); return; }
     if (e.target.closest && e.target.closest('.sp-pop')) return;
     const s = spAt(e); if (!s) return;
     e.preventDefault();
@@ -2769,7 +2771,7 @@
     if (e.key === 'Escape') closeSelectPopup();
     else if ((e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowDown') && e.target.tagName === 'SELECT' && !e.target.hasAttribute('data-native')) { e.preventDefault(); openSelectPopup(e.target); }
   });
-  window.addEventListener('scroll', e => { if (spOpen && e.target instanceof Node && spOpen.pop.contains(e.target)) return; closeSelectPopup(); }, true);   // the list scrolling itself doesn't count
+  window.addEventListener('scroll', e => { if (spTouch || (spOpen && Date.now() - spOpen.at < 700)) return; if (spOpen && e.target instanceof Node && spOpen.pop.contains(e.target)) return; closeSelectPopup(); }, true);   // the list scrolling itself doesn't count
 
   // ---- Home: a landing screen with three buttons; each opens its own page ----
   let homeTab = null;   // null = landing | 'forecast' | 'plan' | 'invoice'
