@@ -1638,7 +1638,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.65.05 · Oct 1, 7:39 PM</div>
+<div class="ver-badge">v1.65.06 · Oct 1, 7:42 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -2716,6 +2716,16 @@
   new MutationObserver(ms => ms.forEach(m => m.addedNodes.forEach(n => { if (n.nodeType === 1) { if (n.matches && n.matches('select:not([data-native])')) { n.inert = true; } spMakeInert(n); } })))
     .observe(document.body, { childList: true, subtree: true });
   let spWasOpenOn = null;
+  // iPhone: pick on pointerup (fires for every tap, even where a synthesized mousedown doesn't), then swallow the click that
+  // follows so it can't land on whatever field sits under the closed list.
+  let spSwallow = 0;
+  document.addEventListener('pointerup', e => {
+    const it = e.target.closest && e.target.closest('.sp-item');
+    if (!it || !spOpen) return;
+    const sel = spOpen.sel; sel.value = it.dataset.v; closeSelectPopup(); spSwallow = Date.now();
+    sel.dispatchEvent(new Event('change', { bubbles: true })); e.preventDefault();
+  }, true);
+  document.addEventListener('click', e => { if (spSwallow && Date.now() - spSwallow < 600) { spSwallow = 0; e.preventDefault(); e.stopImmediatePropagation(); } }, true);
   document.addEventListener('mousedown', e => {
     const it = e.target.closest && e.target.closest('.sp-item');
     if (it && spOpen) { const sel = spOpen.sel; sel.value = it.dataset.v; closeSelectPopup(); sel.dispatchEvent(new Event('change', { bubbles: true })); e.preventDefault(); return; }
