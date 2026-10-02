@@ -1643,7 +1643,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.65.08 · Oct 1, 7:46 PM</div>
+<div class="ver-badge">v1.65.10 · Oct 1, 7:52 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -3215,6 +3215,12 @@
 
   // ===== Shared projection math (used by Home + Projections) =====
   let projLoc = 'La Mirada', homeLoc = 'La Mirada', planLoc = 'La Mirada';   // Stanton paused — La Mirada only (historical Stanton still in Data)
+  // Stores shown on Forecast and Baking Plan: La Mirada always; Stanton appears on its own once it has an entry in the last 3 weeks.
+  function activeLocs(entries) {
+    const cut = addDays(nowPST().slice(0, 10), -21);
+    const live = (entries || []).some(e => e.location === 'Stanton' && !e.taggedForDeletion && String(e.datetime).slice(0, 10) >= cut);
+    return LOCATIONS.filter(l => l === 'La Mirada' || (l === 'Stanton' && live));
+  }
   let bakingMode = 'recipes';   // Baking tab sub-view: 'recipes' | 'costs' (planning lives on Home)
   let planSplit = 0;        // 0..1 — front-load fraction shifted onto the earlier of two bake dates
   let lastPlanSales = null, lastPlanEntries = null;   // cached for live slider re-paint
@@ -3562,10 +3568,11 @@
     };
 
     let html = '';
-    for (const loc of LOCATIONS.filter(l => projLoc === 'all' || l === projLoc)) {
+    const locsShown = activeLocs(entries);
+    for (const loc of locsShown) {
       const st = locStats(loc, sales, entries);
       if (!st.hasInv) {
-        html += `<div class="proj-card"><div class="proj-sub" style="margin-top:2px">No inventory count logged yet — add an Inventory entry to project run-out.</div></div>`;
+        html += `<div class="proj-card"><h3>${loc}</h3><div class="proj-sub" style="margin-top:2px">No inventory count logged yet — add an Inventory entry to project run-out.</div></div>`;
         continue;
       }
       const ro = runoutBand(st);
@@ -3584,6 +3591,7 @@
         : `Runs out in <span class="big">${fmtD(pickFirst(ro))}</span><span class="pr-first">${ro.firstP} first</span>`;
       html += `<div class="proj-card">
           ${infoBtn()}
+          ${locsShown.length > 1 ? `<h3>${loc}</h3>` : ''}
           <div class="proj-runout">${runoutTxt}</div>
           ${staleWarn(st)}
           ${rateRows}
@@ -4061,8 +4069,8 @@
       : `Bake to last through ${fmtWhen(target)}`;
 
     let html = '';
-    const locs = LOCATIONS.filter(l => planLoc === 'all' || l === planLoc);
-    const combined = planLoc === 'all' && locs.length > 1;
+    const locs = activeLocs(entries);
+    const combined = false;   // one card per store
     const computed = locs.map(loc => ({ loc, st: locStats(loc, sales, entries), dowr: dowRates(sales, loc, 28) }));
     const usable = computed.filter(c => c.st.hasInv && c.dowr);
     const skipped = computed.filter(c => !(c.st.hasInv && c.dowr));
