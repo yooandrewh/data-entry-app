@@ -1501,6 +1501,9 @@
   .proj-row > span:last-child:not(.k) { flex: none; }
   .proj-row .k .cost-hint { display: block; }
   .cost-in { max-width: 5.5em; }
+  .pg-head { align-items: center; padding: 0 0 8px; }
+  .pg-t { margin: 0; display: flex; align-items: center; gap: 8px; }
+  .pg-t .info-btn { float: none; }
   /* nav: solid light caramel, flush, only while Data / Baking is open */
   body[data-tab="db"] .tabbar, body[data-tab="plan"] .tabbar { background: #f3f1ed; border-top: 1px solid #e2dfda; }
   body[data-tab="db"] .tabbar button, body[data-tab="plan"] .tabbar button { color: #242c35; opacity: .75; }
@@ -1802,7 +1805,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.70.07 · Oct 3, 6:15 PM</div>
+<div class="ver-badge">v1.70.08 · Oct 4, 9:00 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -3805,8 +3808,7 @@
     if (cols.length) {
       const ab = c => LOC_ABBR[c.loc] || c.loc, cells = f => cols.map(f).join('');
       html += `<div class="proj-card pg-card" style="--n:${cols.length};--w:84px">
-          <h3>By store${infoBtn()}</h3>
-          <div class="pg-row pg-head"><span></span>${cells(c => `<span class="pg-c">${ab(c)}</span>`)}</div>
+          <div class="pg-row pg-head"><h3 class="pg-t">By store${infoBtn()}</h3>${cells(c => `<span class="pg-c">${ab(c)}</span>`)}</div>
           <div class="pg-row pg-time"><span class="k">Runs out in</span>${cells(c => c.none ? '<span class="pg-c">—</span>' : `<span class="pg-c"><b>${c.runout.t}</b><small>${esc(c.runout.sub)}</small></span>`)}</div>
           ${PRODUCTS.map(p => `<div class="pg-row"><span class="k">${tok(p)}${p}</span>${cells(c => { if (c.none) return '<span class="pg-c">—</span>'; const x = c.cell(p); return `<span class="pg-c"><span><b>${x.n}</b> left</span><small>${x.d}</small></span>`; })}</div>`).join('')}
           ${cols.map(c => c.warn ? `<div class="pg-stale"><b>${ab(c)}</b> ${c.warn}</div>` : '').join('')}
@@ -4204,8 +4206,7 @@
       return n > 0 ? `<span class="pg-c"><b>bake ${n}</b><small>${batchLabel(flavorBatches(n))}</small></span>` : `<span class="pg-c pg-ok">enough</span>`;
     })}</div>`).join('');
     return `<div class="proj-card pg-card">
-        <h3>By store${infoBtn()}</h3>
-        <div class="pg-row pg-head"><span></span>${cells(c => `<span class="pg-c">${LOC_ABBR[c.loc] || c.loc}</span>`)}</div>
+        <div class="pg-row pg-head"><h3 class="pg-t">By store${infoBtn()}</h3>${cells(c => `<span class="pg-c">${LOC_ABBR[c.loc] || c.loc}</span>`)}</div>
         <div class="pg-row pg-time"><span class="k">In the kitchen</span>${cells(c => `<span class="pg-c"><b>${c.eff.min ? fmtDur(c.eff.min) : '—'}</b>${c.eff.batches ? `<small>${batchLabel(c.eff.batches)}</small>` : ''}</span>`)}</div>
         ${rows}
         <div class="info-body" hidden>${cols.map(c => `<div class="be-section-label">${c.loc}</div><div class="proj-sub">${c.sub}</div>${c.detail}`).join('')}</div>
