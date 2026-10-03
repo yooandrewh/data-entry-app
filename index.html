@@ -1504,6 +1504,9 @@
   .pg-head { align-items: center; padding: 0 0 8px; }
   .pg-t { margin: 0; display: flex; align-items: center; gap: 8px; }
   .pg-t .info-btn { float: none; }
+  .inv-table tr.inv-grp td, .inv-pdf .inv-table tr.inv-grp td { text-align: left; font-weight: 700; letter-spacing: .4px; text-transform: uppercase; font-size: 12px; padding: 12px 0 6px; border-bottom: 1px solid #111; }
+  .inv-table tr.inv-sub td, .inv-pdf .inv-table tr.inv-sub td { font-weight: 600; font-size: 13px; }
+  .inv-table tr.inv-sub td:first-child, .inv-pdf .inv-table tr.inv-sub td:first-child { text-align: right; color: #555; }
   /* nav: solid light caramel, flush, only while Data / Baking is open */
   body[data-tab="db"] .tabbar, body[data-tab="plan"] .tabbar { background: #f3f1ed; border-top: 1px solid #e2dfda; }
   body[data-tab="db"] .tabbar button, body[data-tab="plan"] .tabbar button { color: #242c35; opacity: .75; }
@@ -1600,7 +1603,7 @@
     <!-- Invoice -->
     <div id="homeInvoice" hidden>
       <div class="card"><div class="sum" style="margin:0 12px">
-        <div class="inv-field"><span>Store</span><div class="inv-store" id="invStoreBtns"><button type="button" data-store="La Mirada" class="on">La Mirada</button><button type="button" data-store="Stanton">Stanton</button></div><select id="invStore" hidden data-native><option>La Mirada</option><option>Stanton</option></select></div>
+        <div class="inv-field"><span>Store</span><div class="inv-store" id="invStoreBtns"><button type="button" data-store="La Mirada" class="on">La Mirada</button><button type="button" data-store="Stanton">Stanton</button><button type="button" data-store="Both">Both</button></div><select id="invStore" hidden data-native><option>La Mirada</option><option>Stanton</option><option>Both</option></select></div>
         <div class="inv-field"><span>From</span><input type="date" id="invFrom" /></div>
         <div class="inv-field"><span>To</span><input type="date" id="invTo" /></div>
         <div class="inv-field"><span>Due date</span><input type="date" id="invDue" /></div>
@@ -1805,7 +1808,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.70.08 · Oct 4, 9:00 AM</div>
+<div class="ver-badge">v1.71.00 · Oct 4, 9:30 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -2989,7 +2992,7 @@
     return Object.fromEntries(ENTRY_PRODUCTS.map(p => [p, Number.isFinite(saved[p]) ? saved[p] : (INV_DEFAULT_PRICE[p] ?? PRICE_PER_UNIT)]));
   }
   // Dubai Ball's price row only matters for Stanton invoices.
-  function syncInvDubai() { const r = document.getElementById('invDubaiRow'); if (r) r.hidden = document.getElementById('invStore').value !== 'Stanton'; }
+  function syncInvDubai() { const r = document.getElementById('invDubaiRow'); if (r) r.hidden = document.getElementById('invStore').value === 'La Mirada'; }
   function initInvoiceForm() {
     const today = nowPST().slice(0, 10);
     if (!document.getElementById('invFrom').value) document.getElementById('invFrom').value = today;
@@ -3025,38 +3028,44 @@
     let remote = [], ok = false;
     try { remote = await fetchRemoteEntries(); ok = true; } catch {}
     btn.disabled = false; btn.textContent = 'Generate invoice';
-    const entries = mergeEntries(remote, ok).filter(e => {
-      if (e.type !== 'delivery' || e.taggedForDeletion || e.location !== store) return false;
+    const both = store === 'Both', stores = both ? ['La Mirada', 'Stanton'] : [store];
+    const all = mergeEntries(remote, ok).filter(e => {
+      if (e.type !== 'delivery' || e.taggedForDeletion || !stores.includes(e.location)) return false;
       const d = String(e.datetime).slice(0, 10);
       return d >= from && d <= to;
     });
-
-    // Sum per product; retired flavors still bill if they were actually delivered.
-    const qty = Object.fromEntries(HIST_PRODUCTS.map(p => [p, 0]));
-    for (const e of entries) for (const p of HIST_PRODUCTS) qty[p] += e.amounts[p] || 0;
-    const lines = HIST_PRODUCTS.filter(p => qty[p] > 0).map(p => {
-      const unit = prices[p] != null ? prices[p] : PRICE_PER_UNIT;
-      return { p, qty: qty[p], unit, amt: qty[p] * unit };
-    });
-    const total = lines.reduce((a, l) => a + l.amt, 0);
-    const units = lines.reduce((a, l) => a + l.qty, 0);
+    // Sum per product, per store; retired flavors still bill if they were actually delivered.
+    const groups = stores.map(st => {
+      const qty = Object.fromEntries(HIST_PRODUCTS.map(p => [p, 0]));
+      for (const e of all) if (e.location === st) for (const p of HIST_PRODUCTS) qty[p] += e.amounts[p] || 0;
+      const lines = HIST_PRODUCTS.filter(p => qty[p] > 0).map(p => {
+        const unit = prices[p] != null ? prices[p] : PRICE_PER_UNIT;
+        return { p, qty: qty[p], unit, amt: qty[p] * unit };
+      });
+      return { st, lines, total: lines.reduce((a, l) => a + l.amt, 0), units: lines.reduce((a, l) => a + l.qty, 0) };
+    }).filter(g => g.lines.length);
+    const lines = groups.flatMap(g => g.lines);
+    const total = groups.reduce((a, g) => a + g.total, 0);
+    const units = groups.reduce((a, g) => a + g.units, 0);
     const fmtD = ymd => { const [y, m, d] = ymd.split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); };
     const period = fmtD(to);   // the range only picks which deliveries are included; the document shows just the end date
-    const num = `KB-${to.replace(/-/g, '')}-${store.split(' ').map(w => w[0]).join('')}`;
+    const num = `KB-${to.replace(/-/g, '')}-${both ? 'ALL' : store.split(' ').map(w => w[0]).join('')}`;
     const issued = fmtD(nowPST().slice(0, 10));
     const dueV = document.getElementById('invDue').value, due = dueV ? fmtD(dueV) : 'Upon receipt';
 
-    invText = [`INVOICE ${num}`, `From: ${INV_FROM.name}, ${INV_FROM.addr.join(', ')}`, `Bill to: ${(INV_BILL[store] || {}).name || store}`, ...((INV_BILL[store] || { addr: [] }).addr), `Due date: ${due}`, `Issued: ${issued}`, '',
-      ...lines.map(l => `${l.p}: ${l.qty} × ${usd(l.unit)} = ${usd(l.amt)}`), '', `Total (${units} units): ${usd(total)}`].join('\n');
+    const billName = both ? INV_BILL['La Mirada'].name : (INV_BILL[store] || {}).name || store;
+    const billAddr = both ? stores.flatMap(st => [`${st}:`, ...INV_BILL[st].addr]) : ((INV_BILL[store] || {}).addr || [store]);
+    invText = [`INVOICE ${num}`, `From: ${INV_FROM.name}, ${INV_FROM.addr.join(', ')}`, `Bill to: ${billName}`, ...billAddr, `Due date: ${due}`, `Issued: ${issued}`, '',
+      ...groups.flatMap(g => [...(both ? [`${g.st}:`] : []), ...g.lines.map(l => `${l.p}: ${l.qty} × ${usd(l.unit)} = ${usd(l.amt)}`), ...(both ? [`  ${g.st} subtotal (${g.units} units): ${usd(g.total)}`, ''] : [])]), '', `Total (${units} units): ${usd(total)}`].join('\n');
 
     document.getElementById('invDoc').innerHTML = `
       <h3>Invoice</h3>
-      <div class="inv-meta"><div><b>From: ${esc(INV_FROM.name)}</b>${INV_FROM.addr.map(l => esc(l)).join('<br>')}</div><div style="text-align:right"><b>Bill to: ${esc((INV_BILL[store] || {}).name || store)}</b>${((INV_BILL[store] || {}).addr || []).map(l => esc(l)).join('<br>') || esc(store)}</div></div>
+      <div class="inv-meta"><div><b>From: ${esc(INV_FROM.name)}</b>${INV_FROM.addr.map(l => esc(l)).join('<br>')}</div><div style="text-align:right"><b>Bill to: ${esc(billName)}</b>${billAddr.map(l => esc(l)).join('<br>')}</div></div>
       <div class="inv-meta" style="margin-top:0"><div>Invoice<b>${esc(num)}</b></div><div style="text-align:center">Issued<b>${esc(issued)}</b></div><div style="text-align:right">Due date<b>${esc(due)}</b></div></div>
       ${lines.length ? `<table class="inv-table"><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Amount</th></tr></thead><tbody>${
-        lines.map(l => `<tr><td>${esc(l.p)}</td><td>${l.qty}</td><td>${usd(l.unit)}</td><td>${usd(l.amt)}</td></tr>`).join('')}</tbody></table>
+        groups.map(g => (both ? `<tr class="inv-grp"><td colspan="4">${esc(g.st)}</td></tr>` : '') + g.lines.map(l => `<tr><td>${esc(l.p)}</td><td>${l.qty}</td><td>${usd(l.unit)}</td><td>${usd(l.amt)}</td></tr>`).join('') + (both ? `<tr class="inv-sub"><td colspan="3">${esc(g.st)} subtotal · ${g.units} units</td><td>${usd(g.total)}</td></tr>` : '')).join('')}</tbody></table>
       <div class="inv-total"><span>Total</span><span>${usd(total)}</span></div>`
-      : `<div class="inv-empty">No deliveries for ${esc(store)} in this period.</div>`}
+      : `<div class="inv-empty">No deliveries for ${both ? 'either store' : esc(store)} in this period.</div>`}
       ${ok ? '' : '<div class="inv-empty inv-noprint">Offline — only entries on this device are included.</div>'}`;
     invNum = num;
     document.getElementById('invPrintBtn').hidden = document.getElementById('invCopyBtn').hidden = !lines.length;
