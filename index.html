@@ -1802,7 +1802,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.70.05 · Oct 3, 5:30 PM</div>
+<div class="ver-badge">v1.70.07 · Oct 3, 6:15 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -4489,7 +4489,10 @@
     { name: 'Brown Butter', title: 'Brown Butter Madeleine', yield: 12,
       custom: [['Cake Flour', 125], ['Baking Powder', 5], ['Caramelized Milk Powder', 3], ['Salt', 0.5], ['Unsalted Butter', 105], ['Milk', 7], ['Eggs', 85], ['Sugar', 80], ['Honey', 10]],
       notes: 'Mould: Woojung / Chiyoda madeleine, 22mm deep. Whole eggs are strained. Caramelized milk powder is made ahead. From the cookbook — the method page wasn’t captured, so add your own steps here if you want them.' },
-    { name: 'Matcha', flour: 156, salt: 2, note: '14g matcha powder' },
+    { name: 'Matcha', title: 'Matcha Madeleine', yield: 12,
+      custom: [['Cake Flour', 100], ['Matcha Powder', 10], ['Baking Powder', 5], ['Salt', 0.5], ['Unsalted Butter', 105], ['Milk', 7], ['Eggs', 85], ['Sugar', 75], ['Honey', 10]],
+      glaze: [['Powdered Sugar', '78g'], ['Water', '18g'], ['Matcha Powder', '4g']],
+      notes: 'Ceremonial matcha. Whole eggs are strained (cookbook page 31). Salt is a pinch of sea salt — entered as 0.5g. From the cookbook — the method page wasn’t captured, so add your own steps here if you want them.' },
     { name: 'Mugwort', title: 'Mugwort Madeleine', link: 'https://www.youtube.com/watch?v=vZBX4NI951A',
       custom: [['All Purpose Flour', 40], ['Cake Flour', 65], ['Baking Powder', 5], ['Baking Soda', 1], ['White Sugar', 25], ['Brown Sugar', 35], ['Unsalted Butter', 110], ['Eggs', 72], ['Salt', 1], ['White Chocolate', 120], ['Skim Milk Powder', 5], ['Milk', 25], ['Honey', 20], ['Mugwort Powder', 15]] },
     { name: 'Maple Pecan',
@@ -4653,7 +4656,7 @@
     };
     for (const it of REC_MADS) {
       const rows = B[it.name]; if (!rows) continue;
-      const verB = { label: 'Ver B', rows, yield: 20, skipNote: true };
+      const verB = { label: 'Ver B', rows, yield: 20, skipNote: true, bakeNote: 'Ver B: preheat the oven to 410°F (210°C), then bake at 356°F (180°C) for 10–12 minutes.' };
       if (!it.versions) it.versions = [{ label: 'Original', rows: recMadRowsV(it) }, verB];
       else { const old = it.versions.splice(1); it.versions.push(verB, ...old.map(v => ({ ...v, label: 'Ver C' }))); }
     }
@@ -4678,7 +4681,7 @@
         ${item.glaze ? `<div class="rec-box"><b>Glaze</b>${item.glaze.map(g => `<div class="gl"><span>${g[0]}</span><span>${rScaleStr(g[1], b)}</span></div>`).join('')}</div>` : ''}
         ${item.topping ? `<div class="rec-box"><b>Topping</b>${item.topping.map(g => `<div class="gl"><span>${g[0]}</span><span>${rScaleStr(g[1], b)}</span></div>`).join('')}</div>` : ''}
         ${(item.fillingRefs || item.fillingNote) ? `<div class="rec-box"><b>Filling & Topping</b>${(item.fillingRefs || []).map(recFillingRef).join('')}${item.fillingNote ? `<p>${item.fillingNote}</p>` : ''}</div>` : ''}
-        <div class="rec-box"><b>Notes</b>${item.notes || REC_MAD_NOTES}</div>
+        <div class="rec-box"><b>Notes</b>${(() => { const bn = item.versions && item.versions[recState.madVer].bakeNote; const n = item.notes || REC_MAD_NOTES; return bn ? bn + '<br><br>' + n.replace(/^Bake at[^<]*<br>(<br>)?/, '') : n; })()}</div>
         ${recLink(item.link)}
       </div>`;
   }
