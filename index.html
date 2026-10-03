@@ -1478,10 +1478,10 @@
   .pg-stale { font-size: var(--fs-caption); color: #8a4b00; background: rgba(255,149,0,.12); padding: 7px 10px; margin-top: 8px; }
   .pg-stale > div { display: inline; background: none; padding: 0; margin: 0; }
   .pg-card .pg-c > span { white-space: nowrap; }
-  /* Home landing: the text list floats mid-screen, the kitchen booking link sits low near the bottom */
-  #view-home:not(.paged) .home-menu { flex: 1; margin: 0; }
-  #view-home:not(.paged) .home-menu button:first-child { margin-top: auto; }
-  #view-home:not(.paged) .home-menu a.hm-link { margin-top: auto; margin-bottom: 14px; }
+  /* Home landing: the text list and the kitchen booking link sit together mid-screen (a fixed gap, not pinned to the bottom,
+     so it stays clear of the nav on a real iPhone where the viewport is shorter) */
+  #view-home:not(.paged) .home-menu { flex: none; margin: auto 0; }
+  #view-home:not(.paged) .home-menu a.hm-link { margin-top: 34px; margin-bottom: 0; }
   /* nav: solid light caramel, flush, only while Data / Baking is open */
   body[data-tab="db"] .tabbar, body[data-tab="plan"] .tabbar { background: #f3f1ed; border-top: 1px solid #e2dfda; }
   body[data-tab="db"] .tabbar button, body[data-tab="plan"] .tabbar button { color: #242c35; opacity: .75; }
@@ -1783,7 +1783,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.69.05 · Oct 3, 1:10 PM</div>
+<div class="ver-badge">v1.69.06 · Oct 3, 1:30 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
