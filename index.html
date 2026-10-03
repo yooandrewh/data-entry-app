@@ -1367,6 +1367,13 @@
   .pg-head .pg-c { font-weight: 700; letter-spacing: .6px; color: var(--muted); }
   .pg-time .pg-c b { color: var(--text); font-size: var(--fs-lg); }
   .pg-time .k { color: var(--muted); }
+  /* Home buttons: two columns, three rows (the last one full width); booking sits apart underneath */
+  .home-menu { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .home-menu button { flex-direction: column; justify-content: center; gap: 8px; height: 108px; padding: 10px; text-align: center; }
+  .home-menu button .hm-t { flex: none; font-size: var(--fs-lg); }
+  .home-menu button .hm-go { display: none; }
+  .home-menu button[data-hpage="invoice"] { grid-column: 1 / -1; flex-direction: row; height: 64px; gap: 14px; }
+  .home-menu a.hm-link { grid-column: 1 / -1; margin-top: 26px; }
 </style>
 </head>
 <body>
@@ -1664,7 +1671,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.67.01 · Oct 2, 9:10 AM</div>
+<div class="ver-badge">v1.67.02 · Oct 3, 9:00 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
