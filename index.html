@@ -1374,6 +1374,15 @@
   .home-menu button .hm-go { display: none; }
   .home-menu button[data-hpage="invoice"] { grid-column: 1 / -1; flex-direction: row; height: 64px; gap: 14px; }
   .home-menu a.hm-link { grid-column: 1 / -1; margin-top: 26px; }
+  /* Home menu: a plain, spaced-out text list (no boxes) */
+  .home-menu { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+  .home-menu button, .home-menu a.hm-link { width: auto; height: auto; flex-direction: row; justify-content: flex-start; gap: 0; padding: 14px 0 8px; text-shadow: 0 1px 8px rgba(20,24,30,.75) !important; border: 0 !important; border-bottom: 1.5px solid transparent !important; border-radius: 0 !important;
+    background: none !important; -webkit-backdrop-filter: none; backdrop-filter: none; text-transform: uppercase; letter-spacing: 0.32em; font-size: var(--fs-body); font-weight: 500; color: #fff6ee; transform: none; margin: 0; grid-column: auto; }
+  .home-menu button[data-hpage="invoice"] { grid-column: auto; height: auto; }
+  .home-menu button .hm-ic, .home-menu button .hm-go { display: none; }
+  .home-menu button .hm-t { flex: none; font-size: inherit; }
+  .home-menu button:active, .home-menu a.hm-link:active { background: none !important; border-bottom-color: #fff6ee !important; transform: none; }
+  .home-menu a.hm-link { margin-top: 30px; font-size: var(--fs-caption); letter-spacing: 0.28em; opacity: .8; }
 </style>
 </head>
 <body>
@@ -1671,7 +1680,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.67.02 · Oct 3, 9:00 AM</div>
+<div class="ver-badge">v1.67.03 · Oct 3, 9:25 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
