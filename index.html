@@ -961,7 +961,7 @@
   .card, .proj-card, .db-entry, .store-card, .hstore { border-radius: 16px; }
   .rec-box, .store-note, .smetric { border-radius: 12px; }
   .home-card { border-radius: 18px; }
-  .sheet { border-radius: 20px 20px 0 0; }
+  .sheet { border-radius: 12px 12px 0 0; }
   .tok { border-radius: 8px; }
   .home-season { background: rgba(38,21,42,0.66); color: #fff6ee; border-radius: 12px; }
   /* nav: a gradient bar, the current tab is a soft white pill */
@@ -1396,14 +1396,14 @@
     --line: rgba(35,42,51,0.30);
   }
   html, body { background: var(--bg); color: var(--text); }
-  .card, .proj-card, .db-entry, .db-summary, .split-card, .rec-box, .ds-card { background: var(--card); border: 1px solid var(--line); border-radius: 18px !important; }
+  .card, .proj-card, .db-entry, .db-summary, .split-card, .rec-box, .ds-card { background: var(--card); border: 1px solid var(--line); border-radius: 10px !important; }
   .home-card { background: transparent; border: 0; }
   .sheet, .entry-modal { background: var(--card); color: var(--text); }
   .scrim { background: rgba(35,42,51,0.45); }
   input, select, textarea { color: var(--text); background-color: var(--field); border-color: var(--line); }
   .seg button, .pill, .amt .step, .chip-row button, .rec-scale button, .bakedays button, .bakedate-add button,
   .db-date-clear, .bs-step button, .btn-ghost, .em-close, .filter-bar select, .home-card .filter-bar select, .db-filter button, .db-filter select {
-    background-color: rgba(255,255,255,0.55); border: 1px solid var(--line); color: var(--text); border-radius: 14px !important;
+    background-color: rgba(255,255,255,0.55); border: 1px solid var(--line); color: var(--text); border-radius: 8px !important;
   }
   .filter-bar select, .home-card .filter-bar select, .db-filter select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23232a33' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
   .seg button.on, .seg button.on[data-type], .pill.on, .chip-row button.on, .rec-scale button.on, .bakedays button.on, .db-filter button.on, .db-filter select.on {
@@ -1411,7 +1411,7 @@
   }
   .db-filter select.on { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23a45a22' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
   .seg button.on .ic svg { stroke: var(--accent); }
-  .btn-primary, .submit, .db-new { background: #a45a22; color: #fff; border: 1px solid #a45a22; border-radius: 14px !important; }
+  .btn-primary, .submit, .db-new { background: #a45a22; color: #fff; border: 1px solid #a45a22; border-radius: 8px !important; }
   .tabbar, body.home-landing .tabbar { background: #fffdf9; border-top: 1px solid var(--sep); }
   body.home-landing .tabbar { background: rgba(255,246,238,0.12); border-top-color: rgba(255,246,238,0.5); }
   .tabbar button { color: var(--muted); }
@@ -1441,6 +1441,9 @@
   }
   body[data-tab="db"], body[data-tab="plan"] { background: #e8e6e2; }
   #view-db *, #view-plan * { border-radius: 0 !important; }
+  #view-db button, #view-plan button, #view-db select, #view-plan select, #view-db input, #view-plan input, #view-plan textarea, #view-db .db-filter, #view-plan .db-filter { border-radius: 8px !important; }
+  #view-db .card, #view-plan .card, #view-db .proj-card, #view-plan .proj-card, #view-db .db-entry, #view-plan .db-entry, #view-db .db-summary, #view-plan .rec-box, #view-plan .split-card, #view-plan .pg-card { border-radius: 10px !important; }
+  #view-db svg, #view-plan svg, #view-db svg *, #view-plan svg *, #view-db .tok, #view-plan .tok { border-radius: 0 !important; }
   #view-db .card, #view-plan .card, #view-db .proj-card, #view-plan .proj-card, #view-db .db-entry, #view-plan .db-entry,
   #view-db .db-summary, #view-plan .rec-box, #view-plan .split-card, #view-plan .pg-card { background: var(--card); border: 1px solid var(--sep); box-shadow: none; }
   #view-db .db-entry.db-fold, #view-db .db-month { background: var(--card); }
@@ -1470,7 +1473,7 @@
   #view-plan .bs-step button, #view-plan .amt .step { width: 28px !important; height: 28px !important; min-height: 0 !important; padding: 0 !important; }
   #view-db .db-filter, #view-plan .db-filter { margin-bottom: 8px; }
   .fc-locs { display: flex; gap: 6px; margin: 0 0 10px; }
-  .fc-locs button { padding: 5px 12px; font: inherit; font-size: var(--fs-caption); cursor: pointer; background: rgba(255,255,255,.55); border: 1px solid var(--line, rgba(35,42,51,.3)); color: var(--text); border-radius: 14px; }
+  .fc-locs button { padding: 5px 12px; font: inherit; font-size: var(--fs-caption); cursor: pointer; background: rgba(255,255,255,.55); border: 1px solid var(--line, rgba(35,42,51,.3)); color: var(--text); border-radius: 8px; }
   .fc-locs button.on { color: var(--accent); border-color: var(--accent); background: rgba(164,90,34,.14); font-weight: 700; }
   .pg-stale { font-size: var(--fs-caption); color: #8a4b00; background: rgba(255,149,0,.12); padding: 7px 10px; margin-top: 8px; }
   .pg-stale > div { display: inline; background: none; padding: 0; margin: 0; }
@@ -1776,7 +1779,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.69.02 · Oct 3, 12:15 PM</div>
+<div class="ver-badge">v1.69.03 · Oct 3, 12:35 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
