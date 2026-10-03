@@ -1138,7 +1138,7 @@
   /* ---- Dropdown list (replaces the browser's own picker): cream panel, thin outline, caramel current choice ---- */
   .sp-pop { position: fixed; z-index: 90; overflow-y: auto; background: #fbf9f5; border: 1px solid rgba(35,42,51,0.35); padding: 4px 0; -webkit-overflow-scrolling: touch; }
   .sp-grp { padding: 10px 14px 4px; font-size: var(--fs-micro); font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: var(--muted); }
-  .sp-item { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; font-size: var(--fs-body); color: var(--text); cursor: pointer; }
+  .sp-item { width: 100%; border: 0; background: none; font-family: inherit; text-align: left; -webkit-appearance: none; appearance: none; touch-action: manipulation; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; font-size: var(--fs-body); color: var(--text); cursor: pointer; }
   .sp-item:active, .sp-item:hover { background: rgba(35,42,51,0.07); }
   .sp-item.on { background: rgba(164,90,34,0.14); color: var(--accent); font-weight: 700; }
   .sp-item b { font-weight: 700; }
@@ -1356,6 +1356,17 @@
   .home-menu .hm-t { flex: 1; }
   .home-menu .hm-go { font-size: 26px; line-height: 1; opacity: .8; }
   .home-menu a.hm-link { justify-content: center; height: 48px; margin-top: 4px; font-size: var(--fs-body); background: transparent; border-color: rgba(255,246,238,0.4); }
+  /* Bake plan grid: flavors down, stores across */
+  .pg-row { display: grid; grid-template-columns: minmax(0, 1fr) repeat(2, 64px); align-items: center; gap: 6px; padding: 9px 0; border-bottom: 1px solid var(--sep); }
+  .pg-row .k { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .pg-c { text-align: right; display: flex; flex-direction: column; align-items: flex-end; line-height: 1.2; }
+  .pg-c small { font-size: var(--fs-micro); color: var(--muted); font-weight: 500; }
+  .pg-c b { color: var(--accent); }
+  .pg-ok { color: var(--green); font-weight: 700; }
+  .pg-head { border-bottom: 1.5px solid var(--sep); padding: 4px 0 6px; }
+  .pg-head .pg-c { font-weight: 700; letter-spacing: .6px; color: var(--muted); }
+  .pg-time .pg-c b { color: var(--text); font-size: var(--fs-lg); }
+  .pg-time .k { color: var(--muted); }
 </style>
 </head>
 <body>
@@ -1653,7 +1664,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.66.04 · Oct 2, 8:30 AM</div>
+<div class="ver-badge">v1.67.01 · Oct 2, 9:10 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -2718,11 +2729,15 @@
   function openSelectPopup(sel) {
     closeSelectPopup();
     const pop = document.createElement('div'); pop.className = 'sp-pop'; pop.setAttribute('role', 'listbox');
-    const item = o => `<div class="sp-item${o.value === sel.value ? ' on' : ''}" role="option" data-v="${esc(o.value)}"><span>${o.dataset.icon ? ic(o.dataset.icon, 20) : ''}${esc(o.textContent.trim())}</span>${o.value === sel.value ? '<b>✓</b>' : ''}</div>`;
+    const item = o => `<button type="button" class="sp-item${o.value === sel.value ? ' on' : ''}" role="option" data-v="${esc(o.value)}"><span>${o.dataset.icon ? ic(o.dataset.icon, 20) : ''}${esc(o.textContent.trim())}</span>${o.value === sel.value ? '<b>✓</b>' : ''}</button>`;
     pop.innerHTML = [...sel.children].map(n => n.tagName === 'OPTGROUP'
       ? `<div class="sp-grp">${esc(n.label)}</div>` + [...n.children].filter(o => !o.hidden).map(item).join('')
       : (n.hidden || (n.disabled && n.value === '') ? '' : item(n))).join('');
     document.body.appendChild(pop);
+    // Real <button>s with their own handlers: the most dependable thing to tap on iOS.
+    pop.querySelectorAll('.sp-item').forEach(el => {
+      el.addEventListener('click', ev => { ev.preventDefault(); ev.stopPropagation(); spChoose(el); });
+    });
     const r = sel.getBoundingClientRect(), navH = 90, room = window.innerHeight - r.bottom - navH, above = room < 220 && r.top > room;
     pop.style.left = Math.max(8, Math.min(r.left, window.innerWidth - Math.max(r.width, 200) - 8)) + 'px';
     pop.style.minWidth = Math.max(r.width, 200) + 'px';
@@ -4014,6 +4029,22 @@
       </div>`;
   }
   // A lump-sum card (no bake dates picked) — single store OR combined.
+  // Two or more stores: one card — flavors down the side, stores (LM / ST) across.
+  const LOC_ABBR = { 'La Mirada': 'LM', 'Stanton': 'ST' };
+  function gridCardHtml(cols) {
+    const cells = f => cols.map(f).join('');
+    const rows = PRODUCTS.map(p => `<div class="pg-row"><span class="k">${tok(p)}${p}</span>${cells(c => {
+      const n = c.bake[p] || 0;
+      return n > 0 ? `<span class="pg-c"><b>bake ${n}</b><small>${batchLabel(flavorBatches(n))}</small></span>` : `<span class="pg-c pg-ok">enough</span>`;
+    })}</div>`).join('');
+    return `<div class="proj-card pg-card">
+        <h3>By store${infoBtn()}</h3>
+        <div class="pg-row pg-head"><span></span>${cells(c => `<span class="pg-c">${LOC_ABBR[c.loc] || c.loc}</span>`)}</div>
+        <div class="pg-row pg-time"><span class="k">In the kitchen</span>${cells(c => `<span class="pg-c"><b>${c.eff.min ? fmtDur(c.eff.min) : '—'}</b>${c.eff.batches ? `<small>${batchLabel(c.eff.batches)}</small>` : ''}</span>`)}</div>
+        ${rows}
+        <div class="info-body" hidden>${cols.map(c => `<div class="be-section-label">${c.loc}</div><div class="proj-sub">${c.sub}</div>${c.detail}`).join('')}</div>
+      </div>`;
+  }
   function lumpCardHtml(title, subLine, bakeMap, haveMap, expMap) {
     let rows = '', haveRows = '', bakeSafe = 0, bakeExp = 0;
     for (const p of PRODUCTS) {
@@ -4124,11 +4155,20 @@
           html += scheduleCardHtml('Both stores · combined', `${stockTotal} on hand across ${withEvents.length === 1 ? 'store' : 'both stores'} · ${dayWord}`, merged, target);
         }
       } else {
+        const gridCols = [];
         for (const w of withEvents) {
           const evs = applySplit(w.events, planSplit);
           tally(evs);
+          if (withEvents.length > 1) {
+            const bake = ZERO(); for (const ev of evs) for (const q of PRODUCTS) bake[q] += ev.bake[q] || 0;
+            const eff = sumEff(evs.map(ev => bakeEffort(ev.bake)));
+            const days = evs.map(ev => `<div class="bake-event"><div class="be-head">${wkShort(ev.ymd)} ${fmtWhen(ev.ymd)} <span class="be-cover">covers thru ${wkShort(ev.coverUntil)} ${fmtWhen(ev.coverUntil)}</span></div>${ev.any ? `<div class="be-chips">${PRODUCTS.filter(q => ev.bake[q] > 0).map(q => kvRow(tok(q), q, ev.bake[q], ` · ${batchLabel(flavorBatches(ev.bake[q]))}`)).join('')}</div>` : '<div class="be-enough">enough on hand — no bake needed</div>'}</div>`).join('');
+            gridCols.push({ loc: w.loc, bake, eff, sub: `${w.st.stockTotal} on hand now · ${dayWord}${trendNote(w.st)}`, detail: days + kitchenRows(eff) });
+            continue;
+          }
           html += scheduleCardHtml(`${w.loc}`, `${w.st.stockTotal} on hand now · ${dayWord}${trendNote(w.st)}`, evs, target);
         }
+        if (gridCols.length) html += gridCardHtml(gridCols);
       }
     } else {
       const withMaps = usable.map(c => {
@@ -4148,6 +4188,13 @@
           html += lumpCardHtml('Both stores · combined', `${nDays} day${nDays === 1 ? '' : 's'} to go · ${stockTotal} on hand across ${withMaps.length === 1 ? 'store' : 'both stores'}`, bakeMap, haveMap, expMap);
         }
       } else {
+        if (withMaps.length > 1) {
+          html += gridCardHtml(withMaps.map(w => {
+            const eff = bakeEffort(w.bakeMap);
+            const have = PRODUCTS.map(q => `<div class="proj-row"><span class="k">${q}</span><span>have <b>${w.haveMap[q]}</b> · expected need ${Math.ceil(w.expMap[q])}</span></div>`).join('');
+            return { loc: w.loc, bake: w.bakeMap, eff, sub: `${w.nDays} day${w.nDays === 1 ? '' : 's'} to go · ${w.nDays - w.nWe} weekday / ${w.nWe} weekend · ${w.st.stockTotal} on hand now${trendNote(w.st)}`, detail: `<div class="be-section-label">On hand</div>${have}${eff.min ? kitchenRows(eff) : ''}` };
+          }));
+        } else
         for (const w of withMaps)
           html += lumpCardHtml(`${w.loc}`, `${w.nDays} day${w.nDays === 1 ? '' : 's'} to go · ${w.nDays - w.nWe} weekday / ${w.nWe} weekend · ${w.st.stockTotal} on hand now${trendNote(w.st)}`, w.bakeMap, w.haveMap, w.expMap);
       }
