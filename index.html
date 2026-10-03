@@ -1044,15 +1044,15 @@
   .kt-grid input { font-size: var(--fs-body); padding: 8px 10px; width: 100%; border: none; background: var(--tint); color: var(--text); }
 
   /* ================= Photo palette, bright (final block — wins over everything above) =================
-     Colours sampled from the Home photo: caramel crust #a45a22, cream plate #d6cbb9, light backdrop #e0dede,
+     Colours sampled from the Home photo: caramel crust #35465c, cream plate #d6cbb9, light backdrop #e0dede,
      shadow navy #232a33. Light ground, navy ink, caramel for selected / primary / links. The Home landing
      itself stays on the photo. */
   :root {
     color-scheme: light;
     --bg: #f2eee7; --card: #fbf9f5; --field: #e8e2d6; --sep: #ddd5c6;
     --text: #232a33; --muted: #6d6660; --plum: #232a33;
-    --accent: #a45a22; --tint: rgba(35,42,51,0.07);
-    --grad: linear-gradient(#a45a22, #a45a22);
+    --accent: #35465c; --tint: rgba(35,42,51,0.07);
+    --grad: linear-gradient(#35465c, #35465c);
   }
   input, select, textarea { color: var(--text); }
   .home-card { background: var(--card); }
@@ -1063,7 +1063,7 @@
   /* nav: one light bar, the current tab in caramel */
   .tabbar, body.home-landing .tabbar { background: #fbf9f5; border-top: 1px solid var(--sep); }
   .tabbar button { color: var(--muted); }
-  .tabbar button.on { background: rgba(164,90,34,0.12); color: var(--accent); }
+  .tabbar button.on { background: rgba(53,70,92,0.12); color: var(--accent); }
   /* dropdown arrows */
   .filter-bar select, .home-card .filter-bar select { background-color: var(--tint); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23232a33' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); color: var(--text); }
   .db-filter select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23232a33' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
@@ -1096,17 +1096,17 @@
   }
   .filter-bar select, .home-card .filter-bar select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23232a33' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
   .seg button.on, .seg button.on[data-type], .pill.on, .chip-row button.on, .rec-scale button.on, .bakedays button.on {
-    background: rgba(164,90,34,0.16); border: 1px solid var(--accent); color: var(--accent);
+    background: rgba(53,70,92,0.16); border: 1px solid var(--accent); color: var(--accent);
   }
   .seg button.on .ic svg { stroke: var(--accent); }
-  .btn-primary, .submit, .db-new { background: rgba(164,90,34,0.90); border: 1px solid var(--accent); color: #fff;
+  .btn-primary, .submit, .db-new { background: rgba(53,70,92,0.90); border: 1px solid var(--accent); color: #fff;
     -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
   /* segmented control: an outlined track, the current option as caramel glass */
   .db-filter { background: transparent; border: 1px solid rgba(35,42,51,0.30); padding: 3px; }
   .db-filter button, .db-filter select { background-color: transparent; background-image: none; border: 1px solid transparent; color: var(--text); }
   .db-filter select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23232a33' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
-  .db-filter button.on, .db-filter select.on { background-color: rgba(164,90,34,0.16); border: 1px solid var(--accent); color: var(--accent); }
-  .db-filter select.on { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23a45a22' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+  .db-filter button.on, .db-filter select.on { background-color: rgba(53,70,92,0.16); border: 1px solid var(--accent); color: var(--accent); }
+  .db-filter select.on { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%2335465c' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
 
   /* ---- × − + need no border; goodwill's place is a dropdown ---- */
   .em-close, .amt .step, .bs-step button { background: transparent; border: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
@@ -1118,7 +1118,7 @@
   #locPills[hidden] { display: none; }
 
   /* Fix: the selected Data-filter button kept an older solid image fill that hid its label. */
-  .db-filter button.on { background-image: none; background-color: rgba(164,90,34,0.16); color: var(--accent); }
+  .db-filter button.on { background-image: none; background-color: rgba(53,70,92,0.16); color: var(--accent); }
   .db-filter button:focus, .db-filter button:focus-visible { outline: none; }
 
   /* ---- Home landing: the bottom bar is see-through too, outlined like the buttons over the photo ---- */
@@ -1140,7 +1140,7 @@
   .sp-grp { padding: 10px 14px 4px; font-size: var(--fs-micro); font-weight: 700; letter-spacing: .5px; text-transform: uppercase; color: var(--muted); }
   .sp-item { width: 100%; border: 0; background: none; font-family: inherit; text-align: left; -webkit-appearance: none; appearance: none; touch-action: manipulation; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; font-size: var(--fs-body); color: var(--text); cursor: pointer; }
   .sp-item:active, .sp-item:hover { background: rgba(35,42,51,0.07); }
-  .sp-item.on { background: rgba(164,90,34,0.14); color: var(--accent); font-weight: 700; }
+  .sp-item.on { background: rgba(53,70,92,0.14); color: var(--accent); font-weight: 700; }
   .sp-item b { font-weight: 700; }
   select:focus, select:focus-visible { outline: none; border-color: var(--accent); }
 
@@ -1236,7 +1236,7 @@
   #tmUse { margin-top: 8px; } #tmUse:disabled { opacity: .45; }
   /* Baking mode + saved sheets */
   .bm-row { display: flex; align-items: center; gap: 10px; margin: 0 0 10px; } .bm-btn { width: auto; margin: 0; padding: 8px 14px; flex: none; }
-  .bm-btn.on { color: var(--accent); border-color: var(--accent); background: rgba(164,90,34,0.16); } .bm-hint { color: var(--muted); font-size: var(--fs-caption); }
+  .bm-btn.on { color: var(--accent); border-color: var(--accent); background: rgba(53,70,92,0.16); } .bm-hint { color: var(--muted); font-size: var(--fs-caption); }
   #bmBadge { position: fixed; left: 0; right: 0; bottom: calc(var(--tabbar-h) + min(var(--safe-bottom), 8px)); z-index: 45; text-align: center; }
   #bmBadge button { border: none; background: var(--accent); color: #fff; font-size: var(--fs-micro); padding: 5px 12px; width: 100%; cursor: pointer; font-family: inherit; }
   .bs-foot2 { display: flex; gap: 8px; margin-top: 8px; } .bs-foot2 button { flex: 1; margin: 0; }
@@ -1245,7 +1245,7 @@
   #bsKitchen { padding: 0 14px; } #bsKitchen .be-section-label { margin-top: 10px; }
   .tm-plan-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--sep); }
   .info-btn { float: right; width: 24px; height: 24px; padding: 0; border: 1px solid var(--muted); background: transparent; color: var(--muted); font-family: "Cormorant Garamond", Georgia, serif; font-style: italic; font-weight: 700; font-size: var(--fs-body); line-height: 1; cursor: pointer; border-radius: 50% !important; }
-  .info-btn.on { color: var(--accent); border-color: var(--accent); background: rgba(164,90,34,0.16); }
+  .info-btn.on { color: var(--accent); border-color: var(--accent); background: rgba(53,70,92,0.16); }
   .info-body { margin-top: 8px; padding-top: 6px; border-top: 1px solid var(--sep); }
   .info-body[hidden] { display: none; }
   .cost-hint { color: var(--muted); font-size: var(--fs-micro); font-weight: 500; }
@@ -1288,7 +1288,7 @@
   .tm-log { padding-right: 56px !important; }
   #tmEditScrim .inv-field input[type=text] { flex: 1; min-width: 0; text-align: right; }
   /* Distinct sections on Forecast and Timers: a header bar + a clear gap above each */
-  #homeForecast .group-label, #homeTimers .group-label { margin: 22px 0 8px; padding: 7px 12px; background: rgba(164,90,34,0.12); border-left: 3px solid var(--accent); color: var(--text); font-size: var(--fs-caption); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+  #homeForecast .group-label, #homeTimers .group-label { margin: 22px 0 8px; padding: 7px 12px; background: rgba(53,70,92,0.12); border-left: 3px solid var(--accent); color: var(--text); font-size: var(--fs-caption); font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
   #homeForecast > .group-label:first-of-type, #homeTimers > .group-label:first-of-type { margin-top: 6px; }
   #homeForecast .card, #homeTimers .card { border: 1px solid var(--sep); }
   #homeContent .hint { margin-top: 6px; }
@@ -1344,7 +1344,7 @@
   /* Invoice store: two buttons instead of a dropdown (the list was being swallowed by the date fields on iPhone) */
   .inv-store { display: flex; gap: 8px; }
   .inv-store button { padding: 8px 14px; font: inherit; font-size: var(--fs-body); color: var(--text); background: rgba(255,255,255,.30); border: 1px solid rgba(35,42,51,.35); cursor: pointer; touch-action: manipulation; }
-  .inv-store button.on { color: var(--accent); border-color: var(--accent); background: rgba(164,90,34,.14); font-weight: 700; }
+  .inv-store button.on { color: var(--accent); border-color: var(--accent); background: rgba(53,70,92,.14); font-weight: 700; }
   /* Home buttons: frosted glass rows with an icon and chevron */
   .home-menu { gap: 10px; }
   .home-menu button, .home-menu a.hm-link { border-radius: 18px !important; height: 60px; display: flex; align-items: center; gap: 14px; padding: 0 18px; text-align: left;
@@ -1386,13 +1386,13 @@
 
   /* ================= Photo outline, bright (final block) =================
      The Home photo's palette on a bright ground: warm white page #f8f5ef, cream cards, shadow-navy ink #232a33,
-     crust caramel #a45a22 for selected / primary, and a thin outline with rounded corners on cards and controls.
+     crust caramel #35465c for selected / primary, and a thin outline with rounded corners on cards and controls.
      Paper documents keep their own colours. */
   :root {
     color-scheme: light;
-    --bg: #f8f5ef; --card: #fffdf9; --field: #f0eadf; --sep: rgba(35,42,51,0.12);
-    --text: #232a33; --muted: #6d6660; --plum: #232a33; --accent: #a45a22; --tint: rgba(35,42,51,0.06);
-    --grad: linear-gradient(#a45a22, #a45a22);
+    --bg: #fcfbf9; --card: #ffffff; --field: #f1efeb; --sep: rgba(35,42,51,0.12);
+    --text: #232a33; --muted: #6d6660; --plum: #232a33; --accent: #35465c; --tint: rgba(35,42,51,0.06);
+    --grad: linear-gradient(#35465c, #35465c);
     --line: rgba(35,42,51,0.30);
   }
   html, body { background: var(--bg); color: var(--text); }
@@ -1407,24 +1407,24 @@
   }
   .filter-bar select, .home-card .filter-bar select, .db-filter select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23232a33' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
   .seg button.on, .seg button.on[data-type], .pill.on, .chip-row button.on, .rec-scale button.on, .bakedays button.on, .db-filter button.on, .db-filter select.on {
-    background-color: rgba(164,90,34,0.14); border-color: var(--accent); color: var(--accent);
+    background-color: rgba(53,70,92,0.14); border-color: var(--accent); color: var(--accent);
   }
-  .db-filter select.on { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23a45a22' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
+  .db-filter select.on { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%2335465c' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
   .seg button.on .ic svg { stroke: var(--accent); }
-  .btn-primary, .submit, .db-new { background: #a45a22; color: #fff; border: 1px solid #a45a22; border-radius: 8px !important; }
-  .tabbar, body.home-landing .tabbar { background: #fffdf9; border-top: 1px solid var(--sep); }
+  .btn-primary, .submit, .db-new { background: #35465c; color: #fff; border: 1px solid #35465c; border-radius: 8px !important; }
+  .tabbar, body.home-landing .tabbar { background: #ffffff; border-top: 1px solid var(--sep); }
   body.home-landing .tabbar { background: rgba(255,246,238,0.12); border-top-color: rgba(255,246,238,0.5); }
   .tabbar button { color: var(--muted); }
-  .tabbar button.on { background: rgba(164,90,34,0.12); color: var(--accent); }
-  .home-season { background: #fffdf9; color: #232a33; }
+  .tabbar button.on { background: rgba(53,70,92,0.12); color: var(--accent); }
+  .home-season { background: #ffffff; color: #232a33; }
   .db-day, .ver-badge { background: none; color: var(--muted); }
-  .sp-pop { background: #fffdf9; border: 1px solid var(--line); color: var(--text); }
+  .sp-pop { background: #ffffff; border: 1px solid var(--line); color: var(--text); }
   .sp-item { color: var(--text); }
   .sp-item:active, .sp-item:hover { background: rgba(35,42,51,0.06); }
-  .sp-item.on { background: rgba(164,90,34,0.14); color: var(--accent); }
+  .sp-item.on { background: rgba(53,70,92,0.14); color: var(--accent); }
   .info-btn { color: var(--muted); border-color: var(--line); }
   .inv-store button { background: rgba(255,255,255,0.55); border-color: var(--line); color: var(--text); }
-  .inv-store button.on { color: var(--accent); border-color: var(--accent); background: rgba(164,90,34,0.14); }
+  .inv-store button.on { color: var(--accent); border-color: var(--accent); background: rgba(53,70,92,0.14); }
   /* the outer frame around a row of buttons goes; the buttons keep their own rounded outlines */
   .db-filter, .seg { background: transparent !important; border: 0 !important; padding: 0 !important; gap: 8px; }
   .proj-card, .pg-card { padding: 14px 16px !important; }
@@ -1432,14 +1432,14 @@
 
   /* ================= Retail-app style for Data and Baking (final block) =================
      Taken from ~/kairosbaking/retail-app (fonts stay as on Home: calligraphy titles, Cormorant Garamond): flat sharp corners, hairline rows, a cool
-     stone ground #e8e6e2 with #f4f2ee cards, slate ink #242c35, solid caramel #a75f2f for selected / primary,
+     stone ground #e8e6e2 with #f4f2ee cards, slate ink #242c35, solid caramel #35465c for selected / primary,
      and a solid light-caramel nav bar. Scoped to the Data and Baking tabs; Home keeps the photo look. */
   #view-db, #view-plan {
-    --bg: #e8e6e2; --card: #f4f2ee; --field: #dcd9d3; --sep: #cfcbc4; --text: #242c35; --muted: #6d737b;
-    --accent: #a75f2f; --plum: #242c35; --tint: rgba(36,44,53,0.06); --line: #cfcbc4;
+    --bg: #fcfbf9; --card: #ffffff; --field: #efede9; --sep: #e2dfda; --text: #242c35; --muted: #6d737b;
+    --accent: #35465c; --plum: #242c35; --tint: rgba(36,44,53,0.06); --line: #dcd8d2;
     color: var(--text);
   }
-  body[data-tab="db"], body[data-tab="plan"] { background: #e8e6e2; }
+  body[data-tab="db"], body[data-tab="plan"] { background: #fcfbf9; }
   #view-db *, #view-plan * { border-radius: 0 !important; }
   #view-db button, #view-plan button, #view-db select, #view-plan select, #view-db input, #view-plan input, #view-plan textarea, #view-db .db-filter, #view-plan .db-filter { border-radius: 8px !important; }
   #view-db .card, #view-plan .card, #view-db .proj-card, #view-plan .proj-card, #view-db .db-entry, #view-plan .db-entry, #view-db .db-summary, #view-plan .rec-box, #view-plan .split-card, #view-plan .pg-card { border-radius: 10px !important; }
@@ -1474,12 +1474,12 @@
   #view-db .db-filter, #view-plan .db-filter { margin-bottom: 8px; }
   .fc-locs { display: flex; gap: 6px; margin: 0 0 10px; }
   .fc-locs button { padding: 5px 12px; font: inherit; font-size: var(--fs-caption); cursor: pointer; background: rgba(255,255,255,.55); border: 1px solid var(--line, rgba(35,42,51,.3)); color: var(--text); border-radius: 8px; }
-  .fc-locs button.on { color: var(--accent); border-color: var(--accent); background: rgba(164,90,34,.14); font-weight: 700; }
+  .fc-locs button.on { color: var(--accent); border-color: var(--accent); background: rgba(53,70,92,.14); font-weight: 700; }
   .pg-stale { font-size: var(--fs-caption); color: #8a4b00; background: rgba(255,149,0,.12); padding: 7px 10px; margin-top: 8px; }
   .pg-stale > div { display: inline; background: none; padding: 0; margin: 0; }
   .pg-card .pg-c > span { white-space: nowrap; }
   /* nav: solid light caramel, flush, only while Data / Baking is open */
-  body[data-tab="db"] .tabbar, body[data-tab="plan"] .tabbar { background: #c4793d; border-top: 0; }
+  body[data-tab="db"] .tabbar, body[data-tab="plan"] .tabbar { background: #f3f1ed; border-top: 1px solid #e2dfda; }
   body[data-tab="db"] .tabbar button, body[data-tab="plan"] .tabbar button { color: #242c35; opacity: .75; }
   body[data-tab="db"] .tabbar button.on, body[data-tab="plan"] .tabbar button.on { background: rgba(36,44,53,.16); color: #242c35; opacity: 1; font-weight: 700; }
 </style>
@@ -1779,7 +1779,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.69.03 · Oct 3, 12:35 PM</div>
+<div class="ver-badge">v1.69.04 · Oct 3, 1:00 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
