@@ -1486,6 +1486,10 @@
      so it stays clear of the nav on a real iPhone where the viewport is shorter) */
   #view-home:not(.paged) .home-menu { flex: none; margin: auto 0; }
   #view-home:not(.paged) .home-menu a.hm-link { margin-top: 34px; margin-bottom: 0; }
+  .rec-h { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+  .rec-ver { display: inline-flex; gap: 4px; margin-left: 2px; }
+  .rec-ver button { padding: 2px 9px; font: inherit; font-size: var(--fs-caption); font-weight: 600; cursor: pointer; background: var(--field); border: 1px solid transparent; color: var(--text); border-radius: 8px; }
+  .rec-ver button.on { background: rgba(53,70,92,.12); border-color: var(--accent); color: var(--accent); }
   /* nav: solid light caramel, flush, only while Data / Baking is open */
   body[data-tab="db"] .tabbar, body[data-tab="plan"] .tabbar { background: #f3f1ed; border-top: 1px solid #e2dfda; }
   body[data-tab="db"] .tabbar button, body[data-tab="plan"] .tabbar button { color: #242c35; opacity: .75; }
@@ -1787,7 +1791,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.69.09 · Oct 3, 2:20 PM</div>
+<div class="ver-badge">v1.69.10 · Oct 3, 2:40 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -4627,14 +4631,14 @@
     if (item.versions) {
       const v = item.versions[recState.madVer];
       verLbl = ` · ${v.label}`;
-      verChips = `<div class="rec-scale">${item.versions.map((vv, i) => `<button data-rmadver="${i}" class="${recState.madVer === i ? 'on' : ''}">${vv.label}</button>`).join('')}</div>`;
+      verChips = `<span class="rec-ver">${item.versions.map((vv, i) => `<button data-rmadver="${i}" class="${recState.madVer === i ? 'on' : ''}">${vv.label}</button>`).join('')}</span>`;
     }
     const rows = recMadSort(recMadRows(item));
     const b = recState.batches;
     return `<div class="proj-card">
-        <h3>${recIc(item.name)} ${item.title || item.name + ' Madeleine'}</h3>
-        <div class="proj-sub">1 batch ≈ ${item.yield || BATCH_YIELD} ${item.type === 'muffin' ? 'pieces' : 'madeleines'}${verLbl}${b !== 1 ? ` · scaled ${rFmt(b)}×` : ''}</div>
-        ${verChips}${recBatchRow()}
+        <h3 class="rec-h">${recIc(item.name)} <span>${item.title || item.name + ' Madeleine'}</span>${verChips}</h3>
+        <div class="proj-sub">1 batch ≈ ${item.yield || BATCH_YIELD} ${item.type === 'muffin' ? 'pieces' : 'madeleines'}${b !== 1 ? ` · scaled ${rFmt(b)}×` : ''}</div>
+        ${recBatchRow()}
         ${recIngRows(rows, b)}
         ${item.note ? `<div class="rec-box"><b>Flavoring</b>${rScaleNote(item.note, b)}</div>` : ''}
         ${item.finishFor ? `<div class="rec-box"><b>Syrup &amp; glaze yield</b>The syrup and glaze below are enough for ${item.finishFor} pieces (${rFmt(item.finishFor / (item.yield || BATCH_YIELD))} batches). Cost, the bake plan and the buy list use the share for one batch.</div>` : ''}
