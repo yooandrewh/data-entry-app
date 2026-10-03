@@ -1802,7 +1802,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.70.03 · Oct 3, 4:30 PM</div>
+<div class="ver-badge">v1.70.04 · Oct 3, 4:45 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -4994,11 +4994,9 @@
       <div class="proj-row"><span class="k">Margin on wholesale</span><span><input class="cost-in" type="number" inputmode="decimal" step="any" min="0" max="90" value="${rFmt(LAB.margin)}" data-lmargin="1">%</span></div>
       <div class="proj-row"><span class="k cost-total">Suggested wholesale price</span><span class="cost-total">${wholesale != null ? '$' + wholesale.toFixed(2) : '—'}</span></div>
       ${wholesale != null && sec === 'mad' ? `<div class="cost-hint" style="padding:4px 0">Retail price in the app is ${money(PRICE_PER_UNIT)}${wholesale > PRICE_PER_UNIT ? ' — this wholesale price is above it' : ''}.</div>` : ''}</div>`;
-    const stat = (l, v) => `<div class="cost-stat"><span>${l}</span><b>${v}</b></div>`;
     document.getElementById('costCard').innerHTML = `<div class="proj-card">
       <h3>${recIc(it.name)} ${esc(costItemName(sec, it))}</h3>
       <div class="proj-sub">ingredient cost for 1 batch of the base recipe</div>
-      <div class="cost-stats">${stat('Cost per item', totalItem != null ? money(totalItem) : '—')}${stat('Wholesale', wholesale != null ? '$' + wholesale.toFixed(2) : '—')}${stat('Batch cost', missing ? '—' : '$' + batch.toFixed(2))}</div>
       <div class="cost-sec"><div class="cost-sub">Ingredients · 1 batch</div>
       ${lines}
       ${missing ? '<div class="cost-miss" style="margin-top:8px">Some ingredients have no price yet — add them under Ingredient prices.</div>' : ''}
