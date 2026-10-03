@@ -1431,25 +1431,16 @@
   .proj-card .proj-row:last-child, .pg-card .pg-row:last-of-type { border-bottom: 0; }
 
   /* ================= Retail-app style for Data and Baking (final block) =================
-     Taken from ~/kairosbaking/retail-app: Kakao Small Sans (light), flat sharp corners, hairline rows, a cool
+     Taken from ~/kairosbaking/retail-app (fonts stay as on Home: calligraphy titles, Cormorant Garamond): flat sharp corners, hairline rows, a cool
      stone ground #e8e6e2 with #f4f2ee cards, slate ink #242c35, solid caramel #a75f2f for selected / primary,
      and a solid light-caramel nav bar. Scoped to the Data and Baking tabs; Home keeps the photo look. */
-  @font-face { font-family: 'Kakao Small Sans'; font-weight: 300; font-style: normal; font-display: swap;
-    src: url('https://cdn.jsdelivr.net/gh/fonts-archive/KakaoSmallSans/KakaoSmallSans-Light.woff2') format('woff2'); }
-  @font-face { font-family: 'Kakao Small Sans'; font-weight: 400; font-style: normal; font-display: swap;
-    src: url('https://cdn.jsdelivr.net/gh/fonts-archive/KakaoSmallSans/KakaoSmallSans-Regular.woff2') format('woff2'); }
-  @font-face { font-family: 'Kakao Small Sans'; font-weight: 700; font-style: normal; font-display: swap;
-    src: url('https://cdn.jsdelivr.net/gh/fonts-archive/KakaoSmallSans/KakaoSmallSans-Bold.woff2') format('woff2'); }
   #view-db, #view-plan {
     --bg: #e8e6e2; --card: #f4f2ee; --field: #dcd9d3; --sep: #cfcbc4; --text: #242c35; --muted: #6d737b;
     --accent: #a75f2f; --plum: #242c35; --tint: rgba(36,44,53,0.06); --line: #cfcbc4;
-    font-family: "Kakao Small Sans", -apple-system, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; font-weight: 300; color: var(--text);
+    color: var(--text);
   }
   body[data-tab="db"], body[data-tab="plan"] { background: #e8e6e2; }
   #view-db *, #view-plan * { border-radius: 0 !important; }
-  #view-db button, #view-db input, #view-db select, #view-plan button, #view-plan input, #view-plan select, #view-plan textarea { font-family: inherit; font-weight: 400; }
-  #view-db h1, #view-plan h1 { font-family: "Kakao Small Sans", -apple-system, sans-serif; font-weight: 400; font-size: 32px; letter-spacing: 0; }
-  #view-db h3, #view-plan h3, #view-plan h4 { font-family: inherit; font-weight: 700; }
   #view-db .card, #view-plan .card, #view-db .proj-card, #view-plan .proj-card, #view-db .db-entry, #view-plan .db-entry,
   #view-db .db-summary, #view-plan .rec-box, #view-plan .split-card, #view-plan .pg-card { background: var(--card); border: 1px solid var(--sep); box-shadow: none; }
   #view-db .db-entry.db-fold, #view-db .db-month { background: var(--card); }
@@ -1469,9 +1460,17 @@
   #view-db input, #view-plan input, #view-plan textarea { background: var(--field); border: 0; color: var(--text); }
   #view-db .proj-row, #view-plan .proj-row, #view-plan .pg-row, #view-db .row, #view-plan .row { border-color: var(--sep); }
   #view-db .db-day, #view-plan .db-day { color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .5px; font-size: var(--fs-micro); }
+  /* smaller buttons on Data and Baking */
+  #view-db .db-filter button, #view-plan .db-filter button, #view-db .db-filter select, #view-plan .db-filter select { padding: 6px 8px !important; min-height: 0 !important; height: auto !important; font-size: var(--fs-caption) !important; gap: 5px; }
+  #view-db .db-filter button .ic2, #view-plan .db-filter button .ic2, #view-db .db-filter button svg, #view-plan .db-filter button svg { width: 15px !important; height: 15px !important; }
+  #view-db .filter-bar select, #view-plan .filter-bar select, #view-plan select, #view-db select { padding: 6px 28px 6px 9px !important; min-height: 0 !important; height: 32px !important; font-size: var(--fs-caption) !important; background-size: 9px !important; background-position: right 9px center !important; }
+  #view-db .db-new, #view-db .btn-primary, #view-plan .btn-primary { padding: 7px 14px !important; min-height: 0 !important; height: auto !important; font-size: var(--fs-caption) !important; }
+  #view-plan .chip-row button, #view-plan .rec-scale button, #view-plan .bakedays button, #view-plan .bakedate-add button, #view-plan .btn-ghost, #view-db .pill, #view-plan .pill { padding: 4px 9px !important; min-height: 0 !important; font-size: var(--fs-caption) !important; }
+  #view-plan .bakedays button { width: 28px !important; height: 28px !important; padding: 0 !important; }
+  #view-plan .bs-step button, #view-plan .amt .step { width: 28px !important; height: 28px !important; min-height: 0 !important; padding: 0 !important; }
+  #view-db .db-filter, #view-plan .db-filter { margin-bottom: 8px; }
   /* nav: solid light caramel, flush, only while Data / Baking is open */
-  body[data-tab="db"] .tabbar, body[data-tab="plan"] .tabbar { background: #c4793d; border-top: 0; font-family: "Kakao Small Sans", -apple-system, sans-serif; }
-  body[data-tab="db"] .tabbar button, body[data-tab="plan"] .tabbar button { font-family: inherit; font-weight: 600; }
+  body[data-tab="db"] .tabbar, body[data-tab="plan"] .tabbar { background: #c4793d; border-top: 0; }
   body[data-tab="db"] .tabbar button, body[data-tab="plan"] .tabbar button { color: #242c35; opacity: .75; }
   body[data-tab="db"] .tabbar button.on, body[data-tab="plan"] .tabbar button.on { background: rgba(36,44,53,.16); color: #242c35; opacity: 1; font-weight: 700; }
 </style>
@@ -1771,7 +1770,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.69.00 · Oct 3, 11:30 AM</div>
+<div class="ver-badge">v1.69.01 · Oct 3, 11:55 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
