@@ -1802,7 +1802,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.70.04 · Oct 3, 4:45 PM</div>
+<div class="ver-badge">v1.70.05 · Oct 3, 5:30 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -4637,6 +4637,27 @@
     return [['Cake Flour', item.flour], ['Baking Powder', REC_MAD_BASE['Baking Powder']], ['Salt', item.salt], ['Eggs', REC_MAD_BASE['Eggs']], ['Sugar', REC_MAD_BASE['Sugar']], ['Vanilla Extract', REC_MAD_BASE['Vanilla Extract']], ['Unsalted Butter', REC_MAD_BASE['Unsalted Butter']]];
   }
   const recMadRows = item => recMadRowsV(item, recState.madVer);
+  // Ver B for seven flavors (2026-10-03, from the "Madeleine base update" page): the Brown Butter recipe rescaled to a 20-piece batch with
+  // plain melted butter. Original stays as it was; where a flavor already had a "Ver B" it moves to "Ver C". Flavoring is in the rows, so the
+  // flavoring note is skipped for Ver B (skipNote). Yield 20 is shown on the card; costs, the plan and labels still use the standard batch.
+  (() => {
+    const base = [['Cake Flour', 208], ['Baking Powder', 8], ['Skim Milk Powder', 5], ['Salt', 0.8], ['Unsalted Butter', 175], ['Milk', 12], ['Eggs', 142], ['Sugar', 133], ['Honey', 17], ['Vanilla Extract', 5]];
+    const swap = (rows, name, amt) => rows.map(r => r[0] === name ? [name, amt] : r);
+    const drop = (rows, ...names) => rows.filter(r => !names.includes(r[0]));
+    const B = {
+      'Classic': base, 'Peach Crumble': base, 'Dot Cake': base,
+      'Lemon Poppy': [...base, ['Lemon Emulsion', 4], ['Poppy Seed', 6]],
+      'Ube': [...swap(base, 'Cake Flour', 168), ['Ube Powder', 20], ['Ube Extract', 2.5]],
+      'Earl Grey': [...drop(base, 'Milk'), ['Earl Grey Tea Leaves', 5], ['Heavy Cream', 24]],
+      'Maple Pecan': [...drop(swap(base, 'Cake Flour', 178), 'Sugar', 'Honey'), ['Brown Sugar', 103], ['Toasted Pecans (ground fine)', 30], ['Pure Maple Syrup (dark/robust)', 30]],
+    };
+    for (const it of REC_MADS) {
+      const rows = B[it.name]; if (!rows) continue;
+      const verB = { label: 'Ver B', rows, yield: 20, skipNote: true };
+      if (!it.versions) it.versions = [{ label: 'Original', rows: recMadRowsV(it) }, verB];
+      else { const old = it.versions.splice(1); it.versions.push(verB, ...old.map(v => ({ ...v, label: 'Ver C' }))); }
+    }
+  })();
   function recMadCard(item) {
     let verChips = '', verLbl = '';
     if (item.versions) {
@@ -4648,10 +4669,10 @@
     const b = recState.batches;
     return `<div class="proj-card">
         <h3 class="rec-h">${recIc(item.name)} <span>${item.title || item.name + ' Madeleine'}</span>${verChips}</h3>
-        <div class="proj-sub">1 batch ≈ ${item.yield || BATCH_YIELD} ${item.type === 'muffin' ? 'pieces' : 'madeleines'}${b !== 1 ? ` · scaled ${rFmt(b)}×` : ''}</div>
+        <div class="proj-sub">1 batch ≈ ${(item.versions && item.versions[recState.madVer].yield) || item.yield || BATCH_YIELD} ${item.type === 'muffin' ? 'pieces' : 'madeleines'}${b !== 1 ? ` · scaled ${rFmt(b)}×` : ''}</div>
         ${recBatchRow()}
         ${recIngRows(rows, b)}
-        ${item.note ? `<div class="rec-box"><b>Flavoring</b>${rScaleNote(item.note, b)}</div>` : ''}
+        ${item.note && !(item.versions && item.versions[recState.madVer].skipNote) ? `<div class="rec-box"><b>Flavoring</b>${rScaleNote(item.note, b)}</div>` : ''}
         ${item.finishFor ? `<div class="rec-box"><b>Syrup &amp; glaze yield</b>The syrup and glaze below are enough for ${item.finishFor} pieces (${rFmt(item.finishFor / (item.yield || BATCH_YIELD))} batches). Cost, the bake plan and the buy list use the share for one batch.</div>` : ''}
         ${item.syrup ? `<div class="rec-box"><b>Simple Syrup</b>${item.syrup.map(g => `<div class="gl"><span>${g[0]}</span><span>${rScaleStr(g[1], b)}</span></div>`).join('')}</div>` : ''}
         ${item.glaze ? `<div class="rec-box"><b>Glaze</b>${item.glaze.map(g => `<div class="gl"><span>${g[0]}</span><span>${rScaleStr(g[1], b)}</span></div>`).join('')}</div>` : ''}
@@ -5463,7 +5484,7 @@
   let lblItem = null;
   // Ingredient groups + per-piece weight for one madeleine (ver = which recipe version's rows to use).
   function lblCalc(item, ver) {
-    const batter = [...recMadSort(recMadRowsV(item, ver)), ...lblNoteRows(item.note)].map(r => [r[0], lblGrams(r[1])]);
+    const batter = [...recMadSort(recMadRowsV(item, ver)), ...((item.versions && item.versions[ver || 0].skipNote) ? [] : lblNoteRows(item.note))].map(r => [r[0], lblGrams(r[1])]);
     const fk = item.finishFor ? (item.yield || BATCH_YIELD) / item.finishFor : 1;
     const glaze = (item.glaze || []).map(g => [g[0], lblGrams(g[1]) * fk]);
     const topping = (item.topping || []).map(g => [g[0], lblGrams(g[1])]);
