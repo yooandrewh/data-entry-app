@@ -1490,6 +1490,12 @@
   .rec-ver { display: inline-flex; gap: 4px; margin-left: 2px; }
   .rec-ver button { padding: 2px 9px; font: inherit; font-size: var(--fs-caption); font-weight: 600; cursor: pointer; background: var(--field); border: 1px solid transparent; color: var(--text); border-radius: 8px; }
   .rec-ver button.on { background: rgba(53,70,92,.12); border-color: var(--accent); color: var(--accent); }
+  .cost-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 10px 0 4px; }
+  .cost-stat { border: 1px solid var(--sep); border-radius: 10px; padding: 8px 10px; background: var(--field); display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .cost-stat span { font-size: var(--fs-micro); color: var(--muted); text-transform: uppercase; letter-spacing: .5px; font-weight: 700; }
+  .cost-stat b { font-size: var(--fs-lg); color: var(--text); }
+  .cost-sec { margin-top: 16px; padding-top: 4px; border-top: 1px solid var(--sep); }
+  .cost-sec .cost-sub { font-size: var(--fs-micro); color: var(--muted); text-transform: uppercase; letter-spacing: .6px; font-weight: 700; margin: 8px 0 2px; }
   /* nav: solid light caramel, flush, only while Data / Baking is open */
   body[data-tab="db"] .tabbar, body[data-tab="plan"] .tabbar { background: #f3f1ed; border-top: 1px solid #e2dfda; }
   body[data-tab="db"] .tabbar button, body[data-tab="plan"] .tabbar button { color: #242c35; opacity: .75; }
@@ -1791,7 +1797,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.69.10 · Oct 3, 2:40 PM</div>
+<div class="ver-badge">v1.70.00 · Oct 3, 3:10 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -4975,24 +4981,28 @@
     const totalItem = unitCost != null && labItem != null ? unitCost + labItem : null;
     const mg = Math.min(90, Math.max(0, LAB.margin)) / 100;
     const wholesale = totalItem != null ? Math.ceil(totalItem / (1 - mg) * 20) / 20 : null;   // to the next 5¢
-    const laborHtml = `<div class="cost-sub">Labor &amp; wholesale</div>
+    const laborHtml = `<div class="cost-sec"><div class="cost-sub">Labor &amp; pricing</div>
       <div class="proj-row"><span class="k">Labor minutes per batch<span class="cost-hint"> · from Kitchen Times: ${labMinsDef}</span></span><span><input class="cost-in" type="number" inputmode="decimal" step="any" min="0" value="${rFmt(labMins)}" data-clab="1"></span></div>
       <div class="proj-row"><span class="k">Labor rate per hour</span><span>$<input class="cost-in" type="number" inputmode="decimal" step="any" min="0" value="${rFmt(LAB.rate)}" data-lrate="1"></span></div>
       <div class="proj-row"><span class="k">Labor per item</span><span><b>${labItem != null ? money(labItem) : '—'}</b></span></div>
       <div class="proj-row"><span class="k cost-total">Total cost per item</span><span class="cost-total">${totalItem != null ? money(totalItem) : '—'}</span></div>
       <div class="proj-row"><span class="k">Margin on wholesale</span><span><input class="cost-in" type="number" inputmode="decimal" step="any" min="0" max="90" value="${rFmt(LAB.margin)}" data-lmargin="1">%</span></div>
       <div class="proj-row"><span class="k cost-total">Suggested wholesale price</span><span class="cost-total">${wholesale != null ? '$' + wholesale.toFixed(2) : '—'}</span></div>
-      ${wholesale != null && sec === 'mad' ? `<div class="cost-hint" style="padding:4px 0">Retail price in the app is ${money(PRICE_PER_UNIT)}${wholesale > PRICE_PER_UNIT ? ' — this wholesale price is above it' : ''}.</div>` : ''}`;
+      ${wholesale != null && sec === 'mad' ? `<div class="cost-hint" style="padding:4px 0">Retail price in the app is ${money(PRICE_PER_UNIT)}${wholesale > PRICE_PER_UNIT ? ' — this wholesale price is above it' : ''}.</div>` : ''}</div>`;
+    const stat = (l, v) => `<div class="cost-stat"><span>${l}</span><b>${v}</b></div>`;
     document.getElementById('costCard').innerHTML = `<div class="proj-card">
       <h3>${recIc(it.name)} ${esc(costItemName(sec, it))}</h3>
       <div class="proj-sub">ingredient cost for 1 batch of the base recipe</div>
+      <div class="cost-stats">${stat('Cost per item', totalItem != null ? money(totalItem) : '—')}${stat('Wholesale', wholesale != null ? '$' + wholesale.toFixed(2) : '—')}${stat('Batch cost', missing ? '—' : '$' + batch.toFixed(2))}</div>
+      <div class="cost-sec"><div class="cost-sub">Ingredients · 1 batch</div>
       ${lines}
       ${missing ? '<div class="cost-miss" style="margin-top:8px">Some ingredients have no price yet — add them under Ingredient prices.</div>' : ''}
-      <div class="proj-row"><span class="k cost-total">Batch cost</span><span class="cost-total">${missing ? '—' : '$' + batch.toFixed(2)}</span></div>
+      <div class="proj-row"><span class="k cost-total">Batch cost</span><span class="cost-total">${missing ? '—' : '$' + batch.toFixed(2)}</span></div></div>
+      <div class="cost-sec"><div class="cost-sub">Per item</div>
       <div class="proj-row"><span class="k">Pieces per batch</span><span><input class="cost-in" type="number" inputmode="decimal" step="any" min="0" placeholder="?" value="${yv === '' ? '' : rFmt(yv)}" data-cyield="1"></span></div>
       <div class="proj-row"><span class="k cost-total">Batter cost per item</span><span class="cost-total">${per != null ? money(per) : '—'}</span></div>
-      ${tops.length ? `<div class="cost-sub">Filling &amp; topping, per item</div>${topHtml}
-        <div class="proj-row"><span class="k cost-total">Cost per item, finished</span><span class="cost-total">${finished != null ? money(finished) : '—'}</span></div>` : ''}
+      ${tops.length ? `${topHtml}
+        <div class="proj-row"><span class="k cost-total">Cost per item, finished</span><span class="cost-total">${finished != null ? money(finished) : '—'}</span></div>` : ''}</div>
       ${laborHtml}
     </div>`;
   }
