@@ -1418,7 +1418,7 @@
   .tabbar button.on { background: rgba(53,70,92,0.12); color: var(--accent); }
   .home-season { background: #ffffff; color: #232a33; }
   .db-day, .ver-badge { background: none; color: var(--muted); }
-  .sp-pop { background: #ffffff; border: 1px solid var(--line); color: var(--text); }
+  .sp-pop { background: #ffffff; border: 1px solid var(--line); color: var(--text); border-radius: 8px !important; overflow-x: hidden; }
   .sp-item { color: var(--text); }
   .sp-item:active, .sp-item:hover { background: rgba(35,42,51,0.06); }
   .sp-item.on { background: rgba(53,70,92,0.14); color: var(--accent); }
@@ -1783,7 +1783,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.69.06 · Oct 3, 1:30 PM</div>
+<div class="ver-badge">v1.69.07 · Oct 3, 2:00 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -2859,8 +2859,9 @@
       el.addEventListener('click', ev => { ev.preventDefault(); ev.stopPropagation(); spChoose(el); });
     });
     const r = sel.getBoundingClientRect(), navH = 90, room = window.innerHeight - r.bottom - navH, above = room < 220 && r.top > room;
-    pop.style.left = Math.max(8, Math.min(r.left, window.innerWidth - Math.max(r.width, 200) - 8)) + 'px';
-    pop.style.minWidth = Math.max(r.width, 200) + 'px';
+    // The list is exactly as wide as the bar it opened from, and lines up with its left edge.
+    pop.style.left = Math.max(8, Math.min(r.left, window.innerWidth - r.width - 8)) + 'px';
+    pop.style.width = r.width + 'px'; pop.style.minWidth = '0'; pop.style.boxSizing = 'border-box';
     pop.style.maxHeight = Math.max(160, Math.min(above ? r.top - 16 : room - 8, window.innerHeight * 0.55)) + 'px';
     if (above) pop.style.bottom = (window.innerHeight - r.top + 4) + 'px'; else pop.style.top = (r.bottom + 4) + 'px';
     const on = pop.querySelector('.sp-item.on'); if (on) pop.scrollTop = Math.max(0, on.offsetTop - pop.clientHeight / 2 + on.offsetHeight / 2);
