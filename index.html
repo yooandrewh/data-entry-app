@@ -1357,7 +1357,7 @@
   .home-menu .hm-go { font-size: 26px; line-height: 1; opacity: .8; }
   .home-menu a.hm-link { justify-content: center; height: 48px; margin-top: 4px; font-size: var(--fs-body); background: transparent; border-color: rgba(255,246,238,0.4); }
   /* Bake plan grid: flavors down, stores across */
-  .pg-row { display: grid; grid-template-columns: minmax(0, 1fr) repeat(2, 64px); align-items: center; gap: 6px; padding: 9px 0; border-bottom: 1px solid var(--sep); }
+  .pg-row { display: grid; grid-template-columns: minmax(0, 1fr) repeat(var(--n, 2), var(--w, 64px)); align-items: center; gap: 6px; padding: 9px 0; border-bottom: 1px solid var(--sep); }
   .pg-row .k { display: flex; align-items: center; gap: 8px; min-width: 0; }
   .pg-c { text-align: right; display: flex; flex-direction: column; align-items: flex-end; line-height: 1.2; }
   .pg-c small { font-size: var(--fs-micro); color: var(--muted); font-weight: 500; }
@@ -1469,6 +1469,12 @@
   #view-plan .bakedays button { width: 28px !important; height: 28px !important; padding: 0 !important; }
   #view-plan .bs-step button, #view-plan .amt .step { width: 28px !important; height: 28px !important; min-height: 0 !important; padding: 0 !important; }
   #view-db .db-filter, #view-plan .db-filter { margin-bottom: 8px; }
+  .fc-locs { display: flex; gap: 6px; margin: 0 0 10px; }
+  .fc-locs button { padding: 5px 12px; font: inherit; font-size: var(--fs-caption); cursor: pointer; background: rgba(255,255,255,.55); border: 1px solid var(--line, rgba(35,42,51,.3)); color: var(--text); border-radius: 14px; }
+  .fc-locs button.on { color: var(--accent); border-color: var(--accent); background: rgba(164,90,34,.14); font-weight: 700; }
+  .pg-stale { font-size: var(--fs-caption); color: #8a4b00; background: rgba(255,149,0,.12); padding: 7px 10px; margin-top: 8px; }
+  .pg-stale > div { display: inline; background: none; padding: 0; margin: 0; }
+  .pg-card .pg-c > span { white-space: nowrap; }
   /* nav: solid light caramel, flush, only while Data / Baking is open */
   body[data-tab="db"] .tabbar, body[data-tab="plan"] .tabbar { background: #c4793d; border-top: 0; }
   body[data-tab="db"] .tabbar button, body[data-tab="plan"] .tabbar button { color: #242c35; opacity: .75; }
@@ -1770,7 +1776,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.69.01 · Oct 3, 11:55 AM</div>
+<div class="ver-badge">v1.69.02 · Oct 3, 12:15 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -3369,6 +3375,7 @@
   });
 
   // ===== Shared projection math (used by Home + Projections) =====
+  let fcLoc = 'all';   // Forecast store filter: 'all' | 'La Mirada' | 'Stanton'
   let projLoc = 'La Mirada', homeLoc = 'La Mirada', planLoc = 'La Mirada';   // Stanton paused — La Mirada only (historical Stanton still in Data)
   // Stores shown on Forecast and Baking Plan: La Mirada always; Stanton appears on its own once it has an entry in the last 3 weeks.
   function activeLocs(entries) {
@@ -3723,9 +3730,13 @@
     };
 
     let html = '';
-    const locsShown = activeLocs(entries);
+    const allLocs = activeLocs(entries);
+    const locsShown = (fcLoc !== 'all' && allLocs.includes(fcLoc)) ? [fcLoc] : allLocs;
+    const gridMode = locsShown.length > 1, cols = [];
+    if (allLocs.length > 1) html += `<div class="fc-locs" id="fcLocs">${[['all', 'Both'], ...allLocs.map(l => [l, l])].map(([v, t]) => `<button type="button" data-floc="${esc(v)}" class="${(locsShown.length > 1 ? 'all' : locsShown[0]) === v ? 'on' : ''}">${esc(t)}</button>`).join('')}</div>`;
     for (const loc of locsShown) {
       const st = locStats(loc, sales, entries);
+      if (gridMode && !st.hasInv) { cols.push({ loc, none: true }); continue; }
       if (!st.hasInv) {
         html += `<div class="proj-card"><h3>${loc}</h3><div class="proj-sub" style="margin-top:2px">No inventory count logged yet — add an Inventory entry to project run-out.</div></div>`;
         continue;
@@ -3744,9 +3755,15 @@
       const runoutTxt = ro.firstD === Infinity
         ? 'No recent sales — can\'t project'
         : `Runs out in <span class="big">${fmtD(pickFirst(ro))}</span><span class="pr-first">${ro.firstP} first</span>`;
+      if (gridMode) {
+        cols.push({ loc, st, ro, runout: ro.firstD === Infinity ? { t: '—', sub: 'no recent sales' } : { t: fmtD(pickFirst(ro)), sub: `${ro.firstP} first` },
+          cell: p => ({ n: st.stock[p], d: fmtD(pick(ro, p)) }), warn: staleWarn(st),
+          detail: `<div class="proj-sub">${st.stockTotal} on hand · counted ${fmtAgo(st.invDate)} · rate from ${st.sellDays} sales ${st.sellDays === 1 ? 'day' : 'days'} · ±${Math.round(st.dailyCV * 100)}% daily swing${trendNote(st)}</div>${ro.firstD === Infinity ? '' : `<div class="be-effort">Overall run-out band: ${fmtD(pickFirst(ro))}${fmtBand(ro.firstLo, ro.firstHi)}</div>`}${detailRows}` });
+        continue;
+      }
       html += `<div class="proj-card">
           ${infoBtn()}
-          ${locsShown.length > 1 ? `<h3>${loc}</h3>` : ''}
+          ${allLocs.length > 1 ? `<h3>${loc}</h3>` : ''}
           <div class="proj-runout">${runoutTxt}</div>
           ${staleWarn(st)}
           ${rateRows}
@@ -3758,8 +3775,23 @@
           </div>
         </div>`;
     }
+    if (cols.length) {
+      const ab = c => LOC_ABBR[c.loc] || c.loc, cells = f => cols.map(f).join('');
+      html += `<div class="proj-card pg-card" style="--n:${cols.length};--w:84px">
+          <h3>By store${infoBtn()}</h3>
+          <div class="pg-row pg-head"><span></span>${cells(c => `<span class="pg-c">${ab(c)}</span>`)}</div>
+          <div class="pg-row pg-time"><span class="k">Runs out in</span>${cells(c => c.none ? '<span class="pg-c">—</span>' : `<span class="pg-c"><b>${c.runout.t}</b><small>${esc(c.runout.sub)}</small></span>`)}</div>
+          ${PRODUCTS.map(p => `<div class="pg-row"><span class="k">${tok(p)}${p}</span>${cells(c => { if (c.none) return '<span class="pg-c">—</span>'; const x = c.cell(p); return `<span class="pg-c"><span><b>${x.n}</b> left</span><small>${x.d}</small></span>`; })}</div>`).join('')}
+          ${cols.map(c => c.warn ? `<div class="pg-stale"><b>${ab(c)}</b> ${c.warn}</div>` : '').join('')}
+          <div class="info-body" hidden>${cols.map(c => c.none ? `<div class="be-section-label">${c.loc}</div><div class="proj-sub">No inventory count logged yet.</div>` : `<div class="be-section-label">${c.loc}</div>${c.detail}`).join('')}</div>
+        </div>`;
+    }
     list.innerHTML = html;
   }
+  document.getElementById('projList').addEventListener('click', e => {
+    const b = e.target.closest('[data-floc]'); if (!b) return;
+    fcLoc = b.dataset.floc; renderProj();
+  });
 
   // ===== Plan tab (what-if: how much to bake to last until a date) =====
   // Weekday vs weekend per-flavor sales rate from the last N days.
