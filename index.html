@@ -1808,7 +1808,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.71.00 · Oct 4, 9:30 AM</div>
+<div class="ver-badge">v1.71.01 · Oct 4, 10:10 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -3003,7 +3003,11 @@
     syncInvDubai();
     const stSel = document.getElementById('invStore');
     const paintStore = () => document.querySelectorAll('#invStoreBtns button').forEach(b => b.classList.toggle('on', b.dataset.store === stSel.value));
-    document.getElementById('invStoreBtns').onclick = e => { const b = e.target.closest('button'); if (!b) return; stSel.value = b.dataset.store; paintStore(); syncInvDubai(); };
+    document.getElementById('invStoreBtns').onclick = e => {
+      const b = e.target.closest('button'); if (!b) return; stSel.value = b.dataset.store; paintStore(); syncInvDubai();
+      // The combined invoice is billed every two weeks: pick Both and the window becomes the 14 days ending at the To date.
+      if (b.dataset.store === 'Both') { const to = document.getElementById('invTo').value || nowPST().slice(0, 10); document.getElementById('invTo').value = to; document.getElementById('invFrom').value = addDays(to, -13); }
+    };
     stSel.onchange = () => { paintStore(); syncInvDubai(); };
     paintStore();
   }
@@ -3053,15 +3057,17 @@
     const issued = fmtD(nowPST().slice(0, 10));
     const dueV = document.getElementById('invDue').value, due = dueV ? fmtD(dueV) : 'Upon receipt';
 
-    const billName = both ? INV_BILL['La Mirada'].name : (INV_BILL[store] || {}).name || store;
-    const billAddr = both ? stores.flatMap(st => [`${st}:`, ...INV_BILL[st].addr]) : ((INV_BILL[store] || {}).addr || [store]);
-    invText = [`INVOICE ${num}`, `From: ${INV_FROM.name}, ${INV_FROM.addr.join(', ')}`, `Bill to: ${billName}`, ...billAddr, `Due date: ${due}`, `Issued: ${issued}`, '',
+    // Both stores on one invoice is a separate billing: it goes to 100 Coffee Inc, no address.
+    const billName = both ? '100 Coffee Inc' : (INV_BILL[store] || {}).name || store;
+    const billAddr = both ? [] : ((INV_BILL[store] || {}).addr || [store]);
+    invText = [`INVOICE ${num}`, `From: ${INV_FROM.name}, ${INV_FROM.addr.join(', ')}`, `Bill to: ${billName}`, ...billAddr, `Due date: ${due}`, `Issued: ${issued}`, ...(both ? [`Delivery period: ${fmtD(from)} – ${fmtD(to)}`] : []), '',
       ...groups.flatMap(g => [...(both ? [`${g.st}:`] : []), ...g.lines.map(l => `${l.p}: ${l.qty} × ${usd(l.unit)} = ${usd(l.amt)}`), ...(both ? [`  ${g.st} subtotal (${g.units} units): ${usd(g.total)}`, ''] : [])]), '', `Total (${units} units): ${usd(total)}`].join('\n');
 
     document.getElementById('invDoc').innerHTML = `
       <h3>Invoice</h3>
       <div class="inv-meta"><div><b>From: ${esc(INV_FROM.name)}</b>${INV_FROM.addr.map(l => esc(l)).join('<br>')}</div><div style="text-align:right"><b>Bill to: ${esc(billName)}</b>${billAddr.map(l => esc(l)).join('<br>')}</div></div>
       <div class="inv-meta" style="margin-top:0"><div>Invoice<b>${esc(num)}</b></div><div style="text-align:center">Issued<b>${esc(issued)}</b></div><div style="text-align:right">Due date<b>${esc(due)}</b></div></div>
+      ${both ? `<div class="inv-meta" style="margin-top:0"><div>Delivery period<b>${esc(fmtD(from))} – ${esc(fmtD(to))}</b></div></div>` : ''}
       ${lines.length ? `<table class="inv-table"><thead><tr><th>Item</th><th>Qty</th><th>Price</th><th>Amount</th></tr></thead><tbody>${
         groups.map(g => (both ? `<tr class="inv-grp"><td colspan="4">${esc(g.st)}</td></tr>` : '') + g.lines.map(l => `<tr><td>${esc(l.p)}</td><td>${l.qty}</td><td>${usd(l.unit)}</td><td>${usd(l.amt)}</td></tr>`).join('') + (both ? `<tr class="inv-sub"><td colspan="3">${esc(g.st)} subtotal · ${g.units} units</td><td>${usd(g.total)}</td></tr>` : '')).join('')}</tbody></table>
       <div class="inv-total"><span>Total</span><span>${usd(total)}</span></div>`
