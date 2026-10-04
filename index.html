@@ -1507,6 +1507,19 @@
   .inv-table tr.inv-grp td, .inv-pdf .inv-table tr.inv-grp td { text-align: left; font-weight: 700; letter-spacing: .4px; text-transform: uppercase; font-size: 12px; padding: 12px 0 6px; border-bottom: 1px solid #111; }
   .inv-table tr.inv-sub td, .inv-pdf .inv-table tr.inv-sub td { font-weight: 600; font-size: 13px; }
   .inv-table tr.inv-sub td:first-child, .inv-pdf .inv-table tr.inv-sub td:first-child { text-align: right; color: #555; }
+  .wk-card { margin-top: 12px; }
+  .wk-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .wk-day { font-size: var(--fs-lg); font-weight: 700; width: auto; min-width: 150px; }
+  .wk-x { border: 0; background: transparent; color: var(--muted); font-size: 18px; cursor: pointer; padding: 4px 8px; }
+  .wk-item { border-top: 1px solid var(--sep); margin-top: 8px; padding-top: 6px; }
+  .wk-top { display: flex; align-items: center; justify-content: space-between; }
+  .wk-nm { font-weight: 700; }
+  .wk-note { width: 12em; max-width: 100%; text-align: right; font: inherit; font-size: var(--fs-caption); background: transparent; border: 0; border-bottom: 1px solid var(--sep); color: var(--text); }
+  .wk-add { width: 100%; margin: 8px 0 2px; }
+  .wk-addday { width: 100%; margin: 12px 0; padding: 10px; font: inherit; font-weight: 600; cursor: pointer; }
+  .wk-split { padding: 0 0 6px; margin-top: -4px; }
+  .wk-day, .wk-add { background-color: var(--field); border: 1px solid var(--line, #dcd8d2); border-radius: 8px; padding: 8px 30px 8px 10px; font: inherit; color: var(--text); }
+  .wk-day { font-size: var(--fs-lg); font-weight: 700; }
   /* nav: solid light caramel, flush, only while Data / Baking is open */
   body[data-tab="db"] .tabbar, body[data-tab="plan"] .tabbar { background: #f3f1ed; border-top: 1px solid #e2dfda; }
   body[data-tab="db"] .tabbar button, body[data-tab="plan"] .tabbar button { color: #242c35; opacity: .75; }
@@ -1532,6 +1545,7 @@
       <button type="button" data-hpage="forecast"><span class="hm-ic" data-ic="chart"></span><span class="hm-t">Forecast</span><span class="hm-go">›</span></button>
       <button type="button" data-hpage="plan"><span class="hm-ic" data-ic="book"></span><span class="hm-t">Baking Plan</span><span class="hm-go">›</span></button>
       <button type="button" data-hpage="timers"><span class="hm-ic" data-ic="flame"></span><span class="hm-t">Timers</span><span class="hm-go">›</span></button>
+      <button type="button" data-hpage="week"><span class="hm-ic" data-ic="calendar"></span><span class="hm-t">Weekly Schedule</span><span class="hm-go">›</span></button>
       <button type="button" data-hbuy><span class="hm-ic" data-ic="bowl"></span><span class="hm-t">Buy List</span><span class="hm-go">›</span></button>
       <button type="button" data-hpage="invoice"><span class="hm-ic" data-ic="tag"></span><span class="hm-t">Invoice / Labels</span><span class="hm-go">›</span></button>
       <a class="hm-link" href="https://app.thefoodcorridor.com/tfc_food_business_dashboard/69084-kairosbaking/bookings?locale=en" target="_blank" rel="noopener noreferrer">Book Commercial Kitchen ↗</a>
@@ -1599,6 +1613,9 @@
 
     <!-- Timers -->
     <div id="homeTimers" hidden></div>
+
+    <!-- Weekly schedule -->
+    <div id="homeWeek" hidden></div>
 
     <!-- Invoice -->
     <div id="homeInvoice" hidden>
@@ -1808,7 +1825,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.72.01 · Oct 4, 11:20 AM</div>
+<div class="ver-badge">v1.73.00 · Oct 4, 12:30 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -2947,7 +2964,7 @@
 
   // ---- Home: a landing screen with three buttons; each opens its own page ----
   let homeTab = null;   // null = landing | 'forecast' | 'plan' | 'invoice'
-  const HOME_TITLES = { forecast: 'Forecast', plan: 'Baking Plan', invoice: 'Invoice / Labels', timers: 'Timers' };
+  const HOME_TITLES = { forecast: 'Forecast', plan: 'Baking Plan', invoice: 'Invoice / Labels', timers: 'Timers', week: 'Weekly Schedule' };
   // The version line lives over the photo on Home's landing; everywhere else it is the fixed strip.
   function syncVer() {
     const onHome = (document.querySelector('.tabbar button.on') || {}).dataset?.tab === 'home';
@@ -2963,9 +2980,11 @@
     document.getElementById('homePlan').hidden = homeTab !== 'plan';
     document.getElementById('homeInvoice').hidden = homeTab !== 'invoice';
     document.getElementById('homeTimers').hidden = homeTab !== 'timers';
+    document.getElementById('homeWeek').hidden = homeTab !== 'week';
     document.getElementById('hpTitle').textContent = HOME_TITLES[homeTab] || '';
     if (homeTab === 'plan') { renderBakeSheet(); renderPlan(); }
     if (homeTab === 'invoice') initInvoiceForm();
+    if (homeTab === 'week') renderWeek();
     if (homeTab === 'timers') renderTimers(); else stopTick();
     syncVer(); window.scrollTo(0, 0);
   }
@@ -5087,6 +5106,120 @@
     costPrices[name] = costPrices[name] || { unit: 'g', amt: null, price: null };
     costPrices[name][f.dataset.cf] = f.value === '' || isNaN(n) ? null : n;
     saveCosts(); renderCostPrices();
+  });
+
+  // ===== Weekly schedule: a repeating week of bake sessions → pans, oven time, kitchen hours and cost per piece =====
+  // Each session is a weekday (it repeats every week) with the items baked that day. Madeleines and scones share the oven: pans are
+  // packed onto the oven's racks (KT.pans at a time), so the oven span, the kitchen hours and each item's share of them come out of one timeline.
+  const WK_KEY = 'weekPlan.v1', WK_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  let WK = { rate: 28.5, scPerPan: 6, restMin: 60, sessions: [] };
+  try { Object.assign(WK, JSON.parse(localStorage.getItem(WK_KEY)) || {}); } catch {}
+  const saveWk = () => { try { localStorage.setItem(WK_KEY, JSON.stringify(WK)); } catch {} };
+  const WK_SECS = ['mad', 'scone', 'other'];
+  function wkUnitCost(sec, it, key) {
+    const rows = costRows(sec, it).filter(r => !COST_SKIP.has(costCanon(r[0])));
+    let batch = 0; for (const r of rows) { const c = costLine(r[0], r[1]); if (c == null) return null; batch += c; }
+    const yv = (costYields[key] != null ? costYields[key] : costDefaultYield(sec, it)) || 18;
+    let unit = batch / yv;
+    for (const t of ((COST_META[key] || {}).toppings || [])) { const c = costTopping(t); if (c == null) return null; unit += c; }
+    return unit;
+  }
+  function wkItem(row) {
+    const f = bsFind(row.key); if (!f) return null;
+    const { sec, it } = f, yv = (costYields[row.key] != null ? costYields[row.key] : costDefaultYield(sec, it)) || 18;
+    const n = Math.max(0, Number(row.n) || 0), batches = n / yv;
+    const perPan = sec === 'scone' ? WK.scPerPan : KT.perPan, bake = sec === 'scone' ? 30 : sec === 'mad' ? KT.bakeMin : 20;
+    const turn = bake + (sec === 'mad' ? KT.coolMin : 0);
+    const prepAuto = sec === 'mad' ? Math.ceil(batches / KT.prepGroup - 1e-9) * KT.prepMin : Math.round(15 * batches);
+    return { sec, it, n, yv, batches, pans: Math.ceil(n / perPan - 1e-9), perPan, bake, turn, prepAuto, prep: row.prep != null ? row.prep : prepAuto,
+      glaze: sec === 'mad' && (it.glaze || []).length ? n * KT.glazeSec / 60 : 0, unit: wkUnitCost(sec, it, row.key), name: costItemName(sec, it) };
+  }
+  function wkSession(se) {
+    const items = se.items.map(r => ({ r, m: wkItem(r) })).filter(x => x.m);
+    const pans = items.flatMap(x => Array.from({ length: x.m.pans }, () => ({ x, bake: x.m.bake, turn: x.m.turn }))).sort((a, b) => b.bake - a.bake);
+    const slots = Array(Math.max(1, KT.pans)).fill(0); let span = 0;
+    for (const pn of pans) { const i = slots.indexOf(Math.min(...slots)); const start = slots[i]; span = Math.max(span, start + pn.bake); slots[i] = start + pn.turn; }
+    const prep = items.reduce((a, x) => a + x.m.prep, 0), glaze = items.reduce((a, x) => a + x.m.glaze, 0), clean = items.length ? KT.cleanMin : 0;
+    const rest = items.length ? WK.restMin : 0, hands = prep + glaze + clean;
+    const autoHrs = Math.ceil((prep + rest + span + glaze + clean) / 30) / 2, booked = se.booked != null ? se.booked : autoHrs;
+    const kitchen = booked * WK.rate, panMin = items.reduce((a, x) => a + x.m.pans * x.m.bake, 0) || 1;
+    let total = 0, pieces = 0, missing = false;
+    const rows = items.map(x => {
+      const share = x.m.pans * x.m.bake / panMin;
+      const ing = x.m.unit == null ? null : x.m.unit * x.m.n, lab = (x.m.prep + x.m.glaze + clean * share) / 60 * LAB.rate, kit = kitchen * share;
+      if (ing == null) missing = true; else total += ing + lab + kit; pieces += x.m.n;
+      return { ...x, ing, lab, kit, sum: ing == null ? null : ing + lab + kit };
+    });
+    return { items: rows, prep, rest, span, glaze, clean, hands, autoHrs, booked, kitchen, total, pieces, missing, npans: pans.length };
+  }
+  const wkNext = idx => { const out = [], t = new Date(nowPST().slice(0, 10) + 'T12:00:00'); const js = (idx + 1) % 7; for (let i = 0; i < 28 && out.length < 3; i++) { const d = new Date(t); d.setDate(t.getDate() + i); if (d.getDay() === js) out.push(d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })); } return out.join(' · '); };
+  const wkMin = m => { m = Math.round(m); return m >= 60 ? `${Math.floor(m / 60)}h ${m % 60 ? m % 60 + 'm' : ''}`.trim() : `${m} min`; };
+  function renderWeek() {
+    const host = document.getElementById('homeWeek');
+    const addOpts = `<option value="" selected disabled>Add an item…</option>` + COST_SECTIONS.filter(([sec]) => WK_SECS.includes(sec)).map(([sec, label, get]) =>
+      `<optgroup label="${label}">${get().map(it => `<option value="${esc(costItemKey(sec, it))}" data-icon="${recKey(it.name)}">${esc(costItemName(sec, it))}</option>`).join('')}</optgroup>`).join('');
+    let weekTotal = 0, weekPieces = 0, weekHrs = 0;
+    const cards = WK.sessions.map((se, si) => {
+      const r = wkSession(se); weekTotal += r.total; weekPieces += r.pieces; weekHrs += r.booked;
+      const rows = r.items.map((x, i) => `<div class="wk-item">
+          <div class="wk-top"><span class="wk-nm">${esc(x.m.name)}</span><button type="button" class="wk-x" data-wk="rm" data-si="${si}" data-i="${i}" aria-label="Remove">✕</button></div>
+          <div class="proj-row"><span class="k">Pieces</span><span><input class="cost-in" type="number" inputmode="numeric" step="1" min="0" value="${x.m.n}" data-wk="n" data-si="${si}" data-i="${i}"></span></div>
+          <div class="proj-row"><span class="k">Prep minutes<span class="cost-hint"> · auto ${x.m.prepAuto}</span></span><span><input class="cost-in" type="number" inputmode="decimal" step="any" min="0" value="${rFmt(x.m.prep)}" data-wk="prep" data-si="${si}" data-i="${i}"></span></div>
+          <div class="cost-hint" style="padding:2px 0 6px">${rFmt(Math.round(x.m.batches * 10) / 10)} batches · ${x.m.pans} pans of ${x.m.perPan} · ${x.m.bake} min in the oven</div>
+        </div>`).join('');
+      const costRowsHtml = r.items.map(x => `<div class="proj-row"><span class="k">${esc(x.m.name)}</span><span>${x.sum == null ? '<span class="cost-miss">add price</span>' : `<b>${usd(x.sum)}</b> <span class="cost-hint">${usd(x.sum / (x.m.n || 1))} each</span>`}</span></div>
+          ${x.sum == null ? '' : `<div class="cost-hint wk-split">ingredients ${usd(x.ing)} · your time ${usd(x.lab)} · kitchen ${usd(x.kit)}</div>`}`).join('');
+      return `<div class="proj-card wk-card" data-si="${si}">
+        <div class="wk-head"><select data-wk="day" data-si="${si}" class="wk-day">${WK_DAYS.map((d, i) => `<option value="${i}"${i === se.day ? ' selected' : ''}>${d}</option>`).join('')}</select><button type="button" class="wk-x" data-wk="del" data-si="${si}" aria-label="Delete this bake day">✕</button></div>
+        <div class="cost-hint" style="margin:2px 0 8px">Repeats every week · next ${wkNext(se.day)}</div>
+        <div class="proj-row"><span class="k">Delivers to</span><span><input class="wk-note" type="text" maxlength="40" placeholder="e.g. La Mirada + Stanton" value="${esc(se.deliver || '')}" data-wk="deliver" data-si="${si}"></span></div>
+        ${rows || '<div class="cost-hint" style="padding:8px 0">No items yet.</div>'}
+        <select class="wk-add" data-wk="add" data-si="${si}">${addOpts}</select>
+        ${r.items.length ? `<div class="cost-sec"><div class="cost-sub">Kitchen timeline</div>
+          <div class="proj-row"><span class="k">Prep</span><span>${wkMin(r.prep)}</span></div>
+          <div class="proj-row"><span class="k">Rest / chill</span><span>${wkMin(r.rest)}</span></div>
+          <div class="proj-row"><span class="k">Oven · ${r.npans} pans, ${KT.pans} at a time</span><span>${wkMin(r.span)}</span></div>
+          ${r.glaze ? `<div class="proj-row"><span class="k">Glazing</span><span>${wkMin(r.glaze)}</span></div>` : ''}
+          <div class="proj-row"><span class="k">Cleaning</span><span>${wkMin(r.clean)}</span></div>
+          <div class="proj-row"><span class="k cost-total">Kitchen booked<span class="cost-hint"> · auto ${rFmt(r.autoHrs)} h</span></span><span><input class="cost-in" type="number" inputmode="decimal" step="0.5" min="0" value="${rFmt(r.booked)}" data-wk="booked" data-si="${si}">h</span></div>
+          <div class="cost-sub">Cost</div>${costRowsHtml}
+          <div class="proj-row"><span class="k cost-total">Bake day total</span><span class="cost-total">${r.missing ? '—' : usd(r.total)}</span></div>
+          <div class="cost-hint">Kitchen ${usd(r.kitchen)} (${rFmt(r.booked)} h × ${usd(WK.rate)}) is shared by oven time; your time is ${wkMin(r.hands)} at ${usd(LAB.rate)}/h.</div></div>` : ''}
+      </div>`;
+    }).join('');
+    host.innerHTML = `<div class="proj-card"><div class="cost-sub" style="margin-top:0">Kitchen &amp; oven</div>
+        <div class="proj-row"><span class="k">Kitchen rate per hour</span><span>$<input class="cost-in" type="number" inputmode="decimal" step="any" min="0" value="${rFmt(WK.rate)}" data-wk="rate"></span></div>
+        <div class="proj-row"><span class="k">Scones per pan</span><span><input class="cost-in" type="number" inputmode="numeric" step="1" min="1" value="${WK.scPerPan}" data-wk="scpan"></span></div>
+        <div class="proj-row"><span class="k">Rest / chill before baking (min)</span><span><input class="cost-in" type="number" inputmode="numeric" step="5" min="0" value="${WK.restMin}" data-wk="rest"></span></div>
+        <div class="cost-hint">Oven holds ${KT.pans} pans · ${KT.perPan} madeleines per pan · your time ${usd(LAB.rate)}/h (set in Costs). Change oven details under Kitchen Times on Baking Plan.</div></div>
+      ${cards}
+      <button type="button" class="btn-ghost wk-addday" data-wk="addday">+ Add a bake day</button>
+      ${WK.sessions.length ? `<div class="proj-card"><div class="cost-sub" style="margin-top:0">Every week</div>
+        <div class="proj-row"><span class="k">${WK.sessions.length} bake day${WK.sessions.length === 1 ? '' : 's'}</span><span>${weekPieces} pieces</span></div>
+        <div class="proj-row"><span class="k">Kitchen booked</span><span>${rFmt(weekHrs)} h</span></div>
+        <div class="proj-row"><span class="k cost-total">Weekly cost</span><span class="cost-total">${usd(weekTotal)}</span></div>
+        <div class="proj-row"><span class="k">Per piece, on average</span><span>${weekPieces ? usd(weekTotal / weekPieces) : '—'}</span></div></div>` : ''}`;
+  }
+  document.getElementById('homeWeek').addEventListener('click', e => {
+    const b = e.target.closest('[data-wk]'); if (!b) return; const a = b.dataset.wk, si = Number(b.dataset.si);
+    if (a === 'addday') { const used = new Set(WK.sessions.map(s => s.day)); WK.sessions.push({ day: [0, 1, 2, 3, 4, 5, 6].find(d => !used.has(d)) ?? 0, deliver: '', items: [] }); }
+    else if (a === 'del') { if (confirm('Delete this bake day?')) WK.sessions.splice(si, 1); else return; }
+    else if (a === 'rm') WK.sessions[si].items.splice(Number(b.dataset.i), 1);
+    else return;
+    saveWk(); renderWeek();
+  });
+  document.getElementById('homeWeek').addEventListener('change', e => {
+    const t = e.target.closest('[data-wk]'); if (!t) return; const a = t.dataset.wk, si = Number(t.dataset.si), se = WK.sessions[si], num = parseFloat(t.value);
+    if (a === 'rate') { if (num >= 0) WK.rate = num; }
+    else if (a === 'scpan') { if (num >= 1) WK.scPerPan = Math.round(num); }
+    else if (a === 'rest') { if (num >= 0) WK.restMin = num; }
+    else if (!se) return;
+    else if (a === 'day') se.day = Number(t.value);
+    else if (a === 'deliver') se.deliver = t.value.trim();
+    else if (a === 'booked') se.booked = t.value === '' || isNaN(num) || num < 0 ? null : num;
+    else if (a === 'add') { if (!t.value) return; const f = bsFind(t.value); const y = f ? ((costYields[t.value] != null ? costYields[t.value] : costDefaultYield(f.sec, f.it)) || 18) : 18; se.items.push({ key: t.value, n: Math.round(y) }); }
+    else { const row = se.items[Number(t.dataset.i)]; if (!row) return; if (a === 'n') row.n = num >= 0 ? Math.round(num) : 0; else if (a === 'prep') row.prep = t.value === '' || isNaN(num) || num < 0 ? null : num; }
+    saveWk(); renderWeek();
   });
 
   // Small message toast (used by copy / PDF actions).
