@@ -1835,7 +1835,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.73.01 · Oct 5, 3:30 PM</div>
+<div class="ver-badge">v1.73.02 · Oct 5, 3:45 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -4506,9 +4506,6 @@
         { label: 'Original', rows: [['Cake Flour', 174], ['Baking Powder', 6], ['Salt', 2], ['Eggs', 200], ['Sugar', 140], ['Vanilla Extract', 5], ['Unsalted Butter', 200]] },
         { label: 'Ver B', rows: [['Cake Flour', 174], ['Baking Powder', 6], ['Salt', 2], ['Eggs', 200], ['Sugar', 140], ['Vanilla Extract', 5], ['Unsalted Butter', 200], ['Avocado Oil', 20]] },
       ] },
-    { name: 'Peach Crumble', flour: 174, salt: 2, lblExtra: { filling: ['peach jam'] },
-      fillingRefs: ['Cream Cheese Frosting'],
-      fillingNote: 'Plus a spoonful of peach jam, about 10g per madeleine. Same frosting batch as Dot Cake — 3lb cream cheese base makes enough for about 200 madeleines.' },
     { name: 'Dot Cake', flour: 174, salt: 2, lblExtra: { topping: ['nonpareil sprinkles'] },
       fillingRefs: ['Cream Cheese Frosting'],
       fillingNote: 'Topped with a layer of nonpareil sprinkles. 3lb cream cheese base makes enough frosting for about 200 madeleines; a 2.2lb bag of sprinkles tops about 100.' },
@@ -4625,7 +4622,7 @@
       rows: [['Cream Cheese', 550], ['Blueberry', 550], ['Powdered Sugar', 65], ['Salt', 3]],
       notes: 'Freeze completely solid before wrapping into the scone dough.' },
   ];
-  const REC_ICON = { 'Dubai Chewy Ball': 'nut', 'Pumpkin Pie Spice Muffin': 'pumpkin', 'Classic': 'madeleine', 'Peach Crumble': 'peach', 'Dot Cake': 'cake_dot', 'Earl Grey': 'teacup', 'Ube': 'ube', 'Lemon Poppy': 'lemon', 'Chocolate': 'choco', 'Brown Butter': 'butter_brown', 'Matcha': 'matcha', 'Mugwort': 'leaf', 'Maple Pecan': 'nut', 'Pumpkin Pie Spice': 'pumpkin', 'Cheddar Jalapeno Scone': 'scone', 'Flat Chocolate Chip Chookie': 'cookie', 'Lemon Curd': 'jar_lemon', 'Cream Cheese Frosting': 'swirl_pink', 'Pumpkin Cream Cheese Frosting': 'swirl_pumpkin', 'Anglesie Buttercream': 'butter', 'Earl Grey Paste': 'jar_tea', 'Chocolate Ganache': 'jar_choc', 'Caramel': 'drop', 'Mascarpone Cream': 'bowl', 'Milk Cream': 'milk', 'Plain Scone': 'scone', 'Strawberry Cream Cheese': 'strawberry', 'Blueberry Cream Cheese': 'blueberry', 'Gluten Free Cake': 'cake_gf', 'Sable': 'cookie', 'Macarons': 'macaron', 'Salt Bread': 'bread', 'Vegan Donut': 'donut', 'Apricot Ricotta Cake': 'cake_apricot', 'Earl Grey Fig Cake': 'cake_fig' };
+  const REC_ICON = { 'Dubai Chewy Ball': 'nut', 'Pumpkin Pie Spice Muffin': 'pumpkin', 'Classic': 'madeleine', 'Dot Cake': 'cake_dot', 'Earl Grey': 'teacup', 'Ube': 'ube', 'Lemon Poppy': 'lemon', 'Chocolate': 'choco', 'Brown Butter': 'butter_brown', 'Matcha': 'matcha', 'Mugwort': 'leaf', 'Maple Pecan': 'nut', 'Pumpkin Pie Spice': 'pumpkin', 'Cheddar Jalapeno Scone': 'scone', 'Flat Chocolate Chip Chookie': 'cookie', 'Lemon Curd': 'jar_lemon', 'Cream Cheese Frosting': 'swirl_pink', 'Pumpkin Cream Cheese Frosting': 'swirl_pumpkin', 'Anglesie Buttercream': 'butter', 'Earl Grey Paste': 'jar_tea', 'Chocolate Ganache': 'jar_choc', 'Caramel': 'drop', 'Mascarpone Cream': 'bowl', 'Milk Cream': 'milk', 'Plain Scone': 'scone', 'Strawberry Cream Cheese': 'strawberry', 'Blueberry Cream Cheese': 'blueberry', 'Gluten Free Cake': 'cake_gf', 'Sable': 'cookie', 'Macarons': 'macaron', 'Salt Bread': 'bread', 'Vegan Donut': 'donut', 'Apricot Ricotta Cake': 'cake_apricot', 'Earl Grey Fig Cake': 'cake_fig' };
   const recKey = name => REC_ICON[name] || 'book';
   const recIc = (name, px) => ic(recKey(name), px);
 
@@ -4696,7 +4693,7 @@
     const swap = (rows, name, amt) => rows.map(r => r[0] === name ? [name, amt] : r);
     const drop = (rows, ...names) => rows.filter(r => !names.includes(r[0]));
     const B = {
-      'Classic': base, 'Peach Crumble': base, 'Dot Cake': base,
+      'Classic': base, 'Dot Cake': base,
       'Lemon Poppy': [...base, ['Lemon Emulsion', 4], ['Poppy Seed', 6]],
       'Ube': [...swap(base, 'Cake Flour', 168), ['Ube Powder', 20], ['Ube Extract', 2.5]],
       'Earl Grey': [...drop(base, 'Milk'), ['Earl Grey Tea Leaves', 5], ['Heavy Cream', 24]],
@@ -4914,7 +4911,6 @@
   };
   // Per-recipe extras, keyed "section:key". Fillings/toppings are costed per finished item.
   const COST_META = {
-    'mad:Peach Crumble': { toppings: [{ label: 'Cream Cheese Frosting filling', refFilling: 'Cream Cheese Frosting', coversItems: 200 }, { label: 'Peach Jam', ingredient: 'Peach Jam', gramsPerItem: 10 }] },
     'mad:Dot Cake': { toppings: [{ label: 'Cream Cheese Frosting filling', refFilling: 'Cream Cheese Frosting', coversItems: 200 }, { label: 'Nonpareil Sprinkles', ingredient: 'Nonpareil Sprinkles', coversItems: 100 }] },
     'mad:Earl Grey': { toppings: [{ label: 'Anglesie Buttercream filling', refFilling: 'Anglesie Buttercream', coversItems: 33 }, { label: 'Earl Grey Paste filling', refFilling: 'Earl Grey Paste', coversItems: 33 }] },
     'mad:Ube': { toppings: [{ label: 'Coconut Flakes topping', ingredient: 'Coconut Flakes', coversItems: 150 }] },
