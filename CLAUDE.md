@@ -455,3 +455,11 @@ is Stanton (also goodwill-from-Stanton and transfers from Stanton) and is zeroed
 maps `Dubai Ball` → its sheet column. The **recipe** (`REC_OTHER` key `dubaiball`, seasonal): filling 1,400 g pistachio butter + 1,000 g white
 chocolate + 1,134 g kataifi (2.5 lb) at 30 g each ≈ 117 balls; outer layer = 1 lb marshmallow + butter / cocoa / milk powder at 10% each, 20 g each
 (≈ 29 balls per 1 lb batch) — a full filling batch uses **4 outer batches** (`outerTimes`), dusted with cocoa. No marshmallow price is set yet.
+
+
+## Maple Pecan + Pumpkin Muffin sales (2026-10-05)
+
+The OCR parser (`kairos-handover/ocr/parse_kairos.py`) now counts Maple Pecan (a madeleine flavor) and Pumpkin Muffin, and a Madeleine Flight
+from 2026-10-01 is 1 Lemon Poppy + 1 Sea Salt + 1 Maple Pecan. `api/sales.js` reads the `Maple Pecan` and `Pumpkin Muffin` Sales columns, and
+`SALES_FLAVORS` includes both, so Data → Sales and the forecast rates pick them up. The earlier statement above that neither has a sales source
+is out of date once new recordings are processed and pushed. Dubai Ball still has none.
