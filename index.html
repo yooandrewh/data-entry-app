@@ -1537,6 +1537,9 @@
   #hpTitle { font-size: 22px; }
   .sheet h2 { font-size: 26px; }
   .proj-card h3, .card h3 { font-size: 18px; }
+  .td-card.locked { opacity: .55; }
+  .td-lock { font-size: var(--fs-caption); color: var(--muted); margin: 6px 0 2px; }
+  .td-box:disabled { cursor: default; border-color: var(--muted); }
   /* nav: solid light caramel, flush, only while Data / Baking is open */
   body[data-tab="db"] .tabbar, body[data-tab="plan"] .tabbar { background: #f3f1ed; border-top: 1px solid #e2dfda; }
   body[data-tab="db"] .tabbar button, body[data-tab="plan"] .tabbar button { color: #242c35; opacity: .75; }
@@ -1842,7 +1845,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.74.00 · Oct 5, 4:10 PM</div>
+<div class="ver-badge">v1.74.01 · Oct 5, 4:40 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -5144,16 +5147,22 @@
   let TODO = TODO_DEFAULT.map(st => ({ ...st, items: st.items.map(i => ({ ...i, done: false })) }));
   try { const v = JSON.parse(localStorage.getItem(TODO_KEY)); if (Array.isArray(v) && v.length) TODO = v; } catch {}
   const saveTodo = () => { try { localStorage.setItem(TODO_KEY, JSON.stringify(TODO)); } catch {} };
+  // A stage unlocks once every item in the stage before it is checked off.
+  const todoDone = st => st.items.length > 0 && st.items.every(i => i.done);
+  const todoLocked = si => si > 0 && !TODO.slice(0, si).every(todoDone);
   function renderTodo() {
     document.getElementById('homeTodo').innerHTML = TODO.map((st, si) => {
-      const done = st.items.filter(i => i.done).length;
-      return `<div class="proj-card td-card"><div class="td-head"><div><h3>${esc(st.title)}</h3><div class="proj-sub">${esc(st.sub)}</div></div><span class="td-n">${done}/${st.items.length}</span></div>
-        ${st.items.map((it, ii) => `<div class="td-row lvl${it.lvl || 0}${it.done ? ' done' : ''}"><button type="button" class="td-box" data-td="toggle" data-si="${si}" data-i="${ii}" aria-label="${it.done ? 'Mark not done' : 'Mark done'}">${it.done ? '✓' : ''}</button><span class="td-t">${esc(it.t)}</span><button type="button" class="td-x" data-td="rm" data-si="${si}" data-i="${ii}" aria-label="Remove">✕</button></div>`).join('')}
-        <div class="td-add"><input type="text" maxlength="160" placeholder="Add to ${esc(st.title)}…" data-td="new" data-si="${si}"><button type="button" data-td="add" data-si="${si}">Add</button></div></div>`;
+      const done = st.items.filter(i => i.done).length, locked = todoLocked(si);
+      const prev = TODO.slice(0, si).find(x => !todoDone(x));
+      return `<div class="proj-card td-card${locked ? ' locked' : ''}"><div class="td-head"><div><h3>${esc(st.title)}</h3><div class="proj-sub">${esc(st.sub)}</div></div><span class="td-n">${locked ? 'Locked · ' : ''}${done}/${st.items.length}</span></div>
+        ${locked ? `<div class="td-lock">Finish ${esc(prev ? prev.title : 'the stage before')} to unlock this stage.</div>` : ''}
+        ${st.items.map((it, ii) => `<div class="td-row lvl${it.lvl || 0}${it.done ? ' done' : ''}"><button type="button" class="td-box" ${locked ? 'disabled' : ''} data-td="toggle" data-si="${si}" data-i="${ii}" aria-label="${it.done ? 'Mark not done' : 'Mark done'}">${it.done ? '✓' : ''}</button><span class="td-t">${esc(it.t)}</span>${locked ? '' : `<button type="button" class="td-x" data-td="rm" data-si="${si}" data-i="${ii}" aria-label="Remove">✕</button>`}</div>`).join('')}
+        ${locked ? '' : `<div class="td-add"><input type="text" maxlength="160" placeholder="Add to ${esc(st.title)}…" data-td="new" data-si="${si}"><button type="button" data-td="add" data-si="${si}">Add</button></div>`}</div>`;
     }).join('');
   }
   document.getElementById('homeTodo').addEventListener('click', e => {
     const b = e.target.closest('[data-td]'); if (!b) return; const a = b.dataset.td, si = Number(b.dataset.si), st = TODO[si];
+    if (todoLocked(si)) return;
     if (a === 'toggle') st.items[Number(b.dataset.i)].done = !st.items[Number(b.dataset.i)].done;
     else if (a === 'rm') st.items.splice(Number(b.dataset.i), 1);
     else if (a === 'add') { const inp = b.parentElement.querySelector('input'), t = inp.value.trim(); if (!t) return; st.items.push({ t, lvl: 0, done: false }); }
