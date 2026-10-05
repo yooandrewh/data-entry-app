@@ -1540,6 +1540,24 @@
   .td-card.locked { opacity: .55; }
   .td-lock { font-size: var(--fs-caption); color: var(--muted); margin: 6px 0 2px; }
   .td-box:disabled { cursor: default; border-color: var(--muted); }
+  /* Compact buttons everywhere: tighter padding, tighter gaps between buttons and between button rows */
+  .btn-primary, .submit, .btn-ghost, .db-new { padding: 9px 14px !important; min-height: 0 !important; font-size: var(--fs-body) !important; }
+  .submit { margin-top: 8px; }
+  .seg { gap: 4px; margin-bottom: 8px; }
+  .seg button { padding: 6px 2px 5px !important; gap: 2px; }
+  .db-filter, .chip-row, .pills, .fc-locs, .inv-store, .rec-scale, .rec-ver, .bakedays { gap: 4px !important; }
+  .db-filter, .fc-locs, .chip-row, .rec-scale { margin-bottom: 6px !important; }
+  .pill, .chip-row button, .rec-scale button, .fc-locs button, .inv-store button, .rec-ver button, .bakedate-add button { padding: 4px 9px !important; min-height: 0 !important; font-size: var(--fs-caption) !important; }
+  .amt .step, .bs-step button { width: 30px !important; height: 30px !important; min-height: 0 !important; padding: 0 !important; }
+  .amt { gap: 2px; }
+  .row { min-height: 0 !important; padding-top: 7px !important; padding-bottom: 7px !important; }
+  .td-add button, .wk-addday { padding: 6px 12px !important; }
+  #invGenBtn, #lblOpenBtn, .inv-actions button { padding: 9px 14px !important; }
+  .inv-actions { gap: 6px !important; margin: 10px 0 4px !important; }
+  .home-menu { gap: 0 !important; }
+  .home-menu button, .home-menu a.hm-link { padding-top: 10px !important; padding-bottom: 6px !important; }
+  .home-menu a.hm-link { margin-top: 22px !important; }
+  .tabbar button { gap: 2px !important; }
   /* nav: solid light caramel, flush, only while Data / Baking is open */
   body[data-tab="db"] .tabbar, body[data-tab="plan"] .tabbar { background: #f3f1ed; border-top: 1px solid #e2dfda; }
   body[data-tab="db"] .tabbar button, body[data-tab="plan"] .tabbar button { color: #242c35; opacity: .75; }
@@ -1845,7 +1863,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.74.01 · Oct 5, 4:40 PM</div>
+<div class="ver-badge">v1.74.02 · Oct 5, 5:10 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
