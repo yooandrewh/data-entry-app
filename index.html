@@ -1507,6 +1507,20 @@
   .inv-table tr.inv-grp td, .inv-pdf .inv-table tr.inv-grp td { text-align: left; font-weight: 700; letter-spacing: .4px; text-transform: uppercase; font-size: 12px; padding: 12px 0 6px; border-bottom: 1px solid #111; }
   .inv-table tr.inv-sub td, .inv-pdf .inv-table tr.inv-sub td { font-weight: 600; font-size: 13px; }
   .inv-table tr.inv-sub td:first-child, .inv-pdf .inv-table tr.inv-sub td:first-child { text-align: right; color: #555; }
+  .td-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  .td-head h3 { margin: 0; }
+  .td-n { font-size: var(--fs-caption); color: var(--muted); font-weight: 700; padding-top: 4px; }
+  .td-row { display: flex; align-items: flex-start; gap: 10px; padding: 9px 0; border-top: 1px solid var(--sep); }
+  .td-row.lvl1 { padding-left: 26px; }
+  .td-box { flex: none; width: 22px; height: 22px; margin-top: 1px; border: 1.5px solid var(--accent); border-radius: 6px; background: transparent; color: #fff; font-size: 14px; line-height: 1; cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center; }
+  .td-row.done .td-box { background: var(--accent); }
+  .td-t { flex: 1; font-size: var(--fs-body); line-height: 1.3; }
+  .td-row.done .td-t { color: var(--muted); text-decoration: line-through; }
+  .td-x { flex: none; border: 0; background: transparent; color: var(--muted); font-size: 16px; cursor: pointer; padding: 0 4px; }
+  .td-add { display: flex; gap: 8px; border-top: 1px solid var(--sep); padding-top: 10px; margin-top: 2px; }
+  .td-add input { flex: 1; min-width: 0; font: inherit; font-size: var(--fs-caption); padding: 8px 10px; border: 1px solid var(--line, #dcd8d2); border-radius: 8px; background: var(--field); color: var(--text); }
+  .td-add button { flex: none; padding: 8px 14px; font: inherit; font-size: var(--fs-caption); font-weight: 700; cursor: pointer; border: 1px solid var(--accent); border-radius: 8px; background: transparent; color: var(--accent); }
+  .td-card { margin-top: 12px; }
   /* nav: solid light caramel, flush, only while Data / Baking is open */
   body[data-tab="db"] .tabbar, body[data-tab="plan"] .tabbar { background: #f3f1ed; border-top: 1px solid #e2dfda; }
   body[data-tab="db"] .tabbar button, body[data-tab="plan"] .tabbar button { color: #242c35; opacity: .75; }
@@ -1534,6 +1548,7 @@
       <button type="button" data-hpage="timers"><span class="hm-ic" data-ic="flame"></span><span class="hm-t">Timers</span><span class="hm-go">›</span></button>
       <button type="button" data-hbuy><span class="hm-ic" data-ic="bowl"></span><span class="hm-t">Buy List</span><span class="hm-go">›</span></button>
       <button type="button" data-hpage="invoice"><span class="hm-ic" data-ic="tag"></span><span class="hm-t">Invoice / Labels</span><span class="hm-go">›</span></button>
+      <button type="button" data-hpage="todo"><span class="hm-ic" data-ic="book"></span><span class="hm-t">To Do</span><span class="hm-go">›</span></button>
       <a class="hm-link" href="https://app.thefoodcorridor.com/tfc_food_business_dashboard/69084-kairosbaking/bookings?locale=en" target="_blank" rel="noopener noreferrer">Book Commercial Kitchen ↗</a>
     </div>
     
@@ -1599,6 +1614,9 @@
 
     <!-- Timers -->
     <div id="homeTimers" hidden></div>
+
+    <!-- To Do -->
+    <div id="homeTodo" hidden></div>
 
     <!-- Invoice -->
     <div id="homeInvoice" hidden>
@@ -1808,7 +1826,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.72.01 · Oct 4, 11:20 AM</div>
+<div class="ver-badge">v1.73.00 · Oct 5, 2:45 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -2947,7 +2965,7 @@
 
   // ---- Home: a landing screen with three buttons; each opens its own page ----
   let homeTab = null;   // null = landing | 'forecast' | 'plan' | 'invoice'
-  const HOME_TITLES = { forecast: 'Forecast', plan: 'Baking Plan', invoice: 'Invoice / Labels', timers: 'Timers' };
+  const HOME_TITLES = { forecast: 'Forecast', plan: 'Baking Plan', invoice: 'Invoice / Labels', timers: 'Timers', todo: 'To Do' };
   // The version line lives over the photo on Home's landing; everywhere else it is the fixed strip.
   function syncVer() {
     const onHome = (document.querySelector('.tabbar button.on') || {}).dataset?.tab === 'home';
@@ -2963,9 +2981,11 @@
     document.getElementById('homePlan').hidden = homeTab !== 'plan';
     document.getElementById('homeInvoice').hidden = homeTab !== 'invoice';
     document.getElementById('homeTimers').hidden = homeTab !== 'timers';
+    document.getElementById('homeTodo').hidden = homeTab !== 'todo';
     document.getElementById('hpTitle').textContent = HOME_TITLES[homeTab] || '';
     if (homeTab === 'plan') { renderBakeSheet(); renderPlan(); }
     if (homeTab === 'invoice') initInvoiceForm();
+    if (homeTab === 'todo') renderTodo();
     if (homeTab === 'timers') renderTimers(); else stopTick();
     syncVer(); window.scrollTo(0, 0);
   }
@@ -5087,6 +5107,49 @@
     costPrices[name] = costPrices[name] || { unit: 'g', amt: null, price: null };
     costPrices[name][f.dataset.cf] = f.value === '' || isNaN(n) ? null : n;
     saveCosts(); renderCostPrices();
+  });
+
+  // ===== To Do: the roadmap in three stages (checklist saved on this device) =====
+  const TODO_KEY = 'todo.v1';
+  const TODO_DEFAULT = [
+    { title: 'Stage 1', sub: '5 solid pastries', items: [
+      { t: 'Make more solid madeleine flavors', lvl: 0 },
+      { t: 'Brown butter madeleine is set — figure out how to reheat it properly so it serves like it just came out of the oven', lvl: 1 },
+      { t: 'Chocolate — master the presentation and/or filling', lvl: 1 },
+      { t: 'Fruit-shaped mousse dessert?', lvl: 0 },
+      { t: 'Something that can be stored in the freezer and thawed fine', lvl: 0 },
+      { t: 'Master muffins and chocolate chip cookies', lvl: 0 } ] },
+    { title: 'Stage 2', sub: 'Other coffee shops / packaging', items: [
+      { t: 'When the wholesale permit for other counties comes out, OUO first', lvl: 0 },
+      { t: 'Figure out the delivery situation — Mar Pacific or delivery companies', lvl: 0 },
+      { t: 'Packaging designs', lvl: 0 },
+      { t: 'Customized madeleine display', lvl: 0 } ] },
+    { title: 'Stage 3', sub: 'Weddings and big events', items: [
+      { t: 'Wedding favors', lvl: 0 },
+      { t: 'Madeleine tower for weddings', lvl: 0 },
+      { t: 'Branded cookies (customized logo stamp for cookies)', lvl: 0 } ] },
+  ];
+  let TODO = TODO_DEFAULT.map(st => ({ ...st, items: st.items.map(i => ({ ...i, done: false })) }));
+  try { const v = JSON.parse(localStorage.getItem(TODO_KEY)); if (Array.isArray(v) && v.length) TODO = v; } catch {}
+  const saveTodo = () => { try { localStorage.setItem(TODO_KEY, JSON.stringify(TODO)); } catch {} };
+  function renderTodo() {
+    document.getElementById('homeTodo').innerHTML = TODO.map((st, si) => {
+      const done = st.items.filter(i => i.done).length;
+      return `<div class="proj-card td-card"><div class="td-head"><div><h3>${esc(st.title)}</h3><div class="proj-sub">${esc(st.sub)}</div></div><span class="td-n">${done}/${st.items.length}</span></div>
+        ${st.items.map((it, ii) => `<div class="td-row lvl${it.lvl || 0}${it.done ? ' done' : ''}"><button type="button" class="td-box" data-td="toggle" data-si="${si}" data-i="${ii}" aria-label="${it.done ? 'Mark not done' : 'Mark done'}">${it.done ? '✓' : ''}</button><span class="td-t">${esc(it.t)}</span><button type="button" class="td-x" data-td="rm" data-si="${si}" data-i="${ii}" aria-label="Remove">✕</button></div>`).join('')}
+        <div class="td-add"><input type="text" maxlength="160" placeholder="Add to ${esc(st.title)}…" data-td="new" data-si="${si}"><button type="button" data-td="add" data-si="${si}">Add</button></div></div>`;
+    }).join('');
+  }
+  document.getElementById('homeTodo').addEventListener('click', e => {
+    const b = e.target.closest('[data-td]'); if (!b) return; const a = b.dataset.td, si = Number(b.dataset.si), st = TODO[si];
+    if (a === 'toggle') st.items[Number(b.dataset.i)].done = !st.items[Number(b.dataset.i)].done;
+    else if (a === 'rm') st.items.splice(Number(b.dataset.i), 1);
+    else if (a === 'add') { const inp = b.parentElement.querySelector('input'), t = inp.value.trim(); if (!t) return; st.items.push({ t, lvl: 0, done: false }); }
+    else return;
+    saveTodo(); renderTodo();
+  });
+  document.getElementById('homeTodo').addEventListener('keydown', e => {
+    if (e.key !== 'Enter' || !e.target.matches('[data-td=new]')) return; e.preventDefault(); e.target.parentElement.querySelector('button').click();
   });
 
   // Small message toast (used by copy / PDF actions).
