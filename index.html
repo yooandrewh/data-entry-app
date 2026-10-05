@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700&family=Cormorant+Garamond:wght@500;600;700&family=Pinyon+Script&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Cormorant+Garamond:wght@500;600;700&family=Pinyon+Script&display=swap" rel="stylesheet" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="color-scheme" content="light" />
@@ -1342,8 +1342,8 @@
   .inv-pdf .inv-total { display: flex; justify-content: space-between; font-size: 18px; font-weight: 700; padding: 16px 0 4px; border-top: 2px solid #111; margin-top: 10px; }
   .inv-pdf .inv-empty { text-align: center; color: #555; padding: 24px 0; }
   /* Invoice store: two buttons instead of a dropdown (the list was being swallowed by the date fields on iPhone) */
-  .inv-store { display: flex; gap: 8px; }
-  .inv-store button { padding: 8px 14px; font: inherit; font-size: var(--fs-body); color: var(--text); background: rgba(255,255,255,.30); border: 1px solid rgba(35,42,51,.35); cursor: pointer; touch-action: manipulation; }
+  .inv-store { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; min-width: 0; }
+  .inv-store button { padding: 7px 11px; font: inherit; font-size: var(--fs-body); color: var(--text); background: rgba(255,255,255,.30); border: 1px solid rgba(35,42,51,.35); cursor: pointer; touch-action: manipulation; }
   .inv-store button.on { color: var(--accent); border-color: var(--accent); background: rgba(53,70,92,.14); font-weight: 700; }
   /* Home buttons: frosted glass rows with an icon and chevron */
   .home-menu { gap: 10px; }
@@ -1521,6 +1521,13 @@
   .td-add input { flex: 1; min-width: 0; font: inherit; font-size: var(--fs-caption); padding: 8px 10px; border: 1px solid var(--line, #dcd8d2); border-radius: 8px; background: var(--field); color: var(--text); }
   .td-add button { flex: none; padding: 8px 14px; font: inherit; font-size: var(--fs-caption); font-weight: 700; cursor: pointer; border: 1px solid var(--accent); border-radius: 8px; background: transparent; color: var(--accent); }
   .td-card { margin-top: 12px; }
+  /* Everything else in Archivo too, a touch lighter than the titles (500 body, 600 emphasis; titles stay 700). Sizes step down a pixel because Archivo runs wider than Cormorant. */
+  :root { --fs-micro: 10px; --fs-nav: 11px; --fs-caption: 12px; --fs-body: 14px; --fs-lg: 16px; --fs-title: 19px; }
+  html, body, button, input, select, textarea { font-family: "Archivo", -apple-system, "SF Pro Text", system-ui, sans-serif; }
+  body { font-weight: 500; }
+  button, input, select, textarea { font-weight: 500; }
+  b, strong { font-weight: 600; }
+  .info-btn, .rec-ver button, .fc-locs button { font-family: "Archivo", -apple-system, system-ui, sans-serif; font-weight: 500; }
   /* Titles in Archivo Bold (page titles, Home title, popup titles, card headings); body text stays Cormorant Garamond */
   h1, .hero-title, .sheet h2, #hpTitle, .proj-card h3, .card h3, body:not(.printing-bake) #bsScrim .bs2-title {
     font-family: "Archivo", -apple-system, "SF Pro Display", system-ui, sans-serif !important; font-weight: 700 !important; letter-spacing: -0.01em !important; font-style: normal; }
@@ -1835,7 +1842,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.73.02 · Oct 5, 3:45 PM</div>
+<div class="ver-badge">v1.74.00 · Oct 5, 4:10 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
