@@ -1868,7 +1868,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.74.16 · Oct 6, 9:10 AM</div>
+<div class="ver-badge">v1.74.17 · Oct 6, 9:30 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -5208,6 +5208,21 @@
   let TODO = TODO_DEFAULT.map(st => ({ ...st, items: st.items.map(i => ({ ...i, done: false })) }));
   try { const v = JSON.parse(localStorage.getItem(TODO_KEY)); if (Array.isArray(v) && v.length) TODO = v; } catch {}
   const saveTodo = () => { try { localStorage.setItem(TODO_KEY, JSON.stringify(TODO)); } catch {} };
+  // Items added after the first version of the list: each is appended once (also to a list already saved on this device), and stays gone if you remove it.
+  const TODO_SEEDS = [
+    { id: 'cream-cheese-scones', stage: 0, t: 'Master cream cheese scones' },
+    { id: 'christmas-items', stage: 0, t: 'Christmas items' },
+  ];
+  (() => {
+    let applied = []; try { applied = JSON.parse(localStorage.getItem('todo.seeds.v1')) || []; } catch {}
+    let changed = false;
+    for (const sd of TODO_SEEDS) {
+      if (applied.includes(sd.id)) continue;
+      if (TODO[sd.stage]) TODO[sd.stage].items.push({ t: sd.t, lvl: 0, done: false });
+      applied.push(sd.id); changed = true;
+    }
+    if (changed) { saveTodo(); try { localStorage.setItem('todo.seeds.v1', JSON.stringify(applied)); } catch {} }
+  })();
   // A stage unlocks once every item in the stage before it is checked off.
   const todoDone = st => st.items.length > 0 && st.items.every(i => i.done);
   const todoLocked = si => si > 0 && !TODO.slice(0, si).every(todoDone);
