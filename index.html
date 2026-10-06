@@ -1868,7 +1868,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.74.18 · Oct 6, 10:00 AM</div>
+<div class="ver-badge">v1.74.19 · Oct 6, 10:30 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -5215,13 +5215,19 @@
   const TODO_SEEDS = [
     { id: 'cream-cheese-scones', stage: 0, t: 'Master cream cheese scones' },
     { id: 'christmas-items', stage: 0, t: 'Christmas items' },
+    { id: 'christmas-meringue-pops', stage: 0, t: 'Christmas meringue pops', lvl: 1, after: 'Christmas items' },
+    { id: 'teddy-bear-madeleine', stage: 0, t: 'Teddy bear madeleine', lvl: 1, after: 'Christmas meringue pops' },
   ];
   (() => {
     let applied = []; try { applied = JSON.parse(localStorage.getItem('todo.seeds.v1')) || []; } catch {}
     let changed = false;
     for (const sd of TODO_SEEDS) {
       if (applied.includes(sd.id)) continue;
-      if (TODO[sd.stage]) TODO[sd.stage].items.push({ t: sd.t, lvl: 0, done: false });
+      if (TODO[sd.stage]) {
+        const list = TODO[sd.stage].items, at = sd.after ? list.findIndex(i => i.t === sd.after) : -1;   // sits under its parent item if that is still on the list
+        const item = { t: sd.t, lvl: sd.lvl || 0, done: false };
+        if (at >= 0) list.splice(at + 1, 0, item); else list.push(item);
+      }
       applied.push(sd.id); changed = true;
     }
     if (changed) { saveTodo(); try { localStorage.setItem('todo.seeds.v1', JSON.stringify(applied)); } catch {} }
