@@ -1621,6 +1621,18 @@
           <input type="date" id="planDate" />
         </div>
         <div class="row row-stack">
+          <span class="lbl">Stanton delivers</span>
+          <div class="bakedays" id="delivDays">
+            <button type="button" data-ddow="1">M</button>
+            <button type="button" data-ddow="2">T</button>
+            <button type="button" data-ddow="3">W</button>
+            <button type="button" data-ddow="4">T</button>
+            <button type="button" data-ddow="5">F</button>
+            <button type="button" data-ddow="6">S</button>
+            <button type="button" data-ddow="0">S</button>
+          </div>
+        </div>
+        <div class="row row-stack">
           <span class="lbl">Bake days</span>
           <div class="bakedays" id="bakeDays">
             <button type="button" data-dow="1">M</button>
@@ -1868,7 +1880,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.74.19 · Oct 6, 10:30 AM</div>
+<div class="ver-badge">v1.75.00 · Oct 6, 11:00 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -4367,6 +4379,17 @@
   // Build the plan (cards + optional split slider) from the last-loaded data and the
   // current planSplit. fullSlider=true rebuilds the slider element; false leaves the
   // slider input untouched (so a live drag isn't interrupted) and only updates its numbers.
+  // Set delivery days per store (Stanton: Fridays). A store with delivery days is planned on those dates — each delivery covers demand
+  // until the next one — instead of the bake days chosen for the whole plan. Saved on this device.
+  let storeDelivery = { 'Stanton': [5] };
+  try { const v = JSON.parse(localStorage.getItem('storeDelivery.v1')); if (v && typeof v === 'object') storeDelivery = v; } catch {}
+  const saveDelivery = () => { try { localStorage.setItem('storeDelivery.v1', JSON.stringify(storeDelivery)); } catch {} };
+  const syncDelivUI = () => document.querySelectorAll('#delivDays button').forEach(b => b.classList.toggle('on', (storeDelivery['Stanton'] || []).includes(Number(b.dataset.ddow))));
+  document.getElementById('delivDays').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return; const d = Number(b.dataset.ddow), cur = storeDelivery['Stanton'] || [];
+    storeDelivery['Stanton'] = cur.includes(d) ? cur.filter(x => x !== d) : [...cur, d];
+    saveDelivery(); syncDelivUI(); if (lastPlanSales) paintPlan(true);
+  });
   function paintPlan(fullSlider) {
     const sales = lastPlanSales, entries = lastPlanEntries;
     if (!sales) return;
@@ -4391,61 +4414,39 @@
     const planTotals = ZERO();   // pieces to bake per product across the whole plan — feeds the bake sheet's batch defaults
     const tally = evs => { for (const ev of evs) { for (const p of PRODUCTS) planTotals[p] += (ev.bake && ev.bake[p]) || 0; if (ev.ymd === activeDates[0]) agg1 += ev.total; else if (ev.ymd === activeDates[1]) agg2 += ev.total; } };
 
-    if (bakeDateSet.size) {
-      const withEvents = usable.map(c => ({ ...c, events: bakeSchedule(c.st, c.dowr, addDays(todayYmd, 1), target, bakeDateSet, c.st.growth) }));
-      const dayWord = `${activeDates.length} bake day${activeDates.length === 1 ? '' : 's'} to ${fmtWhen(target)}`;
-      if (combined) {
-        if (withEvents.length) {
-          const merged = applySplit(mergeEvents(withEvents.map(w => w.events)), planSplit);
-          tally(merged);
-          const stockTotal = withEvents.reduce((s, w) => s + w.st.stockTotal, 0);
-          html += scheduleCardHtml('Both stores · combined', `${stockTotal} on hand across ${withEvents.length === 1 ? 'store' : 'both stores'} · ${dayWord}`, merged, target);
-        }
+    // One entry per store: a store with set delivery days is planned on those dates, the others on the plan's bake days (or a lump sum).
+    syncDelivUI();
+    const stDates = loc => {
+      const dd = storeDelivery[loc] || []; if (!dd.length) return null;
+      const out = []; for (let d = addDays(todayYmd, 1); d <= target; d = addDays(d, 1)) if (dd.includes(parseEntryDate(d).getDay())) out.push(d);
+      return out;
+    };
+    const cols = [];
+    for (const c of usable) {
+      const own = stDates(c.loc), dates = own === null ? activeDates : own, useGlobal = own === null;
+      const hint = `${c.st.stockTotal} on hand now`;
+      if (dates.length) {
+        let evs = bakeSchedule(c.st, c.dowr, addDays(todayYmd, 1), target, new Set(dates), c.st.growth);
+        if (useGlobal) evs = applySplit(evs, planSplit);
+        for (const ev of evs) { for (const p of PRODUCTS) planTotals[p] += (ev.bake && ev.bake[p]) || 0; if (useGlobal) { if (ev.ymd === activeDates[0]) agg1 += ev.total; else if (ev.ymd === activeDates[1]) agg2 += ev.total; } }
+        const bake = ZERO(); for (const ev of evs) for (const q of PRODUCTS) bake[q] += ev.bake[q] || 0;
+        const eff = sumEff(evs.map(ev => bakeEffort(ev.bake)));
+        const dayWord = useGlobal ? `${dates.length} bake day${dates.length === 1 ? '' : 's'} to ${fmtWhen(target)}` : `${dates.length} delivery day${dates.length === 1 ? '' : 's'} (${(storeDelivery[c.loc] || []).map(d => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d]).join(', ')}) to ${fmtWhen(target)}`;
+        const days = evs.map(ev => `<div class="bake-event"><div class="be-head">${wkShort(ev.ymd)} ${fmtWhen(ev.ymd)} <span class="be-cover">covers thru ${wkShort(ev.coverUntil)} ${fmtWhen(ev.coverUntil)}</span></div>${ev.any ? `<div class="be-chips">${PRODUCTS.filter(q => ev.bake[q] > 0).map(q => kvRow(tok(q), q, ev.bake[q], ` · ${batchLabel(flavorBatches(ev.bake[q]))}`)).join('')}</div>` : '<div class="be-enough">enough on hand — no bake needed</div>'}</div>`).join('');
+        cols.push({ loc: c.loc, kind: 'sched', bake, eff, evs, sub: `${hint} · ${dayWord}${trendNote(c.st)}`, detail: days + kitchenRows(eff) });
       } else {
-        const gridCols = [];
-        for (const w of withEvents) {
-          const evs = applySplit(w.events, planSplit);
-          tally(evs);
-          if (withEvents.length > 1) {
-            const bake = ZERO(); for (const ev of evs) for (const q of PRODUCTS) bake[q] += ev.bake[q] || 0;
-            const eff = sumEff(evs.map(ev => bakeEffort(ev.bake)));
-            const days = evs.map(ev => `<div class="bake-event"><div class="be-head">${wkShort(ev.ymd)} ${fmtWhen(ev.ymd)} <span class="be-cover">covers thru ${wkShort(ev.coverUntil)} ${fmtWhen(ev.coverUntil)}</span></div>${ev.any ? `<div class="be-chips">${PRODUCTS.filter(q => ev.bake[q] > 0).map(q => kvRow(tok(q), q, ev.bake[q], ` · ${batchLabel(flavorBatches(ev.bake[q]))}`)).join('')}</div>` : '<div class="be-enough">enough on hand — no bake needed</div>'}</div>`).join('');
-            gridCols.push({ loc: w.loc, bake, eff, sub: `${w.st.stockTotal} on hand now · ${dayWord}${trendNote(w.st)}`, detail: days + kitchenRows(eff) });
-            continue;
-          }
-          html += scheduleCardHtml(`${w.loc}`, `${w.st.stockTotal} on hand now · ${dayWord}${trendNote(w.st)}`, evs, target);
-        }
-        if (gridCols.length) html += gridCardHtml(gridCols);
-      }
-    } else {
-      const withMaps = usable.map(c => {
         const { demand, nDays, nWe } = forecastDemand(c.dowr, addDays(todayYmd, 1), target, c.st.growth);
         const m = Math.min(0.6, FCAST_Z * (c.st.dailyCV || 0) / Math.sqrt(Math.max(1, nDays)));
-        const bakeMap = ZERO(), haveMap = ZERO(), expMap = ZERO();
-        for (const p of PRODUCTS) { bakeMap[p] = Math.max(0, Math.ceil(demand[p] * (1 + m) - c.st.stock[p])); haveMap[p] = c.st.stock[p]; expMap[p] = demand[p]; }
-        return { ...c, bakeMap, haveMap, expMap, nDays, nWe };
-      });
-      for (const w of withMaps) for (const p of PRODUCTS) planTotals[p] += w.bakeMap[p];
-      if (combined) {
-        if (withMaps.length) {
-          const bakeMap = ZERO(), haveMap = ZERO(), expMap = ZERO();
-          for (const w of withMaps) for (const p of PRODUCTS) { bakeMap[p] += w.bakeMap[p]; haveMap[p] += w.haveMap[p]; expMap[p] += w.expMap[p]; }
-          const stockTotal = withMaps.reduce((s, w) => s + w.st.stockTotal, 0);
-          const nDays = withMaps[0].nDays;
-          html += lumpCardHtml('Both stores · combined', `${nDays} day${nDays === 1 ? '' : 's'} to go · ${stockTotal} on hand across ${withMaps.length === 1 ? 'store' : 'both stores'}`, bakeMap, haveMap, expMap);
-        }
-      } else {
-        if (withMaps.length > 1) {
-          html += gridCardHtml(withMaps.map(w => {
-            const eff = bakeEffort(w.bakeMap);
-            const have = PRODUCTS.map(q => `<div class="proj-row"><span class="k">${q}</span><span>have <b>${w.haveMap[q]}</b> · expected need ${Math.ceil(w.expMap[q])}</span></div>`).join('');
-            return { loc: w.loc, bake: w.bakeMap, eff, sub: `${w.nDays} day${w.nDays === 1 ? '' : 's'} to go · ${w.nDays - w.nWe} weekday / ${w.nWe} weekend · ${w.st.stockTotal} on hand now${trendNote(w.st)}`, detail: `<div class="be-section-label">On hand</div>${have}${eff.min ? kitchenRows(eff) : ''}` };
-          }));
-        } else
-        for (const w of withMaps)
-          html += lumpCardHtml(`${w.loc}`, `${w.nDays} day${w.nDays === 1 ? '' : 's'} to go · ${w.nDays - w.nWe} weekday / ${w.nWe} weekend · ${w.st.stockTotal} on hand now${trendNote(w.st)}`, w.bakeMap, w.haveMap, w.expMap);
+        const bake = ZERO(), have = ZERO(), exp = ZERO();
+        for (const p of PRODUCTS) { bake[p] = Math.max(0, Math.ceil(demand[p] * (1 + m) - c.st.stock[p])); have[p] = c.st.stock[p]; exp[p] = demand[p]; planTotals[p] += bake[p]; }
+        const eff = bakeEffort(bake);
+        const haveRows = PRODUCTS.map(q => `<div class="proj-row"><span class="k">${q}</span><span>have <b>${have[q]}</b> · expected need ${Math.ceil(exp[q])}</span></div>`).join('');
+        cols.push({ loc: c.loc, kind: 'lump', bake, have, exp, eff, sub: `${nDays} day${nDays === 1 ? '' : 's'} to go · ${nDays - nWe} weekday / ${nWe} weekend · ${hint}${trendNote(c.st)}`,
+          detail: `<div class="be-section-label">On hand</div>${haveRows}${eff.min ? kitchenRows(eff) : ''}` });
       }
     }
+    if (cols.length > 1) html += gridCardHtml(cols);
+    else for (const c of cols) html += c.kind === 'sched' ? scheduleCardHtml(c.loc, c.sub, c.evs, target) : lumpCardHtml(c.loc, c.sub, c.bake, c.have, c.exp);
     for (const c of skipped)
       html += `<div class="proj-card"><h3>${c.loc}</h3><div class="proj-sub">${c.st.hasInv ? 'No recent sales to forecast from.' : 'Add an inventory count to include this store.'}</div></div>`;
     if (!html) html = `<div class="db-empty"><div class="big">${ic('calendar')}</div>Nothing to plan.</div>`;
