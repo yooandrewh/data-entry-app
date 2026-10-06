@@ -4385,6 +4385,7 @@
   try { const v = JSON.parse(localStorage.getItem('storeDelivery.v1')); if (v && typeof v === 'object') storeDelivery = v; } catch {}
   const saveDelivery = () => { try { localStorage.setItem('storeDelivery.v1', JSON.stringify(storeDelivery)); } catch {} };
   const syncDelivUI = () => document.querySelectorAll('#delivDays button').forEach(b => b.classList.toggle('on', (storeDelivery['Stanton'] || []).includes(Number(b.dataset.ddow))));
+  syncDelivUI();
   document.getElementById('delivDays').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return; const d = Number(b.dataset.ddow), cur = storeDelivery['Stanton'] || [];
     storeDelivery['Stanton'] = cur.includes(d) ? cur.filter(x => x !== d) : [...cur, d];
