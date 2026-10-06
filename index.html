@@ -1868,7 +1868,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.74.12 · Oct 5, 10:40 PM</div>
+<div class="ver-badge">v1.74.13 · Oct 6, 8:00 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -4752,6 +4752,14 @@
     for (const it of REC_MADS) {
       const rows = B[it.name]; if (!rows) continue;
       const verB = { label: 'Ver B', rows, yield: 20, skipNote: true, bakeNote: 'Ver B: preheat the oven to 410°F (210°C), then bake at 356°F (180°C) for 10–12 minutes.' };
+      if (it.name === 'Maple Pecan') {   // 2026-10-05: Ver B is the Brown Butter-matched recipe; the 20-piece melted-butter version moves to Ver C
+        const bbVer = { label: 'Ver B', yield: 12, skipNote: true,
+          rows: [['Cake Flour', 115], ['Toasted Pecans (ground fine)', 10], ['Baking Powder', 5], ['Caramelized Milk Powder', 3], ['Salt', 0.5], ['Unsalted Butter', 100], ['Milk', 7], ['Eggs', 85], ['Brown Sugar', 80], ['Pure Maple Syrup (dark/robust)', 10]],
+          topping: [['Toasted Pecans', '20g'], ['Maple Syrup', '10g']],
+          notes: 'Based on the Brown Butter madeleine, with the same ratios: the ground pecans replace 10g of flour, brown sugar replaces the sugar and maple syrup replaces the honey, so the batter stays as moist and the hump the same. Brown the butter and make it exactly like the Brown Butter madeleine — no resting. The pecans and maple syrup in the topping carry the rest of the flavor.' };
+        it.versions = [{ label: 'Original', rows: recMadRowsV(it) }, bbVer, { ...verB, label: 'Ver C', bakeNote: verB.bakeNote.replace('Ver B:', 'Ver C:') }];
+        continue;
+      }
       if (!it.versions) it.versions = [{ label: 'Original', rows: recMadRowsV(it) }, verB];
       else { const old = it.versions.splice(1); it.versions.push(verB, ...old.map(v => ({ ...v, label: 'Ver C' }))); }
     }
@@ -4774,7 +4782,7 @@
         ${item.finishFor ? `<div class="rec-box"><b>Syrup &amp; glaze yield</b>The syrup and glaze below are enough for ${item.finishFor} pieces (${rFmt(item.finishFor / (item.yield || BATCH_YIELD))} batches). Cost, the bake plan and the buy list use the share for one batch.</div>` : ''}
         ${item.syrup ? `<div class="rec-box"><b>Simple Syrup</b>${item.syrup.map(g => `<div class="gl"><span>${g[0]}</span><span>${rScaleStr(g[1], b)}</span></div>`).join('')}</div>` : ''}
         ${item.glaze ? `<div class="rec-box"><b>Glaze</b>${item.glaze.map(g => `<div class="gl"><span>${g[0]}</span><span>${rScaleStr(g[1], b)}</span></div>`).join('')}</div>` : ''}
-        ${item.topping ? `<div class="rec-box"><b>Topping</b>${item.topping.map(g => `<div class="gl"><span>${g[0]}</span><span>${rScaleStr(g[1], b)}</span></div>`).join('')}</div>` : ''}
+        ${((item.versions && item.versions[recState.madVer].topping) || item.topping) ? `<div class="rec-box"><b>Topping</b>${((item.versions && item.versions[recState.madVer].topping) || item.topping).map(g => `<div class="gl"><span>${g[0]}</span><span>${rScaleStr(g[1], b)}</span></div>`).join('')}</div>` : ''}
         ${(item.fillingRefs || item.fillingNote) ? `<div class="rec-box"><b>Filling & Topping</b>${(item.fillingRefs || []).map(recFillingRef).join('')}${item.fillingNote ? `<p>${item.fillingNote}</p>` : ''}</div>` : ''}
         <div class="rec-box"><b>Notes</b>${(() => { const bn = item.versions && item.versions[recState.madVer].bakeNote; const n = (item.versions && item.versions[recState.madVer].notes) || item.notes || REC_MAD_NOTES; return bn ? bn + '<br><br>' + n.replace(/^Bake at[^<]*<br>(<br>)?/, '') : n; })()}</div>
         ${recLink(item.link)}
@@ -5643,7 +5651,7 @@
     const vy = (item.versions && item.versions[ver || 0].yield) || item.yield || BATCH_YIELD;
     const fk = item.finishFor ? vy / item.finishFor : 1;
     const glaze = (item.glaze || []).map(g => [g[0], lblGrams(g[1]) * fk]);
-    const topping = (item.topping || []).map(g => [g[0], lblGrams(g[1])]);
+    const topping = (((item.versions && item.versions[ver || 0].topping) || item.topping) || []).map(g => [g[0], lblGrams(g[1])]);
     const filling = lblFillingRows(item);
     const syrup = (item.syrup || []).map(g => [g[0], lblGrams(g[1]) * fk]);
     const total = [...batter, ...syrup, ...glaze, ...topping].reduce((a, r) => a + r[1], 0);
