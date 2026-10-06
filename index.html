@@ -1868,7 +1868,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.74.11 · Oct 5, 10:10 PM</div>
+<div class="ver-badge">v1.74.12 · Oct 5, 10:40 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -4534,10 +4534,13 @@
   const REC_MAD_BASE = { 'Baking Powder': 6, 'Salt': 2, 'Eggs': 200, 'Sugar': 140, 'Vanilla Extract': 5, 'Unsalted Butter': 200 };
   const REC_MAD_NOTES = 'Bake at 374°F (190°C) for 13 minutes.<br><br>1. Melt the butter to 50–55°F (10–13°C); cool it down if it goes over 60°F (16°C).<br>2. Whisk together the eggs, sugar, vanilla extract, and flavoring, if using.<br>3. Sift the dry ingredients into the egg mixture and fold to combine.<br>4. Fold in the butter.';
   const REC_MADS = [
-    { name: 'Classic',
+    // Classic is the Brown Butter madeleine now (Original); the old Classic recipe is Ver B. (2026-10-05)
+    { name: 'Classic', yield: 12,
       versions: [
-        { label: 'Original', rows: [['Cake Flour', 174], ['Baking Powder', 6], ['Salt', 2], ['Eggs', 200], ['Sugar', 140], ['Vanilla Extract', 5], ['Unsalted Butter', 200]] },
-        { label: 'Ver B', rows: [['Cake Flour', 174], ['Baking Powder', 6], ['Salt', 2], ['Eggs', 200], ['Sugar', 140], ['Vanilla Extract', 5], ['Unsalted Butter', 200], ['Avocado Oil', 20]] },
+        { label: 'Original', sub: 'brown butter', yield: 12,
+          rows: [['Cake Flour', 125], ['Baking Powder', 5], ['Caramelized Milk Powder', 3], ['Salt', 0.5], ['Unsalted Butter', 105], ['Milk', 7], ['Eggs', 85], ['Sugar', 80], ['Honey', 10]],
+          notes: 'Mould: Woojung / Chiyoda madeleine, 22mm deep. Whole eggs are strained. Caramelized milk powder is made ahead. From the cookbook — the method page wasn’t captured, so add your own steps here if you want them.' },
+        { label: 'Ver B', yield: 18, rows: [['Cake Flour', 174], ['Baking Powder', 6], ['Salt', 2], ['Eggs', 200], ['Sugar', 140], ['Vanilla Extract', 5], ['Unsalted Butter', 200]] },
       ] },
     { name: 'Dot Cake', flour: 174, salt: 2, lblExtra: { topping: ['nonpareil sprinkles'] },
       fillingRefs: ['Cream Cheese Frosting'],
@@ -4561,9 +4564,6 @@
       glaze: [['Powdered Sugar', '85g'], ['Cocoa Powder', '7g'], ['Water', '25g']],
       lblExtra: { topping: ['edible gold powder'] },
       notes: 'Mould: Chiyoda cacao pod. Brush the warm madeleines with the simple syrup (dissolve the sugar in the water), then glaze once cool. To finish: edible gold powder. Whole eggs are strained. From the cookbook — the method page wasn’t captured, so add your own steps here if you want them.' },
-    { name: 'Brown Butter', title: 'Brown Butter Madeleine', yield: 12,
-      custom: [['Cake Flour', 125], ['Baking Powder', 5], ['Caramelized Milk Powder', 3], ['Salt', 0.5], ['Unsalted Butter', 105], ['Milk', 7], ['Eggs', 85], ['Sugar', 80], ['Honey', 10]],
-      notes: 'Mould: Woojung / Chiyoda madeleine, 22mm deep. Whole eggs are strained. Caramelized milk powder is made ahead. From the cookbook — the method page wasn’t captured, so add your own steps here if you want them.' },
     { name: 'Matcha', title: 'Matcha Madeleine', yield: 12,
       custom: [['Cake Flour', 100], ['Matcha Powder', 10], ['Baking Powder', 5], ['Salt', 0.5], ['Unsalted Butter', 105], ['Milk', 7], ['Eggs', 85], ['Sugar', 75], ['Honey', 10]],
       glaze: [['Powdered Sugar', '78g'], ['Water', '18g'], ['Matcha Powder', '4g']],
@@ -4743,7 +4743,7 @@
     const swap = (rows, name, amt) => rows.map(r => r[0] === name ? [name, amt] : r);
     const drop = (rows, ...names) => rows.filter(r => !names.includes(r[0]));
     const B = {
-      'Classic': base, 'Dot Cake': base,
+      'Dot Cake': base,
       'Lemon Poppy': [...base, ['Lemon Emulsion', 4], ['Poppy Seed', 6]],
       'Ube': [...swap(base, 'Cake Flour', 168), ['Ube Powder', 20], ['Ube Extract', 2.5]],
       'Earl Grey': [...drop(base, 'Milk'), ['Earl Grey Tea Leaves', 5], ['Heavy Cream', 24]],
@@ -4767,7 +4767,7 @@
     const b = recState.batches;
     return `<div class="proj-card">
         <h3 class="rec-h">${recIc(item.name)} <span>${item.title || item.name + ' Madeleine'}</span>${verChips}</h3>
-        <div class="proj-sub">1 batch ≈ ${(item.versions && item.versions[recState.madVer].yield) || item.yield || BATCH_YIELD} ${item.type === 'muffin' ? 'pieces' : 'madeleines'}${b !== 1 ? ` · scaled ${rFmt(b)}×` : ''}</div>
+        <div class="proj-sub">1 batch ≈ ${(item.versions && item.versions[recState.madVer].yield) || item.yield || BATCH_YIELD} ${item.type === 'muffin' ? 'pieces' : 'madeleines'}${item.versions && item.versions[recState.madVer].sub ? ` (${item.versions[recState.madVer].sub})` : ''}${b !== 1 ? ` · scaled ${rFmt(b)}×` : ''}</div>
         ${recBatchRow()}
         ${recIngRows(rows, b)}
         ${item.note && !(item.versions && item.versions[recState.madVer].skipNote) ? `<div class="rec-box"><b>Flavoring</b>${rScaleNote(item.note, b)}</div>` : ''}
@@ -4776,7 +4776,7 @@
         ${item.glaze ? `<div class="rec-box"><b>Glaze</b>${item.glaze.map(g => `<div class="gl"><span>${g[0]}</span><span>${rScaleStr(g[1], b)}</span></div>`).join('')}</div>` : ''}
         ${item.topping ? `<div class="rec-box"><b>Topping</b>${item.topping.map(g => `<div class="gl"><span>${g[0]}</span><span>${rScaleStr(g[1], b)}</span></div>`).join('')}</div>` : ''}
         ${(item.fillingRefs || item.fillingNote) ? `<div class="rec-box"><b>Filling & Topping</b>${(item.fillingRefs || []).map(recFillingRef).join('')}${item.fillingNote ? `<p>${item.fillingNote}</p>` : ''}</div>` : ''}
-        <div class="rec-box"><b>Notes</b>${(() => { const bn = item.versions && item.versions[recState.madVer].bakeNote; const n = item.notes || REC_MAD_NOTES; return bn ? bn + '<br><br>' + n.replace(/^Bake at[^<]*<br>(<br>)?/, '') : n; })()}</div>
+        <div class="rec-box"><b>Notes</b>${(() => { const bn = item.versions && item.versions[recState.madVer].bakeNote; const n = (item.versions && item.versions[recState.madVer].notes) || item.notes || REC_MAD_NOTES; return bn ? bn + '<br><br>' + n.replace(/^Bake at[^<]*<br>(<br>)?/, '') : n; })()}</div>
         ${recLink(item.link)}
       </div>`;
   }
@@ -5640,13 +5640,14 @@
   // Ingredient groups + per-piece weight for one madeleine (ver = which recipe version's rows to use).
   function lblCalc(item, ver) {
     const batter = [...recMadSort(recMadRowsV(item, ver)), ...((item.versions && item.versions[ver || 0].skipNote) ? [] : lblNoteRows(item.note))].map(r => [r[0], lblGrams(r[1])]);
-    const fk = item.finishFor ? (item.yield || BATCH_YIELD) / item.finishFor : 1;
+    const vy = (item.versions && item.versions[ver || 0].yield) || item.yield || BATCH_YIELD;
+    const fk = item.finishFor ? vy / item.finishFor : 1;
     const glaze = (item.glaze || []).map(g => [g[0], lblGrams(g[1]) * fk]);
     const topping = (item.topping || []).map(g => [g[0], lblGrams(g[1])]);
     const filling = lblFillingRows(item);
     const syrup = (item.syrup || []).map(g => [g[0], lblGrams(g[1]) * fk]);
     const total = [...batter, ...syrup, ...glaze, ...topping].reduce((a, r) => a + r[1], 0);
-    return { batter, glaze, topping, filling, perPiece: total / (item.yield || BATCH_YIELD) };
+    return { batter, glaze, topping, filling, perPiece: total / vy };
   }
   const lblNetText = c => c.perPiece > 0 ? `${Math.round(c.perPiece)} g (${(c.perPiece / 28.3495).toFixed(1)} oz) each` : '— g';
   // Any recipe except fillings can be labelled. Madeleines and muffins use their full batter / glaze / topping data; the rest use their ingredient rows.
