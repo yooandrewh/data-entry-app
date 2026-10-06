@@ -1868,7 +1868,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.74.17 · Oct 6, 9:30 AM</div>
+<div class="ver-badge">v1.74.18 · Oct 6, 10:00 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -3512,6 +3512,9 @@
   // Per-location stats: run-rate (anchored to that location's latest sales date,
   // so un-entered days don't dilute it) + current stock (latest inventory +
   // deliveries since − sales since).
+  // Products a store doesn't carry anymore: the forecast and the bake plan ignore their sales there (Stanton no longer sells Lemon Poppy).
+  const STORE_SKIP = { 'Stanton': ['Lemon Poppy'] };
+  const storeSells = (loc, p) => !(STORE_SKIP[loc] || []).includes(p);
   function locStats(loc, sales, entries) {
     const locSales = sales.filter(s => s.location === loc);
     const latestSale = locSales.reduce((m, s) => s.date > m ? s.date : m, '');
@@ -3527,7 +3530,7 @@
       if (!latestSale || s.date < winStart || s.date > latestSale) continue;
       let any = false, dayTot = 0;
       for (const p of PRODUCTS) {
-        const v = s.amounts[p] || 0; rate[p] += v; dayTot += v;
+        const v = storeSells(loc, p) ? (s.amounts[p] || 0) : 0; rate[p] += v; dayTot += v;
         if (v > 0) { any = true; if (!firstSeen[p] || s.date < firstSeen[p]) firstSeen[p] = s.date; }
       }
       if (any) {
@@ -3601,7 +3604,7 @@
               && ts(e.datetime) > ts(cOld.datetime) && ts(e.datetime) <= ts(cNew.datetime))
             for (const p of PRODUCTS) add[p] += (e.amounts[p] || 0);
         for (const p of PRODUCTS) {
-          if (rate[p] > 0) continue;   // sales signal wins; only fill products with none
+          if (rate[p] > 0 || !storeSells(loc, p)) continue;   // sales signal wins; only fill products with none (and never for one the store dropped)
           const consumed = (cOld.amounts[p] || 0) + add[p] - (cNew.amounts[p] || 0);
           const r = Math.max(0, consumed) / days;
           if (r > 0) { rate[p] = r; dowRate[p] = { wd: r, we: r }; }   // flat (no weekday signal from counts)
@@ -3911,7 +3914,7 @@
       if (s.date < from) continue;
       const isWe = [0, 6].includes(parseEntryDate(s.date).getDay());
       let any = false;
-      for (const p of PRODUCTS) { const v = s.amounts[p] || 0; (isWe ? we : wd)[p] += v; if (v) any = true; }
+      for (const p of PRODUCTS) { const v = storeSells(loc, p) ? (s.amounts[p] || 0) : 0; (isWe ? we : wd)[p] += v; if (v) any = true; }
       if (any) (isWe ? weD : wdD).add(s.date);
     }
     const nWd = wdD.size || 1, nWe = weD.size || 1, rate = {};
