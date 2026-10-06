@@ -1868,7 +1868,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.74.14 · Oct 6, 8:30 AM</div>
+<div class="ver-badge">v1.74.15 · Oct 6, 8:50 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -4657,6 +4657,12 @@
   ];
   // Testing: recipes still being developed. They live in their own Recipes tab, and stay out of the madeleine lists.
   const REC_TEST = [
+    // Maple Pecan built on the Brown Butter ratios (2026-10-05): the ground pecans replace 10g of the flour, brown sugar replaces the sugar and maple syrup the honey.
+    // Same moisture and hump as Brown Butter, made the same way (no resting). Also live as Maple Pecan Ver B.
+    { key: 'maplepecanbb', type: 'mad', name: 'Maple Pecan Brown Butter', title: 'Maple Pecan (Brown Butter)', yield: 12,
+      custom: [['Cake Flour', 115], ['Toasted Pecans (ground fine)', 10], ['Baking Powder', 5], ['Caramelized Milk Powder', 3], ['Salt', 0.5], ['Unsalted Butter', 100], ['Milk', 7], ['Eggs', 85], ['Brown Sugar', 80], ['Pure Maple Syrup (dark/robust)', 10]],
+      topping: [['Toasted Pecans', '20g'], ['Maple Syrup', '10g']],
+      notes: 'Based on the Brown Butter madeleine, with the same ratios: the ground pecans replace 10g of flour, brown sugar replaces the sugar and maple syrup replaces the honey, so the batter stays as moist and the hump the same. Brown the butter and make it exactly like the Brown Butter madeleine — no resting. Whole eggs are strained. The pecans and maple syrup in the topping carry the rest of the flavor. If it comes out less moist, raise the maple syrup to 14g and drop the brown sugar to 76g.' },
     // Source: alchenny.substack.com (read through a summarizer — check amounts against the post). No yield is given; ~10 pieces per batch is an assumption.
     { key: 'mangomousse', type: 'simple', name: 'Mango Mousse Cake', yield: 20,
       yieldText: 'Fruit-shaped mousse · about 20 pieces per batch in the Wrbin mango mold (the source gives no yield; about 50 mL per cavity from the mold dimensions — fill one with water to confirm)',
@@ -4672,7 +4678,7 @@
       velvet: 'Optional, instead of the dipped shell, for a matte suede finish (the mousse must be frozen solid): melt white chocolate and cocoa butter about 1:1 by weight, add oil-based or powdered fat-soluble color (water-based color seizes it), strain, and keep it near 40–45°C (105–113°F). Spray from 20–30 cm (8–12 in) in even passes with a food-only spray gun, and test one frozen piece first. The dipped coating (about 4:1) is too thick to spray — use one method or the other.',
       notes: '<b>Puree:</b> let 300g frozen mango thaw at room temperature for 30 minutes, then simmer it with 80g sugar over medium heat and blend.<br><br><b>Confit</b> (make first — freeze at least 3 hours): heat the puree with the lemon juice and sugar and boil 1–2 minutes (no pectin). Pour into half-sphere silicone molds (3–4 cm) and freeze.<br><br><b>Mousse:</b> bloom the gelatin in cold water 5–10 minutes. Heat 180g of the puree with the sugar, remove from the heat and dissolve the gelatin in it, then stir in the other 180g of cold puree. Whip the cream to soft peaks and fold the mango mixture in, in 2–3 additions.<br><br><b>Assembly</b> (freeze overnight): fill the mango-shaped silicone molds halfway with mousse, press in a frozen confit dome, cover with more mousse, and freeze.<br><br><b>Biscuit base</b> (two thirds of the source dough): cream the butter and powdered sugar, mix in the egg, salt and almond flour, then the flour. Chill 30 minutes, roll out and cut ovals or rounds. Bake at 350°F (175°C) for 10–12 minutes.<br><br><b>Coating and finishing:</b> melt the white chocolate and cocoa butter together, cool to 90–95°F (32–35°C) and stir in the colors. Dip the frozen mousse cakes, set each on a biscuit base, and thaw 1–2 hours before serving.<br><br><b>Mold:</b> Wrbin 2-pack mango silicone mold (Amazon B0GXDQ8N8N, $8.54; each sheet is 5.5 × 7.5 in and about 1 in deep with 4 mango cavities of 3.14 × 2.2 in, 8 per 2-pack; a funnel is included). A half-size sheet pan (13 × 18 in) holds 4 sheets, 16 cavities, for freezing. The mousse freezes overnight, so the molds cannot be reused the same day — 3 packs (24 cavities, about $25.60 one time) fill a full batch.<br><br>Keep it frozen until serving and label a discard date if it goes to a store. Use unsweetened frozen mango — the puree already has its own 80g of sugar.' },
   ];
-  const REC_ICON = { 'Dubai Chewy Ball': 'nut', 'Pumpkin Pie Spice Muffin': 'pumpkin', 'Classic': 'madeleine', 'Dot Cake': 'cake_dot', 'Earl Grey': 'teacup', 'Ube': 'ube', 'Lemon Poppy': 'lemon', 'Chocolate': 'choco', 'Brown Butter': 'butter_brown', 'Matcha': 'matcha', 'Mugwort': 'leaf', 'Maple Pecan': 'nut', 'Pumpkin Pie Spice': 'pumpkin', 'Cheddar Jalapeno Scone': 'scone', 'Mango Mousse Cake': 'cupcake', 'Flat Chocolate Chip Chookie': 'cookie', 'Lemon Curd': 'jar_lemon', 'Cream Cheese Frosting': 'swirl_pink', 'Pumpkin Cream Cheese Frosting': 'swirl_pumpkin', 'Anglesie Buttercream': 'butter', 'Earl Grey Paste': 'jar_tea', 'Chocolate Ganache': 'jar_choc', 'Caramel': 'drop', 'Mascarpone Cream': 'bowl', 'Milk Cream': 'milk', 'Plain Scone': 'scone', 'Strawberry Cream Cheese': 'strawberry', 'Blueberry Cream Cheese': 'blueberry', 'Gluten Free Cake': 'cake_gf', 'Sable': 'cookie', 'Macarons': 'macaron', 'Salt Bread': 'bread', 'Vegan Donut': 'donut', 'Apricot Ricotta Cake': 'cake_apricot', 'Earl Grey Fig Cake': 'cake_fig' };
+  const REC_ICON = { 'Dubai Chewy Ball': 'nut', 'Pumpkin Pie Spice Muffin': 'pumpkin', 'Classic': 'madeleine', 'Dot Cake': 'cake_dot', 'Earl Grey': 'teacup', 'Ube': 'ube', 'Lemon Poppy': 'lemon', 'Chocolate': 'choco', 'Brown Butter': 'butter_brown', 'Matcha': 'matcha', 'Mugwort': 'leaf', 'Maple Pecan': 'nut', 'Pumpkin Pie Spice': 'pumpkin', 'Cheddar Jalapeno Scone': 'scone', 'Mango Mousse Cake': 'cupcake', 'Maple Pecan Brown Butter': 'nut', 'Flat Chocolate Chip Chookie': 'cookie', 'Lemon Curd': 'jar_lemon', 'Cream Cheese Frosting': 'swirl_pink', 'Pumpkin Cream Cheese Frosting': 'swirl_pumpkin', 'Anglesie Buttercream': 'butter', 'Earl Grey Paste': 'jar_tea', 'Chocolate Ganache': 'jar_choc', 'Caramel': 'drop', 'Mascarpone Cream': 'bowl', 'Milk Cream': 'milk', 'Plain Scone': 'scone', 'Strawberry Cream Cheese': 'strawberry', 'Blueberry Cream Cheese': 'blueberry', 'Gluten Free Cake': 'cake_gf', 'Sable': 'cookie', 'Macarons': 'macaron', 'Salt Bread': 'bread', 'Vegan Donut': 'donut', 'Apricot Ricotta Cake': 'cake_apricot', 'Earl Grey Fig Cake': 'cake_fig' };
   const recKey = name => REC_ICON[name] || 'book';
   const recIc = (name, px) => ic(recKey(name), px);
 
@@ -4873,7 +4879,7 @@
     let html;
     if (recState.sec === 'mad') html = recMadCard(item);
     else if (recState.sec === 'fill') html = recFillCard(item);
-    else if (item.type === 'muffin') html = recMadCard(item);
+    else if (item.type === 'muffin' || item.type === 'mad') html = recMadCard(item);
     else if (item.type === 'sable') html = recSableCard();
     else if (item.type === 'macaron') html = recMacCard(item);
     else if (item.type === 'glutenfree') html = recGfCard(item);
@@ -5025,7 +5031,7 @@
       if (it.type === 'twocol') rows = it.rows.map(r => [r[0], r[1]]);
       else if (it.type === 'ratio') { const [a, b] = it.ratio.split(':').map(parseFloat); rows = [['Sugar', a], ['Heavy Cream', b]]; }
       else rows = it.rows.map(num);
-    } else if (it.type === 'muffin') rows = [...it.custom, ...(it.glaze || []), ...(it.topping || [])].map(num);
+    } else if (it.type === 'muffin' || it.type === 'mad') rows = [...it.custom, ...(it.glaze || []), ...(it.topping || [])].map(num);
     else if (it.type === 'sable') rows = [...REC_SABLE.types[0].rows, ...REC_SABLE.types[0].addins].map(num);
     else if (it.type === 'macaron') rows = it.base.map(num);
     else if (it.type === 'glutenfree') rows = it.sizes[0].rows.map(num);
@@ -5316,7 +5322,7 @@
         return { title: costItemName(f.sec, f.it), note: `${rFmt(b.b)} batch${b.b === 1 ? '' : 'es'} · ≈ ${rFmt(b.b * f.it.yield)} pcs`, groups: [fl.map(([n, g]) => bsLine(n, g))], subs: [{ label: 'Outer layer', lines: ou.map(([n, g]) => bsLine(n, g)) }] };
       }
       // Madeleines / muffins: the batter is its own list; syrup, glaze and topping go underneath as separate sections (not part of the batter).
-      const split = f.sec === 'mad' || f.it.type === 'muffin';
+      const split = f.sec === 'mad' || f.it.type === 'muffin' || f.it.type === 'mad';
       const rows = recMadSort(split ? costRows(f.sec, { ...f.it, syrup: null, glaze: null, topping: null }) : costRows(f.sec, f.it));
       const fkb = f.it.finishFor ? (f.it.yield || BATCH_YIELD) / f.it.finishFor : 1;   // syrup + glaze are written for `finishFor` pieces
       const numr = r => [r[0], typeof r[1] === 'number' ? r[1] : lblGrams(r[1]) || parseFloat(r[1]) || 0];
@@ -5660,7 +5666,7 @@
   const lblNetText = c => c.perPiece > 0 ? `${Math.round(c.perPiece)} g (${(c.perPiece / 28.3495).toFixed(1)} oz) each` : '— g';
   // Any recipe except fillings can be labelled. Madeleines and muffins use their full batter / glaze / topping data; the rest use their ingredient rows.
   function lblCalcAny(c) {
-    if (c.sec === 'mad' || c.it.type === 'muffin') return lblCalc(c.it, 0);
+    if (c.sec === 'mad' || c.it.type === 'muffin' || c.it.type === 'mad') return lblCalc(c.it, 0);
     const batter = costRows(c.sec, c.it).map(r => [r[0], r[1]]);
     const y = costDefaultYield(c.sec, c.it);
     return { batter, glaze: [], topping: [], filling: [], perPiece: y ? batter.reduce((a, r) => a + r[1], 0) / y : 0 };
