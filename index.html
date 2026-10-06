@@ -1558,6 +1558,10 @@
   .home-menu button, .home-menu a.hm-link { padding-top: 10px !important; padding-bottom: 6px !important; }
   .home-menu a.hm-link { margin-top: 22px !important; }
   .tabbar button { gap: 2px !important; }
+  /* five recipe tabs (Mads / Fillings / Scones / Other / Test) must fit a narrow phone */
+  #recSection { display: flex !important; }
+  #recSection button { flex: 1 1 0; min-width: 0; padding: 5px 3px !important; gap: 3px; justify-content: center; white-space: nowrap; }
+  @media (max-width: 400px) { #recSection button [data-ic], #recSection button .ic2 { display: none; } }
   /* nav: solid light caramel, flush, only while Data / Baking is open */
   body[data-tab="db"] .tabbar, body[data-tab="plan"] .tabbar { background: #f3f1ed; border-top: 1px solid #e2dfda; }
   body[data-tab="db"] .tabbar button, body[data-tab="plan"] .tabbar button { color: #242c35; opacity: .75; }
@@ -1843,6 +1847,7 @@
         <button data-sec="fill"><span data-ic="jar_lemon"></span> Fillings</button>
         <button data-sec="scone"><span data-ic="scone"></span> Scones</button>
         <button data-sec="other"><span data-ic="cupcake"></span> Other</button>
+        <button data-sec="test"><span data-ic="flask"></span> Test</button>
       </div>
       <div class="filter-bar"><select id="recPick" aria-label="Recipe"></select></div>
       <div id="recCard"></div>
@@ -1863,7 +1868,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.74.03 · Oct 5, 6:30 PM</div>
+<div class="ver-badge">v1.74.04 · Oct 5, 8:00 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -4650,7 +4655,24 @@
       rows: [['Cream Cheese', 550], ['Blueberry', 550], ['Powdered Sugar', 65], ['Salt', 3]],
       notes: 'Freeze completely solid before wrapping into the scone dough.' },
   ];
-  const REC_ICON = { 'Dubai Chewy Ball': 'nut', 'Pumpkin Pie Spice Muffin': 'pumpkin', 'Classic': 'madeleine', 'Dot Cake': 'cake_dot', 'Earl Grey': 'teacup', 'Ube': 'ube', 'Lemon Poppy': 'lemon', 'Chocolate': 'choco', 'Brown Butter': 'butter_brown', 'Matcha': 'matcha', 'Mugwort': 'leaf', 'Maple Pecan': 'nut', 'Pumpkin Pie Spice': 'pumpkin', 'Cheddar Jalapeno Scone': 'scone', 'Flat Chocolate Chip Chookie': 'cookie', 'Lemon Curd': 'jar_lemon', 'Cream Cheese Frosting': 'swirl_pink', 'Pumpkin Cream Cheese Frosting': 'swirl_pumpkin', 'Anglesie Buttercream': 'butter', 'Earl Grey Paste': 'jar_tea', 'Chocolate Ganache': 'jar_choc', 'Caramel': 'drop', 'Mascarpone Cream': 'bowl', 'Milk Cream': 'milk', 'Plain Scone': 'scone', 'Strawberry Cream Cheese': 'strawberry', 'Blueberry Cream Cheese': 'blueberry', 'Gluten Free Cake': 'cake_gf', 'Sable': 'cookie', 'Macarons': 'macaron', 'Salt Bread': 'bread', 'Vegan Donut': 'donut', 'Apricot Ricotta Cake': 'cake_apricot', 'Earl Grey Fig Cake': 'cake_fig' };
+  // Testing: recipes still being developed. They live in their own Recipes tab, and stay out of the madeleine lists.
+  const REC_TEST = [
+    // Source: alchenny.substack.com (read through a summarizer — check amounts against the post). No yield is given; ~10 pieces per batch is an assumption.
+    { key: 'mangomousse', type: 'simple', name: 'Mango Mousse Cake', yield: 10,
+      yieldText: 'Fruit-shaped mousse · about 10 pieces per batch (assumed — the source gives no yield)',
+      components: [
+        { title: '1. Mango puree (base)', rows: [['Frozen Mango, unsweetened', 600]], note: 'Thaw fully in the fridge, blend, strain: about 560g of puree — 200g goes to the confit, 360g to the mousse.' },
+        { title: '2. Mango confit insert', rows: [['Mango Puree', 200], ['Lemon Juice', 15], ['Sugar', 35], ['Pectin NH', 4]], note: 'Pectin NH, or gelatin, or leave it out with deep molds.' },
+        { title: '3. Mango mousse', rows: [['Heavy Cream', 360], ['Mango Puree', 360], ['Sugar', 60], ['Gelatin', 10]], note: 'Powdered gelatin.' },
+        { title: '4. Biscuit base', rows: [['All Purpose Flour', 200], ['Unsalted Butter', 115], ['Powdered Sugar', 80], ['Almond Flour', 16], ['Eggs', 40], ['Salt', '¼ tsp']] },
+        { title: '5. White chocolate coating (dip)', rows: [['White Chocolate Couverture', 300], ['Cocoa Butter', 75], ['Food Coloring', 'to taste']], note: 'Real couverture made with cocoa butter, not baking chips. Oil-based yellow and orange color. Adjust the cocoa butter for thickness.' },
+      ],
+      // What costing, the buy list and the bake sheet read (the mango puree is made from the frozen mango, so it is not counted twice).
+      rows: [['Frozen Mango', 600], ['Lemon Juice', 15], ['Sugar', 95], ['Pectin NH', 4], ['Heavy Cream', 360], ['Gelatin', 10], ['All Purpose Flour', 200], ['Unsalted Butter', 115], ['Powdered Sugar', 80], ['Almond Flour', 16], ['Eggs', 40], ['Salt', 1.5], ['White Chocolate Couverture', 300], ['Cocoa Butter', 75]],
+      velvet: 'Optional, instead of the dipped shell, for a matte suede finish (the mousse must be frozen solid): melt white chocolate and cocoa butter about 1:1 by weight, add oil-based or powdered fat-soluble color (water-based color seizes it), strain, and keep it near 40–45°C (105–113°F). Spray from 20–30 cm (8–12 in) in even passes with a food-only spray gun, and test one frozen piece first. The dipped coating (about 4:1) is too thick to spray — use one method or the other.',
+      notes: '<b>Puree:</b> thaw the frozen mango fully in the fridge, blend until smooth, strain.<br><br><b>Confit</b> (make first — freeze at least 3 hours): mix the sugar and pectin. Heat the puree with the lemon juice, whisk in the sugar and pectin and boil 1–2 minutes. Pour into half-sphere silicone molds (3–4 cm) and freeze.<br><br><b>Mousse:</b> bloom the gelatin in cold water 5–10 minutes. Heat 180g of the puree with the sugar, remove from the heat and dissolve the gelatin in it, then stir in the other 180g of cold puree. Whip the cream to soft peaks and fold the mango mixture in, in 2–3 additions.<br><br><b>Assembly</b> (freeze overnight): fill the mango-shaped silicone molds halfway with mousse, press in a frozen confit dome, cover with more mousse, and freeze.<br><br><b>Biscuit base:</b> cream the butter and powdered sugar, mix in the egg, salt and almond flour, then the flour. Chill 30 minutes, roll out and cut ovals or rounds. Bake at 350°F (175°C) for 10–12 minutes.<br><br><b>Coating and finishing:</b> melt the white chocolate and cocoa butter together, cool to 90–95°F (32–35°C) and stir in the colors. Dip the frozen mousse cakes, set each on a biscuit base, and thaw 1–2 hours before serving.<br><br>Keep it frozen until serving and label a discard date if it goes to a store. Use unsweetened frozen mango — added sugar throws off the balance.' },
+  ];
+  const REC_ICON = { 'Dubai Chewy Ball': 'nut', 'Pumpkin Pie Spice Muffin': 'pumpkin', 'Classic': 'madeleine', 'Dot Cake': 'cake_dot', 'Earl Grey': 'teacup', 'Ube': 'ube', 'Lemon Poppy': 'lemon', 'Chocolate': 'choco', 'Brown Butter': 'butter_brown', 'Matcha': 'matcha', 'Mugwort': 'leaf', 'Maple Pecan': 'nut', 'Pumpkin Pie Spice': 'pumpkin', 'Cheddar Jalapeno Scone': 'scone', 'Mango Mousse Cake': 'cupcake', 'Flat Chocolate Chip Chookie': 'cookie', 'Lemon Curd': 'jar_lemon', 'Cream Cheese Frosting': 'swirl_pink', 'Pumpkin Cream Cheese Frosting': 'swirl_pumpkin', 'Anglesie Buttercream': 'butter', 'Earl Grey Paste': 'jar_tea', 'Chocolate Ganache': 'jar_choc', 'Caramel': 'drop', 'Mascarpone Cream': 'bowl', 'Milk Cream': 'milk', 'Plain Scone': 'scone', 'Strawberry Cream Cheese': 'strawberry', 'Blueberry Cream Cheese': 'blueberry', 'Gluten Free Cake': 'cake_gf', 'Sable': 'cookie', 'Macarons': 'macaron', 'Salt Bread': 'bread', 'Vegan Donut': 'donut', 'Apricot Ricotta Cake': 'cake_apricot', 'Earl Grey Fig Cake': 'cake_fig' };
   const recKey = name => REC_ICON[name] || 'book';
   const recIc = (name, px) => ic(recKey(name), px);
 
@@ -4663,7 +4685,7 @@
   const seasonRank = (sec, it) => { const i = SEASONAL.indexOf(`${sec}:${it.key || it.name}`); return i < 0 ? 99 : i; };
   const isSeasonal = (sec, it) => seasonRank(sec, it) < 99;
   const seasonalFirst = (sec, arr) => [...arr].sort((a, b) => seasonRank(sec, a) - seasonRank(sec, b));   // stable: the rest keep their order
-  function recList() { const sec = recState.sec; return seasonalFirst(sec, sec === 'mad' ? REC_MADS : sec === 'fill' ? REC_FILLINGS : sec === 'scone' ? REC_SCONES : REC_OTHER); }
+  function recList() { const sec = recState.sec; return seasonalFirst(sec, sec === 'mad' ? REC_MADS : sec === 'fill' ? REC_FILLINGS : sec === 'scone' ? REC_SCONES : sec === 'test' ? REC_TEST : REC_OTHER); }
   const rFmt = n => typeof n === 'string' ? n : String(Math.round(n * 10) / 10);
   // Scale the FIRST number in a string (glaze amounts, ratios).
   const rScaleStr = (str, m) => (!m || m === 1) ? str : String(str).replace(/(\d+(?:\.\d+)?)/, (x, num) => rFmt(parseFloat(num) * m));
@@ -4782,7 +4804,8 @@
         <h3>${recIc(item.name)} ${item.name}</h3>
         <div class="proj-sub">${item.yieldText || 'base recipe'}${b !== 1 ? ` · scaled ${rFmt(b)}×` : ''}</div>
         ${recBatchRow()}
-        ${recIngRows(item.rows, b)}
+        ${item.components ? item.components.map(c => `<div class="rec-box"><b>${esc(c.title)}</b>${c.rows.map(g => `<div class="gl"><span>${esc(g[0])}</span><span>${typeof g[1] === 'number' ? rFmt(g[1] * b) + 'g' : esc(g[1])}</span></div>`).join('')}${c.note ? `<p>${c.note}</p>` : ''}</div>`).join('') : recIngRows(item.rows, b)}
+        ${item.velvet ? `<div class="rec-box"><b>Optional · velvet spray finish</b><p>${item.velvet}</p></div>` : ''}
         ${item.outer ? `<div class="rec-box"><b>Outer Layer · per outer batch</b>${item.outer.map(g => `<div class="gl"><span>${g[0]}</span><span>${rFmt(g[1] * b)}g</span></div>`).join('')}${item.outerNote ? `<p>${item.outerNote}</p>` : ''}</div>` : ''}
         ${item.soak ? `<div class="rec-box"><b>Soak (2+ hrs)</b>${item.soak.map(s => `<div class="gl"><span>${s[0]}</span><span>${rFmt(s[1] * b)}g</span></div>`).join('')}</div>` : ''}
         ${item.notes ? `<div class="rec-box"><b>Notes</b>${item.notes}</div>` : ''}
@@ -4900,6 +4923,13 @@
     'Mugwort Powder': { amt: 300, unit: 'g', price: 26.31, link: 'https://www.amazon.com/dp/B081756F27' },
     'Cheddar Cheese': { amt: 226.8, unit: 'g', price: 1.89, link: 'https://www.target.com/p/cheese-block-good-gather/-/A-95137282?preselect=54340519', note: 'Target Good & Gather sharp cheddar, 8 oz' },
     'Jalapeno': { amt: 283.5, unit: 'g', price: 1.19, link: 'https://www.target.com/p/jalapenos-10oz-good-38-gather-8482/-/A-82675341', note: 'Target Good & Gather fresh jalapenos, 10 oz' },
+    // Mango Mousse Cake (Testing) — prices not set yet; they show under "Needs a price".
+    'Frozen Mango': { amt: 2268, unit: 'g', price: null, note: "Costco Pick'd Organic frozen mango, 5 lb bag — price needed" },
+    'Gelatin': { amt: null, unit: 'g', price: null, note: 'Unflavored powdered gelatin — package size and price needed' },
+    'Pectin NH': { amt: null, unit: 'g', price: null, note: 'Pectin NH — package size and price needed' },
+    'Cocoa Butter': { amt: null, unit: 'g', price: null, note: 'Food-grade cocoa butter — package size and price needed' },
+    'Food Coloring': { amt: null, unit: 'g', price: null, note: 'Oil-based yellow and orange — size and price needed' },
+    'White Chocolate Couverture': { amt: null, unit: 'g', price: null, note: 'Real couverture (cocoa butter), not the baking chips priced above — size and price needed' },
     'Marshmallow': { amt: 283.5, unit: 'g', price: 1.29, link: 'https://www.target.com/p/mini-marshmallows-10oz-good-38-gather-8482/-/A-77640518', note: 'Target Good & Gather mini marshmallows, 10 oz' },
     'Kataifi': { amt: 453.6, unit: 'g', price: 4.99, link: 'https://www.instacart.com/products/244980-indo-european-kataifi-shredded-dough-16-oz?retailerSlug=super-king', note: 'Instacart / Super King, 16oz' },
     'Pistachio Butter': { amt: 18143.7, unit: 'g', price: 600, note: '40lb pail' },
@@ -4946,7 +4976,7 @@
     'scone:plainscone': { yield: 797 / 90, toppings: [{ label: 'Strawberry Cream Cheese filling (60g)', refRecipe: { section: 'scone', key: 'strawberrycc', grams: 60 } }] },
     'scone:strawberrycc': { yield: 1368 / 60 },
   };
-  const COST_SECTIONS = [['mad', 'Madeleines', () => seasonalFirst('mad', REC_MADS)], ['fill', 'Fillings', () => seasonalFirst('fill', REC_FILLINGS)], ['scone', 'Scones', () => seasonalFirst('scone', REC_SCONES)], ['other', 'Other', () => seasonalFirst('other', REC_OTHER)]];
+  const COST_SECTIONS = [['mad', 'Madeleines', () => seasonalFirst('mad', REC_MADS)], ['fill', 'Fillings', () => seasonalFirst('fill', REC_FILLINGS)], ['scone', 'Scones', () => seasonalFirst('scone', REC_SCONES)], ['other', 'Other', () => seasonalFirst('other', REC_OTHER)], ['test', 'Testing', () => REC_TEST]];
   const costItemKey = (sec, it) => `${sec}:${it.key || it.name}`;
   const costItemName = (sec, it) => sec === 'mad' ? (it.title || it.name + ' Madeleine') : (it.type === 'sable' ? 'Sable Cookies' : it.name);
 

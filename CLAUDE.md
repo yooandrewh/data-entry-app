@@ -463,3 +463,12 @@ The OCR parser (`kairos-handover/ocr/parse_kairos.py`) now counts Maple Pecan (a
 from 2026-10-01 is 1 Lemon Poppy + 1 Sea Salt + 1 Maple Pecan. `api/sales.js` reads the `Maple Pecan` and `Pumpkin Muffin` Sales columns, and
 `SALES_FLAVORS` includes both, so Data → Sales and the forecast rates pick them up. The earlier statement above that neither has a sales source
 is out of date once new recordings are processed and pushed. Dubai Ball still has none.
+
+
+## Testing recipes (2026-10-05)
+
+Baking → Recipes has a fifth tab, **Test** (`REC_TEST`, section key `test`, also a "Testing" group in `COST_SECTIONS`, so Costs, the Bake Plan picker and the Buy List can reach it). It holds recipes still being developed.
+First entry: **Mango Mousse Cake** (`key: 'mangomousse'`, `type: 'simple'`, ~10 pieces assumed). It has `components` (shown as separate boxes: puree, confit, mousse, biscuit, white chocolate coating) plus an
+optional `velvet` spray note; `rows` is what costing / the buy list / the bake sheet read (frozen mango is counted once, the puree is derived from it). Its ingredients with no price yet
+(Frozen Mango, Gelatin, Pectin NH, Cocoa Butter, Food Coloring, White Chocolate Couverture) are in `DEFAULT_PRICES` with `price: null`, so they sit under "Needs a price" — don't invent prices.
+It is not a madeleine and not in `REC_MADS` or `SALES_FLAVORS`.
