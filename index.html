@@ -1777,6 +1777,14 @@
             <button type="button" class="step plus">+</button>
           </div>
         </div>
+        <div class="row">
+          <span class="lbl lbl-flavor"><span class="tok" data-tok="Blueberry Muffin"></span>Blueberry Muffin</span>
+          <div class="amt" data-product="Blueberry Muffin">
+            <button type="button" class="step minus">−</button>
+            <input class="val" type="number" inputmode="numeric" value="0" min="0" />
+            <button type="button" class="step plus">+</button>
+          </div>
+        </div>
         <div class="row" id="dubaiRow" hidden>
           <span class="lbl lbl-flavor"><span class="tok" data-tok="Dubai Ball"></span>Dubai Chewy Ball</span>
           <div class="amt" data-product="Dubai Ball">
@@ -1880,7 +1888,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.75.03 · Oct 5, 11:53 PM</div>
+<div class="ver-badge">v1.75.04 · Oct 12</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -2093,24 +2101,24 @@
   const ic = (name, px) => `<svg class="ic2" viewBox="0 0 24 24" aria-hidden="true"${px ? ` style="width:${px}px;height:${px}px"` : ''}>${(IC[name] || IC.book)()}</svg>`;
   document.querySelectorAll('[data-ic]').forEach(el => { el.innerHTML = ic(el.dataset.ic, Number(el.dataset.size) || 0); });
 
-  const PRODUCTS = ['Lemon Poppy', 'Sea Salt', 'Maple Pecan', 'Pumpkin Muffin'];   // actively logged/forecast (Ube/Dot/Dubai Ball retired — history kept in Data)
+  const PRODUCTS = ['Lemon Poppy', 'Sea Salt', 'Maple Pecan', 'Pumpkin Muffin', 'Blueberry Muffin'];   // actively logged/forecast (Ube/Dot/Dubai Ball retired — history kept in Data)
   // Dubai Ball is back, but only for Stanton: it is logged, invoiced and counted there (Entry, Invoice, Data, Sales, Goodwill) and
   // never appears for La Mirada or in the forecast / plan (it has no sales-rate source).
   const ENTRY_PRODUCTS = [...PRODUCTS, 'Dubai Ball'];
-  const HIST_PRODUCTS = ['Lemon Poppy', 'Sea Salt', 'Ube', 'Dot', 'Earl Grey', 'Dubai Ball', 'Pumpkin Muffin', 'Maple Pecan'];   // every flavor ever tracked — for the Data delivery/inventory history
+  const HIST_PRODUCTS = ['Lemon Poppy', 'Sea Salt', 'Ube', 'Dot', 'Earl Grey', 'Dubai Ball', 'Pumpkin Muffin', 'Blueberry Muffin', 'Maple Pecan'];   // every flavor ever tracked — for the Data delivery/inventory history
   // Two-letter monogram + a fixed colour per flavour, used everywhere a flavour
   // is listed. Emoji were ambiguous at small sizes (🫖 for Earl Grey, 🟤 for
   // Dubai Ball) and rendered at different widths, so rows never lined up.
-  const PRODUCT_TOKEN = { 'Lemon Poppy': 'LP', 'Sea Salt': 'SS', 'Earl Grey': 'EG', 'Maple Pecan': 'MP', 'Pumpkin Muffin': 'PM', 'Dubai Ball': 'DB', 'Ube': 'UB', 'Dot': 'DT', 'Matcha': 'MA', 'Chocolate': 'CH', 'Unknown': '?', 'Flights': 'FL' };
-  const PRODUCT_COLOR = { 'Lemon Poppy': '#c99306', 'Sea Salt': '#4a7ba7', 'Earl Grey': '#6b7280', 'Maple Pecan': '#8a5a2b', 'Pumpkin Muffin': '#d4620a', 'Dubai Ball': '#a0662d', 'Ube': '#7c5aa6', 'Dot': '#c2557a', 'Matcha': '#5a8f4e', 'Chocolate': '#7b4b2a', 'Unknown': '#9a9ba3', 'Flights': '#8a8d96' };
-  const TOK_IC = { 'Lemon Poppy': 'lemon', 'Sea Salt': 'madeleine', 'Earl Grey': 'teacup', 'Maple Pecan': 'nut', 'Pumpkin Muffin': 'pumpkin', 'Dubai Ball': 'dubai', 'Ube': 'ube', 'Dot': 'cake_dot', 'Matcha': 'matcha', 'Chocolate': 'choco', 'Flights': 'box' };
+  const PRODUCT_TOKEN = { 'Lemon Poppy': 'LP', 'Sea Salt': 'SS', 'Earl Grey': 'EG', 'Maple Pecan': 'MP', 'Pumpkin Muffin': 'PM', 'Blueberry Muffin': 'BM', 'Dubai Ball': 'DB', 'Ube': 'UB', 'Dot': 'DT', 'Matcha': 'MA', 'Chocolate': 'CH', 'Unknown': '?', 'Flights': 'FL' };
+  const PRODUCT_COLOR = { 'Lemon Poppy': '#c99306', 'Sea Salt': '#4a7ba7', 'Earl Grey': '#6b7280', 'Maple Pecan': '#8a5a2b', 'Pumpkin Muffin': '#d4620a', 'Blueberry Muffin': '#4b5fa8', 'Dubai Ball': '#a0662d', 'Ube': '#7c5aa6', 'Dot': '#c2557a', 'Matcha': '#5a8f4e', 'Chocolate': '#7b4b2a', 'Unknown': '#9a9ba3', 'Flights': '#8a8d96' };
+  const TOK_IC = { 'Lemon Poppy': 'lemon', 'Sea Salt': 'madeleine', 'Earl Grey': 'teacup', 'Maple Pecan': 'nut', 'Pumpkin Muffin': 'pumpkin', 'Blueberry Muffin': 'blueberry', 'Dubai Ball': 'dubai', 'Ube': 'ube', 'Dot': 'cake_dot', 'Matcha': 'matcha', 'Chocolate': 'choco', 'Flights': 'box' };
   const tok = p => `<span class="tok">${ic(TOK_IC[p] || 'madeleine', 22)}</span>`;
   document.querySelectorAll('[data-tok]').forEach(el => { el.outerHTML = tok(el.dataset.tok); });   // Entry's amount rows: logo left of the name
   const LOCATIONS = ['La Mirada', 'Stanton'];
   // Flavors the app stocks (PRODUCTS) plus extra ones that show up in sales.
-  const SALES_FLAVORS = ['Lemon Poppy', 'Sea Salt', 'Maple Pecan', 'Pumpkin Muffin', 'Ube', 'Dot', 'Earl Grey', 'Matcha', 'Chocolate', 'Dubai Ball', 'Unknown'];
+  const SALES_FLAVORS = ['Lemon Poppy', 'Sea Salt', 'Maple Pecan', 'Pumpkin Muffin', 'Blueberry Muffin', 'Ube', 'Dot', 'Earl Grey', 'Matcha', 'Chocolate', 'Dubai Ball', 'Unknown'];
   const PRICE_PER_UNIT = 2.50;   // $/madeleine (from Financial Dashboard: $192.50 / 77 units)
-  const UNIT_PRICE = { 'Pumpkin Muffin': 2.75, 'Dubai Ball': 3.50 };   // items that sell for something other than PRICE_PER_UNIT
+  const UNIT_PRICE = { 'Pumpkin Muffin': 2.75, 'Blueberry Muffin': 2.75, 'Dubai Ball': 3.50 };   // items that sell for something other than PRICE_PER_UNIT
   // Extra revenue over PRICE_PER_UNIT for sales rows (assumes those units are already counted in each row's total).
   const salesAdj = rows => rows.reduce((a, s) => a + Object.entries(UNIT_PRICE).reduce((b, [p, pr]) => b + ((s.amounts && s.amounts[p]) || 0) * (pr - PRICE_PER_UNIT), 0), 0);
   const usd = n => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n);
@@ -3062,6 +3070,8 @@
     try { saved = JSON.parse(localStorage.getItem(INV_PRICE_KEY)) || {}; } catch {}
     // Pumpkin Muffin sells at $2.75 (2026-10-01). A price saved earlier on this device (it saved the old $2.50 default) is replaced once.
     try { if (!localStorage.getItem('invPriceMuffin275')) { saved['Pumpkin Muffin'] = 2.75; localStorage.setItem(INV_PRICE_KEY, JSON.stringify(saved)); localStorage.setItem('invPriceMuffin275', '1'); } } catch {}
+    // Blueberry Muffin sells at $2.75 (2026-10-12); replace a $2.50 default saved earlier on this device, once.
+    try { if (!localStorage.getItem('invPriceBlueberry275')) { saved['Blueberry Muffin'] = 2.75; localStorage.setItem(INV_PRICE_KEY, JSON.stringify(saved)); localStorage.setItem('invPriceBlueberry275', '1'); } } catch {}
     // Dubai Ball is $3.50 (2026-10-01); replace a $2.50 default saved earlier on this device, once.
     try { if (!localStorage.getItem('invPriceDubai350')) { saved['Dubai Ball'] = 3.5; localStorage.setItem(INV_PRICE_KEY, JSON.stringify(saved)); localStorage.setItem('invPriceDubai350', '1'); } } catch {}
     return Object.fromEntries(ENTRY_PRODUCTS.map(p => [p, Number.isFinite(saved[p]) ? saved[p] : (INV_DEFAULT_PRICE[p] ?? PRICE_PER_UNIT)]));
@@ -5287,7 +5297,7 @@
   const BS_TOTALS = ['Unsalted Butter', 'Eggs', 'Sugar', 'Powdered Sugar'];
   const bsFind = key => { const [sec, k] = key.split(/:(.*)/s); const it = (COST_SECTIONS.find(x => x[0] === sec) || [])[2]?.().find(x => (x.key || x.name) === k); return it ? { sec, it } : null; };
   // Which forecast product a recipe's batches come from (recipes with no product just start at 1 batch).
-  const BS_PRODUCT = { 'other:dubaiball': 'Dubai Ball', 'mad:Lemon Poppy': 'Lemon Poppy', 'mad:Maple Pecan': 'Maple Pecan', 'mad:Classic': 'Sea Salt', 'other:pumpkinmuffin': 'Pumpkin Muffin' };
+  const BS_PRODUCT = { 'other:dubaiball': 'Dubai Ball', 'mad:Lemon Poppy': 'Lemon Poppy', 'mad:Maple Pecan': 'Maple Pecan', 'mad:Classic': 'Sea Salt', 'other:pumpkinmuffin': 'Pumpkin Muffin', 'other:blueberrymuffin': 'Blueberry Muffin' };
   const bsProjectedBatches = key => { const p = BS_PRODUCT[key], n = p && planBakeTotals[p]; return n > 0 ? flavorBatches(n) : 0; };
   // The bake plan follows the forecast: recipes whose product the plan says to bake are added, and their batches track the
   // plan until you change them by hand (then they're yours). Removing one keeps it off until the page is reloaded.
