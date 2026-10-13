@@ -1888,7 +1888,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.75.05 · Oct 13</div>
+<div class="ver-badge">v1.75.06 · Oct 13</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -4554,10 +4554,9 @@
     // Classic is the Brown Butter madeleine now (Original); the old Classic recipe is Ver B. (2026-10-05)
     { name: 'Classic', yield: 12,
       versions: [
-        { label: 'Original', sub: 'brown butter', yield: 12,
+        { label: 'Original', star: true, sub: 'brown butter', yield: 12,
           rows: [['Cake Flour', 125], ['Baking Powder', 5], ['Caramelized Milk Powder', 3], ['Salt', 2], ['Unsalted Butter', 105], ['Milk', 7], ['Eggs', 85], ['Sugar', 80], ['Honey', 10]],
           notes: 'Mould: Woojung / Chiyoda madeleine, 22mm deep. Whole eggs are strained. Caramelized milk powder is made ahead. From the cookbook — the method page wasn’t captured, so add your own steps here if you want them.' },
-        { label: 'Ver B', yield: 18, rows: [['Cake Flour', 174], ['Baking Powder', 6], ['Salt', 2], ['Eggs', 200], ['Sugar', 140], ['Vanilla Extract', 5], ['Unsalted Butter', 200]] },
       ] },
     { name: 'Dot Cake', flour: 174, salt: 2, lblExtra: { topping: ['nonpareil sprinkles'] },
       fillingRefs: ['Cream Cheese Frosting'],
@@ -4679,18 +4678,20 @@
     { key: 'maplepecanbb', type: 'mad', name: 'Maple Pecan Brown Butter', title: 'Maple Pecan (Brown Butter)', yield: 12,
       custom: [['Cake Flour', 115], ['Toasted Pecans (ground fine)', 10], ['Baking Powder', 5], ['Caramelized Milk Powder', 3], ['Salt', 0.5], ['Unsalted Butter', 100], ['Milk', 7], ['Eggs', 85], ['Brown Sugar', 80], ['Pure Maple Syrup (dark/robust)', 10]],
       topping: [['Toasted Pecans', '20g'], ['Maple Syrup', '10g']],
-      notes: 'Based on the Brown Butter madeleine, with the same ratios: the ground pecans replace 10g of flour, brown sugar replaces the sugar and maple syrup replaces the honey, so the batter stays as moist and the hump the same. Brown the butter and make it exactly like the Brown Butter madeleine — no resting. Whole eggs are strained. The pecans and maple syrup in the topping carry the rest of the flavor. If it comes out less moist, raise the maple syrup to 14g and drop the brown sugar to 76g.' },
+      notes: 'Based on the Brown Butter madeleine, with the same ratios: the ground pecans replace 10g of flour, brown sugar replaces the sugar and maple syrup replaces the honey, so the batter stays as moist and the hump the same. Brown the butter and make it exactly like the Brown Butter madeleine. Preferred: rest the batter overnight. Whole eggs are strained. The pecans and maple syrup in the topping carry the rest of the flavor. If it comes out less moist, raise the maple syrup to 14g and drop the brown sugar to 76g.' },
     // Blueberry Muffin (2026-10-05): untested, built for a taller dome first, then moisture, and less sweet. Amounts are estimates from comparing three source recipes; the yield (about 12) is a guess.
-    { key: 'blueberrymuffin', type: 'muffin', name: 'Blueberry Muffin', title: 'Blueberry Muffin', yield: 12,
-      custom: [['All Purpose Flour', 325], ['Baking Powder', 9], ['Baking Soda', 2.5], ['Salt', 3], ['Sugar', 100], ['Eggs', 100], ['Milk', 245], ['Unsalted Butter', 70], ['Vegetable Oil', 30], ['Vanilla Extract', 5], ['Lemon Juice', 20], ['Blueberry', 300]],
+    { key: 'blueberrymuffin', type: 'muffin', name: 'Blueberry Muffin', title: 'Blueberry Muffin', yield: 6,
+      custom: [['Unsalted Butter', 113], ['Sugar', 200], ['Eggs', 100], ['Vanilla Extract', 5], ['All Purpose Flour', 240], ['Salt', 3], ['Baking Powder', 9], ['Milk', 110], ['Blueberry', 250]],
       topping: [['Sugar', '15g']],
       versions: [
         { label: 'Ver A', yield: 8, rows: [['All Purpose Flour', 200], ['Baking Powder', 6], ['Salt', 2], ['Sugar', 60], ['Eggs', 120], ['Milk', 51], ['Unsalted Butter', 60], ['Vanilla Extract', 5], ['Lemon Zest', 6], ['Blueberry', 250]], topping: [['Sugar', '15g']],
           notes: 'Lean and berry-heavy, the tartest of the two. Use frozen blueberries straight from the freezer, tossed in 10 g of flour (taken from the 200 g) so they do not sink or bleed. Melt the butter and cool it. Sprinkle the 15 g sugar on top. Preheat to 170°C (350°F) and bake 25 minutes. Yield is an estimate (about 8).<br><br><b>Tips</b><br>1. Eggs must be at room temperature: leave them out of the refrigerator for 30 minutes, or soak them briefly in warm water.<br>2. If using frozen blueberries, do not take them out in advance — take them out right before mixing. There is not much taste difference between frozen and fresh, so use whichever you are comfortable with.<br>3. Once the flour is in, do not mix too long. Long mixing builds gluten and the muffins will not come out with the right texture.' },
         { label: 'Ver D', yield: 12, rows: [['All Purpose Flour', 325], ['Baking Powder', 9], ['Baking Soda', 2.5], ['Salt', 3], ['Sugar', 100], ['Eggs', 100], ['Milk', 245], ['Unsalted Butter', 70], ['Vegetable Oil', 30], ['Vanilla Extract', 5], ['Lemon Juice', 20], ['Blueberry', 300]], topping: [['Sugar', '15g']],
           notes: '<b>Untested</b> — built for a big dome first, then moisture, and less sweet. It uses a big-batch muffin structure (baking powder and soda) with sugar cut to 100 g (31% of the flour, plus 15 g on top), lemon juice and vanilla, and part of the oil swapped for melted butter (70 g butter, 30 g oil).<br><br>1. Whisk the flour, baking powder, baking soda and salt. Take out about 10 g of the flour and toss the blueberries in it.<br>2. Whisk the eggs, sugar, lemon juice and vanilla, then the milk, cooled melted butter and oil.<br>3. Fold the wet into the dry just until combined — a few lumps are fine. Fold in the berries.<br>4. Rest the batter 15–20 minutes.<br>5. Fill the cups to the top and sprinkle the 15 g sugar over the muffins (about 1 g each).<br>6. Bake at 220°C for 5–7 minutes, then lower to 180°C for 12–15 minutes, until a toothpick comes out clean.<br><br>If it is too plain, raise the sugar to 130 g. The lemon juice (20 g) replaces some of the milk (245 g instead of 258 g) to keep the batter the same wetness, and its acid gives the baking soda extra lift. Yield is an estimate (about 12).<br><br><b>Tips</b><br>1. Eggs must be at room temperature: leave them out of the refrigerator for 30 minutes, or soak them briefly in warm water.<br>2. If using frozen blueberries, do not take them out in advance — take them out right before mixing. There is not much taste difference between frozen and fresh, so use whichever you are comfortable with.<br>3. Once the flour is in, do not mix too long. Long mixing builds gluten and the muffins will not come out with the right texture.' },
+        { label: 'Ver E', yield: 6, rows: [['Unsalted Butter', 113], ['Sugar', 200], ['Eggs', 100], ['Vanilla Extract', 5], ['All Purpose Flour', 240], ['Salt', 3], ['Baking Powder', 9], ['Milk', 110], ['Blueberry', 250]],
+          notes: 'One batch makes 6 jumbo muffins. Preheat the oven to 375°F, then bake at 350°F for 35–40 minutes.' },
       ],
-      notes: 'Ver A and Ver D to compare. Costs and labels read Ver D.', latest: 1 },
+      notes: 'Ver A, Ver D and Ver E to compare. Costs and labels read Ver E (the latest).', latest: 2 },
     // Source: alchenny.substack.com (read through a summarizer — check amounts against the post). No yield is given; ~10 pieces per batch is an assumption.
     { key: 'mangomousse', type: 'simple', name: 'Mango Mousse Cake', yield: 20,
       yieldText: 'Fruit-shaped mousse · about 20 pieces per batch in the Wrbin mango mold (the source gives no yield; about 50 mL per cavity from the mold dimensions — fill one with water to confirm)',
@@ -4713,9 +4714,9 @@
   const recState = { sec: 'mad', idx: 0, batches: 1, madVer: 0, sableType: 0, sableFlav: 0, macScale: 1, macCustom: null, gfSize: 0 };
   function recResetVariants() { recState.batches = 1; recState.madVer = 0; recState.sableType = 0; recState.sableFlav = 0; recState.macScale = 1; recState.macCustom = null; recState.gfSize = 0; }
   // This season's recipes — pulled to the top of every recipe dropdown, and the only ones the bake sheet offers.
-  const SEASONAL_DEFAULT = ['mad:Classic', 'mad:Lemon Poppy', 'other:pumpkinmuffin', 'other:dubaiball', 'mad:Maple Pecan', 'fill:Lemon Curd', 'fill:Pumpkin Cream Cheese Frosting'];
+  const SEASONAL_DEFAULT = ['mad:Classic', 'mad:Lemon Poppy', 'other:pumpkinmuffin', 'other:dubaiball', 'other:blueberrymuffin', 'mad:Maple Pecan', 'fill:Lemon Curd', 'fill:Pumpkin Cream Cheese Frosting'];
   let SEASONAL = SEASONAL_DEFAULT;   // editable in the app ("This season's recipes"), saved on this device
-  try { const v = JSON.parse(localStorage.getItem('seasonal.v1')); if (Array.isArray(v)) SEASONAL = v.map(k => k === 'mad:Pumpkin Pie Spice' ? 'other:pumpkinmuffin' : k); if (!localStorage.getItem('seasonalDubai1')) { if (!SEASONAL.includes('other:dubaiball')) SEASONAL = [...SEASONAL, 'other:dubaiball']; localStorage.setItem('seasonal.v1', JSON.stringify(SEASONAL)); localStorage.setItem('seasonalDubai1', '1'); } } catch {}
+  try { const v = JSON.parse(localStorage.getItem('seasonal.v1')); if (Array.isArray(v)) SEASONAL = v.map(k => k === 'mad:Pumpkin Pie Spice' ? 'other:pumpkinmuffin' : k); if (!localStorage.getItem('seasonalDubai1')) { if (!SEASONAL.includes('other:dubaiball')) SEASONAL = [...SEASONAL, 'other:dubaiball']; localStorage.setItem('seasonal.v1', JSON.stringify(SEASONAL)); localStorage.setItem('seasonalDubai1', '1'); } if (!localStorage.getItem('seasonalBlueberry1')) { if (!SEASONAL.includes('other:blueberrymuffin')) SEASONAL = [...SEASONAL, 'other:blueberrymuffin']; localStorage.setItem('seasonal.v1', JSON.stringify(SEASONAL)); localStorage.setItem('seasonalBlueberry1', '1'); } } catch {}
   const seasonRank = (sec, it) => { const i = SEASONAL.indexOf(`${sec}:${it.key || it.name}`); return i < 0 ? 99 : i; };
   const isSeasonal = (sec, it) => seasonRank(sec, it) < 99;
   const seasonalFirst = (sec, arr) => [...arr].sort((a, b) => seasonRank(sec, a) - seasonRank(sec, b));   // stable: the rest keep their order
@@ -4787,12 +4788,12 @@
       const rows = B[it.name]; if (!rows) continue;
       const verB = { label: 'Ver B', rows, yield: 20, skipNote: true, bakeNote: 'Ver B: preheat the oven to 410°F (210°C), then bake at 356°F (180°C) for 10–12 minutes.' };
       if (it.name === 'Maple Pecan') {   // 2026-10-05: Ver B is the Brown Butter-matched recipe; the 20-piece melted-butter version moves to Ver C
-        const bbVer = { label: 'Ver B', yield: 12, skipNote: true,
+        const bbVer = { label: 'Original', yield: 12, skipNote: true,
           rows: [['Cake Flour', 115], ['Toasted Pecans (ground fine)', 10], ['Baking Powder', 5], ['Caramelized Milk Powder', 3], ['Salt', 0.5], ['Unsalted Butter', 100], ['Milk', 7], ['Eggs', 85], ['Brown Sugar', 80], ['Pure Maple Syrup (dark/robust)', 10]],
           topping: [['Toasted Pecans', '20g'], ['Maple Syrup', '10g']],
           notes: 'Based on the Brown Butter madeleine, with the same ratios: the ground pecans replace 10g of flour, brown sugar replaces the sugar and maple syrup replaces the honey, so the batter stays as moist and the hump the same. Brown the butter and make it exactly like the Brown Butter madeleine — no resting. The pecans and maple syrup in the topping carry the rest of the flavor.' };
-        it.versions = [{ label: 'Original', rows: recMadRowsV(it) }, bbVer, { ...verB, label: 'Ver C', bakeNote: verB.bakeNote.replace('Ver B:', 'Ver C:') }];
-        it.latest = 1;   // Ver B (Brown Butter-matched, 2026-10-05) is the newest
+        it.versions = [bbVer];   // 2026-10-13: the Brown Butter-matched recipe is now the Original; the old Original and Ver C are removed
+        it.latest = 0;
         continue;
       }
       if (!it.versions) it.versions = [{ label: 'Original', rows: recMadRowsV(it) }, verB];
@@ -4805,7 +4806,7 @@
     if (item.versions) {
       const v = item.versions[recState.madVer];
       verLbl = ` · ${v.label}`;
-      verChips = `<span class="rec-ver">${item.versions.map((vv, i) => `<button data-rmadver="${i}" class="${recState.madVer === i ? 'on' : ''}">${vv.label}</button>`).join('')}</span>`;
+      verChips = `<span class="rec-ver">${item.versions.map((vv, i) => `<button data-rmadver="${i}" class="${recState.madVer === i ? 'on' : ''}">${vv.label}${vv.star ? ' ★' : ''}</button>`).join('')}</span>`;
     }
     const rows = recMadSort(recMadRows(item));
     const b = recState.batches;
@@ -5763,7 +5764,7 @@
   function paintLblVers() {
     const el = document.getElementById('lblVers'), it = lblItem;
     if (!it.versions || it.versions.length < 2) { el.innerHTML = ''; return; }
-    el.innerHTML = '<span>Recipe version</span><span class="rec-ver">' + it.versions.map((v, i) => `<button data-lblver="${i}" class="${i === lblVer ? 'on' : ''}">${esc(v.label)}${i === verLatest(it) ? ' · latest' : ''}</button>`).join('') + '</span>' + (lblVer !== verLatest(it) ? '<div class="warn">⚠️ Older version. The latest is ' + esc(verName(it, verLatest(it))) + '.</div>' : '');
+    el.innerHTML = '<span>Recipe version</span><span class="rec-ver">' + it.versions.map((v, i) => `<button data-lblver="${i}" class="${i === lblVer ? 'on' : ''}">${esc(v.label)}${v.star ? ' ★' : ''}${i === verLatest(it) ? ' · latest' : ''}</button>`).join('') + '</span>' + (lblVer !== verLatest(it) ? '<div class="warn">⚠️ Older version. The latest is ' + esc(verName(it, verLatest(it))) + '.</div>' : '');
   }
   function openLabel(item) {
     lblItem = item;
