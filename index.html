@@ -1888,7 +1888,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.75.07 · Oct 13</div>
+<div class="ver-badge">v1.75.08 · Oct 13</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -4559,6 +4559,11 @@
           notes: 'Mould: Woojung / Chiyoda madeleine, 22mm deep. Whole eggs are strained. Caramelized milk powder is made ahead. From the cookbook — the method page wasn’t captured, so add your own steps here if you want them.' },
       ] },
     { name: 'Dot Cake', flour: 174, salt: 2, lblExtra: { topping: ['nonpareil sprinkles'] },
+      yield: 12, versions: [
+        { label: 'Original', star: true, sub: 'brown butter', yield: 12,
+          rows: [['Cake Flour', 125], ['Baking Powder', 5], ['Caramelized Milk Powder', 3], ['Salt', 2], ['Unsalted Butter', 105], ['Milk', 7], ['Eggs', 85], ['Sugar', 80], ['Honey', 10]],
+          notes: 'Mould: Woojung / Chiyoda madeleine, 22mm deep. Whole eggs are strained. Caramelized milk powder is made ahead. From the cookbook — the method page wasn’t captured, so add your own steps here if you want them.' },
+      ],
       fillingRefs: ['Cream Cheese Frosting'],
       fillingNote: 'Topped with a layer of nonpareil sprinkles. 3lb cream cheese base makes enough frosting for about 200 madeleines; a 2.2lb bag of sprinkles tops about 100.' },
     { name: 'Earl Grey', title: 'Earl Grey Madeleine', link: 'https://www.youtube.com/watch?v=M4BGif3Ga-Q',
@@ -4574,8 +4579,8 @@
       fillingNote: 'Top the glaze with a scatter of coconut flakes — a 1lb bag covers about 150 madeleines.' },
     { name: 'Lemon Poppy', flour: 174, salt: 2, note: '4g lemon emulsion + 6g poppy seed',
       glaze: [['Powdered Sugar', '100g'], ['Lemon Juice', '25g'], ['Unsalted Butter', '4g']] },
-    { name: 'Chocolate', title: 'Chocolate Madeleine', yield: 7, finishFor: 14,
-      custom: [['Cake Flour', 98], ['Cocoa Powder', 10], ['Baking Powder', 3], ['Salt', 0.5], ['Unsalted Butter', 68], ['Milk', 4], ['Eggs', 55], ['Sugar', 52], ['Honey', 7]],
+    { name: 'Chocolate', title: 'Chocolate Madeleine', yield: 14, star: true,
+      custom: [['Cake Flour', 196], ['Cocoa Powder', 20], ['Baking Powder', 6], ['Salt', 1], ['Unsalted Butter', 136], ['Milk', 8], ['Eggs', 110], ['Sugar', 104], ['Honey', 14]],
       syrup: [['Sugar', '25g'], ['Water', '25g']],
       glaze: [['Powdered Sugar', '85g'], ['Cocoa Powder', '7g'], ['Water', '25g']],
       lblExtra: { topping: ['edible gold powder'] },
@@ -4586,17 +4591,17 @@
       notes: 'Ceremonial matcha. Whole eggs are strained (cookbook page 31). Salt is a pinch of sea salt — entered as 0.5g. From the cookbook — the method page wasn’t captured, so add your own steps here if you want them.' },
     { name: 'Mugwort', title: 'Mugwort Madeleine', link: 'https://www.youtube.com/watch?v=vZBX4NI951A',
       custom: [['All Purpose Flour', 40], ['Cake Flour', 65], ['Baking Powder', 5], ['Baking Soda', 1], ['White Sugar', 25], ['Brown Sugar', 35], ['Unsalted Butter', 110], ['Eggs', 72], ['Salt', 1], ['White Chocolate', 120], ['Skim Milk Powder', 5], ['Milk', 25], ['Honey', 20], ['Mugwort Powder', 15]] },
-    { name: 'Maple Pecan',
+    { name: 'Maple Pecan', star: true,
       custom: [['Cake Flour', 144], ['Toasted Pecans (ground fine)', 30], ['Baking Powder', 5], ['Salt', 2], ['Eggs', 190], ['Brown Sugar', 70], ['Pure Maple Syrup (dark/robust)', 30], ['Vanilla Extract', 5], ['Unsalted Butter', 180], ['Avocado Oil', 20]],
       topping: [['Toasted Pecans', '30g'], ['Maple Syrup', '15g']] },
   ];
   const REC_FILLINGS = [
-    { name: 'Lemon Curd', type: 'single', rows: [['Eggs', '100g'], ['Sugar', '60g'], ['Lemon Juice', '40g'], ['Unsalted Butter', '60g']] },
+    { name: 'Lemon Curd', star: true, type: 'single', rows: [['Eggs', '100g'], ['Sugar', '60g'], ['Lemon Juice', '40g'], ['Unsalted Butter', '60g']] },
     { name: 'Cream Cheese Frosting', type: 'single', rows: [['Unsalted Butter', '113g'], ['Cream Cheese', '225g'], ['Powdered Sugar', '70g']] },
     { name: 'Anglesie Buttercream', type: 'twocol', cols: ['Base', '1lb Butter'],
       rows: [['Milk', 50, 232], ['Unsalted Butter', 100, 464], ['Sugar', 30, 135], ['Egg Yolk', 40, 186]] },
     { name: 'Earl Grey Paste', type: 'single', rows: [['Milk', '150ml'], ['Heavy Cream', '80ml'], ['Sugar', '35g'], ['Tea Bags', '2']] },
-    { name: 'Pumpkin Cream Cheese Frosting', type: 'single', rows: [['Unsalted Butter', '113g'], ['Cream Cheese', '227g'], ['Powdered Sugar', '116g'], ['Pumpkin Puree', '137g'], ['Pumpkin Pie Spice', '23g']],
+    { name: 'Pumpkin Cream Cheese Frosting', star: true, type: 'single', rows: [['Unsalted Butter', '113g'], ['Cream Cheese', '227g'], ['Powdered Sugar', '116g'], ['Pumpkin Puree', '137g'], ['Pumpkin Pie Spice', '23g']],
       notes: 'One batch, no second step: mix the butter, cream cheese and 70g of the powdered sugar (410g base), then fold in the puree, spice and the remaining 46g powdered sugar — 616g total. Same ratio as 90g base + 30g puree + 10g sugar + 5g spice. Frost each madeleine with 20g — 616g covers about 30.' },
     { name: 'Chocolate Ganache', type: 'single', rows: [['Dark Chocolate (Callebaut)', '100g'], ['Unsalted Butter', '20g'], ['Heavy Cream*', '100g']],
       notes: '*Adjust heavy cream slightly to taste for desired firmness.' },
@@ -4621,25 +4626,38 @@
   const REC_OTHER = [
     // Dubai chewy ball: pistachio-kataifi filling (30 g each) inside a cocoa-marshmallow outer layer (20 g each), dusted with cocoa.
     // One filling batch = 3,703.5 g → ~123 balls; one outer batch (two bags of marshmallow = 2 × 283 g = 566 g) coats ~36.8, so a full filling batch uses ~3.3 outer batches.
-    { key: 'dubaiball', type: 'dubai', name: 'Dubai Chewy Ball', title: 'Dubai Chewy Ball', yield: 123, outerTimes: 3.3,
+    { key: 'dubaiball', star: true, type: 'dubai', name: 'Dubai Chewy Ball', title: 'Dubai Chewy Ball', yield: 123, outerTimes: 3.3,
       yieldText: 'Filling batch ≈ 123 balls at 30 g · outer layer 20 g each',
       rows: [['Pistachio Butter', 1400], ['White Chocolate', 1000], ['Kataifi', 1134], ['Unsalted Butter (kataifi)', 169.5]],
       outer: [['Marshmallow', 566], ['Unsalted Butter (outer layer)', 56.5], ['Cocoa Powder', 56.6], ['Skim Milk Powder', 56.6]],
       outerNote: 'One batch of the outer layer: two bags of marshmallow (2 × 283 g = 566 g) with 56.5 g butter (113 ÷ 2), and cocoa powder and milk powder each 10% of the marshmallow (56.6 g). Portion 20 g — one batch coats about 37 balls, so a full filling batch needs about 3.3 outer batches. Dust the finished balls with cocoa powder.',
       notes: 'Filling: 1,400 g pistachio butter + 1,000 g white chocolate + 2.5 lb (1,134 g) kataifi + 169.5 g butter (113 + 113 ÷ 2) with the kataifi, portioned 30 g each (≈ 123). Wrap each filling in the outer layer (20 g), then dust with cocoa powder.' },
-    { key: 'pumpkinmuffin', type: 'muffin', name: 'Pumpkin Pie Spice Muffin', title: 'Pumpkin Pie Spice Muffin',
+    { key: 'pumpkinmuffin', star: true, type: 'muffin', name: 'Pumpkin Pie Spice Muffin', title: 'Pumpkin Pie Spice Muffin',
       custom: [['Eggs', 160], ['Granulated Sugar', 120], ['Light Brown Sugar', 20], ['Vanilla Extract', 5], ['Pumpkin Puree', 100], ['All Purpose Flour', 182], ['Baking Powder', 7], ['Salt', 2], ['Pumpkin Pie Spice', 7], ['Unsalted Butter', 127], ['Vegetable Oil', 50], ['Milk', 42]],
       fillingRefs: ['Pumpkin Cream Cheese Frosting'],
       fillingNote: 'One batch makes 616g of finished frosting — enough for about 30 pieces at 20g each.',
       lblExtra: { filling: ['pumpkin puree', 'pumpkin pie spice'] },
       notes: '1. Whisk together the all-purpose flour, baking powder, salt, and pumpkin pie spice. Set aside.<br>2. In a large bowl, whisk eggs, granulated sugar, and brown sugar for 2–3 minutes until pale and slightly thickened.<br>3. Whisk in vanilla extract and pumpkin puree until smooth.<br>4. Gently fold the dry mixture into the wet mixture just until no streaks remain.<br>5. Fold in the melted butter, then the oil and milk, until fully incorporated and glossy.<br>6. Cover and refrigerate the batter at least 1 hour (overnight best).<br>7. Butter and flour a madeleine pan. Preheat oven to 375°F (190°C).<br>8. Fill each mold about ¾ full with chilled batter.<br>9. Bake ~11 minutes, until edges are golden, a hump has formed, and a toothpick comes out clean.<br>10. Unmold immediately onto a wire rack and cool.<br><br>Drain the pumpkin puree in a fine sieve for 10–15 minutes first — excess water is the main risk to texture. Chilling the batter is essential for the classic hump.' },
+    // Blueberry Muffin (2026-10-05): untested, built for a taller dome first, then moisture, and less sweet. Amounts are estimates from comparing three source recipes; the yield (about 12) is a guess.
+    { key: 'blueberrymuffin', type: 'muffin', name: 'Blueberry Muffin', title: 'Blueberry Muffin', yield: 6,
+      custom: [['Unsalted Butter', 113], ['Sugar', 200], ['Eggs', 100], ['Vanilla Extract', 5], ['All Purpose Flour', 240], ['Salt', 3], ['Baking Powder', 9], ['Milk', 110], ['Blueberry', 250]],
+      topping: [['Sugar', '15g']],
+      versions: [
+        { label: 'Ver A', yield: 8, rows: [['All Purpose Flour', 200], ['Baking Powder', 6], ['Salt', 2], ['Sugar', 60], ['Eggs', 120], ['Milk', 51], ['Unsalted Butter', 60], ['Vanilla Extract', 5], ['Lemon Zest', 6], ['Blueberry', 250]], topping: [['Sugar', '15g']],
+          notes: 'Lean and berry-heavy, the tartest of the two. Use frozen blueberries straight from the freezer, tossed in 10 g of flour (taken from the 200 g) so they do not sink or bleed. Melt the butter and cool it. Sprinkle the 15 g sugar on top. Preheat to 170°C (350°F) and bake 25 minutes. Yield is an estimate (about 8).<br><br><b>Tips</b><br>1. Eggs must be at room temperature: leave them out of the refrigerator for 30 minutes, or soak them briefly in warm water.<br>2. If using frozen blueberries, do not take them out in advance — take them out right before mixing. There is not much taste difference between frozen and fresh, so use whichever you are comfortable with.<br>3. Once the flour is in, do not mix too long. Long mixing builds gluten and the muffins will not come out with the right texture.' },
+        { label: 'Ver D', yield: 12, rows: [['All Purpose Flour', 325], ['Baking Powder', 9], ['Baking Soda', 2.5], ['Salt', 3], ['Sugar', 100], ['Eggs', 100], ['Milk', 245], ['Unsalted Butter', 70], ['Vegetable Oil', 30], ['Vanilla Extract', 5], ['Lemon Juice', 20], ['Blueberry', 300]], topping: [['Sugar', '15g']],
+          notes: '<b>Untested</b> — built for a big dome first, then moisture, and less sweet. It uses a big-batch muffin structure (baking powder and soda) with sugar cut to 100 g (31% of the flour, plus 15 g on top), lemon juice and vanilla, and part of the oil swapped for melted butter (70 g butter, 30 g oil).<br><br>1. Whisk the flour, baking powder, baking soda and salt. Take out about 10 g of the flour and toss the blueberries in it.<br>2. Whisk the eggs, sugar, lemon juice and vanilla, then the milk, cooled melted butter and oil.<br>3. Fold the wet into the dry just until combined — a few lumps are fine. Fold in the berries.<br>4. Rest the batter 15–20 minutes.<br>5. Fill the cups to the top and sprinkle the 15 g sugar over the muffins (about 1 g each).<br>6. Bake at 220°C for 5–7 minutes, then lower to 180°C for 12–15 minutes, until a toothpick comes out clean.<br><br>If it is too plain, raise the sugar to 130 g. The lemon juice (20 g) replaces some of the milk (245 g instead of 258 g) to keep the batter the same wetness, and its acid gives the baking soda extra lift. Yield is an estimate (about 12).<br><br><b>Tips</b><br>1. Eggs must be at room temperature: leave them out of the refrigerator for 30 minutes, or soak them briefly in warm water.<br>2. If using frozen blueberries, do not take them out in advance — take them out right before mixing. There is not much taste difference between frozen and fresh, so use whichever you are comfortable with.<br>3. Once the flour is in, do not mix too long. Long mixing builds gluten and the muffins will not come out with the right texture.' },
+        { label: 'Ver E', yield: 6, rows: [['Unsalted Butter', 113], ['Sugar', 200], ['Eggs', 100], ['Vanilla Extract', 5], ['All Purpose Flour', 240], ['Salt', 3], ['Baking Powder', 9], ['Milk', 110], ['Blueberry', 250]],
+          notes: 'One batch makes 6 jumbo muffins.<br><br>1. Soften the butter and cream it with the sugar.<br>2. Add the eggs and vanilla extract.<br>3. Add the dry ingredients.<br>4. Add the milk in splits, then fold in the blueberries.<br><br>Preheat the oven to 375°F, then bake at 350°F for 35–40 minutes.' },
+      ],
+      notes: 'Ver A, Ver D and Ver E to compare. Costs and labels read Ver E (the latest).', latest: 2 },
     { key: 'glutenfree', name: 'Gluten Free Cake', type: 'glutenfree', link: 'https://www.youtube.com/watch?v=W6Z2X49gHHU&t=13s',
       notes: '1. Whip the Swiss meringue at 122–140°F (50–60°C).<br>2. Mix in the egg yolk and 2g vanilla extract.<br>3. Sift in the almond flour.<br>4. Mix slowly.<br><br>Bake at 350°F (177°C) for 50–55 mins.',
       sizes: [
         { label: '6 inch', yieldText: '~384g batter', rows: [['Egg White', 100], ['Egg Yolk', 70], ['Sugar', 70], ['Almond Flour', 150]] },
         { label: '8 inch', yieldText: '', rows: [['Egg White', 150], ['Egg Yolk', 105], ['Sugar', 105], ['Almond Flour', 225]] },
       ] },
-    { key: 'sable', name: 'Sable', type: 'sable' },
+    { key: 'sable', star: true, name: 'Sable', type: 'sable' },
     { key: 'macaron', name: 'Macarons', type: 'macaron',
       notes: 'Swiss meringue whipped at 131°F (55°C).<br>Bake at 302°F (150°C) for 15 mins.',
       scales: [{ label: '0.5x', mult: 0.5 }, { label: 'Base', mult: 1 }, { label: 'x2', mult: 2 }, { label: 'x2.5', mult: 2.5 }],
@@ -4673,25 +4691,6 @@
   ];
   // Testing: recipes still being developed. They live in their own Recipes tab, and stay out of the madeleine lists.
   const REC_TEST = [
-    // Maple Pecan built on the Brown Butter ratios (2026-10-05): the ground pecans replace 10g of the flour, brown sugar replaces the sugar and maple syrup the honey.
-    // Same moisture and hump as Brown Butter, made the same way (no resting). Also live as Maple Pecan Ver B.
-    { key: 'maplepecanbb', type: 'mad', name: 'Maple Pecan Brown Butter', title: 'Maple Pecan (Brown Butter)', yield: 12,
-      custom: [['Cake Flour', 115], ['Toasted Pecans (ground fine)', 10], ['Baking Powder', 5], ['Caramelized Milk Powder', 3], ['Salt', 0.5], ['Unsalted Butter', 100], ['Milk', 7], ['Eggs', 85], ['Brown Sugar', 80], ['Pure Maple Syrup (dark/robust)', 10]],
-      topping: [['Toasted Pecans', '20g'], ['Maple Syrup', '10g']],
-      notes: 'Based on the Brown Butter madeleine, with the same ratios: the ground pecans replace 10g of flour, brown sugar replaces the sugar and maple syrup replaces the honey, so the batter stays as moist and the hump the same. Brown the butter and make it exactly like the Brown Butter madeleine. Preferred: rest the batter overnight. Whole eggs are strained. The pecans and maple syrup in the topping carry the rest of the flavor. If it comes out less moist, raise the maple syrup to 14g and drop the brown sugar to 76g.' },
-    // Blueberry Muffin (2026-10-05): untested, built for a taller dome first, then moisture, and less sweet. Amounts are estimates from comparing three source recipes; the yield (about 12) is a guess.
-    { key: 'blueberrymuffin', type: 'muffin', name: 'Blueberry Muffin', title: 'Blueberry Muffin', yield: 6,
-      custom: [['Unsalted Butter', 113], ['Sugar', 200], ['Eggs', 100], ['Vanilla Extract', 5], ['All Purpose Flour', 240], ['Salt', 3], ['Baking Powder', 9], ['Milk', 110], ['Blueberry', 250]],
-      topping: [['Sugar', '15g']],
-      versions: [
-        { label: 'Ver A', yield: 8, rows: [['All Purpose Flour', 200], ['Baking Powder', 6], ['Salt', 2], ['Sugar', 60], ['Eggs', 120], ['Milk', 51], ['Unsalted Butter', 60], ['Vanilla Extract', 5], ['Lemon Zest', 6], ['Blueberry', 250]], topping: [['Sugar', '15g']],
-          notes: 'Lean and berry-heavy, the tartest of the two. Use frozen blueberries straight from the freezer, tossed in 10 g of flour (taken from the 200 g) so they do not sink or bleed. Melt the butter and cool it. Sprinkle the 15 g sugar on top. Preheat to 170°C (350°F) and bake 25 minutes. Yield is an estimate (about 8).<br><br><b>Tips</b><br>1. Eggs must be at room temperature: leave them out of the refrigerator for 30 minutes, or soak them briefly in warm water.<br>2. If using frozen blueberries, do not take them out in advance — take them out right before mixing. There is not much taste difference between frozen and fresh, so use whichever you are comfortable with.<br>3. Once the flour is in, do not mix too long. Long mixing builds gluten and the muffins will not come out with the right texture.' },
-        { label: 'Ver D', yield: 12, rows: [['All Purpose Flour', 325], ['Baking Powder', 9], ['Baking Soda', 2.5], ['Salt', 3], ['Sugar', 100], ['Eggs', 100], ['Milk', 245], ['Unsalted Butter', 70], ['Vegetable Oil', 30], ['Vanilla Extract', 5], ['Lemon Juice', 20], ['Blueberry', 300]], topping: [['Sugar', '15g']],
-          notes: '<b>Untested</b> — built for a big dome first, then moisture, and less sweet. It uses a big-batch muffin structure (baking powder and soda) with sugar cut to 100 g (31% of the flour, plus 15 g on top), lemon juice and vanilla, and part of the oil swapped for melted butter (70 g butter, 30 g oil).<br><br>1. Whisk the flour, baking powder, baking soda and salt. Take out about 10 g of the flour and toss the blueberries in it.<br>2. Whisk the eggs, sugar, lemon juice and vanilla, then the milk, cooled melted butter and oil.<br>3. Fold the wet into the dry just until combined — a few lumps are fine. Fold in the berries.<br>4. Rest the batter 15–20 minutes.<br>5. Fill the cups to the top and sprinkle the 15 g sugar over the muffins (about 1 g each).<br>6. Bake at 220°C for 5–7 minutes, then lower to 180°C for 12–15 minutes, until a toothpick comes out clean.<br><br>If it is too plain, raise the sugar to 130 g. The lemon juice (20 g) replaces some of the milk (245 g instead of 258 g) to keep the batter the same wetness, and its acid gives the baking soda extra lift. Yield is an estimate (about 12).<br><br><b>Tips</b><br>1. Eggs must be at room temperature: leave them out of the refrigerator for 30 minutes, or soak them briefly in warm water.<br>2. If using frozen blueberries, do not take them out in advance — take them out right before mixing. There is not much taste difference between frozen and fresh, so use whichever you are comfortable with.<br>3. Once the flour is in, do not mix too long. Long mixing builds gluten and the muffins will not come out with the right texture.' },
-        { label: 'Ver E', yield: 6, rows: [['Unsalted Butter', 113], ['Sugar', 200], ['Eggs', 100], ['Vanilla Extract', 5], ['All Purpose Flour', 240], ['Salt', 3], ['Baking Powder', 9], ['Milk', 110], ['Blueberry', 250]],
-          notes: 'One batch makes 6 jumbo muffins.<br><br>1. Soften the butter and cream it with the sugar.<br>2. Add the eggs and vanilla extract.<br>3. Add the dry ingredients.<br>4. Add the milk in splits, then fold in the blueberries.<br><br>Preheat the oven to 375°F, then bake at 350°F for 35–40 minutes.' },
-      ],
-      notes: 'Ver A, Ver D and Ver E to compare. Costs and labels read Ver E (the latest).', latest: 2 },
     // Source: alchenny.substack.com (read through a summarizer — check amounts against the post). No yield is given; ~10 pieces per batch is an assumption.
     { key: 'mangomousse', type: 'simple', name: 'Mango Mousse Cake', yield: 20,
       yieldText: 'Fruit-shaped mousse · about 20 pieces per batch in the Wrbin mango mold (the source gives no yield; about 50 mL per cavity from the mold dimensions — fill one with water to confirm)',
@@ -4785,7 +4784,7 @@
       'Maple Pecan': [...drop(swap(base, 'Cake Flour', 178), 'Sugar', 'Honey'), ['Brown Sugar', 103], ['Toasted Pecans (ground fine)', 30], ['Pure Maple Syrup (dark/robust)', 30]],
     };
     for (const it of REC_MADS) {
-      const rows = B[it.name]; if (!rows) continue;
+      const rows = B[it.name]; if (!rows || it.name === 'Dot Cake') continue;   // Dot Cake: Classic's starred Original only (2026-10-13)
       const verB = { label: 'Ver B', rows, yield: 20, skipNote: true, bakeNote: 'Ver B: preheat the oven to 410°F (210°C), then bake at 356°F (180°C) for 10–12 minutes.' };
       if (it.name === 'Maple Pecan') {   // 2026-10-05: Ver B is the Brown Butter-matched recipe; the 20-piece melted-butter version moves to Ver C
         const bbVer = { label: 'Original', yield: 12, skipNote: true,
@@ -4915,6 +4914,7 @@
     else if (item.type === 'macaron') html = recMacCard(item);
     else if (item.type === 'glutenfree') html = recGfCard(item);
     else html = recSimpleCard(item);
+    if (item.star) html = /<h3 class="rec-h">/.test(html) ? html.replace(/(<h3 class="rec-h">[\s\S]*?<\/span>)/, '$1 ★') : html.replace('</h3>', ' ★</h3>');
     document.getElementById('recCard').innerHTML = html;
   }
   document.getElementById('bakingRecipes').addEventListener('click', e => {
