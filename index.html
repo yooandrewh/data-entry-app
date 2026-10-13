@@ -1888,7 +1888,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.75.04 · Oct 12</div>
+<div class="ver-badge">v1.75.05 · Oct 13</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -1970,6 +1970,7 @@
       <div class="inv-field"><span>Net weight</span><input type="text" id="lblNet" /></div>
     </div>
     <div class="warn inv-noprint">Best-by dates fill in from the manufactured date: fridge 7 days, freezer 3 weeks. Tap any text on the label to edit it before printing.</div>
+    <div class="inv-noprint" id="lblVers"></div>
     <div class="lbl-doc" id="lblDoc"></div>
     <div class="actions inv-noprint" style="margin-top:16px">
       <button class="btn-primary" id="lblPdfBtn">Download PDF</button>
@@ -4689,7 +4690,7 @@
         { label: 'Ver D', yield: 12, rows: [['All Purpose Flour', 325], ['Baking Powder', 9], ['Baking Soda', 2.5], ['Salt', 3], ['Sugar', 100], ['Eggs', 100], ['Milk', 245], ['Unsalted Butter', 70], ['Vegetable Oil', 30], ['Vanilla Extract', 5], ['Lemon Juice', 20], ['Blueberry', 300]], topping: [['Sugar', '15g']],
           notes: '<b>Untested</b> — built for a big dome first, then moisture, and less sweet. It uses a big-batch muffin structure (baking powder and soda) with sugar cut to 100 g (31% of the flour, plus 15 g on top), lemon juice and vanilla, and part of the oil swapped for melted butter (70 g butter, 30 g oil).<br><br>1. Whisk the flour, baking powder, baking soda and salt. Take out about 10 g of the flour and toss the blueberries in it.<br>2. Whisk the eggs, sugar, lemon juice and vanilla, then the milk, cooled melted butter and oil.<br>3. Fold the wet into the dry just until combined — a few lumps are fine. Fold in the berries.<br>4. Rest the batter 15–20 minutes.<br>5. Fill the cups to the top and sprinkle the 15 g sugar over the muffins (about 1 g each).<br>6. Bake at 220°C for 5–7 minutes, then lower to 180°C for 12–15 minutes, until a toothpick comes out clean.<br><br>If it is too plain, raise the sugar to 130 g. The lemon juice (20 g) replaces some of the milk (245 g instead of 258 g) to keep the batter the same wetness, and its acid gives the baking soda extra lift. Yield is an estimate (about 12).<br><br><b>Tips</b><br>1. Eggs must be at room temperature: leave them out of the refrigerator for 30 minutes, or soak them briefly in warm water.<br>2. If using frozen blueberries, do not take them out in advance — take them out right before mixing. There is not much taste difference between frozen and fresh, so use whichever you are comfortable with.<br>3. Once the flour is in, do not mix too long. Long mixing builds gluten and the muffins will not come out with the right texture.' },
       ],
-      notes: 'Ver A and Ver D to compare. Costs and labels read Ver D.' },
+      notes: 'Ver A and Ver D to compare. Costs and labels read Ver D.', latest: 1 },
     // Source: alchenny.substack.com (read through a summarizer — check amounts against the post). No yield is given; ~10 pieces per batch is an assumption.
     { key: 'mangomousse', type: 'simple', name: 'Mango Mousse Cake', yield: 20,
       yieldText: 'Fruit-shaped mousse · about 20 pieces per batch in the Wrbin mango mold (the source gives no yield; about 50 mL per cavity from the mold dimensions — fill one with water to confirm)',
@@ -4791,10 +4792,12 @@
           topping: [['Toasted Pecans', '20g'], ['Maple Syrup', '10g']],
           notes: 'Based on the Brown Butter madeleine, with the same ratios: the ground pecans replace 10g of flour, brown sugar replaces the sugar and maple syrup replaces the honey, so the batter stays as moist and the hump the same. Brown the butter and make it exactly like the Brown Butter madeleine — no resting. The pecans and maple syrup in the topping carry the rest of the flavor.' };
         it.versions = [{ label: 'Original', rows: recMadRowsV(it) }, bbVer, { ...verB, label: 'Ver C', bakeNote: verB.bakeNote.replace('Ver B:', 'Ver C:') }];
+        it.latest = 1;   // Ver B (Brown Butter-matched, 2026-10-05) is the newest
         continue;
       }
       if (!it.versions) it.versions = [{ label: 'Original', rows: recMadRowsV(it) }, verB];
       else { const old = it.versions.splice(1); it.versions.push(verB, ...old.map(v => ({ ...v, label: 'Ver C' }))); }
+      it.latest = 1;   // Ver B is the newest; Original and Ver C are older
     }
   })();
   function recMadCard(item) {
@@ -5701,6 +5704,15 @@
   const lblCap = s => s.charAt(0).toUpperCase() + s.slice(1);
   let lblItem = null;
   // Ingredient groups + per-piece weight for one madeleine (ver = which recipe version's rows to use).
+  // Labels always start from the newest recipe version (item.latest, default 0). Older ones need an explicit OK.
+  const verLatest = item => (item.versions && item.latest) || 0;
+  const verName = (item, v) => (item.versions && item.versions[v] && item.versions[v].label) || '';
+  const verYield = (item, v) => (item.versions && item.versions[v] && item.versions[v].yield) || item.yield || BATCH_YIELD;
+  // Last check before anything is printed or saved: which version, how many pieces.
+  function lblConfirm(item, v, title) {
+    const old = v !== verLatest(item);
+    return confirm(`${old ? '⚠️ OLDER VERSION — this is not the latest recipe.\n\n' : ''}${title}\nVersion: ${verName(item, v) || 'only version'}${old ? ' (older; latest is ' + verName(item, verLatest(item)) + ')' : ' (latest)'}\nOne batch makes ${verYield(item, v)} pieces.\n\nIs this the latest version of the recipe, with the right count?`);
+  }
   function lblCalc(item, ver) {
     const batter = [...recMadSort(recMadRowsV(item, ver)), ...((item.versions && item.versions[ver || 0].skipNote) ? [] : lblNoteRows(item.note))].map(r => [r[0], lblGrams(r[1])]);
     const vy = (item.versions && item.versions[ver || 0].yield) || item.yield || BATCH_YIELD;
@@ -5715,7 +5727,7 @@
   const lblNetText = c => c.perPiece > 0 ? `${Math.round(c.perPiece)} g (${(c.perPiece / 28.3495).toFixed(1)} oz) each` : '— g';
   // Any recipe except fillings can be labelled. Madeleines and muffins use their full batter / glaze / topping data; the rest use their ingredient rows.
   function lblCalcAny(c) {
-    if (c.sec === 'mad' || c.it.type === 'muffin' || c.it.type === 'mad') return lblCalc(c.it, 0);
+    if (c.sec === 'mad' || c.it.type === 'muffin' || c.it.type === 'mad') return lblCalc(c.it, verLatest(c.it));
     const batter = costRows(c.sec, c.it).map(r => [r[0], r[1]]);
     const y = costDefaultYield(c.sec, c.it);
     return { batter, glaze: [], topping: [], filling: [], perPiece: y ? batter.reduce((a, r) => a + r[1], 0) / y : 0 };
@@ -5747,9 +5759,17 @@
       <p><span class="k">Best by / use by:</span> ${lblDate(addDays(mfg, LBL_FRIDGE_DAYS))} refrigerated · ${lblDate(addDays(mfg, LBL_FREEZER_DAYS))} frozen</p>
       ${dairyFilling ? '<p class="lbl-note">Note: Product must be refrigerated or discarded after 4 hours of sitting at room temperature.</p>' : ''}`;
   }
+  let lblVer = 0;
+  function paintLblVers() {
+    const el = document.getElementById('lblVers'), it = lblItem;
+    if (!it.versions || it.versions.length < 2) { el.innerHTML = ''; return; }
+    el.innerHTML = '<span>Recipe version</span><span class="rec-ver">' + it.versions.map((v, i) => `<button data-lblver="${i}" class="${i === lblVer ? 'on' : ''}">${esc(v.label)}${i === verLatest(it) ? ' · latest' : ''}</button>`).join('') + '</span>' + (lblVer !== verLatest(it) ? '<div class="warn">⚠️ Older version. The latest is ' + esc(verName(it, verLatest(it))) + '.</div>' : '');
+  }
   function openLabel(item) {
     lblItem = item;
-    item.calc = lblCalc(item, recState.madVer);
+    lblVer = verLatest(item);   // not whatever version is open in Recipes: labels default to the latest
+    item.calc = lblCalc(item, lblVer);
+    paintLblVers();
     document.getElementById('lblMfg').value = nowPST().slice(0, 10);
     document.getElementById('lblNet').value = lblNetText(item.calc);
     paintLabel();
@@ -5797,12 +5817,20 @@
   document.getElementById('mlBack').addEventListener('click', () => { document.getElementById('mlPick').hidden = false; document.getElementById('mlResult').hidden = true; });
   document.getElementById('mlClose').addEventListener('click', () => document.getElementById('mlScrim').classList.remove('show'));
   document.getElementById('mlScrim').addEventListener('click', e => { if (e.target.id === 'mlScrim') e.target.classList.remove('show'); });
-  document.getElementById('mlPdf').addEventListener('click', () => downloadPdf(document.getElementById('mlPdf'), [...document.querySelectorAll('#mlDoc .lbl-doc')], `kairos-labels-${document.getElementById('mlMfg').value || nowPST().slice(0, 10)}.pdf`, '.lbl-', { width: LBL_PDF_W, cols: 2, rows: 2 }));   // 2 across × 2 down = 4 labels a page
-  document.getElementById('lblPdfBtn').addEventListener('click', () => downloadPdf(document.getElementById('lblPdfBtn'), [document.getElementById('lblDoc')], `kairos-label-${(lblItem.name || 'label').toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${document.getElementById('lblMfg').value}.pdf`));
+  document.getElementById('mlPdf').addEventListener('click', () => mlCheck() && downloadPdf(document.getElementById('mlPdf'), [...document.querySelectorAll('#mlDoc .lbl-doc')], `kairos-labels-${document.getElementById('mlMfg').value || nowPST().slice(0, 10)}.pdf`, '.lbl-', { width: LBL_PDF_W, cols: 2, rows: 2 }));   // 2 across × 2 down = 4 labels a page
+  document.getElementById('lblPdfBtn').addEventListener('click', () => lblConfirm(lblItem, lblVer, lblItem.title || lblItem.name) && downloadPdf(document.getElementById('lblPdfBtn'), [document.getElementById('lblDoc')], `kairos-label-${(lblItem.name || 'label').toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${document.getElementById('lblMfg').value}.pdf`));
+  const mlCheck = () => { const items = mlCands().filter(c => mlSel.has(c.key)); return confirm(`Before you print or save ${items.length} label${items.length === 1 ? '' : 's'}, check each recipe version and count:\n\n` + items.map(c => { const v = verLatest(c.it); return `• ${c.title}: ${verName(c.it, v) || 'only version'}, ${verYield(c.it, v)} pieces`; }).join('\n') + '\n\nAll use the latest version. Is this the latest version of the recipes, with the right counts?'); };
   document.getElementById('mlPrint').addEventListener('click', () => {
+    if (!mlCheck()) return;
     document.body.classList.add('printing-labels');
     window.addEventListener('afterprint', () => document.body.classList.remove('printing-labels'), { once: true });
     window.print();
+  });
+  document.getElementById('lblVers').addEventListener('click', e => {
+    const b = e.target.closest('[data-lblver]'); if (!b) return;
+    const v = Number(b.dataset.lblver);
+    if (v !== verLatest(lblItem) && !confirm(`${verName(lblItem, v)} is an older version, not the latest (${verName(lblItem, verLatest(lblItem))}). Are you sure you want to use it?`)) return;
+    lblVer = v; lblItem.calc = lblCalc(lblItem, v); document.getElementById('lblNet').value = lblNetText(lblItem.calc); paintLblVers(); paintLabel();
   });
   document.getElementById('lblMfg').addEventListener('input', paintLabel);
   document.getElementById('lblNet').addEventListener('input', paintLabel);
@@ -5837,6 +5865,7 @@
     document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
   }
   document.getElementById('lblPrintBtn').addEventListener('click', () => {
+    if (!lblConfirm(lblItem, lblVer, lblItem.title || lblItem.name)) return;
     track('label_print', { name: lblItem && lblItem.name });
     document.body.classList.add('printing-label');
     window.addEventListener('afterprint', () => document.body.classList.remove('printing-label'), { once: true });
