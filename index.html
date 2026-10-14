@@ -1900,7 +1900,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.80.01 · Oct 13</div>
+<div class="ver-badge">v1.81.00 · Oct 13</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -4025,8 +4025,10 @@
   //  Batch prep happens before the batter rests: `prepGroup` batches at a time, ~`prepMin` minutes per go.
   //  After resting: bake `pans` pans at once (`bakeMin` + `coolMin` per round, the pans need cooling before they're refilled),
   //  glaze the glazed flavours (`glazeSec` per madeleine), then clean (`cleanMin`). Setup (`setupMin`) is booked too.
-  const KT_DEFAULT = { prepGroup: 3, prepMin: 15, pans: 3, perPan: 12, bakeMin: 13, coolMin: 5, glazeSec: 15, setupMin: 20, cleanMin: 20 };   // Andrew's timings, 2026-10-13
-  const KT_LABELS = { prepGroup: 'Batches prepped at once', prepMin: 'Minutes per prep', pans: 'Pans baked at once', perPan: 'Madeleines per pan', bakeMin: 'Bake minutes', coolMin: 'Cooling minutes', glazeSec: 'Glaze seconds each', setupMin: 'Setup minutes', cleanMin: 'Cleaning minutes' };
+  const KT_DEFAULT = { prepGroup: 3, prepMin: 15, pans: 3, perPan: 12, bakeMin: 13, coolMin: 5, glazeSec: 15, setupMin: 20, cleanMin: 20,
+    muPrepGroup: 3, muPrepMin: 20, muBakeLo: 30, muBakeHi: 40, muSetup: 15, muClean: 15, togetherClean: 30, hideMax: 30 };   // Andrew's timings, 2026-10-13 (mu* = muffins; together* / hideMax = a muffin + madeleine day)
+  const KT_LABELS = { prepGroup: 'Batches prepped at once', prepMin: 'Minutes per prep', pans: 'Pans baked at once', perPan: 'Madeleines per pan', bakeMin: 'Bake minutes', coolMin: 'Cooling minutes', glazeSec: 'Glaze seconds each', setupMin: 'Setup minutes', cleanMin: 'Cleaning minutes',
+    muPrepGroup: 'Muffin batches prepped at once', muPrepMin: 'Muffin minutes per prep', muBakeLo: 'Muffin bake minutes (low)', muBakeHi: 'Muffin bake minutes (high)', muSetup: 'Muffin setup minutes', muClean: 'Muffin cleaning minutes', togetherClean: 'Cleaning minutes, muffins + madeleines together', hideMax: 'Madeleine prep minutes hidden in the muffin bake' };
   const GLAZED = ['Lemon Poppy', 'Earl Grey'];
   let KT = { ...KT_DEFAULT };
   try { Object.assign(KT, JSON.parse(localStorage.getItem('kitchenTimes.v1')) || {}); } catch {}
@@ -5190,10 +5192,34 @@
   let LAB = { rate: 35, margin: 40, mins: {} };
   try { Object.assign(LAB, JSON.parse(localStorage.getItem(LAB_KEY)) || {}); } catch {}
   const saveLab = () => { try { localStorage.setItem(LAB_KEY, JSON.stringify(LAB)); } catch {} };
+  // A muffin + madeleine day (yesterday's: 6 muffin batches, 7 madeleine batches prepped, 4 baked): setup once at the larger value,
+  // madeleine prep partly hidden in the muffin oven time, cleaning once. mu / madPrep / madBake are batch counts.
+  const LAB_DAY = { mu: 6, madPrep: 7, madBake: 4 }, LAB_DAY_BATCHES = LAB_DAY.mu + LAB_DAY.madPrep;
+  function sessionMin(mu, madPrep, madBake) {
+    const muPrep = Math.ceil(mu / KT.muPrepGroup) * KT.muPrepMin, muRounds = Math.ceil(mu / KT.pans);
+    const mPrep = Math.ceil(madPrep / KT.prepGroup) * KT.prepMin, mBake = Math.ceil(madBake / KT.pans) * (KT.bakeMin + KT.coolMin);
+    const hide = Math.min(mPrep, KT.hideMax), out = {};
+    for (const [k, b] of [['lo', KT.muBakeLo], ['hi', KT.muBakeHi]]) {
+      const muOven = muRounds * b;
+      out['mu' + k] = mu ? KT.muSetup + muPrep + muOven + KT.muClean : 0;
+      out['both' + k] = Math.max(KT.muSetup, KT.setupMin) + muPrep + muOven + (mPrep - hide) + mBake + KT.togetherClean;
+    }
+    out.mad = KT.setupMin + mPrep + mBake + KT.cleanMin;
+    out.sepLo = out.mulo + out.mad; out.sepHi = out.muhi + out.mad;
+    return out;
+  }
+  // Default labor minutes per batch as {lo, hi}. Each batch carries its own prep and oven time plus an even share of the day's
+  // fixed time (setup and cleaning once, less the madeleine prep hidden in the muffin bake).
   function labDefaultMins(sec, it, pieces) {
-    if (sec !== 'mad' || !pieces) return 30;   // fillings, scones, cookies…: a flat guess until you time them
+    const share = (Math.max(KT.muSetup, KT.setupMin) + KT.togetherClean - Math.min(Math.ceil(LAB_DAY.madPrep / KT.prepGroup) * KT.prepMin, KT.hideMax)) / LAB_DAY_BATCHES;
+    if (it.type === 'muffin') {
+      const prep = KT.muPrepMin / KT.muPrepGroup;
+      return { lo: Math.round(prep + KT.muBakeLo / KT.pans + share), hi: Math.round(prep + KT.muBakeHi / KT.pans + share) };
+    }
+    if (sec !== 'mad' || !pieces) return { lo: 30, hi: 30 };   // fillings, scones, cookies…: a flat guess until you time them
     const glaze = GLAZED.includes(it.name) ? KT.glazeSec * pieces / 60 : 0;
-    return Math.round(KT.prepMin / KT.prepGroup + (KT.bakeMin + KT.coolMin) * pieces / (KT.perPan * KT.pans) + glaze + KT.cleanMin / LAB_SESSION_BATCHES);
+    const m = Math.round(KT.prepMin / KT.prepGroup + (KT.bakeMin + KT.coolMin) * pieces / (KT.perPan * KT.pans) + glaze + share);
+    return { lo: m, hi: m };
   }
   function renderCostCard() {
     const pick = document.getElementById('costPick');
@@ -5219,18 +5245,22 @@
     const topHtml = tops.map(t => { const c = costTopping(t); if (c == null) { tMissing = true; return `<div class="proj-row"><span class="k">${esc(t.label)}</span><span class="cost-miss">add price</span></div>`; } tTotal += c; return `<div class="proj-row"><span class="k">${esc(t.label)}</span><span><b>${money(c)}</b></span></div>`; }).join('');
     const finished = per != null && !tMissing ? per + tTotal : null;
     const unitCost = finished != null ? finished : (tops.length ? null : per);
-    const labMinsDef = labDefaultMins(sec, it, yv), labMins = LAB.mins[costSel] != null ? LAB.mins[costSel] : labMinsDef;
+    const labDef = labDefaultMins(sec, it, yv), labMinsDef = Math.round((labDef.lo + labDef.hi) / 2), labMins = LAB.mins[costSel] != null ? LAB.mins[costSel] : labMinsDef;
+    const labRange = LAB.mins[costSel] == null && labDef.lo !== labDef.hi && yv ? [labDef.lo, labDef.hi].map(m => m / 60 * LAB.rate / yv) : null;
+    const day = (it.type === 'muffin' || sec === 'mad') ? sessionMin(LAB_DAY.mu, LAB_DAY.madPrep, LAB_DAY.madBake) : null;
     const labItem = yv ? labMins / 60 * LAB.rate / yv : null;
     const totalItem = unitCost != null && labItem != null ? unitCost + labItem : null;
     const mg = Math.min(90, Math.max(0, LAB.margin)) / 100;
     const wholesale = totalItem != null ? Math.ceil(totalItem / (1 - mg) * 20) / 20 : null;   // to the next 5¢
     const laborHtml = `<div class="cost-sec"><div class="cost-sub">Labor &amp; pricing</div>
-      <div class="proj-row"><span class="k">Labor minutes per batch<span class="cost-hint"> · from Kitchen Times: ${labMinsDef}</span></span><span><input class="cost-in" type="number" inputmode="decimal" step="any" min="0" value="${rFmt(labMins)}" data-clab="1"></span></div>
+      <div class="proj-row"><span class="k">Labor minutes per batch<span class="cost-hint"> · from Kitchen Times: ${labDef.lo === labDef.hi ? labDef.lo : labDef.lo + '–' + labDef.hi}</span></span><span><input class="cost-in" type="number" inputmode="decimal" step="any" min="0" value="${rFmt(labMins)}" data-clab="1"></span></div>
       <div class="proj-row"><span class="k">Labor rate per hour</span><span>$<input class="cost-in" type="number" inputmode="decimal" step="any" min="0" value="${rFmt(LAB.rate)}" data-lrate="1"></span></div>
       <div class="proj-row"><span class="k">Labor per item</span><span><b>${labItem != null ? money(labItem) : '—'}</b></span></div>
+      ${labRange ? `<div class="proj-row"><span class="k">Labor per item, range</span><span>${money(labRange[0])} – ${money(labRange[1])}</span></div>` : ''}
       <div class="proj-row"><span class="k cost-total">Total cost per item</span><span class="cost-total">${totalItem != null ? money(totalItem) : '—'}</span></div>
       <div class="proj-row"><span class="k">Margin on wholesale</span><span><input class="cost-in" type="number" inputmode="decimal" step="any" min="0" max="90" value="${rFmt(LAB.margin)}" data-lmargin="1">%</span></div>
       <div class="proj-row"><span class="k cost-total">Suggested wholesale price</span><span class="cost-total">${wholesale != null ? '$' + wholesale.toFixed(2) : '—'}</span></div>
+      ${day ? `<div class="cost-hint" style="padding:4px 0">A day with ${LAB_DAY.mu} muffin batches and ${LAB_DAY.madPrep} madeleine batches takes about ${day.bothlo}–${day.bothhi} min together, against ${day.sepLo}–${day.sepHi} min done on separate days. Each batch's minutes above include an even share of the day's setup and cleaning.</div>` : ''}
       ${wholesale != null && sec === 'mad' ? `<div class="cost-hint" style="padding:4px 0">Retail price in the app is ${money(PRICE_PER_UNIT)}${wholesale > PRICE_PER_UNIT ? ' — this wholesale price is above it' : ''}.</div>` : ''}</div>`;
     document.getElementById('costCard').innerHTML = `<div class="proj-card">
       <h3>${recIc(it.name)} ${esc(costItemName(sec, it))}</h3>
