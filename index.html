@@ -1686,6 +1686,7 @@
     #finBody > .fin-banner, #finBody > .db-filter { grid-column: 1 / -1; }
     #finBody > .db-filter { justify-self: start; max-width: 100%; }
     #finBody > .fin-rev { grid-column: 1; grid-row: span 2; order: 1; }
+    #finBody > .fin-item { order: 1; }
     #finBody > .fin-cost { grid-column: 2; order: 2; }
     #finBody > .fin-prof { grid-column: 2; order: 3; }
     #finBody > .fin-wic, #finBody > .fin-scen { grid-column: 1 / -1; order: 4; }
@@ -2060,7 +2061,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.86.02 · Oct 13, 8:05 PM</div>
+<div class="ver-badge">v1.87.00 · Oct 13, 8:25 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -5504,7 +5505,8 @@
   const FIN_KEY = 'finCfg.v1';
   let FIN = { kitchenCost: 570, kitchenHours: 20, taxPct: 7, other: 0, wastePct: 5, topOverride: {} };   // kitchen: $570 per 20 h block + 7% tax (Andrew, 2026-10-13)
   try { Object.assign(FIN, JSON.parse(localStorage.getItem(FIN_KEY)) || {}); } catch {}
-  let finMonth = '', finEntries = null; let finWhat = false, finOv = null, finOpen = {}, finDays = 30;   // What-if overrides: view-only, never saved
+  let finMonth = '', finEntries = null; let finView = (() => { try { return localStorage.getItem('finView.v1') === 'item' ? 'item' : 'sum'; } catch { return 'sum'; } })();
+  let finWhat = false, finOv = null, finOpen = {}, finDays = 30;   // What-if overrides: view-only, never saved
   // Per-item economics for one recipe: ingredient cost (with and without ledger tax/fees), labor, pieces per batch.
   function itemEcon(costSel, ov) {
     const [sec, key] = costSel.split(/:(.*)/s);
@@ -5833,12 +5835,26 @@
       ${row('Kitchen time used<span class="cost-hint">setup, prep, baking, cleaning</span>', (r.kitchenMin / 60).toFixed(1) + '<span class="fin-u">h</span>')}
       ${row('Still available', Math.max(0, r.hoursLeft).toFixed(1) + ' h' + (r.hoursLeft < 0 ? ' <span class="cost-miss">over by ' + (-r.hoursLeft).toFixed(1) + ' h</span>' : ''), 'cost-total')}
       <div class="cost-hint" style="padding-top:6px">Sales use the invoice prices (retail unless you changed them). Kitchen time is estimated from weekly bake sessions of the delivered pieces; delivery doesn't use kitchen hours. Ingredient cost is delivered pieces × the recipe's cost per item plus waste.</div></div>`;
+    // ----- By item view: same mk() numbers as the Summary rows, so both always agree (What-if overrides already live in r) -----
+    const pc = (v, a) => a.rev > 0 ? `<span class="cost-hint"> ${(v / a.rev * 100).toFixed(0)}%</span>` : '';
+    const itemBlock = (title, sub, a, extra) => `<div class="proj-card fin-item"><h3 class="fin-card-h">${title}</h3><div class="proj-sub">${sub}</div>
+      ${row('Sales', fm(a.rev), 'cost-total')}
+      ${row('Less ingredients (incl. waste)', '-' + fm(a.ing) + pc(a.ing, a))}${row('Less baking labor', '-' + fm(a.bl) + pc(a.bl, a))}${row('Less delivery labor', '-' + fm(a.dv) + pc(a.dv, a))}${extra && extra.rows || ''}
+      ${row('Profit', fm(extra && extra.pf != null ? extra.pf : a.pf), 'cost-total')}${row('Profit % of sales', a.rev > 0 ? ((extra && extra.pf != null ? extra.pf : a.pf) / a.rev * 100).toFixed(0) + '%' : '—')}</div>`;
+    let itemHtml = ''; const gt = zero();
+    r.rows.forEach(x => { const a = mk(x); addTo(gt, a); itemHtml += itemBlock(esc(x.p), pace(a), a); });
+    const totExtra = r.recurring > 0 ? { rows: row('Less kitchen and other costs', '-' + fm(r.recurring) + pc(r.recurring, gt)), pf: gt.pf - r.recurring } : null;
+    if (r.rows.length) itemHtml += itemBlock('Total', pace(gt) + (r.partial ? ' · full month of fixed costs' : ''), gt, totExtra);
+    const itemView = (itemHtml || noRows) + (scItems.length ? `<div class="proj-sub">What-if added items are not in these blocks. See the Summary view.</div>` : '');
     el.innerHTML = banner + `
+      <div class="db-filter" id="finViewTog" style="margin-bottom:10px"><button data-finview="sum"${finView === 'sum' ? ' class="on"' : ''}>Summary</button><button data-finview="item"${finView === 'item' ? ' class="on"' : ''}>By item</button></div>
       <div class="db-filter" style="margin-bottom:10px"><select id="finMonth" aria-label="Month">${months.map(m => `<option value="${m}"${m === finMonth ? ' selected' : ''}>${finMonthName(m)}</option>`).join('')}</select>
         <label class="fin-sw"><input type="checkbox" id="finWhat" role="switch"${wi ? ' checked' : ''}><span class="fin-sw-t"></span><span class="fin-sw-l">What if</span></label></div>
-      ${whatIfCard}${scenCard}${revCard}${costCard}${profCard}`;
+      ${whatIfCard}${scenCard}${finView === 'item' ? itemView : revCard + costCard + profCard}`;
   }
   document.addEventListener('click', e => {
+    const fvb = e.target.closest && e.target.closest('[data-finview]');
+    if (fvb) { finView = fvb.dataset.finview === 'item' ? 'item' : 'sum'; try { localStorage.setItem('finView.v1', finView); } catch {} renderFin(); return; }
     if (e.target.id === 'finReset') { finOv = null; renderFin(); return; }
     const sb = e.target.closest && e.target.closest('[data-scmax],[data-scadd],[data-scdel]');
     if (sb && finOv && finOv.scen) {
