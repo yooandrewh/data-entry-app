@@ -1887,7 +1887,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.76.02 · Oct 13</div>
+<div class="ver-badge">v1.76.03 · Oct 13</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -4786,7 +4786,7 @@
     };
     for (const it of REC_MADS) {
       const rows = B[it.name]; if (!rows || it.name === 'Dot Cake') continue;   // Dot Cake: Classic's starred Original only (2026-10-13)
-      const verB = { label: 'Ver B', rows, yield: 20, skipNote: true, bakeNote: 'Ver B: preheat the oven to 410°F (210°C), then bake at 356°F (180°C) for 10–12 minutes.' };
+      const verB = { label: 'Ver B', rows, yield: 20, skipNote: true, bakeNote: 'Preheat the oven to 410°F (210°C), then bake at 356°F (180°C) for 10–12 minutes.' };
       if (it.name === 'Maple Pecan') {   // 2026-10-05: Ver B is the Brown Butter-matched recipe; the 20-piece melted-butter version moves to Ver C
         const bbVer = { label: 'Original', star: true, yield: 12, skipNote: true,
           rows: [['Cake Flour', 115], ['Toasted Pecans (ground fine)', 10], ['Baking Powder', 5], ['Caramelized Milk Powder', 3], ['Salt', 0.5], ['Unsalted Butter', 100], ['Milk', 7], ['Eggs', 85], ['Brown Sugar', 80], ['Pure Maple Syrup (dark/robust)', 10]],
@@ -4797,9 +4797,11 @@
         continue;
       }
       if (!it.versions) it.versions = [{ label: 'Original', rows: recMadRowsV(it) }, verB];
-      else { const old = it.versions.splice(1); it.versions.push(verB, ...old.map(v => ({ ...v, label: 'Ver C' }))); }
-      it.latest = 1;   // Ver B is the newest; Original and Ver C are older
+      else { const old = it.versions.splice(1); it.versions.push(...old, verB); }   // oldest first, the 20-piece rewrite last
+      it.latest = it.versions.length - 1;
     }
+    // Every version is numbered by age: Ver 1 is the oldest, the highest number is the newest.
+    for (const it of [...REC_MADS, ...REC_OTHER]) if (it.versions) it.versions.forEach((v, i) => { v.label = 'Ver ' + (i + 1); });
   })();
   function recMadCard(item) {
     let verChips = '', verLbl = '';
@@ -4915,7 +4917,7 @@
     else if (item.type === 'macaron') html = recMacCard(item);
     else if (item.type === 'glutenfree') html = recGfCard(item);
     else html = recSimpleCard(item);
-    if (item.star && !html.includes('rec-ver')) html = html.replace('</h3>', ' <span class="rec-ver"><button class="on">Original ★</button></span></h3>');   // finalized recipes with a single version
+    if (item.star && !html.includes('rec-ver')) html = html.replace('</h3>', ' <span class="rec-ver"><button class="on">Ver 1 ★</button></span></h3>');   // finalized recipes with a single version
     document.getElementById('recCard').innerHTML = html;
   }
   document.getElementById('bakingRecipes').addEventListener('click', e => {
