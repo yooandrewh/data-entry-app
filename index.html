@@ -1900,7 +1900,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.79.02 · Oct 13</div>
+<div class="ver-badge">v1.80.00 · Oct 13</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -4018,8 +4018,9 @@
   // each baking session costs 20m setup once, then 15m prep + 14m bake per batch
   // (glaze happens during the bake, so it's free). Batches are counted per flavor
   // (you can't mix flavors in a batch). Sequential single-oven estimate.
-  const BATCH_YIELD = 18;
-  const flavorBatches = n => Math.ceil(Math.max(0, n) / BATCH_YIELD);
+  const BATCH_YIELD = 12;   // hardcoded for now (Andrew, 2026-10-13): a madeleine batch is 12
+  const PRODUCT_YIELD = { 'Pumpkin Muffin': 10 };   // pieces per batch for products that aren't madeleines
+  const flavorBatches = (n, p) => Math.ceil(Math.max(0, n) / (PRODUCT_YIELD[p] || BATCH_YIELD));
   // ---- Kitchen time model (commercial kitchen). Every number is editable under "Kitchen times". ----
   //  Batch prep happens before the batter rests: `prepGroup` batches at a time, ~`prepMin` minutes per go.
   //  After resting: bake `pans` pans at once (`bakeMin` + `coolMin` per round, the pans need cooling before they're refilled),
@@ -4032,7 +4033,7 @@
   // Effort for a bake session given a {flavor: qty} map.
   function bakeEffort(bake) {
     let batches = 0, pieces = 0, glazed = 0;
-    for (const p of PRODUCTS) { const n = bake[p] || 0; batches += flavorBatches(n); pieces += n; if (GLAZED.includes(p)) glazed += n; }
+    for (const p of PRODUCTS) { const n = bake[p] || 0; batches += flavorBatches(n, p); pieces += n; if (GLAZED.includes(p)) glazed += n; }
     const rounds = pieces ? Math.ceil(Math.ceil(pieces / KT.perPan) / KT.pans) : 0;
     const prep = batches ? Math.round(Math.ceil(batches / KT.prepGroup) * KT.prepMin) : 0;
     const bakeCool = rounds * (KT.bakeMin + KT.coolMin);
@@ -4280,8 +4281,8 @@
     const effAll = sumEff(events.map(ev => bakeEffort(ev.bake)));
     for (const ev of events) {
       for (const p of PRODUCTS) if (ev.bake[p] > 0) {
-        perFlavor[p] += ev.bake[p]; perFlavorB[p] += flavorBatches(ev.bake[p]);
-        totNeed += ev.bake[p]; totBatches += flavorBatches(ev.bake[p]);
+        perFlavor[p] += ev.bake[p]; perFlavorB[p] += flavorBatches(ev.bake[p], p);
+        totNeed += ev.bake[p]; totBatches += flavorBatches(ev.bake[p], p);
       }
     }
     const flavorRows = totNeed > 0
@@ -4293,7 +4294,7 @@
       const eff = bakeEffort(ev.bake);
       const chips = ev.any
         ? `<div class="be-chips">${PRODUCTS.filter(p => ev.bake[p] > 0).map(p =>
-             kvRow(tok(p), p, ev.bake[p], ` · ${batchLabel(flavorBatches(ev.bake[p]))}`)).join('')}</div>
+             kvRow(tok(p), p, ev.bake[p], ` · ${batchLabel(flavorBatches(ev.bake[p], p))}`)).join('')}</div>
              <div class="be-effort">${batchLabel(eff.batches)} · prep ${fmtDur(eff.prep)} · baking ${fmtDur(eff.baking)}</div>`
         : `<div class="be-enough">enough on hand — no bake needed</div>`;
       return `<div class="bake-event">
@@ -4321,7 +4322,7 @@
     const cells = f => cols.map(f).join('');
     const rows = PRODUCTS.map(p => `<div class="pg-row"><span class="k">${tok(p)}${p}</span>${cells(c => {
       const n = c.bake[p] || 0;
-      return n > 0 ? `<span class="pg-c"><b>bake ${n}</b><small>${batchLabel(flavorBatches(n))}</small></span>` : `<span class="pg-c pg-ok">enough</span>`;
+      return n > 0 ? `<span class="pg-c"><b>bake ${n}</b><small>${batchLabel(flavorBatches(n, p))}</small></span>` : `<span class="pg-c pg-ok">enough</span>`;
     })}</div>`).join('');
     return `<div class="proj-card pg-card">
         <div class="pg-row pg-head"><h3 class="pg-t">By store${infoBtn()}</h3>${cells(c => `<span class="pg-c">${LOC_ABBR[c.loc] || c.loc}</span>`)}</div>
@@ -4338,7 +4339,7 @@
       const right = safe > 0
         ? `<b>bake ${safe}</b>`
         : `<span style="color:var(--green);font-weight:700">enough</span>`;
-      rows += `<div class="proj-row pr-fc"><span class="k">${tok(p)}${p}</span><span class="fc-v">${right}${safe > 0 ? `<span class="fc-sub">${batchLabel(flavorBatches(safe))}</span>` : ''}</span></div>`;
+      rows += `<div class="proj-row pr-fc"><span class="k">${tok(p)}${p}</span><span class="fc-v">${right}${safe > 0 ? `<span class="fc-sub">${batchLabel(flavorBatches(safe, p))}</span>` : ''}</span></div>`;
       haveRows += `<div class="proj-row"><span class="k">${p}</span><span>have <b>${haveMap[p]}</b> · expected need ${Math.ceil(expMap[p])}</span></div>`;
     }
     const eff = bakeEffort(bakeMap);
@@ -4459,7 +4460,7 @@
         const bake = ZERO(); for (const ev of evs) for (const q of PRODUCTS) bake[q] += ev.bake[q] || 0;
         const eff = sumEff(evs.map(ev => bakeEffort(ev.bake)));
         const dayWord = useGlobal ? `${dates.length} bake day${dates.length === 1 ? '' : 's'} to ${fmtWhen(target)}` : `${dates.length} delivery day${dates.length === 1 ? '' : 's'} (${(storeDelivery[c.loc] || []).map(d => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d]).join(', ')}) to ${fmtWhen(target)}`;
-        const days = evs.map(ev => `<div class="bake-event"><div class="be-head">${wkShort(ev.ymd)} ${fmtWhen(ev.ymd)} <span class="be-cover">covers thru ${wkShort(ev.coverUntil)} ${fmtWhen(ev.coverUntil)}</span></div>${ev.any ? `<div class="be-chips">${PRODUCTS.filter(q => ev.bake[q] > 0).map(q => kvRow(tok(q), q, ev.bake[q], ` · ${batchLabel(flavorBatches(ev.bake[q]))}`)).join('')}</div>` : '<div class="be-enough">enough on hand — no bake needed</div>'}</div>`).join('');
+        const days = evs.map(ev => `<div class="bake-event"><div class="be-head">${wkShort(ev.ymd)} ${fmtWhen(ev.ymd)} <span class="be-cover">covers thru ${wkShort(ev.coverUntil)} ${fmtWhen(ev.coverUntil)}</span></div>${ev.any ? `<div class="be-chips">${PRODUCTS.filter(q => ev.bake[q] > 0).map(q => kvRow(tok(q), q, ev.bake[q], ` · ${batchLabel(flavorBatches(ev.bake[q], q))}`)).join('')}</div>` : '<div class="be-enough">enough on hand — no bake needed</div>'}</div>`).join('');
         cols.push({ loc: c.loc, kind: 'sched', bake, eff, evs, sub: `${hint} · ${dayWord}${trendNote(c.st)}`, detail: days + kitchenRows(eff) });
       } else {
         const { demand, nDays, nWe } = forecastDemand(c.dowr, addDays(todayYmd, 1), target, c.st.growth);
@@ -4818,6 +4819,9 @@
       else { const old = it.versions.splice(1); it.versions.push(...old, verB); }   // oldest first, the 20-piece rewrite last
       it.latest = it.versions.length - 1;
     }
+    // Hardcoded yields (Andrew, 2026-10-13): every madeleine batch is 12, Pumpkin Pie Spice Muffin 10, Blueberry Muffin 6.
+    for (const it of REC_MADS) { it.yield = 12; (it.versions || []).forEach(v => { v.yield = 12; }); }
+    for (const it of REC_OTHER) if (it.key === 'pumpkinmuffin') it.yield = 10; else if (it.key === 'blueberrymuffin') it.yield = 6;
     // Every version is numbered by age: Ver 1 is the oldest, the highest number is the newest.
     for (const it of [...REC_MADS, ...REC_OTHER]) if (it.versions) it.versions.forEach((v, i) => { v.label = 'Ver ' + (i + 1); });
   })();
@@ -5429,7 +5433,7 @@
   const bsFind = key => { const [sec, k] = key.split(/:(.*)/s); const it = (COST_SECTIONS.find(x => x[0] === sec) || [])[2]?.().find(x => (x.key || x.name) === k); return it ? { sec, it } : null; };
   // Which forecast product a recipe's batches come from (recipes with no product just start at 1 batch).
   const BS_PRODUCT = { 'other:dubaiball': 'Dubai Ball', 'mad:Lemon Poppy': 'Lemon Poppy', 'mad:Maple Pecan': 'Maple Pecan', 'mad:Classic': 'Sea Salt', 'other:pumpkinmuffin': 'Pumpkin Muffin', 'other:blueberrymuffin': 'Blueberry Muffin' };
-  const bsProjectedBatches = key => { const p = BS_PRODUCT[key], n = p && planBakeTotals[p]; return n > 0 ? flavorBatches(n) : 0; };
+  const bsProjectedBatches = key => { const p = BS_PRODUCT[key], n = p && planBakeTotals[p]; return n > 0 ? flavorBatches(n, p) : 0; };
   // The bake plan follows the forecast: recipes whose product the plan says to bake are added, and their batches track the
   // plan until you change them by hand (then they're yours). Removing one keeps it off until the page is reloaded.
   const bsDismissed = new Set();
