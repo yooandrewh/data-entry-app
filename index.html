@@ -1581,6 +1581,43 @@
   body[data-tab="db"] .tabbar, body[data-tab="plan"] .tabbar, body[data-tab="fin"] .tabbar { background: #f3f1ed; border-top: 1px solid #e2dfda; }
   body[data-tab="db"] .tabbar button, body[data-tab="plan"] .tabbar button, body[data-tab="fin"] .tabbar button { color: #242c35; opacity: .75; }
   body[data-tab="db"] .tabbar button.on, body[data-tab="plan"] .tabbar button.on, body[data-tab="fin"] .tabbar button.on { background: rgba(36,44,53,.16); color: #242c35; opacity: 1; font-weight: 700; }
+  /* ===== Desktop (>= 900px): spread out; phone layout untouched ===== */
+  @media (min-width: 900px) {
+    .wrap { max-width: 1120px; padding: 0 32px; }
+    header { margin-bottom: 20px; }
+    /* bottom bar: same bar, tabs centred at a sensible width */
+    .tab-pill { max-width: 640px; }
+    .tabbar button { gap: 4px; }
+    /* card stacks flow into columns */
+    #projList, #finBody, #planList, #planSplitWrap, #costCard {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px 20px; align-items: start;
+    }
+    #projList > *, #finBody > *, #planList > *, #planSplitWrap > *, #costCard > * { margin-bottom: 0; min-width: 0; }
+    #finBody > .fin-banner { grid-column: 1 / -1; }
+    #costCard > .proj-card, #costCard > .cost-card { max-width: 720px; }
+    #projList > .proj-sub, #projList > .proj-empty, #finBody > .sub, #finBody > .db-filter, #finBody > .filter-bar { grid-column: 1 / -1; }
+    /* Data entries in columns, month/day headers span the row */
+    #dbList { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 8px 20px; align-items: start; }
+    #dbList > * { min-width: 0; }
+    #dbList > :not(.db-entry) { grid-column: 1 / -1; }
+    /* sheets and the entry popup: centred dialogs, not full-bleed */
+    .scrim { align-items: center; }
+    .sheet { max-width: 560px; border-radius: 18px; padding: 28px 28px 28px; transform: translateY(24px); max-height: 90vh; overflow-y: auto; }
+    .scrim.show .sheet { transform: translateY(0); }
+    .inv-sheet, #lblScrim .sheet, #bsScrim .sheet, #mlScrim .sheet { max-width: 760px; }
+    #seaScrim .sheet, #buyScrim .sheet { max-width: 640px; max-height: 88vh; }
+    .scrim.alert .alert-box { max-width: 420px; }
+    .entry-modal { inset: 5vh 0 auto 50%; transform: translateX(-50%); width: 680px; max-width: calc(100vw - 48px); max-height: 90vh;
+      border-radius: 18px; box-shadow: 0 0 0 100vmax rgba(0,0,0,.4) !important; padding-bottom: 24px; }
+    .entry-modal .wrap { max-width: none; padding: 0 28px; }
+    /* Home landing: photo fills the screen, buttons centred and roomy */
+    #view-home:not(.paged) .home-menu { width: 100%; max-width: 440px; margin: auto auto auto 0; align-items: flex-start; }
+    #view-home:not(.paged) .home-menu button, #view-home:not(.paged) .home-menu a.hm-link { justify-content: flex-start; }
+    #view-home:not(.paged) .home-ver { text-align: left; }
+    /* Home sub-pages read as one comfortable column in a card */
+    #view-home.paged .wrap { max-width: 1040px; }
+    .home-card { border-radius: 18px; }
+  }
 </style>
 </head>
 <body>
@@ -1909,7 +1946,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.83.00 · Oct 13</div>
+<div class="ver-badge">v1.84.00 · Oct 13, 7:15 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -4042,7 +4079,12 @@
     muPrepGroup: 'Muffin batches prepped at once', muPrepMin: 'Muffin minutes per prep', muBakeLo: 'Muffin bake minutes (low)', muBakeHi: 'Muffin bake minutes (high)', muSetup: 'Muffin setup minutes', muClean: 'Muffin cleaning minutes', togetherClean: 'Cleaning minutes, muffins + madeleines together', hideMax: 'Madeleine prep minutes hidden in the muffin bake' };
   const GLAZED = ['Lemon Poppy', 'Earl Grey'];
   let KT = { ...KT_DEFAULT };
-  try { Object.assign(KT, JSON.parse(localStorage.getItem('kitchenTimes.v1')) || {}); } catch {}
+  try {
+    if (!localStorage.getItem('ktDefaults1013')) { localStorage.removeItem('kitchenTimes.v1'); localStorage.setItem('ktDefaults1013', '1'); }   // once per device: back to the 2026-10-13 defaults (3 pans, 15 prep, 13 bake, setup 20, clean 20)
+    const saved = JSON.parse(localStorage.getItem('kitchenTimes.v1')) || {};
+    for (const k of Object.keys(KT_DEFAULT)) if (saved[k] != null && Number.isFinite(Number(saved[k])) && Number(saved[k]) >= 0) KT[k] = Number(saved[k]);
+  } catch {}
+  for (const k of ['prepGroup', 'pans', 'perPan', 'muPrepGroup']) if (!(KT[k] >= 1)) KT[k] = KT_DEFAULT[k];   // these are divisors: never 0
   // Effort for a bake session given a {flavor: qty} map.
   function bakeEffort(bake) {
     let batches = 0, pieces = 0, glazed = 0;
@@ -4073,7 +4115,7 @@
   }
   document.getElementById('ktGrid').addEventListener('change', e => {
     const i = e.target.closest('[data-kt]'); if (!i) return;
-    const n = parseFloat(i.value); KT[i.dataset.kt] = n >= 0 ? n : KT_DEFAULT[i.dataset.kt];
+    const k = i.dataset.kt, n = parseFloat(i.value), divisor = ['prepGroup', 'pans', 'perPan', 'muPrepGroup'].includes(k); KT[k] = n >= (divisor ? 1 : 0) ? n : KT_DEFAULT[k];
     try { localStorage.setItem('kitchenTimes.v1', JSON.stringify(KT)); } catch {}
     paintKitchenTimes(); renderPlan();
   });
@@ -5080,16 +5122,17 @@
   let LEDGER = null, ledgerErr = '', ledgerBusy = false;
   const vendorOf = p => { const s = ((p.link || '') + ' ' + (p.note || '')).toLowerCase();
     return /costco/.test(s) ? 'Costco' : /target/.test(s) ? 'Target' : /amazon/.test(s) ? 'Amazon' : /instacart|super king/.test(s) ? 'Instacart' : /pastrydepot|pastry depot/.test(s) ? 'Pastry Depot' : /kerrygold/.test(s) ? 'Kerrygold' : 'Unassigned'; };
+  const isoD = d => /^\d{4}-\d{2}-\d{2}$/.test(String(d || '')) ? String(d) : '';   // non-ISO dates count as oldest
   function ledgerReceipts() {   // [{id, vendor, date, items:[], tax, fees, factor}]
     const by = new Map();
     (LEDGER || []).forEach(l => {
       if (!by.has(l.receipt)) by.set(l.receipt, { id: l.receipt, vendor: l.vendor, date: l.date, items: [], tax: [], fees: [] });
       const r = by.get(l.receipt);
       if (l.kind === 'item') r.items.push(l); else if (l.kind === 'tax') r.tax.push(l); else r.fees.push(l);
-      if (l.date > r.date) r.date = l.date;
+      if (isoD(l.date) > isoD(r.date)) r.date = l.date;
     });
     const out = [...by.values()];
-    out.forEach(r => { const sub = r.items.reduce((t, l) => t + (l.price || 0), 0), extra = [...r.tax, ...r.fees].reduce((t, l) => t + (l.price || 0), 0); r.sub = sub; r.extra = extra; r.factor = sub > 0 ? 1 + extra / sub : 1; });
+    out.forEach(r => { const sub = r.items.reduce((t, l) => t + (l.price || 0), 0), extra = [...r.tax, ...r.fees].reduce((t, l) => t + (l.price || 0), 0); r.sub = sub; r.extra = extra; r.factor = sub > 0 ? Math.max(0.5, 1 + extra / sub) : 1; });
     return out;
   }
   function buildCostPrices() {
@@ -5097,7 +5140,7 @@
     const best = {};
     ledgerReceipts().forEach(r => r.items.filter(l => l.approved).forEach(l => {
       const k = costCanon(l.item), cur = best[k];
-      if (!cur || l.date > cur.l.date || (l.date === cur.l.date && l.idx > cur.l.idx)) best[k] = { l, f: r.factor };
+      if (!cur || isoD(l.date) > isoD(cur.l.date) || (isoD(l.date) === isoD(cur.l.date) && l.idx > cur.l.idx)) best[k] = { l, f: r.factor };
     }));
     Object.keys(best).forEach(k => { const { l, f } = best[k];
       costPrices[k] = { unit: l.unit, amt: l.amt, price: l.price * f, base: l.price, link: l.link, note: l.note, vendor: l.vendor, date: l.date, ledger: true }; });
@@ -5244,6 +5287,8 @@
     const m = Math.round(KT.prepMin / KT.prepGroup + (KT.bakeMin + KT.coolMin) * pieces / (KT.perPan * KT.pans) + glaze + share);
     return { lo: m, hi: m };
   }
+  // Round up to the next 5 cents in whole cents (float error otherwise pushes 0.45 to 0.50).
+  function ceil5c(x) { return Math.ceil(Math.round(x * 100 * 1e6) / 1e6 / 5) * 5 / 100; }
   function renderCostCard() {
     const pick = document.getElementById('costPick');
     const copt = (sec, it) => `<option value="${esc(costItemKey(sec, it))}" data-icon="${recKey(it.name)}">${esc(costItemName(sec, it))}</option>`;
@@ -5272,11 +5317,11 @@
     const labRange = LAB.mins[costSel] == null && labDef.lo !== labDef.hi && yv ? [labDef.lo, labDef.hi].map(m => m / 60 * LAB.rate / yv) : null;
     const day = (it.type === 'muffin' || sec === 'mad') ? sessionMin(LAB_DAY.mu, LAB_DAY.madPrep, LAB_DAY.madBake) : null;
     const labItem = yv ? labMins / 60 * LAB.rate / yv : null;
-    const wkLab = labWeek(), delivItem = wkLab.items ? LAB.wk.deliv / 60 * LAB.rate / wkLab.items : 0;
+    const wkLab = labWeek(), wKey = it.type === 'muffin' ? 'muffin' : (sec === 'mad' ? 'mad' : null), delivItem = wKey && wkLab.items ? LAB.wk.deliv / 60 * LAB.rate / wkLab.items : 0;
     const totalItem = unitCost != null && labItem != null ? unitCost + labItem + delivItem : null;
     const mg = Math.min(90, Math.max(0, LAB.margin)) / 100;
-    const wholesale = totalItem != null ? Math.ceil(totalItem / (1 - mg) * 20) / 20 : null;   // to the next 5¢
-    const wKey = it.type === 'muffin' ? 'muffin' : (sec === 'mad' ? 'mad' : null), curW = wKey ? LAB.whole[wKey] : null;
+    const wholesale = totalItem != null ? ceil5c(totalItem / (1 - mg)) : null;   // to the next 5¢
+    const curW = wKey ? LAB.whole[wKey] : null;
     const curM = curW != null && totalItem != null ? curW - totalItem : null;
     const wholeHtml = wKey ? `<div class="proj-row"><span class="k">Current wholesale price<span class="cost-hint"> · all ${wKey === 'mad' ? 'madeleines' : 'muffins'}</span></span><span>$<input class="cost-in" type="number" inputmode="decimal" step="any" min="0" value="${rFmt(curW)}" data-lwhole="${wKey}"></span></div>
       <div class="proj-row"><span class="k cost-total">Margin at that price</span><span class="cost-total">${curM != null ? (curM < 0 ? '−' : '') + money(Math.abs(curM)) + ' · ' + (curW ? Math.round(curM / curW * 100) : 0) + '%' : '—'}</span></div>` : '';
@@ -5285,7 +5330,7 @@
       <div class="proj-row"><span class="k">Labor rate per hour</span><span>$<input class="cost-in" type="number" inputmode="decimal" step="any" min="0" value="${rFmt(LAB.rate)}" data-lrate="1"></span></div>
       <div class="proj-row"><span class="k">Labor per item</span><span><b>${labItem != null ? money(labItem) : '—'}</b></span></div>
       ${labRange ? `<div class="proj-row"><span class="k">Labor per item, range</span><span>${money(labRange[0])} – ${money(labRange[1])}</span></div>` : ''}
-      <div class="proj-row"><span class="k">Delivery per item<span class="cost-hint"> · ${rFmt(LAB.wk.deliv)} min a week over ${wkLab.items} pieces</span></span><span><b>${money(delivItem)}</b></span></div>
+      <div class="proj-row"><span class="k">Delivery per item<span class="cost-hint"> · ${rFmt(LAB.wk.deliv)} min a week over ${wkLab.items} pieces. Delivery is already counted monthly on Finance; don't add it again.</span></span><span><b>${money(delivItem)}</b></span></div>
       <div class="proj-row"><span class="k cost-total">Total cost per item</span><span class="cost-total">${totalItem != null ? money(totalItem) : '—'}</span></div>
       <div class="proj-row"><span class="k">Margin on wholesale</span><span><input class="cost-in" type="number" inputmode="decimal" step="any" min="0" max="90" value="${rFmt(LAB.margin)}" data-lmargin="1">%</span></div>
       <div class="proj-row"><span class="k cost-total">Suggested wholesale price</span><span class="cost-total">${wholesale != null ? '$' + wholesale.toFixed(2) : '—'}</span></div>
@@ -5342,10 +5387,13 @@
   const finSave = () => { try { localStorage.setItem(FIN_KEY, JSON.stringify(FIN)); } catch {} };
   // Totals for a month. entries = merged entries; prices = invoice prices per product.
   function finCompute(entries, month) {
-    const prices = invPrices(), byProd = {};
+    const prices = invPrices(), byProd = {}, allP = [...new Set([...PRODUCTS, ...HIST_PRODUCTS, ...ENTRY_PRODUCTS])];
+    let anyDeliv = false;
     entries.filter(e => e.type === 'delivery' && !e.taggedForDeletion && String(e.datetime).slice(0, 7) === month).forEach(e => {
-      ENTRY_PRODUCTS.forEach(p => { const n = Number((e.amounts || {})[p]) || 0; if (n > 0) byProd[p] = (byProd[p] || 0) + n; });
+      anyDeliv = true;
+      allP.forEach(p => { const n = Number((e.amounts || {})[p]) || 0; if (n) byProd[p] = (byProd[p] || 0) + n; });   // signed: negatives are corrections
     });
+    Object.keys(byProd).forEach(p => { if (byProd[p] <= 0) delete byProd[p]; });   // a product's month never goes below 0
     const recipeOf = p => Object.keys(BS_PRODUCT).find(k => BS_PRODUCT[k] === p);
     let sales = 0, ingr = 0, ingrPre = 0, bakeMin = 0; const rows = [], missing = [];
     Object.keys(byProd).forEach(p => {
@@ -5356,29 +5404,46 @@
       ingr += cost; ingrPre += pre; bakeMin += n / ec.yv * ec.mins;
       rows.push({ p, n, rev, cost });
     });
-    const bakeLabor = bakeMin / 60 * LAB.rate, delivMin = LAB.wk.deliv * WEEKS_PER_MONTH, delivLabor = delivMin / 60 * LAB.rate;
-    const kitchen = FIN.kitchenCost * (1 + FIN.taxPct / 100), recurring = kitchen + (Number(FIN.other) || 0);
+    // Booked kitchen time: the month's pieces split into weekly bake sessions, each costed like a Baking Plan session (setup + prep + bake rounds + cooling + glaze + cleaning).
+    const [yy, mm] = month.split('-').map(Number), dim = new Date(yy, mm, 0).getDate();
+    const isCur = month === nowPST().slice(0, 7), dayNow = isCur ? Math.min(dim, Number(nowPST().slice(8, 10)) || dim) : dim;
+    const weeks = Math.max(1, Math.ceil(dayNow / 7));
+    const wk = {}; Object.keys(byProd).forEach(p => { wk[p] = Math.round(byProd[p] / weeks); });
+    const kitchenMin = Object.keys(byProd).length ? bakeEffort(wk).min * weeks : 0;
+    const kHours = Number(FIN.kitchenHours) > 0 ? Number(FIN.kitchenHours) : 20;
+    const hoursLeft = kHours - kitchenMin / 60, overH = Math.max(0, -hoursLeft);
+    const kitchen = FIN.kitchenCost * (1 + FIN.taxPct / 100), overRate = kitchen / kHours, overCost = overH * overRate;
+    const recurring = kitchen + overCost + (Number(FIN.other) || 0);
+    // Delivery labor only in months that had a delivery; the in-progress month is prorated by days elapsed.
+    const delivFrac = anyDeliv ? (isCur ? dayNow / dim : 1) : 0;
+    const bakeLabor = bakeMin / 60 * LAB.rate, delivMin = LAB.wk.deliv * WEEKS_PER_MONTH * delivFrac, delivLabor = delivMin / 60 * LAB.rate;
     const preLabor = sales - ingr - recurring, labor = bakeLabor + delivLabor;
-    return { rows, missing, sales, ingr, ingrTax: ingr - ingrPre, ingrPre, bakeMin, bakeLabor, delivMin, delivLabor, labor, kitchen, recurring, preLabor, postLabor: preLabor - labor, hoursLeft: FIN.kitchenHours - bakeMin / 60 };
+    return { rows, missing, sales, ingr, ingrTax: ingr - ingrPre, ingrPre, bakeMin, bakeLabor, delivMin, delivFrac, delivLabor, labor, laborHours: (bakeMin + delivMin) / 60, kitchenMin, overH, overRate, overCost, kitchen, recurring, preLabor, postLabor: preLabor - labor, hoursLeft, kHours };
   }
   const finMoney = n => (n < 0 ? '−$' : '$') + Math.abs(n).toFixed(2);
   const finMonthName = ym => { const [y, m] = ym.split('-'); return new Date(Number(y), Number(m) - 1, 1).toLocaleString('en-US', { month: 'long', year: 'numeric' }); };
   async function renderFin() {
     const el = document.getElementById('finBody');
     if (!Object.keys(costPrices).length) loadCosts();
+    let offline = false, tmpEntries = null;
     if (finEntries == null) {
       el.innerHTML = '<div class="proj-sub">Loading…</div>';
       let remote = [], ok = false;
       try { remote = await fetchRemoteEntries(); ok = true; } catch {}
-      finEntries = mergeEntries(remote, ok);
+      if (!ok) { offline = true; remote = []; }
+      const merged = mergeEntries(remote, ok);
+      if (ok) finEntries = merged; else finEntries = null, tmpEntries = merged;   // offline: don't cache, retry next render
     }
-    const months = [...new Set(finEntries.filter(e => e.type === 'delivery').map(e => String(e.datetime).slice(0, 7)).filter(m => /^\d{4}-\d{2}$/.test(m)))].sort().reverse();
+    const ents = finEntries || tmpEntries || [];
+    const months = [...new Set(ents.filter(e => e.type === 'delivery').map(e => String(e.datetime).slice(0, 7)).filter(m => /^\d{4}-\d{2}$/.test(m)))].sort().reverse();
     const cur = nowPST().slice(0, 7); if (!months.includes(cur)) months.unshift(cur);
     if (!months.includes(finMonth)) finMonth = cur;
-    const r = finCompute(finEntries, finMonth);
+    const r = finCompute(ents, finMonth);
     const row = (k, v, cls) => `<div class="proj-row"><span class="k${cls ? ' ' + cls : ''}">${k}</span><span${cls ? ' class="' + cls + '"' : ''}>${v}</span></div>`;
     const inp = (f, v, step) => `<input class="cost-in" type="number" inputmode="decimal" step="${step || 'any'}" min="0" value="${v}" data-fin="${f}">`;
-    el.innerHTML = `
+    const banner = (r.missing.length ? `<div class="cost-miss fin-banner" style="padding:10px 12px;margin-bottom:10px;border:1px solid var(--red,#c0392b);font-weight:600">Net is overstated: ${r.missing.length} product${r.missing.length === 1 ? ' has' : 's have'} no cost: ${r.missing.map(esc).join(', ')}</div>` : '')
+      + (offline ? `<div class="cost-hint fin-banner" style="padding:8px 12px;margin-bottom:10px;border:1px solid var(--sep)">Offline: showing this device's entries only. Numbers may be incomplete.</div>` : '');
+    el.innerHTML = banner + `
       <div class="db-filter" style="margin-bottom:10px"><select id="finMonth" aria-label="Month">${months.map(m => `<option value="${m}"${m === finMonth ? ' selected' : ''}>${finMonthName(m)}</option>`).join('')}</select></div>
       <div class="proj-card"><h3>Sales</h3><div class="proj-sub">pieces delivered in the month at the invoice price</div>
         ${r.rows.length ? r.rows.map(x => row(`${esc(x.p)}<span class="cost-hint"> · ${x.n} pcs</span>`, finMoney(x.rev))).join('') : '<div class="cost-hint">No deliveries logged this month.</div>'}
@@ -5391,21 +5456,23 @@
         ${r.missing.length ? `<div class="cost-miss" style="padding:4px 0">No cost for ${r.missing.map(esc).join(', ')} (no recipe or an unapproved price), so those count as $0.</div>` : ''}
         <div class="cost-sub" style="margin-top:12px">Labor <span class="cost-hint">· $${rFmt(LAB.rate)}/hr</span></div>
         ${row(`Baking<span class="cost-hint"> · ${(r.bakeMin / 60).toFixed(1)} h</span>`, finMoney(r.bakeLabor))}
-        ${row(`Delivery<span class="cost-hint"> · ${(r.delivMin / 60).toFixed(1)} h (${rFmt(LAB.wk.deliv)} min/wk)</span>`, finMoney(r.delivLabor))}
+        ${row(`Delivery<span class="cost-hint"> · ${(r.delivMin / 60).toFixed(1)} h (${rFmt(LAB.wk.deliv)} min/wk${r.delivFrac === 0 ? ', no deliveries this month' : r.delivFrac < 1 ? ', prorated ' + Math.round(r.delivFrac * 100) + '%' : ''})</span>`, finMoney(r.delivLabor))}
+        ${row('<span class="cost-hint">Labor hours (baking + delivery)</span>', '<span class="cost-hint">' + r.laborHours.toFixed(1) + ' h</span>')}
         ${row('Labor total', finMoney(r.labor), 'cost-total')}
         <div class="cost-sub" style="margin-top:12px">Monthly recurring</div>
         ${row('Kitchen block $<input class="cost-in" type="number" inputmode="decimal" step="any" min="0" value="' + rFmt(FIN.kitchenCost) + '" data-fin="kitchenCost"> for <input class="cost-in" type="number" inputmode="decimal" step="any" min="0" value="' + rFmt(FIN.kitchenHours) + '" data-fin="kitchenHours"> h', finMoney(FIN.kitchenCost))}
         ${row('Kitchen tax <input class="cost-in" type="number" inputmode="decimal" step="any" min="0" value="' + rFmt(FIN.taxPct) + '" data-fin="taxPct">%', finMoney(r.kitchen - FIN.kitchenCost))}
+        ${r.overCost > 0 ? row(`Overage hours<span class="cost-hint"> · ${r.overH.toFixed(1)} h × ${finMoney(r.overRate)}/h</span>`, finMoney(r.overCost)) : ''}
         ${row('Other monthly costs $', inp('other', rFmt(Number(FIN.other) || 0)))}
         ${row('Recurring total', finMoney(r.recurring), 'cost-total')}</div>
       <div class="proj-card"><h3>What's left</h3>
         ${row('Net before labor', finMoney(r.preLabor), 'cost-total')}
         ${row('Net after labor', finMoney(r.postLabor), 'cost-total')}
         <div class="cost-sub" style="margin-top:12px">Kitchen hours</div>
-        ${row('Booked', rFmt(FIN.kitchenHours) + ' h')}
-        ${row('Used (baking time from the batches)', (r.bakeMin / 60).toFixed(1) + ' h')}
+        ${row('Booked block', rFmt(r.kHours) + ' h')}
+        ${row('Kitchen time used<span class="cost-hint"> · setup, prep, baking, cleaning</span>', (r.kitchenMin / 60).toFixed(1) + ' h')}
         ${row('Still available', Math.max(0, r.hoursLeft).toFixed(1) + ' h' + (r.hoursLeft < 0 ? ' <span class="cost-miss">over by ' + (-r.hoursLeft).toFixed(1) + ' h</span>' : ''), 'cost-total')}
-        <div class="cost-hint" style="padding-top:6px">Sales use the invoice prices (retail unless you changed them). Ingredient cost is delivered pieces × the recipe's cost per item, so it ignores waste and what was baked but not delivered.</div></div>`;
+        <div class="cost-hint" style="padding-top:6px">Sales use the invoice prices (retail unless you changed them). Kitchen time is estimated from weekly bake sessions of the delivered pieces; delivery doesn't use kitchen hours. Ingredient cost is delivered pieces × the recipe's cost per item, so it ignores waste and what was baked but not delivered.</div></div>`;
   }
   document.addEventListener('change', e => {
     if (e.target.id === 'finMonth') { finMonth = e.target.value; renderFin(); }

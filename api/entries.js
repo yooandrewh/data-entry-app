@@ -21,10 +21,10 @@ async function readTab({ type, tab }) {
     .filter((r) => (r.id || r.Date))                 // skip fully-empty rows
     .map((r) => {
       // Goodwill (free samples) and Transfers (store-to-store moves) both live in
-      // the Deliveries tab as signed adjustments, marked by their notes title.
+      // the Deliveries tab as signed adjustments, marked by the start of the notes title (never the free-text memo after it).
       const note = String(r.notes || '');
-      const isGoodwill = type === 'delivery' && /goodwill/i.test(note);
-      const isTransfer = type === 'delivery' && /transfer/i.test(note);
+      const isGoodwill = type === 'delivery' && /^\s*goodwill\b/i.test(note);
+      const isTransfer = type === 'delivery' && /^\s*transfer\b/i.test(note);
       return {
         notionId: r.id || '',                        // Sheets row id (kept the field name)
         type: isTransfer ? 'transfer' : isGoodwill ? 'goodwill' : type,

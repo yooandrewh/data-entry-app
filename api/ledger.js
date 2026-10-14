@@ -22,6 +22,9 @@ const HEADER = ['Id', 'Receipt', 'Date', 'Vendor', 'Kind', 'Item', 'Amount', 'Un
 const MAX_LINES = 80;
 const clip = (v, n) => String(v == null ? '' : v).slice(0, n);
 const num = (v) => { const n = Number(v); return Number.isFinite(n) && n >= 0 ? n : null; };
+// Price may be negative only for tax / fee lines (discounts); items stay >= 0.
+const priceFor = (kind, v) => { const n = Number(v); if (v === '' || v == null || !Number.isFinite(n)) return null; return n >= 0 || kind === 'tax' || kind === 'fee' ? n : null; };
+const isoDate = (v) => (/^\d{4}-\d{2}-\d{2}$/.test(String(v || '')) ? String(v) : '');
 const isTrue = (v) => v === true || String(v).toUpperCase() === 'TRUE';
 
 export default async function handler(req, res) {
@@ -44,7 +47,7 @@ export default async function handler(req, res) {
         rows: rows.filter((r) => r.Id && !isTrue(r.Deleted)).map((r) => ({
           id: String(r.Id), receipt: String(r.Receipt), date: String(r.Date), vendor: String(r.Vendor),
           kind: String(r.Kind), item: String(r.Item), amt: num(r.Amount), unit: r.Unit === 'ml' ? 'ml' : 'g',
-          price: num(r.Price), note: String(r.Note), link: String(r.Link), approved: isTrue(r.Approved),
+          price: priceFor(String(r.Kind), r.Price), note: String(r.Note), link: String(r.Link), approved: isTrue(r.Approved),
         })),
       });
     }
@@ -65,12 +68,12 @@ export default async function handler(req, res) {
       for (const l of lines) {
         if (!l) continue;
         const kind = ['item', 'tax', 'fee'].includes(l.kind) ? l.kind : 'item';
-        const price = num(l.price);
+        const price = priceFor(kind, l.price);
         if (price == null || !clip(l.receipt, 80)) continue;
         if (kind === 'item' && (!clip(l.item, 80) || !(num(l.amt) > 0))) continue;
         out.push({
           Id: 'l' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
-          Receipt: clip(l.receipt, 80), Date: clip(l.date, 10), Vendor: clip(l.vendor, 60) || 'Unassigned',
+          Receipt: clip(l.receipt, 80), Date: isoDate(l.date), Vendor: clip(l.vendor, 60) || 'Unassigned',
           Kind: kind, Item: kind === 'item' ? clip(l.item, 80) : '', Amount: kind === 'item' ? num(l.amt) : '',
           Unit: l.unit === 'ml' ? 'ml' : 'g', Price: price, Note: clip(l.note, 200), Link: clip(l.link, 400), Deleted: '', Approved: l.approved === true && kind === 'item' ? 'TRUE' : '',
         });
