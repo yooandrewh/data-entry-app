@@ -1451,13 +1451,15 @@
      Taken from ~/kairosbaking/retail-app (fonts stay as on Home: calligraphy titles, Cormorant Garamond): flat sharp corners, hairline rows, a cool
      stone ground #e8e6e2 with #f4f2ee cards, slate ink #242c35, solid caramel #35465c for selected / primary,
      and a solid light-caramel nav bar. Scoped to the Data and Baking tabs; Home keeps the photo look. */
-  #view-db, #view-plan {
+  #view-db, #view-plan, #view-fin {
     --bg: #fcfbf9; --card: #ffffff; --field: #efede9; --sep: #e2dfda; --text: #242c35; --muted: #6d737b;
     --accent: #35465c; --plum: #242c35; --tint: rgba(36,44,53,0.06); --line: #dcd8d2;
     color: var(--text);
   }
-  body[data-tab="db"], body[data-tab="plan"] { background: #fcfbf9; }
-  #view-db *, #view-plan * { border-radius: 0 !important; }
+  body[data-tab="db"], body[data-tab="plan"], body[data-tab="fin"] { background: #fcfbf9; }
+  #view-db *, #view-plan *, #view-fin * { border-radius: 0 !important; }
+  #view-fin .proj-card { background: var(--card); border: 1px solid var(--sep); box-shadow: none; }
+  #view-fin button, #view-fin select, #view-fin input { border-radius: 8px !important; }
   #view-db button, #view-plan button, #view-db select, #view-plan select, #view-db input, #view-plan input, #view-plan textarea, #view-db .db-filter, #view-plan .db-filter { border-radius: 8px !important; }
   #view-db .card, #view-plan .card, #view-db .proj-card, #view-plan .proj-card, #view-db .db-entry, #view-plan .db-entry, #view-db .db-summary, #view-plan .rec-box, #view-plan .split-card, #view-plan .pg-card { border-radius: 10px !important; }
   #view-db svg, #view-plan svg, #view-db svg *, #view-plan svg *, #view-db .tok, #view-plan .tok { border-radius: 0 !important; }
@@ -1576,9 +1578,9 @@
   #recSection button { flex: 1 1 0; min-width: 0; padding: 5px 3px !important; gap: 3px; justify-content: center; white-space: nowrap; }
   @media (max-width: 400px) { #recSection button [data-ic], #recSection button .ic2 { display: none; } }
   /* nav: solid light caramel, flush, only while Data / Baking is open */
-  body[data-tab="db"] .tabbar, body[data-tab="plan"] .tabbar { background: #f3f1ed; border-top: 1px solid #e2dfda; }
-  body[data-tab="db"] .tabbar button, body[data-tab="plan"] .tabbar button { color: #242c35; opacity: .75; }
-  body[data-tab="db"] .tabbar button.on, body[data-tab="plan"] .tabbar button.on { background: rgba(36,44,53,.16); color: #242c35; opacity: 1; font-weight: 700; }
+  body[data-tab="db"] .tabbar, body[data-tab="plan"] .tabbar, body[data-tab="fin"] .tabbar { background: #f3f1ed; border-top: 1px solid #e2dfda; }
+  body[data-tab="db"] .tabbar button, body[data-tab="plan"] .tabbar button, body[data-tab="fin"] .tabbar button { color: #242c35; opacity: .75; }
+  body[data-tab="db"] .tabbar button.on, body[data-tab="plan"] .tabbar button.on, body[data-tab="fin"] .tabbar button.on { background: rgba(36,44,53,.16); color: #242c35; opacity: 1; font-weight: 700; }
 </style>
 </head>
 <body>
@@ -1861,6 +1863,13 @@
 <!-- ===== PROJECTIONS VIEW ===== -->
 
 <!-- ===== PLAN VIEW (what-if: how much to bake to last until a date) ===== -->
+<div class="view" id="view-fin">
+  <div class="wrap">
+    <header><h1>Finance</h1><div class="sub">One month: sales, costs, and what is left</div></header>
+    <div id="finBody"></div>
+  </div>
+</div>
+
 <div class="view" id="view-plan">
   <div class="wrap">
     <header>
@@ -1900,13 +1909,14 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.82.00 · Oct 13</div>
+<div class="ver-badge">v1.83.00 · Oct 13</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
   <button data-tab="home" class="on"><span class="tic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3.2 11.4 12 4l8.8 7.4"/><path d="M5.6 9.8V20h12.8V9.8"/><path d="M10 20v-5.6h4V20"/><path d="M16.4 6.5V4.2h2.2v4.1"/></svg></span><span class="tlabel">Home</span></button>
   <button data-tab="db"><span class="tic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><mask id="dataMask" maskUnits="userSpaceOnUse" x="0" y="0" width="24" height="24"><rect width="24" height="24" fill="#fff" style="stroke:none"/><path d="M3.2 16.6 8.6 11.4 14.6 15.4 20.8 8" style="stroke:#000;stroke-width:4.4" fill="none"/></mask><g mask="url(#dataMask)"><rect x="3.5" y="12.2" width="3" height="7.8"/><rect x="8.5" y="8.6" width="3" height="11.4"/><rect x="13.5" y="4" width="3" height="16"/><rect x="18.5" y="10" width="3" height="10"/></g><path d="M4.2 15.7 7.6 12.4M9.6 12.1 13.6 14.8M15.6 14.4 20.8 8"/><circle cx="3.2" cy="16.6" r="1.1"/><circle cx="8.6" cy="11.4" r="1.4"/><circle cx="14.6" cy="15.4" r="1.4"/><path d="M17.7 7.6 20.8 8 20.2 11.1"/></svg></span><span class="tlabel">Data</span></button>
   <button data-tab="plan"><span class="tic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20.7C8.2 19.7 4.8 15.7 4.8 11c0-3.4 1.8-6 4.2-6.7 1-.6 2-.4 3 .1 1-.5 2-.7 3-.1 2.4.7 4.2 3.3 4.2 6.7 0 4.7-3.4 8.7-7.2 9.7z"/><path d="M12 20C9.9 16.5 8.7 11.5 9.1 5"/><path d="M12 20c0-5 0-10.500 0-14.700"/><path d="M12 20c2.100-3.500 3.300-8.500 2.900-15"/></svg></span><span class="tlabel">Baking</span></button>
+  <button data-tab="fin"><span class="tic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.3"/><path d="M14.7 9.3c-.5-.9-1.500-1.400-2.700-1.400-1.500 0-2.600.8-2.600 2s1 1.700 2.600 2.100c1.600.4 2.600.9 2.600 2.100s-1.100 2-2.600 2c-1.200 0-2.200-.5-2.800-1.500"/><path d="M12 6.300v1.600M12 16.100v1.600"/></svg></span><span class="tlabel">Finance</span></button>
 </div></nav>
 
 <!-- ===== Confirmation sheet ===== -->
@@ -2723,7 +2733,7 @@
   }
 
   // ---- Tab switching ----
-  const VIEWS = { home: 'view-home', db: 'view-db', plan: 'view-plan' };
+  const VIEWS = { home: 'view-home', db: 'view-db', plan: 'view-plan', fin: 'view-fin' };
   document.querySelector('.tabbar').addEventListener('click', e => {
     const btn = e.target.closest('button'); if (!btn) return;
     const tab = btn.dataset.tab;
@@ -2735,6 +2745,7 @@
     syncVer();
     if (tab === 'db') { salesCache = null; renderData(); retryUnsynced(); }
     if (tab === 'plan') { salesCache = null; renderBaking(); }
+    if (tab === 'fin') { finEntries = null; renderFin(); }
     window.scrollTo(0, 0);
   });
   // Baking tab has two modes (Plan / Recipes) toggled by a segment control.
@@ -5103,6 +5114,7 @@
     ledgerBusy = false;
     buildCostPrices();
     if (!document.getElementById('bakingCosts').hidden) renderCosts();
+    if (document.getElementById('view-fin').classList.contains('active')) renderFin();
   }
   const saveCosts = () => { try { localStorage.setItem('costYields.v1', JSON.stringify(costYields)); } catch {} };
 
@@ -5189,9 +5201,12 @@
   }
   // Labor + wholesale: hourly rate and margin are global; minutes per batch default from Kitchen Times (per-recipe override).
   const LAB_KEY = 'laborCfg.v1', LAB_SESSION_BATCHES = 4;   // cleaning is shared across a typical session of 4 batches
-  let LAB = { rate: 35, margin: 40, mins: {}, wk: { mad: 70, pump: 10, blue: 12, deliv: 60 } };   // wk = a typical week: pieces made, and delivery minutes
+  let LAB = { rate: 20, margin: 40, mins: {}, wk: { mad: 70, pump: 10, blue: 12, deliv: 120 } };   // wk = a typical week: pieces made, and delivery minutes
   try { Object.assign(LAB, JSON.parse(localStorage.getItem(LAB_KEY)) || {}); } catch {}
-  LAB.wk = Object.assign({ mad: 70, pump: 10, blue: 12, deliv: 60 }, LAB.wk);
+  try { if (!localStorage.getItem('laborRate20')) { LAB.rate = 20; localStorage.setItem('laborRate20', '1'); localStorage.setItem(LAB_KEY, JSON.stringify(LAB)); } } catch {}   // $20/hr (Andrew, 2026-10-13); replaces a $35 saved earlier on this device, once
+  try { if (!localStorage.getItem('delivMin120')) { LAB.wk = LAB.wk || {}; LAB.wk.deliv = 120; localStorage.setItem('delivMin120', '1'); localStorage.setItem(LAB_KEY, JSON.stringify(LAB)); } } catch {}   // delivery 120 min/wk = 60 x 2 locations (2026-10-13)
+  LAB.wk = Object.assign({ mad: 70, pump: 10, blue: 12, deliv: 120 }, LAB.wk);
+  LAB.whole = Object.assign({ mad: 2.5, muffin: 2.75 }, LAB.whole);   // current wholesale prices (Andrew, 2026-10-13)
   const WEEKS_PER_MONTH = 52 / 12;
   // One week's labor: a single muffin + madeleine bake day, plus delivery. Delivery is shared over every piece made that week.
   function labWeek() {
@@ -5261,6 +5276,10 @@
     const totalItem = unitCost != null && labItem != null ? unitCost + labItem + delivItem : null;
     const mg = Math.min(90, Math.max(0, LAB.margin)) / 100;
     const wholesale = totalItem != null ? Math.ceil(totalItem / (1 - mg) * 20) / 20 : null;   // to the next 5¢
+    const wKey = it.type === 'muffin' ? 'muffin' : (sec === 'mad' ? 'mad' : null), curW = wKey ? LAB.whole[wKey] : null;
+    const curM = curW != null && totalItem != null ? curW - totalItem : null;
+    const wholeHtml = wKey ? `<div class="proj-row"><span class="k">Current wholesale price<span class="cost-hint"> · all ${wKey === 'mad' ? 'madeleines' : 'muffins'}</span></span><span>$<input class="cost-in" type="number" inputmode="decimal" step="any" min="0" value="${rFmt(curW)}" data-lwhole="${wKey}"></span></div>
+      <div class="proj-row"><span class="k cost-total">Margin at that price</span><span class="cost-total">${curM != null ? (curM < 0 ? '−' : '') + money(Math.abs(curM)) + ' · ' + (curW ? Math.round(curM / curW * 100) : 0) + '%' : '—'}</span></div>` : '';
     const laborHtml = `<div class="cost-sec"><div class="cost-sub">Labor &amp; pricing</div>
       <div class="proj-row"><span class="k">Labor minutes per batch<span class="cost-hint"> · from Kitchen Times: ${labDef.lo === labDef.hi ? labDef.lo : labDef.lo + '–' + labDef.hi}</span></span><span><input class="cost-in" type="number" inputmode="decimal" step="any" min="0" value="${rFmt(labMins)}" data-clab="1"></span></div>
       <div class="proj-row"><span class="k">Labor rate per hour</span><span>$<input class="cost-in" type="number" inputmode="decimal" step="any" min="0" value="${rFmt(LAB.rate)}" data-lrate="1"></span></div>
@@ -5270,6 +5289,7 @@
       <div class="proj-row"><span class="k cost-total">Total cost per item</span><span class="cost-total">${totalItem != null ? money(totalItem) : '—'}</span></div>
       <div class="proj-row"><span class="k">Margin on wholesale</span><span><input class="cost-in" type="number" inputmode="decimal" step="any" min="0" max="90" value="${rFmt(LAB.margin)}" data-lmargin="1">%</span></div>
       <div class="proj-row"><span class="k cost-total">Suggested wholesale price</span><span class="cost-total">${wholesale != null ? '$' + wholesale.toFixed(2) : '—'}</span></div>
+      ${wholeHtml}
       <div class="cost-sub" style="margin-top:12px">A typical week</div>
       ${[['mad', 'Madeleines made'], ['pump', 'Pumpkin muffins made'], ['blue', 'Blueberry muffins made'], ['deliv', 'Delivery minutes']].map(([k, l]) => `<div class="proj-row"><span class="k">${l}</span><span><input class="cost-in" type="number" inputmode="decimal" step="any" min="0" value="${rFmt(LAB.wk[k])}" data-lwk="${k}"></span></div>`).join('')}
       <div class="proj-row"><span class="k">Batches</span><span>${wkLab.mad} madeleine · ${wkLab.mu} muffin</span></div>
@@ -5293,6 +5313,104 @@
         <div class="proj-row"><span class="k cost-total">Cost per item, finished</span><span class="cost-total">${finished != null ? money(finished) : '—'}</span></div>` : ''}</div>
     </div>`;
   }
+  // ===== Finance tab: one month of sales, cost of goods, kitchen, and what is left =====
+  const FIN_KEY = 'finCfg.v1';
+  let FIN = { kitchenCost: 570, kitchenHours: 20, taxPct: 7, other: 0 };   // kitchen: $570 per 20 h block + 7% tax (Andrew, 2026-10-13)
+  try { Object.assign(FIN, JSON.parse(localStorage.getItem(FIN_KEY)) || {}); } catch {}
+  let finMonth = '', finEntries = null;
+  // Per-item economics for one recipe: ingredient cost (with and without ledger tax/fees), labor, pieces per batch.
+  function itemEcon(costSel) {
+    const [sec, key] = costSel.split(/:(.*)/s);
+    const sc = COST_SECTIONS.find(x => x[0] === sec); const it = sc && sc[2]().find(x => (x.key || x.name) === key);
+    if (!it) return null;
+    const yv = costYields[costSel] != null ? costYields[costSel] : costDefaultYield(sec, it);
+    if (!yv) return null;
+    const cost = () => {
+      let batch = 0;
+      for (const r of costRows(sec, it).filter(r => !COST_SKIP.has(costCanon(r[0])))) { const c = costLine(r[0], r[1]); if (c == null) return null; batch += c; }
+      let top = 0;
+      for (const t of ((COST_META[costSel] || {}).toppings || [])) { const c = costTopping(t); if (c == null) return null; top += c; }
+      return batch / yv + top;
+    };
+    const withTax = cost();
+    const saved = costPrices;
+    costPrices = Object.fromEntries(Object.entries(saved).map(([k, v]) => [k, { ...v, price: v.base != null ? v.base : v.price }]));
+    let pre; try { pre = cost(); } finally { costPrices = saved; }
+    const d = labDefaultMins(sec, it, yv), mins = LAB.mins[costSel] != null ? LAB.mins[costSel] : (d.lo + d.hi) / 2;
+    return { yv, withTax, pre, mins, name: costItemName(sec, it) };
+  }
+  const finSave = () => { try { localStorage.setItem(FIN_KEY, JSON.stringify(FIN)); } catch {} };
+  // Totals for a month. entries = merged entries; prices = invoice prices per product.
+  function finCompute(entries, month) {
+    const prices = invPrices(), byProd = {};
+    entries.filter(e => e.type === 'delivery' && !e.taggedForDeletion && String(e.datetime).slice(0, 7) === month).forEach(e => {
+      ENTRY_PRODUCTS.forEach(p => { const n = Number((e.amounts || {})[p]) || 0; if (n > 0) byProd[p] = (byProd[p] || 0) + n; });
+    });
+    const recipeOf = p => Object.keys(BS_PRODUCT).find(k => BS_PRODUCT[k] === p);
+    let sales = 0, ingr = 0, ingrPre = 0, bakeMin = 0; const rows = [], missing = [];
+    Object.keys(byProd).forEach(p => {
+      const n = byProd[p], rev = n * (prices[p] || 0); sales += rev;
+      const ec = recipeOf(p) ? itemEcon(recipeOf(p)) : null;
+      if (!ec || ec.withTax == null) { missing.push(p); rows.push({ p, n, rev, cost: null }); return; }
+      const cost = n * ec.withTax, pre = n * (ec.pre != null ? ec.pre : ec.withTax);
+      ingr += cost; ingrPre += pre; bakeMin += n / ec.yv * ec.mins;
+      rows.push({ p, n, rev, cost });
+    });
+    const bakeLabor = bakeMin / 60 * LAB.rate, delivMin = LAB.wk.deliv * WEEKS_PER_MONTH, delivLabor = delivMin / 60 * LAB.rate;
+    const kitchen = FIN.kitchenCost * (1 + FIN.taxPct / 100), recurring = kitchen + (Number(FIN.other) || 0);
+    const preLabor = sales - ingr - recurring, labor = bakeLabor + delivLabor;
+    return { rows, missing, sales, ingr, ingrTax: ingr - ingrPre, ingrPre, bakeMin, bakeLabor, delivMin, delivLabor, labor, kitchen, recurring, preLabor, postLabor: preLabor - labor, hoursLeft: FIN.kitchenHours - bakeMin / 60 };
+  }
+  const finMoney = n => (n < 0 ? '−$' : '$') + Math.abs(n).toFixed(2);
+  const finMonthName = ym => { const [y, m] = ym.split('-'); return new Date(Number(y), Number(m) - 1, 1).toLocaleString('en-US', { month: 'long', year: 'numeric' }); };
+  async function renderFin() {
+    const el = document.getElementById('finBody');
+    if (!Object.keys(costPrices).length) loadCosts();
+    if (finEntries == null) {
+      el.innerHTML = '<div class="proj-sub">Loading…</div>';
+      let remote = [], ok = false;
+      try { remote = await fetchRemoteEntries(); ok = true; } catch {}
+      finEntries = mergeEntries(remote, ok);
+    }
+    const months = [...new Set(finEntries.filter(e => e.type === 'delivery').map(e => String(e.datetime).slice(0, 7)).filter(m => /^\d{4}-\d{2}$/.test(m)))].sort().reverse();
+    const cur = nowPST().slice(0, 7); if (!months.includes(cur)) months.unshift(cur);
+    if (!months.includes(finMonth)) finMonth = cur;
+    const r = finCompute(finEntries, finMonth);
+    const row = (k, v, cls) => `<div class="proj-row"><span class="k${cls ? ' ' + cls : ''}">${k}</span><span${cls ? ' class="' + cls + '"' : ''}>${v}</span></div>`;
+    const inp = (f, v, step) => `<input class="cost-in" type="number" inputmode="decimal" step="${step || 'any'}" min="0" value="${v}" data-fin="${f}">`;
+    el.innerHTML = `
+      <div class="db-filter" style="margin-bottom:10px"><select id="finMonth" aria-label="Month">${months.map(m => `<option value="${m}"${m === finMonth ? ' selected' : ''}>${finMonthName(m)}</option>`).join('')}</select></div>
+      <div class="proj-card"><h3>Sales</h3><div class="proj-sub">pieces delivered in the month at the invoice price</div>
+        ${r.rows.length ? r.rows.map(x => row(`${esc(x.p)}<span class="cost-hint"> · ${x.n} pcs</span>`, finMoney(x.rev))).join('') : '<div class="cost-hint">No deliveries logged this month.</div>'}
+        ${row('Top line sales', finMoney(r.sales), 'cost-total')}</div>
+      <div class="proj-card"><h3>Cost of goods</h3>
+        <div class="cost-sub">Ingredients</div>
+        ${r.rows.map(x => row(esc(x.p), x.cost == null ? '<span class="cost-miss">needs a price</span>' : finMoney(x.cost))).join('')}
+        ${row('Ingredients total', finMoney(r.ingr), 'cost-total')}
+        ${row('<span class="cost-hint">of which ledger tax &amp; fees</span>', '<span class="cost-hint">' + finMoney(r.ingrTax) + '</span>')}
+        ${r.missing.length ? `<div class="cost-miss" style="padding:4px 0">No cost for ${r.missing.map(esc).join(', ')} (no recipe or an unapproved price), so those count as $0.</div>` : ''}
+        <div class="cost-sub" style="margin-top:12px">Labor <span class="cost-hint">· $${rFmt(LAB.rate)}/hr</span></div>
+        ${row(`Baking<span class="cost-hint"> · ${(r.bakeMin / 60).toFixed(1)} h</span>`, finMoney(r.bakeLabor))}
+        ${row(`Delivery<span class="cost-hint"> · ${(r.delivMin / 60).toFixed(1)} h (${rFmt(LAB.wk.deliv)} min/wk)</span>`, finMoney(r.delivLabor))}
+        ${row('Labor total', finMoney(r.labor), 'cost-total')}
+        <div class="cost-sub" style="margin-top:12px">Monthly recurring</div>
+        ${row('Kitchen block $<input class="cost-in" type="number" inputmode="decimal" step="any" min="0" value="' + rFmt(FIN.kitchenCost) + '" data-fin="kitchenCost"> for <input class="cost-in" type="number" inputmode="decimal" step="any" min="0" value="' + rFmt(FIN.kitchenHours) + '" data-fin="kitchenHours"> h', finMoney(FIN.kitchenCost))}
+        ${row('Kitchen tax <input class="cost-in" type="number" inputmode="decimal" step="any" min="0" value="' + rFmt(FIN.taxPct) + '" data-fin="taxPct">%', finMoney(r.kitchen - FIN.kitchenCost))}
+        ${row('Other monthly costs $', inp('other', rFmt(Number(FIN.other) || 0)))}
+        ${row('Recurring total', finMoney(r.recurring), 'cost-total')}</div>
+      <div class="proj-card"><h3>What's left</h3>
+        ${row('Net before labor', finMoney(r.preLabor), 'cost-total')}
+        ${row('Net after labor', finMoney(r.postLabor), 'cost-total')}
+        <div class="cost-sub" style="margin-top:12px">Kitchen hours</div>
+        ${row('Booked', rFmt(FIN.kitchenHours) + ' h')}
+        ${row('Used (baking time from the batches)', (r.bakeMin / 60).toFixed(1) + ' h')}
+        ${row('Still available', Math.max(0, r.hoursLeft).toFixed(1) + ' h' + (r.hoursLeft < 0 ? ' <span class="cost-miss">over by ' + (-r.hoursLeft).toFixed(1) + ' h</span>' : ''), 'cost-total')}
+        <div class="cost-hint" style="padding-top:6px">Sales use the invoice prices (retail unless you changed them). Ingredient cost is delivered pieces × the recipe's cost per item, so it ignores waste and what was baked but not delivered.</div></div>`;
+  }
+  document.addEventListener('change', e => {
+    if (e.target.id === 'finMonth') { finMonth = e.target.value; renderFin(); }
+    else if (e.target.dataset && e.target.dataset.fin) { const v = Number(e.target.value); FIN[e.target.dataset.fin] = Number.isFinite(v) && v >= 0 ? v : 0; finSave(); renderFin(); }
+  });
   // ----- Price ledger view: vendors as headers, receipts and their items underneath, tax + fees at the end of each receipt -----
   let rcpDraft = null, ledgerOpen = {};
   const activeNames = () => { const s = new Set(); ACTIVE_ITEMS.forEach(k => { const [sec, key] = k.split(/:(.*)/s); const sc = COST_SECTIONS.find(x => x[0] === sec); const it = sc && sc[2]().find(x => (x.key || x.name) === key); if (it) costRows(sec, it).forEach(r => s.add(costCanon(r[0]))); }); return s; };
@@ -5385,10 +5503,11 @@
   document.getElementById('costPick').addEventListener('change', e => { costSel = e.target.value; renderCostCard(); });
   document.getElementById('bakingCosts').addEventListener('change', e => {
     const y = e.target.closest('[data-cyield]');
-    const lab = e.target.closest('[data-clab],[data-lrate],[data-lmargin],[data-lwk]');
+    const lab = e.target.closest('[data-clab],[data-lrate],[data-lmargin],[data-lwk],[data-lwhole]');
     if (lab) {
       const n = parseFloat(lab.value);
       if (lab.dataset.lwk) { if (n >= 0) LAB.wk[lab.dataset.lwk] = n; }
+      else if (lab.dataset.lwhole) { if (n >= 0) LAB.whole[lab.dataset.lwhole] = n; }
       else if (lab.dataset.clab) { if (n >= 0) LAB.mins[costSel] = n; else delete LAB.mins[costSel]; }
       else if (lab.dataset.lrate) { if (n >= 0) LAB.rate = n; }
       else if (n >= 0) LAB.margin = n;
