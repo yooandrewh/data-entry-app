@@ -2061,7 +2061,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.91.01 · Oct 13, 9:30 PM</div>
+<div class="ver-badge">v1.91.02 · Oct 13, 10:00 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -4992,7 +4992,7 @@
       it.latest = it.versions.length - 1;
     }
     // Hardcoded yields (Andrew, 2026-10-13): every madeleine batch is 12, Pumpkin Pie Spice Muffin 10, Blueberry Muffin 6.
-    for (const it of REC_MADS) { it.yield = 12; (it.versions || []).forEach(v => { v.yield = 12; }); }
+    for (const it of REC_MADS) { const y = it.name === 'Maple Pecan' ? 11 : 12; it.yield = y; (it.versions || []).forEach(v => { v.yield = y; }); }   // Maple Pecan counted as 11 per batch (Andrew, 2026-10-13); the other madeleines 12
     for (const it of REC_OTHER) if (it.key === 'pumpkinmuffin') it.yield = 10; else if (it.key === 'blueberrymuffin') it.yield = 6;
     // Every version is numbered by age: Ver 1 is the oldest, the highest number is the newest.
     for (const it of [...REC_MADS, ...REC_OTHER]) if (it.versions) it.versions.forEach((v, i) => { v.label = 'Ver ' + (i + 1); });
