@@ -2126,7 +2126,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.105.00 · Oct 14, 3:04 PM</div>
+<div class="ver-badge">v1.105.01 · Oct 14, 3:25 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -6798,7 +6798,7 @@
     const eff = bsView ? bsView.eff : bsEffort();
     const recs = bsView ? (bsView.recipes || []) : bakeSheet.map(b => { const f = bsFind(b.key); return f ? costItemName(f.sec, f.it) + (bsVers(f.it) && bsVers(f.it).length > 1 ? ` (${bsVers(f.it)[bsVerOf(f.it, b)].label})` : '') + ' × ' + rFmt(b.b) : ''; }).filter(Boolean);
     const summary = recs.length ? `<div class="bs2-summary"><b>Summary</b>${recs.map(r => `<div>${esc(r)}</div>`).join('')}${eff ? `<div class="bs2-sum-t">${rFmt(eff.batches)} batches · ${eff.pieces} pcs · ${fmtDur(eff.min)} to book<br>Prep ${fmtDur(eff.prep)} · Baking ${fmtDur(eff.baking)}</div>` : ''}</div>` : '';
-    document.getElementById('bsEditBtn').hidden = !(bsView && bsView.sheet);
+    document.getElementById('bsEditBtn').hidden = !bsView;
     document.getElementById('bsDoc').innerHTML = `<div class="bs2-doc">${bsHeadHtml()}${summary}${bsModel().map(bsBlockHtml).join('')}</div>`;
   }
   // The PDF is laid out in two columns per page, like a printed prep sheet; blocks are measured and packed so none is split.
@@ -6904,11 +6904,24 @@
     paintBakeSheetDoc(); document.getElementById('bsScrim').classList.add('show');
   });
   document.getElementById('bsEditBtn').addEventListener('click', () => {
-    const v = bsView; if (!v || !v.sheet) return;
-    bakeSheet = v.sheet.filter(x => bsFind(x.key)).map(x => ({ key: x.key, b: x.b, ver: x.ver, plan: false, manual: true }));
+    const v = bsView; if (!v) return;
+    let sheet = v.sheet, skipped = 0;
+    if (!sheet) {   // plan saved before v1.105: rebuild from its "Recipe (Version) × batches" lines
+      const all = COST_SECTIONS.flatMap(([sec, , get]) => get().map(it => ({ sec, it, key: costItemKey(sec, it) })));
+      sheet = [];
+      for (const line of v.recipes || []) {
+        const m = /^(.*?)(?: \((.+)\))? × (.+)$/.exec(line); const hit = m && all.find(a => costItemName(a.sec, a.it) === m[1]);
+        if (!hit) { skipped++; continue; }
+        const vs = bsVers(hit.it); const vi = m[2] && vs ? vs.findIndex(x => x.label === m[2]) : -1;
+        sheet.push({ key: hit.key, b: Number(m[3]) || 1, ver: vi >= 0 ? vi : undefined });
+      }
+      if (!sheet.length) { alert('Could not rebuild this plan.'); return; }
+    }
+    bakeSheet = sheet.filter(x => bsFind(x.key)).map(x => ({ key: x.key, b: x.b, ver: x.ver, plan: false, manual: true }));
     bsEditing = v.id; bsClose(); saveBakeSheet(); renderBakeSheet();
     const sv = document.getElementById('bsSave'); sv.textContent = 'Update saved plan';
     document.getElementById('bsList').scrollIntoView({ block: 'center' });
+    if (skipped) rcpToast(skipped + ' recipe' + (skipped > 1 ? 's' : '') + ' could not be matched and were left out');
   });
 
   // ---- Buy list: every ingredient the bake plan needs, with packages to buy and what they cost ----
