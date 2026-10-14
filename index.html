@@ -2054,7 +2054,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.86.00 · Oct 13, 7:28 PM</div>
+<div class="ver-badge">v1.86.01 · Oct 13, 7:34 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -5569,7 +5569,7 @@
     // Top-line override per group (saved per month, or on top in What-if): spread over the flavors by their calculated sales.
     const adj = {}, topCalc = {}, topSaved = (FIN.topOverride || {})[month] || {};
     [['Madeleines', 'mad'], ['Muffins', 'muffin']].forEach(([g, k]) => {
-      const t = (ov && ov.top && ov.top[k] !== undefined) ? ov.top[k] : topSaved[k];
+      const t = ov ? (ov.top || {})[k] : topSaved[k];   // What-if has its own top lines (seeded from the saved ones); a saved override never freezes it
       if (t === false || t == null || t === '') return;
       const o = finNum(t); if (o == null || o < 0) return;
       const rs = rows.filter(x => finGrp(x.p) === g), pieces = rs.reduce((a, x) => a + x.n, 0), calc = rs.reduce((a, x) => a + x.rev, 0);
@@ -5592,7 +5592,7 @@
     rows.forEach(x => { x.bl = x.bm / 60 * rate; });
     const bakeLabor = bakeMin / 60 * rate, delivMin = delivWk * WEEKS_PER_MONTH * delivFrac, delivLabor = delivMin / 60 * rate;
     const preLabor = sales - ingr - recurring, labor = bakeLabor + delivLabor;
-    return { taxPct, other, adj, topCalc, wastePct, ingrWaste: ingr - ingrBase, days: Math.max(1, dayNow), rows, missing, actualPcs, rate, delivWk, kCost, sales, ingr, ingrTax: ingr - ingrPre, ingrPre, bakeMin, bakeLabor, delivMin, delivFrac, delivLabor, labor, laborHours: (bakeMin + delivMin) / 60, kitchenMin, overH, overRate, overCost, kitchen, recurring, preLabor, postLabor: preLabor - labor, hoursLeft, kHours };
+    return { taxPct, other, adj, topCalc, wastePct, ingrWaste: ingr - ingrBase, days: Math.max(1, dayNow), rows, missing, actualPcs, rate, delivWk, kCost, sales, ingr, ingrTax: ingr - ingrPre, ingrPre, bakeMin, bakeLabor, delivMin, delivFrac, delivLabor, labor, laborHours: (bakeMin + delivMin) / 60, kitchenMin, overH, overRate, overCost, kitchen, recurring, preLabor, postLabor: preLabor - labor, hoursLeft, kHours, weeks, dim, partial: isCur && dayNow < dim, other };
   }
   const finMoney = n => (n < 0 ? '−$' : '$') + Math.abs(n).toFixed(2);
   const finMonthName = ym => { const [y, m] = ym.split('-'); return new Date(Number(y), Number(m) - 1, 1).toLocaleString('en-US', { month: 'long', year: 'numeric' }); };
@@ -5613,7 +5613,7 @@
     const cur = nowPST().slice(0, 7); if (!months.includes(cur)) months.unshift(cur);
     if (!months.includes(finMonth)) finMonth = cur;
     const ra = finCompute(ents, finMonth, null);   // actuals
-    if (finWhat && (!finOv || finOv.month !== finMonth)) finOv = { month: finMonth, pcs: Object.assign({}, ra.actualPcs), pM: null, pU: null, rate: LAB.rate, deliv: LAB.wk.deliv, kCost: FIN.kitchenCost, kHours: FIN.kitchenHours, waste: 0, wastePct: finWaste(FIN.wastePct), taxPct: Number(FIN.taxPct) || 0, other: Number(FIN.other) || 0, price: {}, mins: {}, ing: {}, top: {}, scen: { maxOn: false, hours: null, mix: {}, items: [] } };
+    if (finWhat && (!finOv || finOv.month !== finMonth)) finOv = { month: finMonth, pcs: Object.assign({}, ra.actualPcs), pM: null, pU: null, rate: LAB.rate, deliv: LAB.wk.deliv, kCost: FIN.kitchenCost, kHours: FIN.kitchenHours, waste: 0, wastePct: finWaste(FIN.wastePct), taxPct: Number(FIN.taxPct) || 0, other: Number(FIN.other) || 0, price: {}, mins: {}, ing: {}, top: Object.fromEntries(Object.entries((FIN.topOverride || {})[finMonth] || {}).filter(([, v]) => typeof v === 'number')), scen: { maxOn: false, hours: null, mix: {}, items: [] } };
     if (finWhat && !finOv.base) finOv.base = { pcs: Object.assign({}, ra.actualPcs), rate: finOv.rate, deliv: finOv.deliv, kCost: finOv.kCost, kHours: finOv.kHours, waste: 0, wastePct: finOv.wastePct, taxPct: finOv.taxPct, other: finOv.other };
     const wi = !!(finWhat && finOv);
     const r0 = wi ? finCompute(ents, finMonth, finOv) : ra;
@@ -5629,8 +5629,8 @@
         const pb = finNum(it.perBatch) || (ec ? ec.yv : 0) || BATCH_YIELD, pw = finNum(it.pw) || 0;
         const perPc = cost * wf2 + mins / 60 * r0.rate / pb, dflt = ceil5c(perPc / (1 - mg));
         const price = finNum(it.price) != null ? finNum(it.price) : dflt, pieces = pw * WEEKS_PER_MONTH;
-        const sales = pieces * price, ing = pieces * cost * wf2, lab = pieces / pb * mins / 60 * r0.rate;
-        scItems.push({ i, it, name: it.name || 'Added item', cost, mins, pb, pw, price, dflt, pieces, sales, ing, lab, profit: sales - ing - lab, ec });
+        const made = pieces * wfp, bmin = made / pb * mins, sales = pieces * price, ing = made * cost * wf2, lab = bmin / 60 * r0.rate;   // made = pieces plus piece waste, like real items
+        scItems.push({ i, it, name: it.name || 'Added item', cost, mins, pb, pw, price, dflt, pieces, bmin, sales, ing, lab, profit: sales - ing - lab, ec });
       });
       if (sc.maxOn) {
         const wks0 = r0.days / 7, cur = {}; r0.rows.forEach(x => { if (PRODUCTS.includes(x.p)) cur[x.p] = x; });
@@ -5640,23 +5640,28 @@
         const H = finNum(sc.hours) > 0 ? finNum(sc.hours) : r0.kHours;
         scM = { H, ps, dm, mixv, ms, ok: ms > 0 };
         if (scM.ok) {
-          const eff = T => { const wk = {}; ps.forEach(p => { wk[p] = Math.round(T * mixv[p] / ms); }); return { wk, e: bakeEffort(wk) }; };
-          let lo = 0, hi = 20000; while (lo < hi) { const mid = Math.ceil((lo + hi) / 2); if (eff(mid).e.min * WEEKS_PER_MONTH <= H * 60) lo = mid; else hi = mid - 1; }
+          const sess = r0.weeks, eff = T => { const wk = {}; ps.forEach(p => { wk[p] = Math.round(T * mixv[p] / ms); }); return { wk, e: bakeEffort(wk) }; };   // sess: same sessions-per-month figure finCompute books
+          let lo = 0, hi = 20000; while (lo < hi) { const mid = Math.ceil((lo + hi) / 2); if (eff(mid).e.min * sess <= H * 60) lo = mid; else hi = mid - 1; }
           const { wk, e } = eff(lo), curWk = {}; let dPcs = 0, xSales = 0, xIng = 0, xLab = 0, newWk = 0, nowWk = 0;
           ps.forEach(p => {
             const x = cur[p], ec = scRecipeOf(p) ? itemEcon(scRecipeOf(p), finOv) : null;
             const u = x && x.n ? { px: x.rev / x.n, ing: (x.cost || 0) / x.n, bl: x.bl / x.n } : { px: invPrices()[p] || 0, ing: ec && ec.withTax != null ? ec.withTax * wfp * wf2 : 0, bl: ec && ec.yv ? ec.mins / ec.yv / 60 * r0.rate * wfp : 0 };
-            const dWk = wk[p] / wfp, cWk = x ? x.n / wks0 : 0, d = (dWk - cWk) * WEEKS_PER_MONTH;
+            const dWk = wk[p] / wfp, cWk = x ? x.n / wks0 : 0, d = (dWk - cWk) * sess;
             newWk += dWk; nowWk += cWk; dPcs += d; xSales += d * u.px; xIng += d * u.ing; xLab += d * u.bl;
           });
-          const blocks = Math.max(1, Math.ceil(H / r0.kHours - 1e-9)), xKit = (blocks - 1) * r0.kitchen - r0.overCost;
+          const extraH = Math.max(0, H - r0.kHours), xKit = extraH * r0.overRate - r0.overCost;   // main sheet's rule: hours past the block are priced by the hour
           const usedH = r0.kitchenMin / 60;
-          Object.assign(scM, { wk, e, newWk, nowWk, dPcs, xSales, xIng, xLab, blocks, xKit, usedH, net: xSales - xIng - xLab - xKit, demand: usedH < Math.min(H, r0.kHours) * 0.9 });
+          Object.assign(scM, { wk, e, newWk, nowWk, dPcs, xSales, xIng, xLab, extraH, xKit, usedH, net: xSales - xIng - xLab - xKit, demand: usedH < Math.min(H, r0.kHours) * (r0.partial ? r0.days / r0.dim : 1) * 0.9 });
         }
       }
     }
     const aSales = scItems.reduce((t, x) => t + x.sales, 0), aIng = scItems.reduce((t, x) => t + x.ing, 0), aLab = scItems.reduce((t, x) => t + x.lab, 0);
-    const r = scItems.length ? Object.assign({}, r0, { sales: r0.sales + aSales, ingr: r0.ingr + aIng, labor: r0.labor + aLab, preLabor: r0.preLabor + aSales - aIng, postLabor: r0.postLabor + aSales - aIng - aLab }) : r0;
+    const aMin = scItems.reduce((t, x) => t + x.bmin, 0);
+    let aOver = 0, r = r0;
+    if (scItems.length) {   // added items use kitchen time too: hours left drops, overage is charged like real items
+      const hoursLeft = r0.hoursLeft - aMin / 60, overH = Math.max(0, -hoursLeft), overCost = overH * r0.overRate; aOver = overCost - r0.overCost;
+      r = Object.assign({}, r0, { sales: r0.sales + aSales, ingr: r0.ingr + aIng, labor: r0.labor + aLab, kitchenMin: r0.kitchenMin + aMin, hoursLeft, overH, overCost, recurring: r0.recurring + aOver, preLabor: r0.preLabor + aSales - aIng - aOver, postLabor: r0.postLabor + aSales - aIng - aLab - aOver });
+    }
     const row = (k, v, cls) => `<div class="proj-row"><span class="k${cls ? ' ' + cls : ''}">${k}</span><span${cls ? ' class="' + cls + '"' : ''}>${v}</span></div>`;
     const inp = (f, v, step) => `<input class="cost-in" type="number" inputmode="decimal" step="${step || 'any'}" min="0" value="${v}" data-fin="${f}">`;
     finDays = 0;
@@ -5712,13 +5717,13 @@
           + (scM.ps.length ? scM.ps.map(p => row(esc(p), sIn('mix:' + p, sc.mix[p], scM.dm[p].toFixed(0), '') + '<span class="fin-u">%</span>')).join('') : '<div class="cost-hint">No madeleine or muffin deliveries to base a mix on. Type a % for a product.</div>');
         if (scM.ok) {
           mx += `<div class="cost-sub" style="margin-top:8px">What fits (hypothetical)</div>`
-            + row(`Batches per week<span class="cost-hint">${rFmt(scM.e.min / 60)} h a week, ${rFmt(scM.e.min * WEEKS_PER_MONTH / 60)} h a month of ${rFmt(scM.H)} h</span>`, String(scM.e.batches))
+            + row(`Batches per week<span class="cost-hint">${rFmt(scM.e.min / 60)} h a week, ${rFmt(scM.e.min * r0.weeks / 60)} h a month of ${rFmt(scM.H)} h</span>`, String(scM.e.batches))
             + row(`Pieces per week<span class="cost-hint">now ${scM.nowWk.toFixed(1)} a week</span>`, scM.newWk.toFixed(1))
             + row('Extra pieces per month', (scM.dPcs >= 0 ? '+' : '−') + Math.abs(scM.dPcs).toFixed(0))
             + row('Extra sales', fmS(scM.xSales)) + row('Extra ingredients', fmS(-scM.xIng)) + row('Extra labor', fmS(-scM.xLab))
-            + row(`Extra kitchen cost<span class="cost-hint">${scM.blocks} block${scM.blocks === 1 ? '' : 's'} of ${rFmt(r0.kHours)} h at ${fm(r0.kitchen)} each, tax included</span>`, fmS(-scM.xKit))
+            + row(`Extra kitchen cost<span class="cost-hint">${rFmt(scM.extraH)} h past the ${rFmt(r0.kHours)} h block, priced by the hour at ${fm(r0.overRate)}/h like the main sheet</span>`, fmS(-scM.xKit))
             + row('Net change per month', fmS(scM.net), 'cost-total')
-            + (scM.demand ? `<div class="cost-hint" style="padding:6px 0">Demand is the limit, not hours: at your current pace you use ${scM.usedH.toFixed(1)} h of the ${rFmt(Math.min(scM.H, r0.kHours))} h booked. The extra pieces assume you can sell them.</div>` : '');
+            + (scM.demand ? `<div class="cost-hint" style="padding:6px 0">Demand is the limit, not hours: at your current pace you use ${scM.usedH.toFixed(1)} h of the ${rFmt(Math.min(scM.H, r0.kHours) * (r0.partial ? r0.days / r0.dim : 1))} h expected so far this month. The extra pieces assume you can sell them.</div>` : '');
         } else mx += '<div class="cost-hint" style="padding:6px 0">Enter a mix above 0% to see what fits.</div>';
       }
       const items = scItems.map(x => {
@@ -5736,11 +5741,11 @@
           + `<button class="cp-btn fin-del" data-scdel="${i}" style="margin:6px 0 12px">Remove this item</button></div>`;
       }).join('');
       const iProfit = scItems.reduce((t, x) => t + x.profit, 0), showVs = (scM && scM.ok) || scItems.length;
-      const nowNet = r0.postLabor, scNet = nowNet + (scM && scM.ok ? scM.net : 0) + iProfit, dN = scNet - nowNet;
+      const nowNet = r0.postLabor, scNet = nowNet + (scM && scM.ok ? scM.net : 0) + iProfit - aOver, dN = scNet - nowNet;
       const vs = showVs ? `<div class="cost-sub" style="margin-top:8px">Now vs scenario <span class="cost-hint">· net after labor, per month</span></div>`
         + row('Now', fm(nowNet)) + row('Scenario', fm(scNet))
         + row('Difference', fmS(dN) + (nowNet !== 0 ? ' · ' + (dN >= 0 ? '+' : '−') + Math.abs(dN / Math.abs(nowNet) * 100).toFixed(0) + '%' : ''), 'cost-total')
-        + (scM && scM.ok ? '<div class="cost-hint">The kitchen scenario counts a full month at the new pace; the month on screen may be partly done.</div>' : '') : '';
+        + (scM && scM.ok ? '<div class="cost-hint">The kitchen scenario uses the same ' + r0.weeks + ' bake sessions this month is booked with.</div>' : '') : '';
       scenCard = `<div class="proj-card fin-scen"><h3 class="fin-card-h">Scenarios <small class="fin-wtag">hypothetical</small></h3>
         <div class="proj-sub">Nothing here is saved. Reset clears it. Added items are counted in Revenue, Costs and Profit below.</div>
         <div class="cost-sub">Max out the kitchen</div>
@@ -5805,6 +5810,7 @@
       ${scItems.length ? row('Added items: labor<span class="cost-hint">what-if</span>', fm(aLab)) : ''}
       ${row('Total labor', fm(r.labor), 'cost-total')}
       <div class="cost-sub" style="margin-top:10px">Kitchen and other</div>
+      ${r.partial ? `<div class="cost-hint" style="padding:4px 0">Full month of fixed costs vs ${r.days} day${r.days === 1 ? '' : 's'} of sales.</div>` : ''}
       ${kit}
       ${row('Kitchen total<span class="cost-hint">block plus tax</span>', fm(r.kitchen))}
       ${r.overCost > 0 ? row(`Overage hours<span class="cost-hint">${r.overH.toFixed(1)} h × ${fm(r.overRate)}/h</span>`, fm(r.overCost)) : ''}
@@ -5865,6 +5871,7 @@
     else if (e.target.dataset && e.target.dataset.wi && finOv) {
       const k = e.target.dataset.wi, raw = e.target.value.trim(), v = raw === '' ? null : Number(raw), val = (v == null || (Number.isFinite(v) && v >= 0)) ? v : null;
       const ci = k.indexOf(':');
+      if (k === 'kHours' && !(val > 0)) { rcpToast('Kitchen block hours must be above 0'); renderFin(); return; }
       if (ci > 0) { const g = k.slice(0, ci), sk = k.slice(ci + 1);
         if (g === 'pcs') finOv.pcs[sk] = val == null ? 0 : val;
         else if (g === 'pcsw') finOv.pcs[sk] = val == null ? 0 : Math.round(val * finDays / 7);
