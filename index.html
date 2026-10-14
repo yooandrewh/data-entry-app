@@ -2126,7 +2126,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.104.00 · Oct 14, 1:10 PM</div>
+<div class="ver-badge">v1.105.00 · Oct 14, 3:04 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -2227,6 +2227,7 @@
     <div class="actions inv-noprint" style="margin-top:16px">
       <button class="btn-primary" id="bsPdfBtn">Download PDF</button>
       <button class="btn-ghost" id="bsPrintBtn">Print</button>
+      <button class="btn-ghost" id="bsEditBtn" hidden>Edit this plan</button>
     </div>
   </div>
 </div>
@@ -6758,6 +6759,7 @@
   };
   const bsLine = (name, g) => `${rFmt(g)} ${g === 1 ? 'gram' : 'grams'} ${bsLineName(name)}`;
   // Recipes → blocks of grouped lines (wet / dry / fat, a blank gap between), plus combined totals.
+  let bsEditing = null;   // id of the saved plan being edited (Save then updates it instead of adding a new one)
   let bsView = null;   // a saved sheet being viewed (null = the sheet being built)
   function bsModel() {
     if (bsView) return bsView.blocks;
@@ -6796,6 +6798,7 @@
     const eff = bsView ? bsView.eff : bsEffort();
     const recs = bsView ? (bsView.recipes || []) : bakeSheet.map(b => { const f = bsFind(b.key); return f ? costItemName(f.sec, f.it) + (bsVers(f.it) && bsVers(f.it).length > 1 ? ` (${bsVers(f.it)[bsVerOf(f.it, b)].label})` : '') + ' × ' + rFmt(b.b) : ''; }).filter(Boolean);
     const summary = recs.length ? `<div class="bs2-summary"><b>Summary</b>${recs.map(r => `<div>${esc(r)}</div>`).join('')}${eff ? `<div class="bs2-sum-t">${rFmt(eff.batches)} batches · ${eff.pieces} pcs · ${fmtDur(eff.min)} to book<br>Prep ${fmtDur(eff.prep)} · Baking ${fmtDur(eff.baking)}</div>` : ''}</div>` : '';
+    document.getElementById('bsEditBtn').hidden = !(bsView && bsView.sheet);
     document.getElementById('bsDoc').innerHTML = `<div class="bs2-doc">${bsHeadHtml()}${summary}${bsModel().map(bsBlockHtml).join('')}</div>`;
   }
   // The PDF is laid out in two columns per page, like a printed prep sheet; blocks are measured and packed so none is split.
@@ -6875,9 +6878,12 @@
   document.getElementById('bsSave').addEventListener('click', e => {
     const blocks = bsModel(); if (!blocks.length) return;
     const now = new Date(), day = nowPST().slice(0, 10);
-    BH.unshift({ id: Date.now().toString(36), day, at: now.getTime(), recipes: bakeSheet.map(b => { const f = bsFind(b.key); return f ? costItemName(f.sec, f.it) + (bsVers(f.it) && bsVers(f.it).length > 1 ? ` (${bsVers(f.it)[bsVerOf(f.it, b)].label})` : '') + ' × ' + rFmt(b.b) : ''; }).filter(Boolean), eff: bsEffort(), blocks });
-    BH = BH.slice(0, 100); bhSave(); track('bake_sheet_save', { recipes: bakeSheet.length });
-    e.target.textContent = 'Saved ✓'; setTimeout(() => { e.target.textContent = 'Save this plan'; }, 1600);
+    const rec = { recipes: bakeSheet.map(b => { const f = bsFind(b.key); return f ? costItemName(f.sec, f.it) + (bsVers(f.it) && bsVers(f.it).length > 1 ? ` (${bsVers(f.it)[bsVerOf(f.it, b)].label})` : '') + ' × ' + rFmt(b.b) : ''; }).filter(Boolean), eff: bsEffort(), blocks, sheet: bakeSheet.map(b => ({ key: b.key, b: b.b, ver: b.ver })) };
+    const ed = bsEditing && BH.find(h => h.id === bsEditing);
+    if (ed) Object.assign(ed, rec); else BH.unshift({ id: Date.now().toString(36), day, at: now.getTime(), ...rec });
+    BH = BH.slice(0, 100); bhSave(); track('bake_sheet_save', { recipes: bakeSheet.length, edit: !!ed });
+    bsEditing = null;
+    e.target.textContent = ed ? 'Updated ✓' : 'Saved ✓'; setTimeout(() => { e.target.textContent = 'Save this plan'; }, 1600);
   });
   document.getElementById('bsSave').disabled = false;
   function bhPaint() {
@@ -6896,6 +6902,13 @@
     bsView = BH.find(h => h.id === row.dataset.bh); if (!bsView) return;
     document.getElementById('bhScrim').classList.remove('show');
     paintBakeSheetDoc(); document.getElementById('bsScrim').classList.add('show');
+  });
+  document.getElementById('bsEditBtn').addEventListener('click', () => {
+    const v = bsView; if (!v || !v.sheet) return;
+    bakeSheet = v.sheet.filter(x => bsFind(x.key)).map(x => ({ key: x.key, b: x.b, ver: x.ver, plan: false, manual: true }));
+    bsEditing = v.id; bsClose(); saveBakeSheet(); renderBakeSheet();
+    const sv = document.getElementById('bsSave'); sv.textContent = 'Update saved plan';
+    document.getElementById('bsList').scrollIntoView({ block: 'center' });
   });
 
   // ---- Buy list: every ingredient the bake plan needs, with packages to buy and what they cost ----
