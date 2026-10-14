@@ -6,7 +6,8 @@
 // sets Deleted = TRUE.
 //
 // GET  -> { rows: [...] }  (rows not removed)
-// POST { action: 'add', lines: [...] } | { action: 'remove', ids: [...] }
+// POST { action: 'add', lines: [...] } | { action: 'remove', ids: [...] } | { action: 'approve', ids: [...], approved?: false }
+// Costs use only lines with Approved = TRUE; new lines start unapproved unless the add sets approved: true.
 //
 // Auth: reads are open (the seed prices were already public in the app source). Writes need the
 // x-ledger-code header to match env LEDGER_CODE; with no LEDGER_CODE set, writes are refused.
@@ -17,7 +18,7 @@
 import { getRows, appendRows, ensureTab, updateCell } from './_sheets.js';
 
 const TAB = 'Ledger';
-const HEADER = ['Id', 'Receipt', 'Date', 'Vendor', 'Kind', 'Item', 'Amount', 'Unit', 'Price', 'Note', 'Link', 'Deleted'];
+const HEADER = ['Id', 'Receipt', 'Date', 'Vendor', 'Kind', 'Item', 'Amount', 'Unit', 'Price', 'Note', 'Link', 'Deleted', 'Approved'];
 const MAX_LINES = 80;
 const clip = (v, n) => String(v == null ? '' : v).slice(0, n);
 const num = (v) => { const n = Number(v); return Number.isFinite(n) && n >= 0 ? n : null; };
@@ -43,7 +44,7 @@ export default async function handler(req, res) {
         rows: rows.filter((r) => r.Id && !isTrue(r.Deleted)).map((r) => ({
           id: String(r.Id), receipt: String(r.Receipt), date: String(r.Date), vendor: String(r.Vendor),
           kind: String(r.Kind), item: String(r.Item), amt: num(r.Amount), unit: r.Unit === 'ml' ? 'ml' : 'g',
-          price: num(r.Price), note: String(r.Note), link: String(r.Link),
+          price: num(r.Price), note: String(r.Note), link: String(r.Link), approved: isTrue(r.Approved),
         })),
       });
     }
@@ -71,7 +72,7 @@ export default async function handler(req, res) {
           Id: 'l' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7),
           Receipt: clip(l.receipt, 80), Date: clip(l.date, 10), Vendor: clip(l.vendor, 60) || 'Unassigned',
           Kind: kind, Item: kind === 'item' ? clip(l.item, 80) : '', Amount: kind === 'item' ? num(l.amt) : '',
-          Unit: l.unit === 'ml' ? 'ml' : 'g', Price: price, Note: clip(l.note, 200), Link: clip(l.link, 400), Deleted: '',
+          Unit: l.unit === 'ml' ? 'ml' : 'g', Price: price, Note: clip(l.note, 200), Link: clip(l.link, 400), Deleted: '', Approved: l.approved === true && kind === 'item' ? 'TRUE' : '',
         });
       }
       if (!out.length) return res.status(400).json({ error: 'No valid lines' });
@@ -85,6 +86,15 @@ export default async function handler(req, res) {
       let n = 0;
       for (const r of rows) if (ids.has(String(r.Id))) { await updateCell(TAB, header, r._row, 'Deleted', 'TRUE'); n++; }
       return res.status(200).json({ removed: n });
+    }
+    // Approve (or un-approve) item lines. Costs only use approved lines.
+    if (body.action === 'approve') {
+      const ids = new Set((Array.isArray(body.ids) ? body.ids : []).slice(0, MAX_LINES).map(String));
+      const val = body.approved === false ? '' : 'TRUE';
+      const { header, rows } = await getRows(TAB);
+      let n = 0;
+      for (const r of rows) if (ids.has(String(r.Id)) && !isTrue(r.Deleted)) { await updateCell(TAB, header, r._row, 'Approved', val); n++; }
+      return res.status(200).json({ approved: val ? n : 0, cleared: val ? 0 : n });
     }
     return res.status(400).json({ error: 'Unknown action' });
   } catch (e) {
