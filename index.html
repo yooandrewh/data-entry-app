@@ -1738,6 +1738,8 @@
   .lg-tabs { display: flex; gap: 6px; overflow-x: auto; margin-bottom: 12px; }
   .lg-tabs button { flex: 1 0 auto; font-size: var(--fs-caption); font-weight: 600; padding: 9px 12px; border-radius: 999px; border: 1px solid var(--sep); background: rgba(255,255,255,.30); color: var(--text); font-family: inherit; cursor: pointer; white-space: nowrap; }
   .lg-tabs button.on { border-color: var(--accent); color: var(--accent); background: rgba(164,90,34,.10); }
+  .inv-hact { display: flex; gap: 6px; margin-left: 10px; }
+  .inv-hact button { padding: 6px 10px !important; font-size: var(--fs-caption); }
   .lg-note { font-size: var(--fs-caption); color: var(--muted); margin-bottom: 10px; }
   label .lg-note { display: block; margin: 6px 0 0; font-weight: 400; }
   .lg-form { display: grid; gap: 10px; margin-bottom: 14px; }
@@ -2100,7 +2102,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.99.00 · Oct 14, 10:30 AM</div>
+<div class="ver-badge">v1.99.01 · Oct 14, 10:50 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -3485,10 +3487,23 @@
     try { localStorage.setItem(INV_HIST_KEY, JSON.stringify(a.slice(0, 200))); } catch {}
     paintInvHistory();
   }
+  function invHistClick(b) {
+    const h = invHistory()[+b.dataset.i]; if (!h || !h.html) { rcpToast('Print it again to save a copy'); return; }
+    if (b.dataset.hist === 'open') {
+      document.getElementById('invDoc').innerHTML = h.html; invNum = h.num; invText = h.text || ''; invMeta = null;
+      document.getElementById('invPrintBtn').hidden = document.getElementById('invCopyBtn').hidden = false;
+      invScrim.classList.add('show');
+    } else {
+      const el = document.createElement('div'); el.className = 'inv-pdf'; el.innerHTML = h.html;
+      el.querySelectorAll('.inv-noprint').forEach(n => n.remove());
+      downloadPdf(b, [el], `${h.num.toLowerCase()}.pdf`, '.inv-');
+    }
+  }
+  document.addEventListener('click', e => { const b = e.target.closest('[data-hist]'); if (b) invHistClick(b); });
   function paintInvHistory() {
     const box = document.getElementById('invHistory'); if (!box) return;
     const a = invHistory();
-    box.innerHTML = a.length ? a.map(h => `<div class="proj-row"><span>${esc(h.num)}<small style="display:block;color:var(--muted)">${esc(h.store)} · printed ${esc(h.printed)}</small></span><b>${esc(h.total)}</b></div>`).join('') : '<div class="inv-empty">No printed invoices yet. They show here after you press Download PDF.</div>';
+    box.innerHTML = a.length ? a.map((h, i) => `<div class="proj-row"><span>${esc(h.num)}<small style="display:block;color:var(--muted)">${esc(h.store)} · printed ${esc(h.printed)}</small></span><b>${esc(h.total)}</b><span class="inv-hact"><button type="button" class="btn-ghost" data-hist="open" data-i="${i}">Open</button><button type="button" class="btn-ghost" data-hist="dl" data-i="${i}">Download</button></span></div>`).join('') : '<div class="inv-empty">No printed invoices yet. They show here after you press Download PDF.</div>';
   }
   function invPrices() {
     let saved = {};
@@ -3566,7 +3581,7 @@
     const units = groups.reduce((a, g) => a + g.units, 0);
     const fmtD = ymd => { const [y, m, d] = ymd.split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); };
     const period = fmtD(to);   // the range only picks which deliveries are included; the document shows just the end date
-    const num = `KB-${to.replace(/-/g, '')}-${both ? 'ALL' : store.split(' ').map(w => w[0]).join('')}`;
+    const num = `KB-${from.replace(/-/g, '')}-${both ? 'ALL' : store.split(' ').map(w => w[0]).join('')}`;
     const issued = fmtD(document.getElementById('invIssue').value || nowPST().slice(0, 10));
     const dueV = document.getElementById('invDue').value, due = dueV ? fmtD(dueV) : 'Upon receipt';
 
@@ -3586,7 +3601,7 @@
       <div class="inv-total"><span>Total</span><span>${usd(total)}</span></div>`
       : `<div class="inv-empty">No deliveries for ${both ? 'either store' : esc(store)} in this period.</div>`}
       ${ok ? '' : '<div class="inv-empty inv-noprint">Offline — only entries on this device are included.</div>'}`;
-    invNum = num; invMeta = { num, store: both ? 'Both Stores' : store, total: usd(total) };
+    invNum = num; invMeta = { num, store: both ? 'Both Stores' : store, total: usd(total), text: invText };
     document.getElementById('invPrintBtn').hidden = document.getElementById('invCopyBtn').hidden = !lines.length;
     invScrim.classList.add('show');
     track('invoice_create', { store, days: from === to ? 1 : 2, lines: lines.length });
@@ -3599,7 +3614,7 @@
     const el = document.createElement('div'); el.className = 'inv-pdf';
     el.innerHTML = document.getElementById('invDoc').innerHTML;
     el.querySelectorAll('.inv-noprint').forEach(n => n.remove());
-    if (invMeta) invSaveHistory({ ...invMeta, printed: nowPST().slice(0, 10) });
+    if (invMeta) invSaveHistory({ ...invMeta, html: document.getElementById('invDoc').innerHTML, printed: nowPST().slice(0, 10) });
     downloadPdf(document.getElementById('invPrintBtn'), [el], `${invNum.toLowerCase()}.pdf`, '.inv-');
   });
   document.getElementById('invCopyBtn').addEventListener('click', async () => {
