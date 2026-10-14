@@ -15,10 +15,10 @@ import { getRows, appendRow, ensureTab, updateCell } from './_sheets.js';
 
 // Each log: sheet tab, the fields a client may set (name -> kind), and which of them may be edited later.
 const LOGS = {
-  production: { tab: 'Log Production', fields: { date: 'date', item: 'text', target: 'num', batchSize: 'num', batches: 'num', start: 'time', status: 'status', actual: 'num', notes: 'text', doneAt: 'num' }, edit: ['status', 'actual', 'notes', 'doneAt'] },
-  delivery: { tab: 'Log Delivery', fields: { date: 'date', invoice: 'text', dest: 'text', left: 'time', arrived: 'time' }, edit: [] },
-  training: { tab: 'Log Training', fields: { name: 'text', role: 'text', handler: 'text', manager: 'text', binder: 'date', sig: 'text' }, edit: [] },
-  complaints: { tab: 'Log Complaints', fields: { date: 'date', customer: 'text', product: 'text', problem: 'text', action: 'text', closed: 'date' }, edit: ['closed', 'action'] },
+  production: { tab: 'Log Production', fields: { date: 'date', item: 'text', target: 'num', batchSize: 'num', batches: 'num', start: 'time', status: 'status', actual: 'num', notes: 'text', doneAt: 'num' }, edit: ['date', 'item', 'target', 'batchSize', 'batches', 'start', 'status', 'actual', 'notes', 'doneAt'] },
+  delivery: { tab: 'Log Delivery', fields: { date: 'date', invoice: 'text', dest: 'text', left: 'time', arrived: 'time' }, edit: ['date', 'invoice', 'dest', 'left', 'arrived'] },
+  training: { tab: 'Log Training', fields: { name: 'text', role: 'text', handler: 'text', manager: 'text', binder: 'date', sig: 'text' }, edit: ['name', 'role', 'handler', 'manager', 'binder', 'sig'] },
+  complaints: { tab: 'Log Complaints', fields: { date: 'date', customer: 'text', product: 'text', problem: 'text', action: 'text', closed: 'date' }, edit: ['date', 'customer', 'product', 'problem', 'action', 'closed'] },
 };
 const MAX_ROWS = 2000;   // rows returned per read
 const clip = (v, n) => String(v == null ? '' : v).slice(0, n);
@@ -30,6 +30,14 @@ function clean(kind, v) {
   if (kind === 'num') { if (v === '' || v == null) return ''; const n = Number(v); return Number.isFinite(n) && n >= 0 && n < 1e9 ? n : ''; }
   if (kind === 'status') return v === 'done' ? 'done' : 'planned';
   return clip(v, 500);
+}
+// Required fields per log, checked on add and again on update (against the merged row).
+function missing(key, row) {
+  if (key === 'production') return !row.item || !row.date || !(Number(row.target) > 0) || !(Number(row.batchSize) > 0);
+  if (key === 'delivery') return !row.invoice || !row.dest || !row.date;
+  if (key === 'training') return !row.name;
+  if (key === 'complaints') return !row.customer || !row.problem || !row.date;
+  return false;
 }
 const headerFor = (cfg) => ['Id', 'Created', ...Object.keys(cfg.fields), 'Deleted'];
 
@@ -73,10 +81,7 @@ export default async function handler(req, res) {
       const rec = body.rec && typeof body.rec === 'object' ? body.rec : {};
       const row = { Id: 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 7), Created: Date.now(), Deleted: '' };
       for (const [f, kind] of Object.entries(cfg.fields)) row[f] = clean(kind, rec[f]);
-      if (key === 'production' && (!row.item || !row.date || !(row.target > 0) || !(row.batchSize > 0))) return res.status(400).json({ error: 'Missing fields' });
-      if (key === 'delivery' && (!row.invoice || !row.dest || !row.date)) return res.status(400).json({ error: 'Missing fields' });
-      if (key === 'training' && !row.name) return res.status(400).json({ error: 'Missing fields' });
-      if (key === 'complaints' && (!row.customer || !row.problem || !row.date)) return res.status(400).json({ error: 'Missing fields' });
+      if (missing(key, row)) return res.status(400).json({ error: 'Missing fields' });
       await appendRow(cfg.tab, row);
       return res.status(200).json({ id: row.Id });
     }
@@ -91,10 +96,14 @@ export default async function handler(req, res) {
         return res.status(200).json({ removed: 1 });
       }
       const fields = body.fields && typeof body.fields === 'object' ? body.fields : {};
+      const next = {}, merged = {};
+      for (const f of Object.keys(cfg.fields)) merged[f] = r[f];
+      for (const f of cfg.edit) if (f in fields) { next[f] = clean(cfg.fields[f], fields[f]); merged[f] = next[f]; }
+      const quick = ['status', 'actual', 'doneAt', 'notes'];   // Mark Done / Reopen / Close never need the full check
+      if (Object.keys(next).some((f) => !quick.includes(f)) && missing(key, merged)) return res.status(400).json({ error: 'Missing fields' });
       let n = 0;
-      for (const f of cfg.edit) {
-        if (!(f in fields)) continue;
-        await updateCell(cfg.tab, header, r._row, f, clean(cfg.fields[f], fields[f]));
+      for (const f of Object.keys(next)) {
+        await updateCell(cfg.tab, header, r._row, f, next[f]);
         n++;
       }
       return res.status(200).json({ updated: n });

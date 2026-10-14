@@ -1756,6 +1756,12 @@
   .lg-badge { font-size: var(--fs-micro); font-weight: 700; justify-self: start; border: 1px solid var(--sep); padding: 1px 8px; border-radius: 999px; }
   .lg-badge.done { color: var(--green); border-color: var(--green); }
   .lg-badge.open { color: var(--red); border-color: var(--red); }
+  .lg-day.tg { cursor: pointer; align-items: center; background: none; border-left: 0; border-right: 0; border-top: 0; width: 100%; font: inherit; font-size: var(--fs-caption); font-weight: 700; color: var(--muted); text-align: left; }
+  .lg-day.tg .chev { display: inline-block; width: 14px; transition: transform .15s; }
+  .lg-day.tg.open .chev { transform: rotate(90deg); }
+  .lg-edit { display: grid; gap: 10px; margin-top: 8px; }
+  .lg-edit label { display: grid; gap: 4px; font-size: var(--fs-caption); color: var(--muted); font-weight: 600; }
+  .lg-edit input, .lg-edit select, .lg-edit textarea { font: inherit; font-size: var(--fs-body); padding: 10px 12px; border: 1px solid var(--sep); background: rgba(255,255,255,.30); border-radius: 12px; width: 100%; box-sizing: border-box; color: var(--text); }
   .lg-acts { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
   .lg-acts button, .lg-btn { font: inherit; font-size: var(--fs-caption); font-weight: 600; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--sep); background: rgba(255,255,255,.30); color: var(--text); cursor: pointer; }
   .lg-acts button.danger { color: var(--red); border-color: var(--red); }
@@ -2102,7 +2108,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.99.01 · Oct 14, 10:50 AM</div>
+<div class="ver-badge">v1.100.00 · Oct 14, 9:54 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -3290,6 +3296,12 @@
       { k: 'date', l: 'Date', t: 'date', def: 1 }, { k: 'customer', l: 'Customer', t: 'text' }, { k: 'product', l: 'Product and Production Date', t: 'text' },
       { k: 'problem', l: 'Problem', t: 'area' }, { k: 'action', l: 'Action Taken', t: 'area' }] },
   };
+  const LG_EDIT = {
+    production: [['date', 'Date', 'date'], ['item', 'Item', 'item'], ['target', 'Target Quantity', 'num'], ['batches', '# of Batches', 'num'], ['batchSize', 'Yield Each', 'num'], ['start', 'Start Time', 'time']],
+    delivery: [['date', 'Date', 'date'], ['invoice', 'Invoice #', 'text'], ['dest', 'Destination', 'text'], ['left', 'Time Left', 'time'], ['arrived', 'Time Arrived', 'time']],
+    training: [['name', 'Name', 'text'], ['role', 'Role', 'text'], ['handler', 'Food Handler Card (Expiry)', 'text'], ['manager', 'Food Manager Certified (Expiry)', 'text'], ['binder', 'Read Food Safety Binder (Date)', 'date'], ['sig', 'Signature', 'text']],
+    complaints: [['date', 'Date', 'date'], ['customer', 'Customer', 'text'], ['product', 'Product and Production Date', 'text'], ['problem', 'Problem', 'area'], ['action', 'Action Taken', 'area'], ['closed', 'Closed (Date)', 'date']],
+  };
   const LG_SHOW = {
     delivery: [['invoice', 'Invoice'], ['left', 'Left', 'time'], ['arrived', 'Arrived', 'time']],
     training: [['role', 'Role'], ['handler', 'Food Handler Card'], ['manager', 'Food Manager'], ['binder', 'Read Binder', 'date'], ['sig', 'Signature']],
@@ -3301,7 +3313,7 @@
     training: [['Name', e => e.name], ['Role', e => e.role], ['Food Handler Card (Expiry)', e => e.handler], ['Food Manager Certified (Expiry)', e => e.manager], ['Read Binder', e => lgDate(e.binder)], ['Signature', e => e.sig]],
     complaints: [['Customer', e => e.customer], ['Product and Production Date', e => e.product], ['Problem', e => e.problem], ['Action Taken', e => e.action], ['Closed', e => lgDate(e.closed)]],
   };
-  let lgTab = 'production', lgData = {}, lgLoaded = {}, lgRange = { from: '', to: '' }, lgConfirm = null, lgDraft = {};
+  let lgTab = 'production', lgData = {}, lgLoaded = {}, lgRange = { from: '', to: '' }, lgConfirm = null, lgDraft = {}, lgEditing = null, lgOpen = {};
   const lgEsc = v => String(v == null ? '' : v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const lgDate = s => { const p = String(s || '').split('-'); return p.length === 3 ? `${+p[1]}/${+p[2]}/${p[0]}` : (s || ''); };
   const lgTime = s => { if (!s) return ''; const p = String(s).split(':'); let h = +p[0]; const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return `${h}:${p[1]} ${ap}`; };
@@ -3343,7 +3355,19 @@
     for (let i = 0; i < fs.length;) { if (fs[i].pair) { h += '<div class="lg-2">'; while (i < fs.length && fs[i].pair) h += lgField(fs[i++]); h += '</div>'; } else h += lgField(fs[i++]); }
     return h + `<button class="lg-btn pri" type="submit">Save Entry</button></form>`;
   }
+  function lgEditHtml(key, e) {
+    const f = LG_EDIT[key].map(([k, l, t]) => {
+      const v = lgEsc(e[k]);
+      if (t === 'area') return `<label>${l}<textarea name="${k}">${v}</textarea></label>`;
+      if (t === 'item') return `<label>${l}<select name="${k}">${[...new Set([...LG_ITEMS, e[k]].filter(Boolean))].map(i => `<option${i === e[k] ? ' selected' : ''}>${lgEsc(i)}</option>`).join('')}</select></label>`;
+      if (t === 'num') return `<label>${l}<input type="text" inputmode="numeric" name="${k}" value="${v}"></label>`;
+      return `<label>${l}<input type="${t}" name="${k}" value="${v}"></label>`;
+    }).join('');
+    const extra = key === 'production' && e.status === 'done' ? `<label>Actual Qty<input type="text" inputmode="numeric" name="actual" value="${lgEsc(e.actual)}"></label>` : '';
+    return `<form class="lg-edit" data-edit="${e.id}"><div class="t">Edit Entry</div>${f}${extra}<div class="lg-acts"><button type="button" data-act="cancel">Cancel</button><button class="lg-btn pri" type="submit">Save Changes</button></div></form>`;
+  }
   function lgEntryHtml(key, e) {
+    if (lgEditing === e.id) return `<div class="lg-entry">${lgEditHtml(key, e)}</div>`;
     const kv = []; const add = (l, v) => { if (v !== '' && v != null) kv.push(`<span>${l}</span><span>${lgEsc(v)}</span>`); };
     let title, badge = '';
     if (key === 'production') {
@@ -3358,6 +3382,7 @@
     let h = `<div class="lg-entry"><div class="t">${lgEsc(title)}</div>${badge}<div class="kv">${kv.join('')}</div>`;
     if (key === 'production' && e.status !== 'done') h += `<div class="lg-finish"><label class="lg-form" style="margin:0;display:grid;gap:4px"><span style="font-size:var(--fs-caption);color:var(--muted);font-weight:600">When Finished: Actual Qty</span><input type="text" inputmode="numeric" data-act="actual" data-id="${e.id}" value="${lgEsc(lgDraft[e.id] || '')}" style="font:inherit;padding:10px 12px;border:1px solid var(--sep);background:rgba(255,255,255,.30);border-radius:12px;width:100%;box-sizing:border-box"></label><button class="lg-btn pri" data-act="done" data-id="${e.id}" style="width:auto">Mark Done</button></div>`;
     h += '<div class="lg-acts">';
+    h += `<button data-act="edit" data-id="${e.id}">Edit</button>`;
     if (key === 'production' && e.status === 'done') h += `<button data-act="reopen" data-id="${e.id}">Reopen</button>`;
     if (key === 'complaints' && !e.closed) h += `<button data-act="close" data-id="${e.id}">Mark Closed Today</button>`;
     h += lgConfirm === e.id ? `<button data-act="keep">Keep</button><button class="danger" data-act="remove" data-id="${e.id}">Delete</button>` : `<button data-act="ask" data-id="${e.id}">Delete</button>`;
@@ -3397,7 +3422,10 @@
     let list = `<div class="lg-day"><span>${lgLoaded[key] ? (arr.length === 1 ? '1 entry' : arr.length + ' entries') : 'Loading'}</span></div>`;
     if (lgLoaded[key] && !arr.length) list += '<div class="lg-empty">No entries yet. Your first one will show up here.</div>';
     if (key === 'training') list += arr.map(e => lgEntryHtml(key, e)).join('');
-    else lgGroup(arr, false).forEach(g => { list += `<div class="lg-day"><span>${lgEsc(lgLong(g.date))}</span><span>${g.items.length}</span></div>` + g.items.map(e => lgEntryHtml(key, e)).join(''); });
+    else lgGroup(arr, false).forEach((g, i) => {
+      const ok = key + '|' + g.date, open = ok in lgOpen ? lgOpen[ok] : (i === 0 || g.items.some(e => e.id === lgEditing));
+      list += `<button type="button" class="lg-day tg${open ? ' open' : ''}" data-day="${lgEsc(ok)}"><span><span class="chev">›</span>${lgEsc(lgLong(g.date))}</span><span>${g.items.length}</span></button>` + (open ? g.items.map(e => lgEntryHtml(key, e)).join('') : '');
+    });
     box.innerHTML = tabs + `<div class="lg-note">${lgEsc(LG_FORMS[key].note)}</div>` + (saved ? '<div id="lgSlot"></div>' : lgFormHtml(key)) + `<div id="lgList">${list}</div>`;
     if (saved) box.querySelector('#lgSlot').replaceWith(saved);
     box.dataset.key = key; if (key === 'production') lgCalc();
@@ -3432,6 +3460,8 @@
     const key = lgTab, id = b.dataset.id, a = b.dataset.act;
     if (a === 'ask') { lgConfirm = id; lgPaint(); return; }
     if (a === 'keep') { lgConfirm = null; lgPaint(); return; }
+    if (a === 'edit') { lgEditing = id; lgConfirm = null; lgPaint(); return; }
+    if (a === 'cancel') { lgEditing = null; lgPaint(); return; }
     let body;
     if (a === 'done') { const v = (document.querySelector(`#homeLogs input[data-act=actual][data-id="${id}"]`) || {}).value || ''; if (v.trim() === '' || !(lgNum(v) >= 0)) { rcpToast('Enter the actual quantity first'); return; } body = { action: 'update', fields: { status: 'done', actual: lgNum(v), doneAt: Date.now() } }; }
     else if (a === 'reopen') body = { action: 'update', fields: { status: 'planned' } };
@@ -3441,15 +3471,27 @@
     b.disabled = true; const j = await lgCall('POST', { ...body, log: key, id }); if (!j) { b.disabled = false; return; }
     delete lgDraft[id]; await lgLoad(key); lgPaint();
   }
+  async function lgSaveEdit(f) {
+    const key = lgTab, id = f.dataset.edit, fields = {};
+    for (const [k, , t] of LG_EDIT[key]) fields[k] = t === 'num' ? (f.elements[k].value.trim() === '' ? '' : lgNum(f.elements[k].value)) : f.elements[k].value.trim();
+    if (f.elements.actual) fields.actual = lgNum(f.elements.actual.value);
+    const need = { production: ['item', 'date', 'target', 'batchSize'], delivery: ['invoice', 'dest', 'date'], training: ['name'], complaints: ['customer', 'problem', 'date'] }[key];
+    if (need.some(k => !fields[k])) { rcpToast('Fill in the required fields'); return; }
+    const btn = f.querySelector('button[type=submit]'); btn.disabled = true;
+    const j = await lgCall('POST', { action: 'update', log: key, id, fields }); btn.disabled = false;
+    if (!j) return;
+    track('log_edit', { log: key }); rcpToast('Saved'); lgEditing = null; await lgLoad(key); lgPaint();
+  }
   (() => {
     const box = document.getElementById('homeLogs');
     box.addEventListener('click', async e => {
       const t = e.target.closest('button'); if (!t) return;
-      if (t.dataset.tab) { lgTab = t.dataset.tab; lgConfirm = null; track('log_tab', { tab: lgTab }); logsOpen(); return; }
+      if (t.dataset.day) { lgOpen[t.dataset.day] = !t.classList.contains('open'); lgPaint(); return; }
+      if (t.dataset.tab) { lgTab = t.dataset.tab; lgConfirm = null; lgEditing = null; track('log_tab', { tab: lgTab }); logsOpen(); return; }
       if (t.id === 'lgPrintBtn') { lgPrint(); return; }
       if (t.dataset.act) lgAct(t);
     });
-    box.addEventListener('submit', e => { e.preventDefault(); lgSubmit(e.target); });
+    box.addEventListener('submit', e => { e.preventDefault(); if (e.target.dataset.edit) lgSaveEdit(e.target); else lgSubmit(e.target); });
     box.addEventListener('input', e => {
       const t = e.target;
       if (t.closest('#lgForm') && lgTab === 'production') {
