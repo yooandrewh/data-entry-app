@@ -2061,7 +2061,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.90.00 · Oct 13, 7:47 PM</div>
+<div class="ver-badge">v1.90.01 · Oct 13, 7:50 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -5840,13 +5840,14 @@
     // Kitchen and other costs split by share of baking minutes (items with 0 minutes use pieces at the average minutes per piece); last item takes the rounding remainder so parts sum exactly to the total.
     const kAlloc = (rows, res) => { const nz = x => Math.max(0, Number(x) || 0);
       const rate = res.kHours > 0 ? res.kCost * (1 + (Number(res.taxPct) || 0) / 100) / res.kHours : 0;
-      const tm = rows.reduce((t, x) => t + nz(x.bm), 0), tp = rows.reduce((t, x) => t + (x.bm > 0 ? x.n : 0), 0), per = tp ? tm / tp : 0;
-      const bmw = rows.map(x => x.bm > 0 ? x.bm : (per ? x.n * per : x.n)), tw = bmw.reduce((a, v) => a + v, 0);
-      const eff = m => { try { return nz(bakeEffort(m).min); } catch (e) { return 0; } };
-      const all = {}; rows.forEach(x => { all[x.p] = x.n; }); const comb = eff(all);
-      // minutes if baked alone (own session) and together (share of the combined session by baking minutes); blended = midpoint
-      const mins = rows.map((x, i) => { const al = eff({ [x.p]: x.n }) || nz(x.bm), tg = tw > 0 ? comb * bmw[i] / tw : 0; return (al + (tg || al)) / 2; });
-      return { rate, mins, amts: mins.map(m => m / 60 * rate) }; };
+      // Fixed per session (does not grow with quantity): batch prep + cleaning; setup is not booked. Only baking (rounds x (bake+cool) + glazing) grows with pieces.
+      const FIX = KT.prepMin + KT.cleanMin;
+      const bk = rows.map(x => { const n = nz(x.n); if (!n) return 0; const rounds = Math.ceil(Math.ceil(n / KT.perPan) / KT.pans); return rounds * (KT.bakeMin + KT.coolMin) + (GLAZED.includes(x.p) ? n * KT.glazeSec / 60 : 0); });
+      const tb = bk.reduce((a, v) => a + v, 0), fixAlone = rows.map((x, i) => bk[i] > 0 ? FIX : 0);
+      const fixTog = rows.map((x, i) => tb > 0 ? FIX * bk[i] / tb : 0);
+      const mins = rows.map((x, i) => ((fixAlone[i] + bk[i]) + (fixTog[i] + bk[i])) / 2);
+      const detail = rows.map((x, i) => ({ p: x.p, fixed: (fixAlone[i] + fixTog[i]) / 2, baking: bk[i], blended: mins[i] }));
+      return { rate, mins, detail, amts: mins.map(m => m / 60 * rate) }; };
     const ppct = (v, rev) => rev > 0 ? (v / rev * 100).toFixed(0).replace('-', '\u2212') + '%' : '\u2014';
     const pc = (v, a) => a.rev > 0 ? `<span class="cost-hint"> ${(v / a.rev * 100).toFixed(0)}%</span>` : '';
     const itemBlock = (title, sub, a, extra) => `<div class="proj-card fin-item"><h3 class="fin-card-h">${title}</h3><div class="proj-sub">${sub}</div>
