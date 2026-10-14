@@ -2061,7 +2061,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.91.03 · Oct 13, 10:10 PM</div>
+<div class="ver-badge">v1.92.00 · Oct 13, 10:45 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -4205,7 +4205,7 @@
     let batches = 0, pieces = 0, glazed = 0;
     for (const p of PRODUCTS) { const n = bake[p] || 0; batches += flavorBatches(n, p); pieces += n; if (GLAZED.includes(p)) glazed += n; }
     const rounds = pieces ? Math.ceil(Math.ceil(pieces / KT.perPan) / KT.pans) : 0;
-    const prep = batches ? Math.round(Math.ceil(batches / KT.prepGroup) * KT.prepMin) : 0;
+    const prep = batches ? KT.prepMin : 0;   // prep is one fixed block per session, it doesn't grow with batches (Andrew, 2026-10-13)
     const bakeCool = rounds * (KT.bakeMin + KT.coolMin);
     const glaze = Math.round(glazed * KT.glazeSec / 60);
     const baking = pieces ? bakeCool + glaze + KT.cleanMin : 0;          // after the batter rests, cleaning included
@@ -5404,8 +5404,8 @@
   // madeleine prep partly hidden in the muffin oven time, cleaning once. mu / madPrep / madBake are batch counts.
   const LAB_DAY = { mu: 6, madPrep: 7, madBake: 4 }, LAB_DAY_BATCHES = LAB_DAY.mu + LAB_DAY.madPrep;
   function sessionMin(mu, madPrep, madBake) {
-    const muPrep = Math.ceil(mu / KT.muPrepGroup) * KT.muPrepMin, muRounds = Math.ceil(mu / KT.pans);
-    const mPrep = Math.ceil(madPrep / KT.prepGroup) * KT.prepMin, mBake = Math.ceil(madBake / KT.pans) * (KT.bakeMin + KT.coolMin);
+    const muPrep = mu ? KT.muPrepMin : 0, muRounds = Math.ceil(mu / KT.pans);
+    const mPrep = madPrep ? KT.prepMin : 0, mBake = Math.ceil(madBake / KT.pans) * (KT.bakeMin + KT.coolMin);
     const hide = Math.min(mPrep, KT.hideMax), out = {};
     for (const [k, b] of [['lo', KT.muBakeLo], ['hi', KT.muBakeHi]]) {
       const muOven = muRounds * b;
@@ -5419,14 +5419,14 @@
   // Default labor minutes per batch as {lo, hi}. Each batch carries its own prep and oven time plus an even share of the day's
   // fixed time (setup and cleaning once, less the madeleine prep hidden in the muffin bake).
   function labDefaultMins(sec, it, pieces) {
-    const share = (Math.max(KT.muSetup, KT.setupMin) + KT.togetherClean - Math.min(Math.ceil(LAB_DAY.madPrep / KT.prepGroup) * KT.prepMin, KT.hideMax)) / LAB_DAY_BATCHES;
+    const share = (Math.max(KT.muSetup, KT.setupMin) + KT.togetherClean + KT.muPrepMin + KT.prepMin - Math.min(KT.prepMin, KT.hideMax)) / LAB_DAY_BATCHES;   // setup, cleaning and prep are fixed per day; only oven time scales
     if (it.type === 'muffin') {
-      const prep = KT.muPrepMin / KT.muPrepGroup;
+      const prep = 0;
       return { lo: Math.round(prep + KT.muBakeLo / KT.pans + share), hi: Math.round(prep + KT.muBakeHi / KT.pans + share) };
     }
     if (sec !== 'mad' || !pieces) return { lo: 30, hi: 30 };   // fillings, scones, cookies…: a flat guess until you time them
     const glaze = GLAZED.includes(it.name) ? KT.glazeSec * pieces / 60 : 0;
-    const m = Math.round(KT.prepMin / KT.prepGroup + (KT.bakeMin + KT.coolMin) * pieces / (KT.perPan * KT.pans) + glaze + share);
+    const m = Math.round((KT.bakeMin + KT.coolMin) * pieces / (KT.perPan * KT.pans) + glaze + share);
     return { lo: m, hi: m };
   }
   function renderCostCard() {
@@ -5850,16 +5850,18 @@
       const detail = rows.map((x, i) => ({ p: x.p, fixed: (fixAlone[i] + fixTog[i]) / 2, baking: bk[i], blended: mins[i] }));
       return { rate, mins, detail, amts: mins.map(m => m / 60 * rate) }; };
     const ppct = (v, rev) => rev > 0 ? (v / rev * 100).toFixed(0).replace('-', '\u2212') + '%' : '\u2014';
-    const pc = (v, a) => a.rev > 0 ? `<span class="cost-hint"> ${(v / a.rev * 100).toFixed(0)}%</span>` : '';
-    const itemBlock = (title, sub, a, extra) => `<div class="proj-card fin-item"><h3 class="fin-card-h">${title}</h3><div class="proj-sub">${sub}</div>
-      ${row('Sales', fm(a.rev), 'cost-total')}
-      ${row('Less ingredients (incl. waste)', '-' + fm(a.ing) + pc(a.ing, a))}${row('Less baking labor', '-' + fm(a.bl) + pc(a.bl, a))}${row('Less delivery labor', '-' + fm(a.dv) + pc(a.dv, a))}${extra && extra.rows || ''}
-      ${row('Profit', fm(extra && extra.pf != null ? extra.pf : a.pf), 'cost-total')}${row('Profit % of sales', ppct(extra && extra.pf != null ? extra.pf : a.pf, a.rev))}</div>`;
+    const pcv = (v, rev) => rev > 0 ? (Math.abs(v) / rev * 100).toFixed(0) + '%' : '\u2014';
+    // Percent-only blocks (Andrew, 2026-10-13): every line is a share of that block's sales.
+    const itemBlock = (title, sub, a, extra) => { const pf = extra && extra.pf != null ? extra.pf : a.pf;
+      return `<div class="proj-card fin-item"><h3 class="fin-card-h">${title}</h3><div class="proj-sub">${sub}</div>
+      ${row('Sales', '100%', 'cost-total')}
+      ${row('Ingredients (incl. waste)', pcv(a.ing, a.rev))}${row('Baking labor', pcv(a.bl, a.rev))}${row('Delivery labor', pcv(a.dv, a.rev))}${extra && extra.rows || ''}
+      ${row('Profit', ppct(pf, a.rev), 'cost-total')}</div>`; };
     let itemHtml = ''; const gt = zero();
     const kA = kAlloc(r.rows, r), kSum = kA.amts.reduce((t, v) => t + v, 0);
     r.rows.forEach((x, i) => { const a = mk(x); addTo(gt, a); const kc = kA.amts[i]; itemHtml += itemBlock(esc(x.p), pace(a), a, { rows: '', pf: a.pf }); });
     const kUnused = (r.recurring || 0) - kSum;
-    const totExtra = r.recurring > 0 ? { rows: row('Kitchen and other costs (month)', '-' + fm(r.recurring) + pc(r.recurring, gt)), pf: gt.pf - r.recurring } : { rows: '', pf: gt.pf };
+    const totExtra = r.recurring > 0 ? { rows: row('Kitchen and other costs (month)', pcv(r.recurring, gt.rev)), pf: gt.pf - r.recurring } : { rows: '', pf: gt.pf };
     if (r.rows.length) itemHtml += itemBlock('Total', pace(gt) + (r.partial ? ' · full month of fixed costs' : ''), gt, totExtra);
     const itemView = (itemHtml || noRows) + (scItems.length ? `<div class="proj-sub">What-if added items are not in these blocks. See the Summary view.</div>` : '');
     // ----- Send to Google Sheet: real (actuals) numbers from ra, same per-item math as mk() -----
@@ -6187,7 +6189,7 @@
     }
     if (!pieces) return null;
     const rounds = Math.ceil(Math.ceil(pieces / KT.perPan) / KT.pans);
-    const prep = Math.round(Math.ceil(batches / KT.prepGroup) * KT.prepMin);
+    const prep = KT.prepMin;
     const glaze = Math.round(glazed * KT.glazeSec / 60);
     const baking = rounds * (KT.bakeMin + KT.coolMin) + glaze + KT.cleanMin;
     const setup = KT.setupMin;
