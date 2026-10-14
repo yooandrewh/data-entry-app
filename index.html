@@ -415,6 +415,7 @@
   .bs-head span { font-size: var(--fs-caption); color: var(--muted); }
   .bs-item { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-top: 1px solid var(--sep); }
   .bs-item .nm { flex: 1; min-width: 0; font-size: var(--fs-body); font-weight: 600; }
+  .bs-item .bs-ver { display: block; margin-top: 4px; font-size: var(--fs-caption); max-width: 100%; }
   .bs-item .nm small { display: block; font-weight: 400; color: var(--muted); font-size: var(--fs-caption); }
   .bs-step { display: flex; align-items: center; gap: 6px; }
   .bs-step button { width: 30px; height: 30px; border-radius: 50%; border: none; background: var(--field); color: var(--text); font-size: var(--fs-lg); font-family: inherit; cursor: pointer; padding: 0; }
@@ -2125,7 +2126,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.103.00 · Oct 14, 12:30 PM</div>
+<div class="ver-badge">v1.104.00 · Oct 14, 1:10 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -5686,11 +5687,12 @@
   const saveCosts = () => { try { localStorage.setItem('costYields.v1', JSON.stringify(costYields)); } catch {} };
 
   // Base-recipe rows [name, grams] for one item (first version; the cost is per 1 batch).
-  function costRows(sec, it) {
+  function costRows(sec, it, ver) {
+    if (ver != null && it.vers && it.vers[ver]) it = { ...it, rows: it.vers[ver].rows };   // a chosen version of a test recipe
     const num = r => [r[0], typeof r[1] === 'number' ? r[1] : lblGrams(r[1]) || parseFloat(r[1]) || 0];
     let rows;
     if (sec === 'mad') {
-      const lv = it.versions ? it.versions[verLatest(it)] : null;   // costs follow the latest version, same as the label
+      const lv = it.versions ? it.versions[ver != null && it.versions[ver] ? ver : verLatest(it)] : null;   // costs follow the latest version, same as the label
       const base = lv ? lv.rows : it.custom ? it.custom
         : [['Cake Flour', it.flour], ['Baking Powder', REC_MAD_BASE['Baking Powder']], ['Salt', it.salt], ['Eggs', REC_MAD_BASE['Eggs']], ['Sugar', REC_MAD_BASE['Sugar']], ['Vanilla Extract', REC_MAD_BASE['Vanilla Extract']], ['Unsalted Butter', REC_MAD_BASE['Unsalted Butter']]];
       // flavoring, glaze and topping are part of the batch too (the old costing left them out)
@@ -6688,7 +6690,9 @@
   // Light merge only (spelling variants of the same thing) — unlike pricing, egg yolk stays separate from whole eggs.
   const BS_ALIAS = { 'whole eggs': 'Eggs', 'egg': 'Eggs', 'granulated sugar': 'Sugar', 'white sugar': 'Sugar', 'light brown sugar': 'Brown Sugar', 'all-purpose flour': 'All Purpose Flour', 'pure vanilla extract': 'Vanilla Extract', 'kosher salt': 'Salt' };
   const bsCanon = n => { const b = String(n).split(',')[0].replace(/\(.*?\)/g, '').replace(/\*/g, '').trim(); return BS_ALIAS[b.toLowerCase()] || titleCase(b); };
-  const BS_TOTALS = ['Unsalted Butter', 'Eggs', 'Sugar', 'Powdered Sugar'];
+  // Versions a recipe can be baked in: madeleines have `versions`, test recipes have `vers`. Default = the latest madeleine version, else the first.
+  const bsVers = it => it.versions || it.vers || null;
+  const bsVerOf = (it, b) => { const v = bsVers(it); if (!v) return null; return b.ver != null && v[b.ver] ? b.ver : (it.versions ? verLatest(it) : 0); };
   const bsFind = key => { const [sec, k] = key.split(/:(.*)/s); const it = (COST_SECTIONS.find(x => x[0] === sec) || [])[2]?.().find(x => (x.key || x.name) === k); return it ? { sec, it } : null; };
   // Which forecast product a recipe's batches come from (recipes with no product just start at 1 batch).
   const BS_PRODUCT = { 'other:dubaiball': 'Dubai Ball', 'mad:Lemon Poppy': 'Lemon Poppy', 'mad:Maple Pecan': 'Maple Pecan', 'mad:Classic': 'Sea Salt', 'other:pumpkinmuffin': 'Pumpkin Muffin', 'other:blueberrymuffin': 'Blueberry Muffin' };
@@ -6716,8 +6720,8 @@
     pick.innerHTML = `<option value="" selected disabled>Add a recipe…</option>`
       + (seasonal.length ? `<optgroup label="This season">${seasonal.map(optHtml).join('')}</optgroup>` : '')
       + rest.map(([label, l]) => `<optgroup label="${label}">${l.map(optHtml).join('')}</optgroup>`).join('');
-    const rows = bakeSheet.map((b, i) => { const f = bsFind(b.key); if (!f) return ''; const y = costDefaultYield(f.sec, f.it);
-      return `<div class="bs-item" data-bi="${i}"><div class="nm">${esc(costItemName(f.sec, f.it))}<small>${y ? `≈ ${rFmt(b.b * y)} pieces` : ''}${b.plan ? `${y ? ' · ' : ''}from plan` : ''}</small></div>
+    const rows = bakeSheet.map((b, i) => { const f = bsFind(b.key); if (!f) return ''; const y = (f.it.vers && bsVers(f.it)[bsVerOf(f.it, b)].yield > 0 ? bsVers(f.it)[bsVerOf(f.it, b)].yield : 0) || costDefaultYield(f.sec, f.it);
+      return `<div class="bs-item" data-bi="${i}"><div class="nm">${esc(costItemName(f.sec, f.it))}<small>${y ? `≈ ${rFmt(b.b * y)} pieces` : ''}${b.plan ? `${y ? ' · ' : ''}from plan` : ''}</small>${bsVers(f.it) && bsVers(f.it).length > 1 ? `<select class="bs-ver" data-bsver aria-label="Version">${bsVers(f.it).map((v, vi) => `<option value="${vi}"${vi === bsVerOf(f.it, b) ? ' selected' : ''}>${esc(v.label)}</option>`).join('')}</select>` : ''}</div>
         <div class="bs-step"><button type="button" data-bs="-">−</button><input type="number" inputmode="decimal" step="0.5" min="0.5" value="${rFmt(b.b)}" data-bs="n" aria-label="Batches"><button type="button" data-bs="+">+</button></div>
         <button type="button" class="bs-x" data-bs="x" aria-label="Remove">✕</button></div>`; }).join('');
     document.getElementById('bsList').innerHTML = rows || '<div class="bs-empty">Nothing added yet — choose a recipe above and it is added with the batches your plan calls for.</div>';
@@ -6767,19 +6771,22 @@
       }
       // Madeleines / muffins: the batter is its own list; syrup, glaze and topping go underneath as separate sections (not part of the batter).
       const split = f.sec === 'mad' || f.it.type === 'muffin' || f.it.type === 'mad';
-      const rows = recMadSort(split ? costRows(f.sec, { ...f.it, syrup: null, glaze: null, topping: null }) : costRows(f.sec, f.it));
+      const ver = bsVerOf(f.it, b), vl = bsVers(f.it) ? bsVers(f.it)[ver] : null;
+      const noTop = f.it.versions ? f.it.versions.map((v, i) => i === ver ? { ...v, topping: null } : v) : null;
+      const rows = recMadSort(split ? costRows(f.sec, { ...f.it, syrup: null, glaze: null, topping: null, ...(noTop ? { versions: noTop } : {}) }, ver) : costRows(f.sec, f.it, ver));
       const fkb = f.it.finishFor ? (f.it.yield || BATCH_YIELD) / f.it.finishFor : 1;   // syrup + glaze are written for `finishFor` pieces
       const numr = r => [r[0], typeof r[1] === 'number' ? r[1] : lblGrams(r[1]) || parseFloat(r[1]) || 0];
-      const subs = split ? [['Simple syrup', f.it.syrup], ['Glaze', f.it.glaze], ['Topping', f.it.topping]].filter(([, l]) => l && l.length)
+      const subs = split ? [['Simple syrup', f.it.syrup], ['Glaze', f.it.glaze], ['Topping', (f.it.versions && vl && vl.topping) || f.it.topping]].filter(([, l]) => l && l.length)
         .map(([label, l]) => ({ label, rows: l.map(numr).map(r => [r[0], label === 'Topping' ? r[1] : r[1] * fkb]).filter(r => r[1] > 0) })) : [];
       [...rows, ...subs.flatMap(sb => sb.rows)].forEach(([n, g]) => { const c = bsCanon(n), t = totals.get(c) || { g: 0, uses: new Set() }; t.g += g * b.b; t.uses.add(b.key); totals.set(c, t); });
       const groups = [[], [], []];
       rows.forEach(([n, g]) => { const r = recMadRank(String(n)); groups[r <= 2 ? 0 : r <= 13 ? 1 : 2].push(bsLine(n, g * b.b)); });
-      const y = costDefaultYield(f.sec, f.it);
-      return { title: costItemName(f.sec, f.it), note: `${rFmt(b.b)} batch${b.b === 1 ? '' : 'es'}${y ? ` · ≈ ${rFmt(b.b * y)} pcs` : ''}`, groups: groups.filter(g => g.length), subs: subs.map(sb => ({ label: sb.label, lines: sb.rows.map(([n, g]) => bsLine(n, g * b.b)) })) };
+      const y = (f.it.vers && vl && vl.yield > 0 ? vl.yield : 0) || costDefaultYield(f.sec, f.it);
+      return { title: costItemName(f.sec, f.it) + (vl && bsVers(f.it).length > 1 ? ` (${vl.label})` : ''), note: `${rFmt(b.b)} batch${b.b === 1 ? '' : 'es'}${y ? ` · ≈ ${rFmt(b.b * y)} pcs` : ''}`, groups: groups.filter(g => g.length), subs: subs.map(sb => ({ label: sb.label, lines: sb.rows.map(([n, g]) => bsLine(n, g * b.b)) })) };
     }).filter(Boolean);
-    const tot = BS_TOTALS.filter(n => totals.has(n)).map(n => bsLine(n, totals.get(n).g));   // for now: just butter, eggs and sugars
-    if (tot.length) blocks.push({ title: 'Total ingredients needed', note: 'all recipes', groups: [tot] });
+    // Common ingredients: anything used by two or more of the planned recipes, biggest amount first (needs two recipes to be "common").
+    const tot = [...totals.entries()].filter(([, t]) => t.uses.size > 1).sort((a, b) => b[1].g - a[1].g || a[0].localeCompare(b[0])).map(([n, t]) => bsLine(n, t.g));
+    if (tot.length) blocks.push({ title: 'Total ingredients needed', note: 'ingredients shared by 2+ recipes', groups: [tot] });
     return blocks;
   }
   const bsBlockHtml = bl => `<div class="bs2-block"><h4>${esc(bl.title)}<small>${esc(bl.note)}</small></h4>${bl.groups.map(g => `<div class="bs2-grp">${g.map(l => `<div>${esc(l)}</div>`).join('')}</div>`).join('')}${(bl.subs || []).map(sb => `<div class="bs2-grp bs2-sub"><div class="bs2-subh">${esc(sb.label)}</div>${sb.lines.map(l => `<div>${esc(l)}</div>`).join('')}</div>`).join('')}</div>`;
@@ -6787,7 +6794,7 @@
   function paintBakeSheetDoc() {
     // Summary first: which recipes and how many batches, and the kitchen time they add up to.
     const eff = bsView ? bsView.eff : bsEffort();
-    const recs = bsView ? (bsView.recipes || []) : bakeSheet.map(b => { const f = bsFind(b.key); return f ? costItemName(f.sec, f.it) + ' × ' + rFmt(b.b) : ''; }).filter(Boolean);
+    const recs = bsView ? (bsView.recipes || []) : bakeSheet.map(b => { const f = bsFind(b.key); return f ? costItemName(f.sec, f.it) + (bsVers(f.it) && bsVers(f.it).length > 1 ? ` (${bsVers(f.it)[bsVerOf(f.it, b)].label})` : '') + ' × ' + rFmt(b.b) : ''; }).filter(Boolean);
     const summary = recs.length ? `<div class="bs2-summary"><b>Summary</b>${recs.map(r => `<div>${esc(r)}</div>`).join('')}${eff ? `<div class="bs2-sum-t">${rFmt(eff.batches)} batches · ${eff.pieces} pcs · ${fmtDur(eff.min)} to book<br>Prep ${fmtDur(eff.prep)} · Baking ${fmtDur(eff.baking)}</div>` : ''}</div>` : '';
     document.getElementById('bsDoc').innerHTML = `<div class="bs2-doc">${bsHeadHtml()}${summary}${bsModel().map(bsBlockHtml).join('')}</div>`;
   }
@@ -6851,6 +6858,8 @@
     saveBakeSheet(); renderBakeSheet();
   });
   document.getElementById('bsList').addEventListener('change', e => {
+    const sel = e.target.closest('select[data-bsver]');
+    if (sel) { bakeSheet[Number(sel.closest('[data-bi]').dataset.bi)].ver = Number(sel.value); saveBakeSheet(); renderBakeSheet(); return; }
     const inp = e.target.closest('input[data-bs="n"]'); if (!inp) return;
     const it = bakeSheet[Number(inp.closest('[data-bi]').dataset.bi)], n = parseFloat(inp.value);
     if (n > 0) { it.b = Math.round(n * 100) / 100; it.plan = false; it.manual = true; } saveBakeSheet(); renderBakeSheet();
@@ -6866,7 +6875,7 @@
   document.getElementById('bsSave').addEventListener('click', e => {
     const blocks = bsModel(); if (!blocks.length) return;
     const now = new Date(), day = nowPST().slice(0, 10);
-    BH.unshift({ id: Date.now().toString(36), day, at: now.getTime(), recipes: bakeSheet.map(b => { const f = bsFind(b.key); return f ? costItemName(f.sec, f.it) + ' × ' + rFmt(b.b) : ''; }).filter(Boolean), eff: bsEffort(), blocks });
+    BH.unshift({ id: Date.now().toString(36), day, at: now.getTime(), recipes: bakeSheet.map(b => { const f = bsFind(b.key); return f ? costItemName(f.sec, f.it) + (bsVers(f.it) && bsVers(f.it).length > 1 ? ` (${bsVers(f.it)[bsVerOf(f.it, b)].label})` : '') + ' × ' + rFmt(b.b) : ''; }).filter(Boolean), eff: bsEffort(), blocks });
     BH = BH.slice(0, 100); bhSave(); track('bake_sheet_save', { recipes: bakeSheet.length });
     e.target.textContent = 'Saved ✓'; setTimeout(() => { e.target.textContent = 'Save this plan'; }, 1600);
   });
@@ -6903,7 +6912,7 @@
     const add = (name, g) => need.set(name, (need.get(name) || 0) + g);
     for (const b of [...bakeSheet, ...buyRecipes]) {
       const f = bsFind(b.key); if (!f) continue;
-      for (const [n, g] of costRows(f.sec, f.it)) {
+      for (const [n, g] of costRows(f.sec, f.it, bsVers(f.it) ? bsVerOf(f.it, b) : null)) {
         if (/^water$/i.test(String(n).split(',')[0].replace(/\(.*?\)/g, '').trim())) continue;
         const c = costCanon(n), q = g * b.b;
         if (c === 'Cake Flour') { add('All Purpose Flour', q * 436 / 500); add('Cornstarch', q * 64 / 500); }
