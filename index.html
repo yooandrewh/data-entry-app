@@ -2061,7 +2061,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.93.01 · Oct 13, 11:30 PM</div>
+<div class="ver-badge">v1.94.00 · Oct 13, 11:59 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -5506,7 +5506,7 @@
   const FIN_KEY = 'finCfg.v1';
   let FIN = { kitchenCost: 570, kitchenHours: 20, taxPct: 7, other: 0, wastePct: 5, topOverride: {} };   // kitchen: $570 per 20 h block + 7% tax (Andrew, 2026-10-13)
   try { Object.assign(FIN, JSON.parse(localStorage.getItem(FIN_KEY)) || {}); } catch {}
-  let finMonth = '', finEntries = null; let finView = (() => { try { const v = localStorage.getItem('finView.v1'); return v === 'item' || v === 'labor' ? v : 'sum'; } catch { return 'sum'; } })();
+  let finMonth = '', finEntries = null; let finView = (() => { try { const v = localStorage.getItem('finView.v1'); return v === 'item' || v === 'labor' || v === 'sim' ? v : 'sum'; } catch { return 'sum'; } })();
   let finLab = (() => { const d = { sess: 4, items: [{ name: 'Madeleines', type: 'mad', n: 400 }, { name: 'Muffins', type: 'mu', n: 90 }, { name: '', type: 'mad', n: 0 }, { name: '', type: 'mad', n: 0 }, { name: '', type: 'mad', n: 0 }] }; try { const s = JSON.parse(localStorage.getItem('finLabor.v2') || 'null'); return s && Array.isArray(s.items) && s.items.length === 5 ? Object.assign(d, s) : d; } catch { return d; } })();
   let finSheet = null;
   let finWhat = false, finOv = null, finOpen = {}, finDays = 30;   // What-if overrides: view-only, never saved
@@ -5885,18 +5885,17 @@
         [], ['Edit the Pieces column and the kitchen cell. Sending again from the app overwrites this tab.']);
       finSheet.model = { rows2d: mrows }; }
     el.innerHTML = banner + `
-      <div class="db-filter" id="finViewTog" style="margin-bottom:10px"><button data-finview="sum"${finView === 'sum' ? ' class="on"' : ''}>Summary</button><button data-finview="item"${finView === 'item' ? ' class="on"' : ''}>By item</button><button data-finview="labor"${finView === 'labor' ? ' class="on"' : ''}>Labor</button></div>
+      <div class="db-filter" id="finViewTog" style="margin-bottom:10px"><button data-finview="sum"${finView === 'sum' ? ' class="on"' : ''}>Summary</button><button data-finview="item"${finView === 'item' ? ' class="on"' : ''}>By item</button><button data-finview="labor"${finView === 'labor' ? ' class="on"' : ''}>Labor</button><button data-finview="sim"${finView === 'sim' ? ' class="on"' : ''}>Simulator</button></div>
       <button class="cp-btn" id="finSheetBtn" style="margin:0 0 10px">Send to Google Sheet</button>
       <div class="db-filter" style="margin-bottom:10px"><select id="finMonth" aria-label="Month">${months.map(m => `<option value="${m}"${m === finMonth ? ' selected' : ''}>${finMonthName(m)}</option>`).join('')}</select>
         <label class="fin-sw"><input type="checkbox" id="finWhat" role="switch"${wi ? ' checked' : ''}><span class="fin-sw-t"></span><span class="fin-sw-l">What if</span></label></div>
-      ${finView === 'labor' ? laborView() : whatIfCard + scenCard + (finView === 'item' ? itemView : revCard + costCard + profCard)}`;
+      ${finView === 'sim' ? simView() : finView === 'labor' ? laborView() : whatIfCard + scenCard + (finView === 'item' ? itemView : revCard + costCard + profCard)}`;
   }
   // Labor planner: monthly madeleine and muffin totals spread over 3, 4 or 5 bake sessions. Prep, setup and cleaning are fixed per session; only oven time scales.
-  function laborView() {
-    const sess = Math.max(1, Math.round(Number(finLab.sess) || 4)), muYield = PRODUCT_YIELD['Pumpkin Muffin'] || 10, glazedShare = 0.25, rate = LAB.rate;
-    const hh = m => (m / 60).toFixed(1) + ' h';
-    const items = (finLab.items || []).map(it => ({ name: it.name, type: it.type === 'mu' ? 'mu' : 'mad', n: Math.max(0, Number(it.n) || 0) }));
-    const rows = items.map(it => {
+  // Oven + prep + setup/cleaning minutes for a set of items baked over `sess` sessions a month (shared by the Labor and Simulator views).
+  function labPlan(list, sess) {
+    const muYield = PRODUCT_YIELD['Pumpkin Muffin'] || 10, glazedShare = 0.25;
+    const rows = list.map(it => {
       const p = it.n / sess;
       if (!p) return Object.assign(it, { p: 0, oven: 0 });
       const oven = it.type === 'mu' ? Math.ceil(Math.ceil(p / muYield) / KT.pans) * (KT.muBakeLo + KT.muBakeHi) / 2
@@ -5906,7 +5905,13 @@
     const anyMu = rows.some(r => r.p && r.type === 'mu'), anyMad = rows.some(r => r.p && r.type === 'mad');
     const prep = (anyMu ? KT.muPrepMin : 0) + (anyMad ? Math.max(0, KT.prepMin - (anyMu ? Math.min(KT.prepMin, KT.hideMax) : 0)) : 0);
     const fixed = (anyMu || anyMad) ? Math.max(anyMu ? KT.muSetup : 0, anyMad ? KT.setupMin : 0) + (anyMu && anyMad ? KT.togetherClean : anyMad ? KT.cleanMin : KT.muClean) : 0;
-    const bake = rows.reduce((a, r) => a + r.oven, 0), per = prep + bake + fixed, tot = per * sess;
+    const bake = rows.reduce((a, r) => a + r.oven, 0), per = prep + bake + fixed;
+    return { rows, prep, fixed, bake, per, tot: per * sess };
+  }
+  function laborView() {
+    const sess = Math.max(1, Math.round(Number(finLab.sess) || 4)), muYield = PRODUCT_YIELD['Pumpkin Muffin'] || 10, rate = LAB.rate;
+    const hh = m => (m / 60).toFixed(1) + ' h';
+    const { rows, prep, fixed, bake, per, tot } = labPlan((finLab.items || []).map(it => ({ name: it.name, type: it.type === 'mu' ? 'mu' : 'mad', n: Math.max(0, Number(it.n) || 0) })), sess);
     const cols = rows.map((r, i) => `<th align="right">${i < 2 ? r.name : 'Item ' + (i + 1)}</th>`).join('') + '<th align="right">Total</th>';
     const cell = f => rows.map(r => `<td align="right">${f(r)}</td>`).join('');
     const inp = (i, f, v, w, type) => `<input ${type === 'text' ? 'type="text"' : 'type="number" inputmode="numeric" min="0"'} data-labi="${i}" data-labf="${f}" value="${String(v).replace(/"/g, '&quot;')}" style="width:${w}px;text-align:right">`;
@@ -5926,6 +5931,53 @@
       <div class="proj-row"><span>Per session</span><span>${hh(per)}</span></div>
       <div class="cost-hint" style="padding-top:6px">Labor at $${rFmt(rate)}/hr. Madeleines ${BATCH_YIELD} a batch (a quarter glazed), muffins ${muYield} a batch, all baked in the same sessions. Extra items bake like their type and add no extra prep. Delivery time is not included.</div></div>`;
   }
+  // Simulator: total volume as a share of capacity (two scenarios side by side) -> hours, labor and the cost per piece items 3-5 can afford.
+  let finSim = (() => { const d = { a: 20, b: 30, cap: 180, mad: 10, mu: 4, days: 30, pMad: 2.5, pMu: 2.75, share: 60, price: 5, cost: 1.6, type: 'mad', sess: 4, target: 4000, fixed: 0, rate: LAB.rate }; try { return Object.assign(d, JSON.parse(localStorage.getItem('finSim.v1') || '{}')); } catch { return d; } })();
+  function simView() {
+    const S = finSim, N = (v, d) => { const n = Number(v); return Number.isFinite(n) ? n : d; };
+    const days = Math.max(1, N(S.days, 30)), sess = Math.max(1, Math.round(N(S.sess, 4))), rate = N(S.rate, 20), price = N(S.price, 5), cost = N(S.cost, 0), target = N(S.target, 0), fixedX = N(S.fixed, 0);
+    const madM = N(S.mad, 0) * days, muM = N(S.mu, 0) * days, perDay = N(S.mad, 0) + N(S.mu, 0), cap = Math.max(1, N(S.cap, 180));
+    const curProfit = (madM * N(S.pMad, 0) + muM * N(S.pMu, 0)) * (1 - N(S.share, 60) / 100);
+    const kH = FIN.kitchenHours > 0 ? Number(FIN.kitchenHours) : 20, overRate = FIN.kitchenCost * (1 + (Number(FIN.taxPct) || 0) / 100) / kH;
+    const xType = S.type === 'mu' ? 'mu' : 'mad';
+    const calc = pct => {
+      const day = cap * N(pct, 0) / 100, n = Math.max(0, day - perDay) * days;
+      const plan = labPlan([{ type: 'mad', n: madM }, { type: 'mu', n: muM }, { type: xType, n }], sess), hrs = plan.tot / 60;
+      const labor = hrs * rate, over = Math.max(0, hrs - kH) * overRate;
+      const pre = curProfit + n * (price - cost), post = pre - labor - over;
+      const need = (extra) => n > 0 ? price - (target + fixedX + extra - curProfit) / n : null;
+      return { day, n, hrs, labor, over, pre, post, mcPre: need(0), mcPost: need(labor + over), rev: n * price };
+    };
+    const A = calc(S.a), B = calc(S.b);
+    const inp = (f, v, w, step) => `<input type="number" inputmode="decimal" step="${step || 'any'}" min="0" data-simf="${f}" value="${v}" style="width:${w || 64}px;text-align:right">`;
+    const r2 = (k, v) => `<div class="proj-row"><span>${k}</span><span>${v}</span></div>`;
+    const m2 = n => (n < 0 ? '-' : '') + '$' + Math.abs(n).toFixed(2);
+    const ceil = v => v == null ? '–' : v < 0 ? `<b style="color:var(--red,#c0392b)">can't reach</b>` : '<b>' + m2(v) + '</b>';
+    const sgn = n => (n >= 0 ? '+' : '-') + fm0(Math.abs(n));
+    const tr = (k, f) => `<tr><td>${k}</td><td align="right">${f(A)}</td><td align="right">${f(B)}</td></tr>`;
+    const good = x => `<span style="color:${x >= 0 ? 'var(--green,#2e7d32)' : 'var(--red,#c0392b)'}">${sgn(x)}</span>`;
+    return `<div class="proj-card fin-lab"><h3 class="fin-card-h">Simulator</h3><div class="proj-sub">Pick how full the kitchen output is (share of ${cap} pastries a day) and what items 3–5 sell and cost. It shows hours, labor, and the most each piece can cost to hit your profit goal.</div>
+      <table style="width:100%;border-collapse:collapse;margin-top:6px"><tr><th align="left">Scenario</th><th align="right">A</th><th align="right">B</th></tr>
+      <tr><td>Share of capacity</td><td align="right">${inp('a', S.a, 56)}%</td><td align="right">${inp('b', S.b, 56)}%</td></tr>
+      ${tr('Pastries a day', x => x.day.toFixed(0))}${tr('Items 3–5 a month', x => Math.round(x.n).toLocaleString())}${tr('Items 3–5 revenue', x => fm0(x.rev))}
+      ${tr('Kitchen hours', x => x.hrs.toFixed(1) + ' h' + (x.hrs > kH ? ` <small>(${(x.hrs - kH).toFixed(1)} over)</small>` : ''))}
+      ${tr('Labor (your time)', x => fm0(x.labor))}${tr('Kitchen overage', x => fm0(x.over))}
+      ${tr('Profit before labor', x => fm0(x.pre))}${tr('Profit after labor', x => '<b>' + fm0(x.post) + '</b>')}
+      ${tr('After labor vs goal', x => good(x.post - target - fixedX))}
+      ${tr('Max cost / piece, before labor', x => ceil(x.mcPre))}${tr('Max cost / piece, after labor', x => ceil(x.mcPost))}</table>
+      <div class="cost-hint" style="padding:6px 0">Before labor ignores your time and kitchen overage; after labor takes both out. Profit is the sheet's way: sales × (1 − cost share). Items 3–5 bake like the type chosen below, in the same sessions.</div>
+      <h4 class="fin-card-h" style="margin-top:10px">Items 3–5</h4>
+      ${r2('Price a piece', '$' + inp('price', S.price, 60, '0.25'))}${r2('Cost a piece (to see profit)', '$' + inp('cost', S.cost, 60, '0.05'))}
+      ${r2('Bakes like', `<select data-native data-simf="type"><option value="mad"${xType === 'mad' ? ' selected' : ''}>Madeleine</option><option value="mu"${xType === 'mu' ? ' selected' : ''}>Muffin</option></select>`)}
+      <h4 class="fin-card-h" style="margin-top:10px">Goal and kitchen</h4>
+      ${r2('Profit goal a month', '$' + inp('target', S.target, 70, '100'))}${r2('Other fixed costs to cover (rent…)', '$' + inp('fixed', S.fixed, 70, '50'))}
+      ${r2('Bake sessions a month', inp('sess', S.sess, 56, '1'))}${r2('Your labor rate', '$' + inp('rate', S.rate, 56, '1') + '/h')}
+      <h4 class="fin-card-h" style="margin-top:10px">Today</h4>
+      ${r2('Madeleines a day (all stores)', inp('mad', S.mad, 56))}${r2('Muffins a day (all stores)', inp('mu', S.mu, 56))}${r2('Capacity a day (all stores)', inp('cap', S.cap, 56))}
+      ${r2('Selling days a month', inp('days', S.days, 56))}${r2('Madeleine / muffin price', '$' + inp('pMad', S.pMad, 54, '0.25') + ' / $' + inp('pMu', S.pMu, 54, '0.25'))}${r2('Cost share of sales', inp('share', S.share, 56) + '%')}
+      ${r2('Current profit (sheet way)', fm0(curProfit))}
+      <div class="cost-hint" style="padding-top:6px">Kitchen ${kH} h included, then ${fm0(overRate)}/h. Delivery time is not counted.</div></div>`;
+  }
   const fm0 = n => '$' + Math.round(n);
   document.addEventListener('click', async e => {
     if (e.target.id === 'finSheetBtn' && finSheet) {
@@ -5943,7 +5995,7 @@
   });
   document.addEventListener('click', e => {
     const fvb = e.target.closest && e.target.closest('[data-finview]');
-    if (fvb) { finView = ['item', 'labor'].includes(fvb.dataset.finview) ? fvb.dataset.finview : 'sum'; try { localStorage.setItem('finView.v1', finView); } catch {} renderFin(); return; }
+    if (fvb) { finView = ['item', 'labor', 'sim'].includes(fvb.dataset.finview) ? fvb.dataset.finview : 'sum'; try { localStorage.setItem('finView.v1', finView); } catch {} renderFin(); return; }
     if (e.target.id === 'finReset') { finOv = null; renderFin(); return; }
     const sb = e.target.closest && e.target.closest('[data-scmax],[data-scadd],[data-scdel]');
     if (sb && finOv && finOv.scen) {
@@ -5962,6 +6014,8 @@
     renderFin();
   });
   document.addEventListener('change', e => {
+    if (e.target.dataset && e.target.dataset.simf) { const t = e.target, f = t.dataset.simf; finSim[f] = f === 'type' ? t.value : Math.max(0, Number(t.value) || 0);
+      try { localStorage.setItem('finSim.v1', JSON.stringify(finSim)); } catch {} renderFin(); return; }
     if (e.target.dataset && e.target.dataset.labf) { const t = e.target, f = t.dataset.labf, i = t.dataset.labi;
       if (f === 'sess') finLab.sess = Math.max(1, Math.round(Number(t.value) || 4)); else if (f === 'n') finLab.items[i].n = Math.max(0, Number(t.value) || 0); else finLab.items[i][f] = t.value;
       try { localStorage.setItem('finLabor.v2', JSON.stringify(finLab)); } catch {} renderFin(); return; }
