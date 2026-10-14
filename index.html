@@ -1582,8 +1582,35 @@
   body[data-tab="db"] .tabbar button, body[data-tab="plan"] .tabbar button, body[data-tab="fin"] .tabbar button { color: #242c35; opacity: .75; }
   body[data-tab="db"] .tabbar button.on, body[data-tab="plan"] .tabbar button.on, body[data-tab="fin"] .tabbar button.on { background: rgba(36,44,53,.16); color: #242c35; opacity: 1; font-weight: 700; }
   /* ===== Desktop (>= 900px): spread out; phone layout untouched ===== */
-  .fin-ledger, .fin-rec { display: none; }
-  .fin-ledger small { display: block; color: var(--muted); font-size: var(--fs-micro); font-weight: 400; }
+  .fin-wi { background: rgba(164,90,34,.18) !important; border-color: var(--accent) !important; }
+  .fin-wtag { display: inline-block; margin-left: 4px; font-size: var(--fs-micro); color: var(--accent); font-weight: 600; }
+  #finBody .proj-row { padding: 10px 0; font-size: var(--fs-body); align-items: center; gap: 12px; }
+  #finBody .proj-row > span:last-child { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  #finBody .proj-row .k { white-space: normal; }
+  #finBody .fin-click { cursor: pointer; }
+  #finBody .fin-grp { font-weight: 700; }
+  #finBody .fin-ind { padding-left: 18px; }
+  #finBody .fin-ind2 { padding-left: 36px; font-size: var(--fs-caption); }
+  #finBody .fin-chev { display: inline-block; width: 14px; margin-right: 6px; vertical-align: -2px; transition: transform .15s; }
+  #finBody .fin-chev.open { transform: rotate(90deg); }
+  #finBody .fin-card-h { font-size: var(--fs-lg); margin: 0 0 6px; }
+  /* editable fields match the row type size, with a visible underline; labels never share a line with the input */
+  #finBody .proj-row > span:first-child { flex: 1 1 auto; min-width: 0; }
+  #finBody .proj-row > span:last-child { flex: none; display: inline-flex; align-items: baseline; justify-content: flex-end; gap: 2px; }
+  #finBody .cost-in { font-size: var(--fs-body) !important; font-weight: 600; width: 5.5em; padding: 3px 4px !important; border: none !important; border-bottom: 1px solid var(--accent) !important; border-radius: 0 !important; background: rgba(164,90,34,.06) !important; text-align: right; }
+  #finBody .cost-in.fin-wi { background: rgba(164,90,34,.18) !important; }
+  #finBody .cost-in.fin-name { width: 11em; text-align: right; }
+  #finBody .fin-sel { max-width: 12em; font-size: var(--fs-body); }
+  #finBody .fin-u { color: var(--muted); font-size: var(--fs-body); font-weight: 500; margin: 0 2px; }
+  #finBody .cost-hint { font-size: var(--fs-caption); }
+  #finBody .fin-scitem { border-top: 1px solid var(--sep); padding-top: 8px; margin-top: 8px; }
+  #finBody .fin-sw { display: inline-flex; align-items: center; gap: 10px; margin-left: 12px; cursor: pointer; font-size: var(--fs-body); font-weight: 600; }
+  #finBody .fin-sw input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+  #finBody .fin-sw-t { position: relative; width: 46px; height: 26px; border-radius: 13px !important; background: var(--sep); transition: background .15s; flex: none; }
+  #finBody .fin-sw-t::after { content: ''; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50% !important; background: #fff; transition: transform .15s; }
+  #finBody .fin-sw input:checked + .fin-sw-t { background: var(--accent); }
+  #finBody .fin-sw input:checked + .fin-sw-t::after { transform: translateX(20px); }
+  #finBody .fin-sw input:focus-visible + .fin-sw-t { outline: 2px solid var(--accent); outline-offset: 2px; }
   .proj-row .cost-in { width: 5em; }
   @media (min-width: 900px) {
     .wrap { max-width: 1120px; padding: 0 32px; }
@@ -1597,23 +1624,9 @@
     }
     #projList > *, #finBody > *, #planList > *, #planSplitWrap > *, #costCard > * { margin-bottom: 0; min-width: 0; }
     #finBody > .fin-banner { grid-column: 1 / -1; }
-    /* Finance on desktop reads as one ledger table; the phone cards are hidden */
-    #finBody { display: block; }
+    /* Finance: one readable column, centred */
+    #finBody { display: block; max-width: 720px; margin-left: auto; margin-right: auto; }
     #finBody > * { margin-bottom: 16px; }
-    #finBody .fin-mob { display: none; }
-    #finBody .fin-ledger { display: block; }
-    #finBody .fin-rec { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px 32px; margin-top: 20px; }
-    .fin-ledger table { width: 100%; border-collapse: collapse; font-size: var(--fs-caption); font-variant-numeric: tabular-nums; }
-    .fin-ledger th { position: sticky; top: 0; z-index: 2; background: var(--bg); font-size: var(--fs-micro); text-transform: uppercase; letter-spacing: 0.3px; color: var(--muted); border-bottom: 2px solid var(--text); }
-    .fin-ledger th, .fin-ledger td { text-align: right; padding: 8px 10px; white-space: nowrap; }
-    .fin-ledger td { border-bottom: 1px solid var(--sep); }
-    .fin-ledger th:first-child, .fin-ledger td:first-child { text-align: left; }
-    .fin-ledger tr.fl td:first-child { padding-left: 22px; }
-    .fin-ledger tr.grp td { font-weight: 700; background: var(--card); }
-    .fin-ledger tr.tot td { font-weight: 700; border-top: 2px solid var(--text); border-bottom: none; }
-    #finBody .fin-rec .proj-row { gap: 10px; flex-wrap: nowrap; align-items: center; }
-    #finBody .fin-rec .proj-row .k { white-space: nowrap; }
-    #finBody .fin-rec .cost-in { width: 6.5em; }
     #costCard > .proj-card, #costCard > .cost-card { max-width: 720px; }
     #projList > .proj-sub, #projList > .proj-empty, #finBody > .sub, #finBody > .db-filter, #finBody > .filter-bar { grid-column: 1 / -1; }
     /* Data entries in columns, month/day headers span the row */
@@ -5411,9 +5424,9 @@
   const FIN_KEY = 'finCfg.v1';
   let FIN = { kitchenCost: 570, kitchenHours: 20, taxPct: 7, other: 0, wastePct: 5, topOverride: {} };   // kitchen: $570 per 20 h block + 7% tax (Andrew, 2026-10-13)
   try { Object.assign(FIN, JSON.parse(localStorage.getItem(FIN_KEY)) || {}); } catch {}
-  let finMonth = '', finEntries = null; let finWhat = false, finOv = null;   // What-if overrides: view-only, never saved
+  let finMonth = '', finEntries = null; let finWhat = false, finOv = null, finOpen = {}, finDays = 30;   // What-if overrides: view-only, never saved
   // Per-item economics for one recipe: ingredient cost (with and without ledger tax/fees), labor, pieces per batch.
-  function itemEcon(costSel) {
+  function itemEcon(costSel, ov) {
     const [sec, key] = costSel.split(/:(.*)/s);
     const sc = COST_SECTIONS.find(x => x[0] === sec); const it = sc && sc[2]().find(x => (x.key || x.name) === key);
     if (!it) return null;
@@ -5430,7 +5443,7 @@
     const saved = costPrices;
     costPrices = Object.fromEntries(Object.entries(saved).map(([k, v]) => [k, { ...v, price: v.base != null ? v.base : v.price }]));
     let pre; try { pre = cost(); } finally { costPrices = saved; }
-    const d = labDefaultMins(sec, it, yv), mins = LAB.mins[costSel] != null ? LAB.mins[costSel] : (d.lo + d.hi) / 2;
+    const d = labDefaultMins(sec, it, yv), mo = ov && ov.mins ? finNum(ov.mins[costSel]) : null, mins = mo != null ? mo : LAB.mins[costSel] != null ? LAB.mins[costSel] : (d.lo + d.hi) / 2;   // ov: What-if minutes per batch, view-only
     return { yv, withTax, pre, mins, name: costItemName(sec, it) };
   }
   const finSave = () => { try { localStorage.setItem(FIN_KEY, JSON.stringify(FIN)); } catch {} };
@@ -5447,13 +5460,16 @@
     });
     Object.keys(byProd).forEach(p => { if (byProd[p] <= 0) delete byProd[p]; });   // a product's month never goes below 0
     const actualPcs = Object.assign({}, byProd);
-    let wastePct = finWaste(FIN.wastePct), waste = 0, rate = LAB.rate, delivWk = LAB.wk.deliv, kCost = FIN.kitchenCost, kHrsIn = Number(FIN.kitchenHours);
+    let wastePct = finWaste(FIN.wastePct), waste = 0, rate = LAB.rate, delivWk = LAB.wk.deliv, kCost = FIN.kitchenCost, kHrsIn = Number(FIN.kitchenHours), taxPct = Number(FIN.taxPct) || 0, other = Number(FIN.other) || 0;
     if (ov) {
       Object.keys(byProd).forEach(p => delete byProd[p]);
       Object.keys(ov.pcs || {}).forEach(p => { const n = finNum(ov.pcs[p]); if (n > 0) byProd[p] = n; });
       anyDeliv = Object.keys(byProd).length > 0 || anyDeliv;
       const pm = finNum(ov.pM), pu = finNum(ov.pU);
       allP.forEach(p => { const g = finGrp(p), o = g === 'Madeleines' ? pm : g === 'Muffins' ? pu : null; if (o != null) prices[p] = o; });
+      Object.keys(ov.price || {}).forEach(p => { const n = finNum(ov.price[p]); if (n != null) prices[p] = n; });   // per-flavor price beats the group price
+      if (finNum(ov.taxPct) != null) taxPct = finNum(ov.taxPct);
+      if (finNum(ov.other) != null) other = finNum(ov.other);
       if (finNum(ov.waste) != null) waste = finNum(ov.waste);
       if (finNum(ov.wastePct) != null) wastePct = finWaste(ov.wastePct);
       if (finNum(ov.rate) != null) rate = finNum(ov.rate);
@@ -5466,11 +5482,13 @@
     let sales = 0, ingr = 0, ingrBase = 0, ingrPre = 0, bakeMin = 0; const rows = [], missing = [];
     Object.keys(byProd).forEach(p => {
       const n = byProd[p], rev = n * (prices[p] || 0); sales += rev;
-      const ec = recipeOf(p) ? itemEcon(recipeOf(p)) : null;
-      if (!ec || ec.withTax == null) { missing.push(p); rows.push({ p, n, rev, cost: null, pre: null, bm: 0 }); return; }
+      let ec = recipeOf(p) ? itemEcon(recipeOf(p), ov) : null;
+      const io = ov && ov.ing ? finNum(ov.ing[p]) : null;   // What-if ingredient cost per piece (before waste)
+      if (io != null) ec = ec ? { ...ec, withTax: io, pre: io } : { yv: 1, mins: 0, withTax: io, pre: io, name: p };
+      if (!ec || ec.withTax == null) { missing.push(p); rows.push({ p, n, rev, px: prices[p] || 0, cost: null, pre: null, bm: 0 }); return; }
       const made = n * wf, cost = made * ec.withTax * wf2, pre = made * (ec.pre != null ? ec.pre : ec.withTax) * wf2, bm = made / ec.yv * ec.mins;
       ingr += cost; ingrBase += made * ec.withTax; ingrPre += pre; bakeMin += bm;
-      rows.push({ p, n, rev, cost, pre, bm });
+      rows.push({ p, n, rev, px: prices[p] || 0, cost, pre, bm });
     });
     // Top-line override per group (saved per month, or on top in What-if): spread over the flavors by their calculated sales.
     const adj = {}, topCalc = {}, topSaved = (FIN.topOverride || {})[month] || {};
@@ -5491,14 +5509,14 @@
     const kitchenMin = Object.keys(byProd).length ? bakeEffort(wk).min * weeks : 0;
     const kHours = kHrsIn > 0 ? kHrsIn : 20;
     const hoursLeft = kHours - kitchenMin / 60, overH = Math.max(0, -hoursLeft);
-    const kitchen = kCost * (1 + FIN.taxPct / 100), overRate = kitchen / kHours, overCost = overH * overRate;
-    const recurring = kitchen + overCost + (Number(FIN.other) || 0);
+    const kitchen = kCost * (1 + taxPct / 100), overRate = kitchen / kHours, overCost = overH * overRate;
+    const recurring = kitchen + overCost + other;
     // Delivery labor only in months that had a delivery; the in-progress month is prorated by days elapsed.
     const delivFrac = anyDeliv ? (isCur ? dayNow / dim : 1) : 0;
     rows.forEach(x => { x.bl = x.bm / 60 * rate; });
     const bakeLabor = bakeMin / 60 * rate, delivMin = delivWk * WEEKS_PER_MONTH * delivFrac, delivLabor = delivMin / 60 * rate;
     const preLabor = sales - ingr - recurring, labor = bakeLabor + delivLabor;
-    return { adj, topCalc, wastePct, ingrWaste: ingr - ingrBase, days: Math.max(1, dayNow), rows, missing, actualPcs, rate, delivWk, kCost, sales, ingr, ingrTax: ingr - ingrPre, ingrPre, bakeMin, bakeLabor, delivMin, delivFrac, delivLabor, labor, laborHours: (bakeMin + delivMin) / 60, kitchenMin, overH, overRate, overCost, kitchen, recurring, preLabor, postLabor: preLabor - labor, hoursLeft, kHours };
+    return { taxPct, other, adj, topCalc, wastePct, ingrWaste: ingr - ingrBase, days: Math.max(1, dayNow), rows, missing, actualPcs, rate, delivWk, kCost, sales, ingr, ingrTax: ingr - ingrPre, ingrPre, bakeMin, bakeLabor, delivMin, delivFrac, delivLabor, labor, laborHours: (bakeMin + delivMin) / 60, kitchenMin, overH, overRate, overCost, kitchen, recurring, preLabor, postLabor: preLabor - labor, hoursLeft, kHours };
   }
   const finMoney = n => (n < 0 ? '−$' : '$') + Math.abs(n).toFixed(2);
   const finMonthName = ym => { const [y, m] = ym.split('-'); return new Date(Number(y), Number(m) - 1, 1).toLocaleString('en-US', { month: 'long', year: 'numeric' }); };
@@ -5519,12 +5537,56 @@
     const cur = nowPST().slice(0, 7); if (!months.includes(cur)) months.unshift(cur);
     if (!months.includes(finMonth)) finMonth = cur;
     const ra = finCompute(ents, finMonth, null);   // actuals
-    if (finWhat && (!finOv || finOv.month !== finMonth)) finOv = { month: finMonth, pcs: Object.assign({}, ra.actualPcs), pM: null, pU: null, rate: LAB.rate, deliv: LAB.wk.deliv, kCost: FIN.kitchenCost, kHours: FIN.kitchenHours, waste: 0, wastePct: finWaste(FIN.wastePct), top: {} };
+    if (finWhat && (!finOv || finOv.month !== finMonth)) finOv = { month: finMonth, pcs: Object.assign({}, ra.actualPcs), pM: null, pU: null, rate: LAB.rate, deliv: LAB.wk.deliv, kCost: FIN.kitchenCost, kHours: FIN.kitchenHours, waste: 0, wastePct: finWaste(FIN.wastePct), taxPct: Number(FIN.taxPct) || 0, other: Number(FIN.other) || 0, price: {}, mins: {}, ing: {}, top: {}, scen: { maxOn: false, hours: null, mix: {}, items: [] } };
+    if (finWhat && !finOv.base) finOv.base = { pcs: Object.assign({}, ra.actualPcs), rate: finOv.rate, deliv: finOv.deliv, kCost: finOv.kCost, kHours: finOv.kHours, waste: 0, wastePct: finOv.wastePct, taxPct: finOv.taxPct, other: finOv.other };
     const wi = !!(finWhat && finOv);
-    const r = wi ? finCompute(ents, finMonth, finOv) : ra;
+    const r0 = wi ? finCompute(ents, finMonth, finOv) : ra;
+    // ----- Scenarios (What-if only, kept in finOv.scen, never saved; Reset clears them) -----
+    const sc = wi ? finOv.scen : null, scItems = []; let scM = null;
+    const scRecipeOf = p => Object.keys(BS_PRODUCT).find(z => BS_PRODUCT[z] === p);
+    if (wi) {
+      const wf2 = 1 + r0.wastePct / 100, mg = Math.min(90, Math.max(0, LAB.margin)) / 100, wfp = 1 + (finNum(finOv.waste) || 0) / 100;
+      (sc.items || []).forEach((it, i) => {
+        const ec = it.rec ? itemEcon(it.rec, finOv) : null;
+        const cost = finNum(it.cost) != null ? finNum(it.cost) : (ec && ec.withTax != null ? ec.withTax : 0);
+        const mins = finNum(it.mins) != null ? finNum(it.mins) : (ec ? ec.mins : 0);
+        const pb = finNum(it.perBatch) || (ec ? ec.yv : 0) || BATCH_YIELD, pw = finNum(it.pw) || 0;
+        const perPc = cost * wf2 + mins / 60 * r0.rate / pb, dflt = ceil5c(perPc / (1 - mg));
+        const price = finNum(it.price) != null ? finNum(it.price) : dflt, pieces = pw * WEEKS_PER_MONTH;
+        const sales = pieces * price, ing = pieces * cost * wf2, lab = pieces / pb * mins / 60 * r0.rate;
+        scItems.push({ i, it, name: it.name || 'Added item', cost, mins, pb, pw, price, dflt, pieces, sales, ing, lab, profit: sales - ing - lab, ec });
+      });
+      if (sc.maxOn) {
+        const wks0 = r0.days / 7, cur = {}; r0.rows.forEach(x => { if (PRODUCTS.includes(x.p)) cur[x.p] = x; });
+        const curTot = Object.values(cur).reduce((t, x) => t + x.n, 0), ps = PRODUCTS.filter(p => cur[p] || finNum(sc.mix[p]) != null);
+        const dm = {}, mixv = {}; let ms = 0;
+        ps.forEach(p => { dm[p] = cur[p] && curTot ? cur[p].n / curTot * 100 : 0; mixv[p] = finNum(sc.mix[p]) != null ? finNum(sc.mix[p]) : dm[p]; ms += mixv[p]; });
+        const H = finNum(sc.hours) > 0 ? finNum(sc.hours) : r0.kHours;
+        scM = { H, ps, dm, mixv, ms, ok: ms > 0 };
+        if (scM.ok) {
+          const eff = T => { const wk = {}; ps.forEach(p => { wk[p] = Math.round(T * mixv[p] / ms); }); return { wk, e: bakeEffort(wk) }; };
+          let lo = 0, hi = 20000; while (lo < hi) { const mid = Math.ceil((lo + hi) / 2); if (eff(mid).e.min * WEEKS_PER_MONTH <= H * 60) lo = mid; else hi = mid - 1; }
+          const { wk, e } = eff(lo), curWk = {}; let dPcs = 0, xSales = 0, xIng = 0, xLab = 0, newWk = 0, nowWk = 0;
+          ps.forEach(p => {
+            const x = cur[p], ec = scRecipeOf(p) ? itemEcon(scRecipeOf(p), finOv) : null;
+            const u = x && x.n ? { px: x.rev / x.n, ing: (x.cost || 0) / x.n, bl: x.bl / x.n } : { px: invPrices()[p] || 0, ing: ec && ec.withTax != null ? ec.withTax * wfp * wf2 : 0, bl: ec && ec.yv ? ec.mins / ec.yv / 60 * r0.rate * wfp : 0 };
+            const dWk = wk[p] / wfp, cWk = x ? x.n / wks0 : 0, d = (dWk - cWk) * WEEKS_PER_MONTH;
+            newWk += dWk; nowWk += cWk; dPcs += d; xSales += d * u.px; xIng += d * u.ing; xLab += d * u.bl;
+          });
+          const blocks = Math.max(1, Math.ceil(H / r0.kHours - 1e-9)), xKit = (blocks - 1) * r0.kitchen - r0.overCost;
+          const usedH = r0.kitchenMin / 60;
+          Object.assign(scM, { wk, e, newWk, nowWk, dPcs, xSales, xIng, xLab, blocks, xKit, usedH, net: xSales - xIng - xLab - xKit, demand: usedH < Math.min(H, r0.kHours) * 0.9 });
+        }
+      }
+    }
+    const aSales = scItems.reduce((t, x) => t + x.sales, 0), aIng = scItems.reduce((t, x) => t + x.ing, 0), aLab = scItems.reduce((t, x) => t + x.lab, 0);
+    const r = scItems.length ? Object.assign({}, r0, { sales: r0.sales + aSales, ingr: r0.ingr + aIng, labor: r0.labor + aLab, preLabor: r0.preLabor + aSales - aIng, postLabor: r0.postLabor + aSales - aIng - aLab }) : r0;
     const row = (k, v, cls) => `<div class="proj-row"><span class="k${cls ? ' ' + cls : ''}">${k}</span><span${cls ? ' class="' + cls + '"' : ''}>${v}</span></div>`;
     const inp = (f, v, step) => `<input class="cost-in" type="number" inputmode="decimal" step="${step || 'any'}" min="0" value="${v}" data-fin="${f}">`;
-    const win = (k, v) => `<input class="cost-in" type="number" inputmode="decimal" step="any" min="0" value="${v == null ? '' : v}" data-wi="${esc(k)}">`;
+    finDays = 0;
+    const wget = (o, k) => { const i = k.indexOf(':'); return i < 0 ? o[k] : (o[k.slice(0, i)] || {})[k.slice(i + 1)]; };
+    const wchg = k => { if (!wi) return false; const kk = k.startsWith('pcsw:') ? 'pcs:' + k.slice(5) : k, v = finNum(wget(finOv, kk)); if (v == null) return false; let b = finNum(wget(finOv.base || {}, kk)); if (b == null && kk.startsWith('pcs:')) b = 0; return b == null || Math.abs(v - b) > 1e-9; };
+    const win = (k, v, ph) => { const c = wchg(k); return `<input class="cost-in${c ? ' fin-wi' : ''}" type="number" inputmode="decimal" step="any" min="0" value="${v == null ? '' : v}"${ph != null ? ` placeholder="${ph}"` : ''} data-wi="${esc(k)}">${c ? '<small class="fin-wtag">what-if</small>' : ''}`; };
     // Group rows: Madeleines (retired flavors too), Muffins, Other. Group total first (bold), flavors indented and muted beneath.
     const grouped = (lbl, val, tot, hint) => ['Madeleines', 'Muffins', 'Other'].map(name => {
       const rs = r.rows.filter(x => finGrp(x.p) === name); if (!rs.length) return '';
@@ -5534,7 +5596,7 @@
     const sum = (f) => r.rows.reduce((t, x) => t + f(x), 0), pcs = rs => rs.reduce((t, x) => t + x.n, 0) + ' pcs';
     const cst = x => x.cost || 0, direct = x => cst(x) + x.bl;
     const shared = (k, v) => row(`<span class="cost-hint">${k}</span>`, '<span class="cost-hint">' + finMoney(v) + '</span>');
-    const banner = (wi ? `<div class="fin-banner" style="padding:8px 12px;margin-bottom:10px;border:1px solid var(--accent);font-weight:600">What if (not saved): numbers below use your overrides. Nothing is written to the sheet or your settings.</div>` : '')
+    const banner = (wi ? `<div class="fin-banner" style="padding:8px 12px;margin-bottom:10px;border:1px solid var(--accent);font-weight:600">What if: these numbers are hypothetical. Net, margins, pace and hours left use your overrides. Nothing is saved to the sheet or your settings, and your real figures come back when you turn What if off.</div>` : '')
       + (r.missing.length ? `<div class="cost-miss fin-banner" style="padding:10px 12px;margin-bottom:10px;border:1px solid var(--red,#c0392b);font-weight:600">Net is overstated: ${r.missing.length} product${r.missing.length === 1 ? ' has' : 's have'} no cost: ${r.missing.map(esc).join(', ')}</div>` : '')
       + (offline ? `<div class="cost-hint fin-banner" style="padding:8px 12px;margin-bottom:10px;border:1px solid var(--sep)">Offline: showing this device's entries only. Numbers may be incomplete.</div>` : '');
     const piecesList = [...new Set([...Object.keys(ra.actualPcs), ...PRODUCTS])];
@@ -5542,105 +5604,165 @@
     const whatIfCard = wi ? `
       <div class="proj-card"><h3>What if (not saved)</h3><div class="proj-sub">Change any number; totals update when you leave the field. Blank price = invoiced price.</div>
         <div class="cost-sub">Pieces delivered</div>
-        ${piecesList.map(p => row(esc(p), win('pcs:' + p, finOv.pcs[p] != null ? finOv.pcs[p] : 0))).join('')}
-        <div class="cost-sub" style="margin-top:12px">Price per piece</div>
-        ${row('Madeleines $', win('pM', finOv.pM))}${row('Muffins $', win('pU', finOv.pU))}
+        ${piecesList.map(p => { const n = finOv.pcs[p] != null ? finOv.pcs[p] : 0; return row(esc(p), win('pcs:' + p, n) + ' /mo ' + win('pcsw:' + p, +(n / (r.days / 7)).toFixed(1)) + ' /wk'); }).join('')}
+        <div class="cost-sub" style="margin-top:12px">Price per piece <span class="cost-hint">· blank = invoice price</span></div>
+        ${row('All madeleines $', win('pM', finOv.pM))}${row('All muffins $', win('pU', finOv.pU))}
+        ${piecesList.map(p => row(esc(p) + ' $', win('price:' + p, finOv.price[p], (invPrices()[p] || 0).toFixed(2)))).join('')}
+        <div class="cost-sub" style="margin-top:12px">Ingredient cost per piece <span class="cost-hint">· before waste, blank = recipe cost</span></div>
+        ${piecesList.map(p => { const k = Object.keys(BS_PRODUCT).find(z => BS_PRODUCT[z] === p), ec = k ? itemEcon(k) : null; return row(esc(p) + ' $', win('ing:' + p, finOv.ing[p], ec && ec.withTax != null && ec.yv ? ec.withTax.toFixed(3) : '')); }).join('')}
+        <div class="cost-sub" style="margin-top:12px">Labor minutes per batch <span class="cost-hint">· blank = saved minutes</span></div>
+        ${piecesList.map(p => { const k = Object.keys(BS_PRODUCT).find(z => BS_PRODUCT[z] === p), ec = k ? itemEcon(k) : null; return k ? row(esc(p), win('mins:' + k, finOv.mins[k], ec ? Math.round(ec.mins) : '')) : ''; }).join('')}
         <div class="cost-sub" style="margin-top:12px">Costs</div>
         ${row('Labor rate $/hr', win('rate', finOv.rate))}${row('Delivery min/week', win('deliv', finOv.deliv))}
         ${row('Kitchen block $', win('kCost', finOv.kCost))}${row('Kitchen block hours', win('kHours', finOv.kHours))}
+        ${row('Kitchen tax %', win('taxPct', finOv.taxPct))}${row('Other monthly costs $', win('other', finOv.other))}
         ${row('Pieces waste %', win('waste', finOv.waste))}${row('Ingredient waste %', win('wastePct', finOv.wastePct))}
         <button id="finReset" class="cp-btn" style="margin-top:10px">Reset to actuals</button></div>
       <div class="proj-card"><h3>Actual vs What if</h3>
         <table style="width:100%;font-size:var(--fs-caption);border-collapse:collapse"><tr class="cost-hint"><td></td><td align="right">Actual</td><td align="right">What if</td><td align="right">Difference</td></tr>
         <tr><td>Net before labor</td><td align="right">${finMoney(ra.preLabor)}</td><td align="right">${finMoney(r.preLabor)}</td><td align="right"><b>${diff(ra.preLabor, r.preLabor)}</b></td></tr>
         <tr><td>Net after labor</td><td align="right">${finMoney(ra.postLabor)}</td><td align="right">${finMoney(r.postLabor)}</td><td align="right"><b>${diff(ra.postLabor, r.postLabor)}</b></td></tr></table></div>` : '';
-    const kRow = wi ? row('Kitchen block', `${finMoney(r.kCost)} for ${rFmt(r.kHours)} h = ${finMoney(r.kCost)}`)
-      : row('Kitchen block', '$' + inp('kitchenCost', rFmt(FIN.kitchenCost)) + ' for ' + inp('kitchenHours', rFmt(FIN.kitchenHours)) + ' h = ' + finMoney(r.kCost));
-    const taxIn = wi ? `Kitchen tax ${rFmt(FIN.taxPct)}%` : 'Kitchen tax <input class="cost-in" type="number" inputmode="decimal" step="any" min="0" value="' + rFmt(FIN.taxPct) + '" data-fin="taxPct">%';
-    const otherIn = (wi ? row('Other monthly costs', finMoney(Number(FIN.other) || 0)) : row('Other monthly costs $', inp('other', rFmt(Number(FIN.other) || 0)))) + (wi ? row('Ingredient waste', rFmt(r.wastePct) + '%') : row('Ingredient waste %', inp('wastePct', rFmt(finWaste(FIN.wastePct)))));
     const noRows = '<div class="cost-hint">No deliveries logged this month.</div>';
-    // ----- Ledger data: one row per flavor, group subtotals, grand total. Delivery labor is shared out by pieces. -----
-    const days = r.days, wks = days / 7, tn = r.rows.reduce((t, x) => t + x.n, 0);
+    // ----- Scenarios panel -----
+    const sIn = (k, v, ph, cls) => `<input class="cost-in${v != null && v !== '' ? ' fin-wi' : ''}${cls ? ' ' + cls : ''}" type="${cls === 'fin-name' ? 'text' : 'number'}" inputmode="${cls === 'fin-name' ? 'text' : 'decimal'}" step="any" min="0" value="${v == null ? '' : esc(String(v))}"${ph != null ? ` placeholder="${esc(String(ph))}"` : ''} data-sc="${esc(k)}">`;
+    const recOpts = sel => '<option value="">Manual</option>' + COST_SECTIONS.map(([sk, lbl, f]) => `<optgroup label="${lbl}">` + f().map(it => { const k = costItemKey(sk, it); return `<option value="${esc(k)}"${k === sel ? ' selected' : ''}>${esc(costItemName(sk, it))}</option>`; }).join('') + '</optgroup>').join('');
+    const fmS = n => (n >= 0 ? '+' : '−') + '$' + Math.abs(n).toFixed(2);
+    let scenCard = '';
+    if (wi) {
+      let mx = '';
+      if (sc.maxOn && scM) {
+        mx = row('Kitchen hours booked per month', sIn('hours', sc.hours, rFmt(r0.kHours), '') + '<span class="fin-u">h</span>')
+          + `<div class="cost-sub" style="margin-top:8px">Product mix <span class="cost-hint">· % of pieces, blank = current share</span></div>`
+          + (scM.ps.length ? scM.ps.map(p => row(esc(p), sIn('mix:' + p, sc.mix[p], scM.dm[p].toFixed(0), '') + '<span class="fin-u">%</span>')).join('') : '<div class="cost-hint">No madeleine or muffin deliveries to base a mix on. Type a % for a product.</div>');
+        if (scM.ok) {
+          mx += `<div class="cost-sub" style="margin-top:8px">What fits (hypothetical)</div>`
+            + row(`Batches per week<span class="cost-hint">${rFmt(scM.e.min / 60)} h a week, ${rFmt(scM.e.min * WEEKS_PER_MONTH / 60)} h a month of ${rFmt(scM.H)} h</span>`, String(scM.e.batches))
+            + row(`Pieces per week<span class="cost-hint">now ${scM.nowWk.toFixed(1)} a week</span>`, scM.newWk.toFixed(1))
+            + row('Extra pieces per month', (scM.dPcs >= 0 ? '+' : '−') + Math.abs(scM.dPcs).toFixed(0))
+            + row('Extra sales', fmS(scM.xSales)) + row('Extra ingredients', fmS(-scM.xIng)) + row('Extra labor', fmS(-scM.xLab))
+            + row(`Extra kitchen cost<span class="cost-hint">${scM.blocks} block${scM.blocks === 1 ? '' : 's'} of ${rFmt(r0.kHours)} h at ${fm(r0.kitchen)} each, tax included</span>`, fmS(-scM.xKit))
+            + row('Net change per month', fmS(scM.net), 'cost-total')
+            + (scM.demand ? `<div class="cost-hint" style="padding:6px 0">Demand is the limit, not hours: at your current pace you use ${scM.usedH.toFixed(1)} h of the ${rFmt(Math.min(scM.H, r0.kHours))} h booked. The extra pieces assume you can sell them.</div>` : '');
+        } else mx += '<div class="cost-hint" style="padding:6px 0">Enter a mix above 0% to see what fits.</div>';
+      }
+      const items = scItems.map(x => {
+        const it = x.it, i = x.i;
+        return `<div class="fin-scitem">`
+          + row('Name', sIn(`i:${i}:name`, it.name || '', 'Added item', 'fin-name'))
+          + row('Recipe', `<select data-sc="i:${i}:rec" class="fin-sel">${recOpts(it.rec || '')}</select>`)
+          + row('Cost per piece', '<span class="fin-u">$</span>' + sIn(`i:${i}:cost`, it.cost, x.ec && x.ec.withTax != null ? x.ec.withTax.toFixed(3) : '', ''))
+          + row('Labor minutes per batch', sIn(`i:${i}:mins`, it.mins, x.ec ? Math.round(x.ec.mins) : '', ''))
+          + row('Pieces per batch', sIn(`i:${i}:perBatch`, it.perBatch, x.ec ? x.ec.yv : BATCH_YIELD, ''))
+          + row(`Selling price<span class="cost-hint">blank = suggested wholesale at your margin</span>`, '<span class="fin-u">$</span>' + sIn(`i:${i}:price`, it.price, x.dflt.toFixed(2), ''))
+          + row('Pieces per week', sIn(`i:${i}:pw`, it.pw, '0', ''))
+          + row(`Sales<span class="cost-hint">${x.pieces.toFixed(0)} pieces a month</span>`, fm(x.sales)) + row('Ingredients (incl. waste)', fm(-x.ing)) + row('Labor', fm(-x.lab))
+          + row('Profit per month', fm(x.profit), 'cost-total') + row('Margin', x.sales > 0 ? (x.profit / x.sales * 100).toFixed(0) + '%' : '—')
+          + `<button class="cp-btn fin-del" data-scdel="${i}" style="margin:6px 0 12px">Remove this item</button></div>`;
+      }).join('');
+      const iProfit = scItems.reduce((t, x) => t + x.profit, 0), showVs = (scM && scM.ok) || scItems.length;
+      const nowNet = r0.postLabor, scNet = nowNet + (scM && scM.ok ? scM.net : 0) + iProfit, dN = scNet - nowNet;
+      const vs = showVs ? `<div class="cost-sub" style="margin-top:8px">Now vs scenario <span class="cost-hint">· net after labor, per month</span></div>`
+        + row('Now', fm(nowNet)) + row('Scenario', fm(scNet))
+        + row('Difference', fmS(dN) + (nowNet !== 0 ? ' · ' + (dN >= 0 ? '+' : '−') + Math.abs(dN / Math.abs(nowNet) * 100).toFixed(0) + '%' : ''), 'cost-total')
+        + (scM && scM.ok ? '<div class="cost-hint">The kitchen scenario counts a full month at the new pace; the month on screen may be partly done.</div>' : '') : '';
+      scenCard = `<div class="proj-card fin-scen"><h3 class="fin-card-h">Scenarios <small class="fin-wtag">hypothetical</small></h3>
+        <div class="proj-sub">Nothing here is saved. Reset clears it. Added items are counted in Revenue, Costs and Profit below.</div>
+        <div class="cost-sub">Max out the kitchen</div>
+        <button class="cp-btn" data-scmax="1" style="margin:4px 0 8px">${sc.maxOn ? 'Hide this scenario' : 'Fill the booked hours'}</button>${mx}
+        <div class="cost-sub" style="margin-top:14px">Add another item</div>
+        ${items}<button class="cp-btn" data-scadd="1" style="margin:4px 0">Add an item</button>${vs}</div>`;
+    }
+    // ----- Vertical P&L: Revenue -> Costs -> Profit. Groups and flavors expand on tap (state in finOpen, not saved). -----
+    const days = r.days, wks = days / 7, tn = r.rows.reduce((t, x) => t + x.n, 0); finDays = days;
     const ew = effWk(), plan = { Madeleines: ew.mad / 7, Muffins: (ew.pump + ew.blue) / 7 };
     const mk = x => { const dv = tn ? r.delivLabor * x.n / tn : 0, ing = x.cost || 0, tc = ing + x.bl + dv; return { adj: !!x.adj, n: x.n, rev: x.rev, ing, bl: x.bl, dv, tc, pf: x.rev - tc, ap: 0 }; };
     const am = {}; if (wi) { const tna = ra.rows.reduce((t, x) => t + x.n, 0); ra.rows.forEach(x => { am[x.p] = x.rev - (x.cost || 0) - x.bl - (tna ? ra.delivLabor * x.n / tna : 0); }); }
-    const addTo = (a, b) => { ['n', 'rev', 'ing', 'bl', 'dv', 'tc', 'pf', 'ap'].forEach(k => { a[k] += b[k]; }); return a; };
-    const zero = () => ({ n: 0, rev: 0, ing: 0, bl: 0, dv: 0, tc: 0, pf: 0, ap: 0 });
+    const addTo = (a, b) => { ['n', 'rev', 'ing', 'bl', 'dv', 'tc', 'pf'].forEach(k => { a[k] += b[k]; }); return a; };
+    const zero = () => ({ n: 0, rev: 0, ing: 0, bl: 0, dv: 0, tc: 0, pf: 0 });
     const fm = finMoney, pct = a => a.rev > 0 ? (a.pf / a.rev * 100).toFixed(0) + '%' : '—';
     const topKey = { Madeleines: 'mad', Muffins: 'muffin' };
-    const lrow = (label, a, cls, pl, gname) => `<tr class="${cls}"><td>${label}</td><td>${a.n}</td><td>${(a.n / days).toFixed(1)}<small>${(a.n / wks).toFixed(1)}/wk${pl != null ? ' · plan ' + pl.toFixed(1) + '/day' : ''}</small></td><td>${a.n ? fm(a.rev / a.n) : '—'}${a.adj ? '<small>adjusted</small>' : ''}</td><td>${gname && topKey[gname] && a.n ? '<input class="cost-in" type="number" inputmode="decimal" step="any" min="0" value="' + a.rev.toFixed(2) + '" data-top="' + topKey[gname] + '">' + (a.adj ? '<small>edited · <a href="#" data-topreset="' + topKey[gname] + '">Reset</a></small>' : '') : fm(a.rev)}</td><td>${fm(a.ing)}</td><td>${fm(a.bl)}</td><td>${fm(a.dv)}</td><td>${fm(a.tc)}</td><td>${a.n ? fm(a.tc / a.n) : '—'}</td><td>${fm(a.pf)}</td><td>${pct(a)}</td>${wi ? `<td>${fm(a.ap)}</td><td>${diff(a.ap, a.pf)}</td>` : ''}</tr>`;
-    const grand = zero(); let body = '';
+    const isOpen = k => k.startsWith('g:') ? finOpen[k] !== false : !!finOpen[k];
+    const chev = o => `<svg class="fin-chev${o ? ' open' : ''}" viewBox="0 0 14 14" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="4,2 10,7 4,12"/></svg>`;
+    const pace = (a, extra) => `${(a.n / days).toFixed(1)}/day · ${(a.n / wks).toFixed(1)}/wk · ${a.n} pcs${extra || ''}`;
+    const crow = (key, cls, label, sub, val) => `<div class="proj-row fin-click ${cls}" data-finopen="${esc(key)}"><span class="k" style="color:var(--text)">${chev(isOpen(key))}${label}${sub ? `<span class="cost-hint">${sub}</span>` : ''}</span><span>${val}</span></div>`;
+    const dl = (k, v, cls) => `<div class="fin-ind2">${row(k, v, cls)}</div>`;
+    const topIn = (g, a) => `<input class="cost-in${wi && finOv.top && typeof finOv.top[topKey[g]] === 'number' ? ' fin-wi' : ''}" type="number" inputmode="decimal" step="any" min="0" value="${a.rev.toFixed(2)}" data-top="${topKey[g]}">`;
+    let revHtml = ''; const grand = zero();
     ['Madeleines', 'Muffins', 'Other'].forEach(name => {
       const rs = r.rows.filter(x => finGrp(x.p) === name); if (!rs.length) return;
-      const g = zero();
-      rs.forEach(x => { const a = mk(x); a.ap = am[x.p] || 0; body += lrow(esc(x.p), a, 'fl'); addTo(g, a); });
-      g.adj = rs.some(x => x.adj);
-      body += lrow('Total ' + name, g, 'grp', plan[name], name);
-      if (r.adj[name] != null) body += `<tr class="adj"><td colspan="${wi ? 14 : 12}">Adjustment: ${diff(0, r.adj[name]).replace('+$', '+$').replace('−$', '−$')} vs calculated (${fm(r.topCalc[name])})</td></tr>`;
+      const g = zero(), parts = [];
+      rs.forEach(x => { const a = mk(x); addTo(g, a); parts.push([x, a]); });
+      const gk = 'g:' + name, op = isOpen(gk);
+      revHtml += crow(gk, 'fin-grp', 'Total ' + name, pace(g, plan[name] != null ? ' · plan ' + plan[name].toFixed(1) + '/day' : ''), fm(g.rev));
+      if (op) {
+        parts.forEach(([x, a]) => {
+          const fk = 'f:' + x.p, fo = isOpen(fk);
+          revHtml += `<div class="fin-ind">${crow(fk, '', esc(x.p), pace(a), fm(a.rev))}</div>`;
+          if (fo) {
+            const ap = am[x.p] || 0;
+            revHtml += dl('Price per piece', a.n ? fm(a.rev / a.n) : '—') + dl('Ingredients (incl. waste)', fm(a.ing)) + dl('Baking labor', fm(a.bl)) + dl('Delivery labor', fm(a.dv)) + dl('Total cost', fm(a.tc)) + dl('Cost per piece', a.n ? fm(a.tc / a.n) : '—') + dl('Profit', fm(a.pf), 'cost-total') + dl('Margin', pct(a))
+              + (wi ? dl('Actual profit', fm(ap)) + dl('Change', diff(ap, a.pf)) : '');
+          }
+        });
+        if (topKey[name]) {
+          revHtml += `<div class="fin-ind">${row(name + ' top line $', topIn(name, g) + (r.adj[name] != null ? ' <small class="cost-hint">' + (wi ? 'what-if' : 'edited') + ' · <a href="#" data-topreset="' + topKey[name] + '">Reset</a></small>' : ''))}</div>`
+            + (r.adj[name] != null ? `<div class="fin-ind">${row('<span class="cost-hint">Adjustment vs calculated (' + fm(r.topCalc[name]) + ')</span>', '<span class="cost-hint">' + diff(0, r.adj[name]) + '</span>')}</div>` : '');
+        }
+      }
       addTo(grand, g);
     });
-    const ledger = `<div class="fin-ledger"><div class="proj-sub">${days} day${days === 1 ? '' : 's'} counted · delivery labor shared out by pieces · recurring costs are below</div>
-      <table><thead><tr><th>Product</th><th>Pieces</th><th>Per day</th><th>Price</th><th>Sales</th><th>Ingredients</th><th>Labor</th><th>Delivery</th><th>Total cost</th><th>Cost / piece</th><th>Profit</th><th>Margin</th>${wi ? '<th>Actual profit</th><th>Change</th>' : ''}</tr></thead>
-      <tbody>${r.rows.length ? body + lrow('Total (before recurring)', grand, 'tot') : `<tr><td colspan="12">No deliveries logged this month.</td></tr>`}</tbody></table></div>
-      <div class="fin-rec">
-        <div><div class="cost-sub">Monthly recurring</div>${kRow}${row(taxIn, finMoney(r.kitchen - r.kCost))}${r.overCost > 0 ? row(`Overage hours<span class="cost-hint"> · ${r.overH.toFixed(1)} h</span>`, finMoney(r.overCost)) : ''}${otherIn}${row('Total recurring', finMoney(r.recurring), 'cost-total')}</div>
-        <div><div class="cost-sub">Labor and kitchen hours</div>${row('Baking<span class="cost-hint"> · ' + (r.bakeMin / 60).toFixed(1) + ' h at $' + rFmt(r.rate) + '/hr</span>', finMoney(r.bakeLabor))}${row('Delivery<span class="cost-hint"> · ' + (r.delivMin / 60).toFixed(1) + ' h</span>', finMoney(r.delivLabor))}${row('Total labor', finMoney(r.labor), 'cost-total')}${row('Kitchen time used', (r.kitchenMin / 60).toFixed(1) + ' of ' + rFmt(r.kHours) + ' h')}${row('Still available', Math.max(0, r.hoursLeft).toFixed(1) + ' h' + (r.hoursLeft < 0 ? ' <span class="cost-miss">over by ' + (-r.hoursLeft).toFixed(1) + ' h</span>' : ''), 'cost-total')}</div>
-        <div><div class="cost-sub">Net</div>${row('Total sales', finMoney(r.sales))}${row('Total ingredients', finMoney(-r.ingr))}${row('<span class="cost-hint">Waste ' + rFmt(r.wastePct) + '%</span>', '<span class="cost-hint">' + finMoney(-r.ingrWaste) + '</span>')}${row('Total recurring', finMoney(-r.recurring))}${row('Net before labor', finMoney(r.preLabor), 'cost-total')}${row('Total labor', finMoney(-r.labor))}${row('Net after labor', finMoney(r.postLabor), 'cost-total')}</div>
-      </div>`;
-    // Phone: pace and cost per piece, stacked.
-    const pcRow = (name, a, hint) => row(`${name}<span class="cost-hint"> · ${a.n} pcs · ${(a.n / days).toFixed(1)}/day${hint || ''}</span>`, a.n ? `${fm(a.tc / a.n)}/pc <span class="cost-hint">· ${pct(a)}</span>` : '—');
-    const paceCard = `<div class="proj-card fin-mob"><h3>Pace and cost per piece</h3><div class="proj-sub">${days} day${days === 1 ? '' : 's'} counted; cost per piece includes ingredients, baking and delivery</div>
-      ${r.rows.length ? ['Madeleines', 'Muffins', 'Other'].map(name => { const rs = r.rows.filter(x => finGrp(x.p) === name); if (!rs.length) return ''; const g = zero(); const parts = rs.map(x => { const a = mk(x); addTo(g, a); return `<div style="padding-left:16px;color:var(--muted)">${pcRow(esc(x.p), a)}</div>`; }).join(''); return `<div class="cost-total">${pcRow('Total ' + name, g, plan[name] != null ? ' (plan ' + plan[name].toFixed(1) + ')' : '')}</div>` + parts; }).join('') : noRows}</div>`;
+    const revCard = `<div class="proj-card"><h3 class="fin-card-h">Revenue</h3><div class="proj-sub">${days} day${days === 1 ? '' : 's'} counted · tap a row for detail</div>
+      ${r.rows.length ? revHtml : noRows}${scItems.map(x => row(`${esc(x.name)}<span class="cost-hint">added item (what-if) · ${x.pw.toFixed(1)}/wk · ${x.pieces.toFixed(0)} pcs a month</span>`, fm(x.sales))).join('')}${r.rows.length || scItems.length ? row(`Total sales<span class="cost-hint">${pace(grand)}</span>`, fm(r.sales), 'cost-total') : ''}</div>`;
+    const kit = wi
+      ? row('Kitchen block price', '<span class="fin-u">$</span>' + win('kCost', finOv.kCost)) + row('Kitchen block hours', win('kHours', finOv.kHours) + '<span class="fin-u">h</span>') + row('Kitchen tax', win('taxPct', finOv.taxPct) + '<span class="fin-u">%</span>')
+      : row('Kitchen block price', '<span class="fin-u">$</span>' + inp('kitchenCost', rFmt(FIN.kitchenCost))) + row('Kitchen block hours', inp('kitchenHours', rFmt(FIN.kitchenHours)) + '<span class="fin-u">h</span>') + row('Kitchen tax', inp('taxPct', rFmt(FIN.taxPct)) + '<span class="fin-u">%</span>');
+    const oth = wi ? row('Other monthly costs', '<span class="fin-u">$</span>' + win('other', finOv.other)) : row('Other monthly costs', '<span class="fin-u">$</span>' + inp('other', rFmt(Number(FIN.other) || 0)));
+    const wst = wi ? row('Ingredient waste', win('wastePct', finOv.wastePct) + '<span class="fin-u">%</span>') : row('Ingredient waste', inp('wastePct', rFmt(finWaste(FIN.wastePct))) + '<span class="fin-u">%</span>');
+    const totCost = r.ingr + r.labor + r.recurring;
+    const costCard = `<div class="proj-card"><h3 class="fin-card-h">Costs</h3>
+      ${row(`Ingredients<span class="cost-hint">incl. ${rFmt(r.wastePct)}% waste (${fm(r.ingrWaste)}) and ledger tax &amp; fees (${fm(r.ingrTax)})</span>`, fm(r0.ingr))}
+      ${scItems.length ? row('Added items: ingredients<span class="cost-hint">what-if</span>', fm(aIng)) : ''}
+      ${r.missing.length ? `<div class="cost-miss" style="padding:4px 0">No cost for ${r.missing.map(esc).join(', ')} (no recipe or an unapproved price), so those count as $0.</div>` : ''}
+      ${wst}
+      ${row(`Baking labor<span class="cost-hint">${(r.bakeMin / 60).toFixed(1)} h at $${rFmt(r.rate)}/hr</span>`, fm(r.bakeLabor))}
+      ${row(`Delivery labor<span class="cost-hint">${(r.delivMin / 60).toFixed(1)} h (${rFmt(r.delivWk)} min/wk${r.delivFrac === 0 ? ', no deliveries this month' : r.delivFrac < 1 ? ', prorated ' + Math.round(r.delivFrac * 100) + '%' : ''})</span>`, fm(r.delivLabor))}
+      ${scItems.length ? row('Added items: labor<span class="cost-hint">what-if</span>', fm(aLab)) : ''}
+      ${row('Total labor', fm(r.labor), 'cost-total')}
+      <div class="cost-sub" style="margin-top:10px">Kitchen and other</div>
+      ${kit}
+      ${row('Kitchen total<span class="cost-hint">block plus tax</span>', fm(r.kitchen))}
+      ${r.overCost > 0 ? row(`Overage hours<span class="cost-hint">${r.overH.toFixed(1)} h × ${fm(r.overRate)}/h</span>`, fm(r.overCost)) : ''}
+      ${oth}
+      ${row('Total recurring', fm(r.recurring), 'cost-total')}
+      ${row('Total costs', fm(totCost), 'cost-total')}</div>`;
+    const net = r.sales > 0 ? (r.postLabor / r.sales * 100).toFixed(0) + '%' : '—', netPre = r.sales > 0 ? (r.preLabor / r.sales * 100).toFixed(0) + '%' : '—';
+    const profCard = `<div class="proj-card"><h3 class="fin-card-h">Profit</h3>
+      ${row('Total sales', fm(r.sales))}${scItems.length ? row('Added items profit<span class="cost-hint">what-if, included in these totals</span>', fm(scItems.reduce((t, x) => t + x.profit, 0))) : ''}${row('Ingredients', fm(-r.ingr))}${row('Recurring', fm(-r.recurring))}
+      ${row(`Net before labor<span class="cost-hint">${netPre} of sales</span>`, fm(r.preLabor), 'cost-total')}
+      ${row('Total labor', fm(-r.labor))}
+      ${row(`Net after labor<span class="cost-hint">${net} margin</span>`, fm(r.postLabor), 'cost-total')}
+      <div class="cost-sub" style="margin-top:10px">Kitchen hours</div>
+      ${row('Booked block', rFmt(r.kHours) + '<span class="fin-u">h</span>')}
+      ${row('Kitchen time used<span class="cost-hint">setup, prep, baking, cleaning</span>', (r.kitchenMin / 60).toFixed(1) + '<span class="fin-u">h</span>')}
+      ${row('Still available', Math.max(0, r.hoursLeft).toFixed(1) + ' h' + (r.hoursLeft < 0 ? ' <span class="cost-miss">over by ' + (-r.hoursLeft).toFixed(1) + ' h</span>' : ''), 'cost-total')}
+      <div class="cost-hint" style="padding-top:6px">Sales use the invoice prices (retail unless you changed them). Kitchen time is estimated from weekly bake sessions of the delivered pieces; delivery doesn't use kitchen hours. Ingredient cost is delivered pieces × the recipe's cost per item plus waste.</div></div>`;
     el.innerHTML = banner + `
       <div class="db-filter" style="margin-bottom:10px"><select id="finMonth" aria-label="Month">${months.map(m => `<option value="${m}"${m === finMonth ? ' selected' : ''}>${finMonthName(m)}</option>`).join('')}</select>
-        <label style="display:inline-flex;align-items:center;gap:6px;margin-left:10px;font-size:var(--fs-caption)"><input type="checkbox" id="finWhat"${wi ? ' checked' : ''}> What if</label></div>
-      ${whatIfCard}
-      ${ledger}
-      <div class="proj-card fin-mob"><h3>Sales</h3><div class="proj-sub">pieces delivered in the month at the invoice price</div>
-        ${r.rows.length ? grouped(x => `${esc(x.p)}<span class="cost-hint"> · ${x.n} pcs</span>`, x => finMoney(x.rev), x => x.rev, pcs) : noRows}
-        ${['Madeleines', 'Muffins'].map(g => r.rows.some(x => finGrp(x.p) === g) ? row(g + ' top line $', '<input class="cost-in" type="number" inputmode="decimal" step="any" min="0" value="' + (r.rows.filter(x => finGrp(x.p) === g).reduce((t, x) => t + x.rev, 0)).toFixed(2) + '" data-top="' + topKey[g] + '">' + (r.adj[g] != null ? ' <small class="cost-hint">edited · <a href="#" data-topreset="' + topKey[g] + '">Reset</a></small>' : '')) + (r.adj[g] != null ? row('<span class="cost-hint">Adjustment vs calculated</span>', '<span class="cost-hint">' + diff(0, r.adj[g]) + '</span>') : '') : '').join('')}
-        ${row(`Total sales<span class="cost-hint"> · ${pcs(r.rows)}</span>`, finMoney(r.sales), 'cost-total')}</div>
-      ${paceCard}
-      <div class="proj-card fin-mob"><h3>Cost of goods</h3>
-        <div class="cost-sub">Ingredients</div>
-        ${grouped(x => esc(x.p), x => x.cost == null ? '<span class="cost-miss">needs a price</span>' : finMoney(x.cost), cst, rs => 'incl. ' + finMoney(rs.reduce((t, x) => t + (x.cost != null ? x.cost - x.pre : 0), 0)) + ' tax &amp; fees')}
-        ${row('Total ingredients', finMoney(r.ingr), 'cost-total')}
-        ${row('<span class="cost-hint">Waste ' + rFmt(r.wastePct) + '%, included above</span>', '<span class="cost-hint">' + finMoney(r.ingrWaste) + '</span>')}
-        ${row('<span class="cost-hint">of which ledger tax &amp; fees</span>', '<span class="cost-hint">' + finMoney(r.ingrTax) + '</span>')}
-        ${r.missing.length ? `<div class="cost-miss" style="padding:4px 0">No cost for ${r.missing.map(esc).join(', ')} (no recipe or an unapproved price), so those count as $0.</div>` : ''}
-        <div class="cost-sub" style="margin-top:12px">Labor <span class="cost-hint">· $${rFmt(r.rate)}/hr</span></div>
-        ${grouped(x => `${esc(x.p)}<span class="cost-hint"> · ${(x.bm / 60).toFixed(1)} h</span>`, x => finMoney(x.bl), x => x.bl, rs => (rs.reduce((t, x) => t + x.bm, 0) / 60).toFixed(1) + ' h baking')}
-        ${row(`Total baking<span class="cost-hint"> · ${(r.bakeMin / 60).toFixed(1)} h</span>`, finMoney(r.bakeLabor), 'cost-total')}
-        ${row(`Delivery<span class="cost-hint"> · ${(r.delivMin / 60).toFixed(1)} h (${rFmt(r.delivWk)} min/wk${r.delivFrac === 0 ? ', no deliveries this month' : r.delivFrac < 1 ? ', prorated ' + Math.round(r.delivFrac * 100) + '%' : ''})</span>`, finMoney(r.delivLabor))}
-        ${row('<span class="cost-hint">Labor hours (baking + delivery)</span>', '<span class="cost-hint">' + r.laborHours.toFixed(1) + ' h</span>')}
-        ${row('Total labor', finMoney(r.labor), 'cost-total')}
-        <div class="cost-sub" style="margin-top:12px">Monthly recurring</div>
-        ${kRow}
-        ${row(taxIn, finMoney(r.kitchen - r.kCost))}
-        ${r.overCost > 0 ? row(`Overage hours<span class="cost-hint"> · ${r.overH.toFixed(1)} h × ${finMoney(r.overRate)}/h</span>`, finMoney(r.overCost)) : ''}
-        ${otherIn}
-        ${row('Total recurring', finMoney(r.recurring), 'cost-total')}
-        <div class="cost-sub" style="margin-top:12px">Total COGS <span class="cost-hint">· ingredients + baking, by group</span></div>
-        ${grouped(x => esc(x.p), x => finMoney(direct(x)), direct)}
-        ${shared('Delivery labor', r.delivLabor)}${shared('Recurring', r.recurring)}
-        ${row('Total COGS', finMoney(r.ingr + r.labor + r.recurring), 'cost-total')}</div>
-      <div class="proj-card fin-mob"><h3>What's left</h3>
-        <div class="cost-sub">Net before labor <span class="cost-hint">· sales − ingredients, by group</span></div>
-        ${grouped(x => esc(x.p), x => finMoney(x.rev - cst(x)), x => x.rev - cst(x))}
-        ${shared('Recurring', -r.recurring)}
-        ${row('Net before labor', finMoney(r.preLabor), 'cost-total')}
-        <div class="cost-sub" style="margin-top:12px">Net after labor <span class="cost-hint">· also minus baking</span></div>
-        ${grouped(x => esc(x.p), x => finMoney(x.rev - direct(x)), x => x.rev - direct(x))}
-        ${shared('Recurring', -r.recurring)}${shared('Delivery labor', -r.delivLabor)}
-        ${row('Net after labor', finMoney(r.postLabor), 'cost-total')}
-        <div class="cost-sub" style="margin-top:12px">Kitchen hours</div>
-        ${row('Booked block', rFmt(r.kHours) + ' h')}
-        ${row('Kitchen time used<span class="cost-hint"> · setup, prep, baking, cleaning</span>', (r.kitchenMin / 60).toFixed(1) + ' h')}
-        ${row('Still available', Math.max(0, r.hoursLeft).toFixed(1) + ' h' + (r.hoursLeft < 0 ? ' <span class="cost-miss">over by ' + (-r.hoursLeft).toFixed(1) + ' h</span>' : ''), 'cost-total')}
-        <div class="cost-hint" style="padding-top:6px">Sales use the invoice prices (retail unless you changed them). Kitchen time is estimated from weekly bake sessions of the delivered pieces; delivery doesn't use kitchen hours. Ingredient cost is delivered pieces × the recipe's cost per item, so it ignores waste and what was baked but not delivered (except the What if waste %).</div></div>`;
+        <label class="fin-sw"><input type="checkbox" id="finWhat" role="switch"${wi ? ' checked' : ''}><span class="fin-sw-t"></span><span class="fin-sw-l">What if</span></label></div>
+      ${whatIfCard}${scenCard}${revCard}${costCard}${profCard}`;
   }
   document.addEventListener('click', e => {
     if (e.target.id === 'finReset') { finOv = null; renderFin(); return; }
+    const sb = e.target.closest && e.target.closest('[data-scmax],[data-scadd],[data-scdel]');
+    if (sb && finOv && finOv.scen) {
+      const s = finOv.scen;
+      if (sb.dataset.scmax) s.maxOn = !s.maxOn;
+      else if (sb.dataset.scadd) s.items.push({ name: '', rec: '', cost: null, mins: null, perBatch: null, price: null, pw: null });
+      else s.items.splice(Number(sb.dataset.scdel), 1);
+      renderFin(); return;
+    }
+    const tg = e.target.closest && e.target.closest('[data-finopen]');
+    if (tg && !e.target.closest('input,a,select')) { const k = tg.dataset.finopen; finOpen[k] = !(k.startsWith('g:') ? finOpen[k] !== false : !!finOpen[k]); renderFin(); return; }
     const a = e.target.closest && e.target.closest('[data-topreset]'); if (!a) return; e.preventDefault();
     const k = a.dataset.topreset;
     if (finWhat && finOv) { finOv.top = finOv.top || {}; finOv.top[k] = false; }
@@ -5656,12 +5778,25 @@
       else { FIN.topOverride = FIN.topOverride || {}; const m = FIN.topOverride[finMonth] = FIN.topOverride[finMonth] || {}; if (ok) m[k] = val; else delete m[k]; if (!Object.keys(m).length) delete FIN.topOverride[finMonth]; finSave(); }
       renderFin();
     }
-    else if (e.target.dataset && e.target.dataset.wi && finOv) {
-      const k = e.target.dataset.wi, raw = e.target.value.trim(), v = raw === '' ? null : Number(raw), val = (v == null || (Number.isFinite(v) && v >= 0)) ? v : null;
-      if (k.startsWith('pcs:')) finOv.pcs[k.slice(4)] = val == null ? 0 : val; else finOv[k] = val;
+    else if (e.target.dataset && e.target.dataset.sc && finOv && finOv.scen) {
+      const k = e.target.dataset.sc, raw = e.target.value.trim(), v = raw === '' ? null : Number(raw), num = (v == null || (Number.isFinite(v) && v >= 0)) ? v : null, s = finOv.scen;
+      if (k === 'hours') s.hours = num;
+      else if (k.startsWith('mix:')) { if (num == null) delete s.mix[k.slice(4)]; else s.mix[k.slice(4)] = num; }
+      else if (k.startsWith('i:')) { const [, n, f] = k.split(':'), it = s.items[Number(n)];
+        if (it) { if (f === 'name') it.name = e.target.value.trim(); else if (f === 'rec') { it.rec = e.target.value; if (!it.name && it.rec) { const ec = itemEcon(it.rec, finOv); if (ec) it.name = ec.name; } } else it[f] = num; } }
       renderFin();
     }
-    else if (e.target.dataset && e.target.dataset.fin) { const v = Number(e.target.value); FIN[e.target.dataset.fin] = e.target.dataset.fin === 'wastePct' ? finWaste(e.target.value) : Number.isFinite(v) && v >= 0 ? v : 0; finSave(); renderFin(); }
+    else if (e.target.dataset && e.target.dataset.wi && finOv) {
+      const k = e.target.dataset.wi, raw = e.target.value.trim(), v = raw === '' ? null : Number(raw), val = (v == null || (Number.isFinite(v) && v >= 0)) ? v : null;
+      const ci = k.indexOf(':');
+      if (ci > 0) { const g = k.slice(0, ci), sk = k.slice(ci + 1);
+        if (g === 'pcs') finOv.pcs[sk] = val == null ? 0 : val;
+        else if (g === 'pcsw') finOv.pcs[sk] = val == null ? 0 : Math.round(val * finDays / 7);
+        else { finOv[g] = finOv[g] || {}; if (val == null) delete finOv[g][sk]; else finOv[g][sk] = val; } }
+      else finOv[k] = val;
+      renderFin();
+    }
+    else if (e.target.dataset && e.target.dataset.fin && !finWhat) { const v = Number(e.target.value); FIN[e.target.dataset.fin] = e.target.dataset.fin === 'wastePct' ? finWaste(e.target.value) : Number.isFinite(v) && v >= 0 ? v : 0; finSave(); renderFin(); }
   });
   // ----- Price ledger view: vendors as headers, receipts and their items underneath, tax + fees at the end of each receipt -----
   let rcpDraft = null, ledgerOpen = {};
@@ -6403,7 +6538,14 @@
     const clone = doc.cloneNode(true);
     clone.removeAttribute('id'); clone.style.cssText = `box-sizing:border-box;width:${w}px;`;
     clone.querySelectorAll('[contenteditable]').forEach(e => e.removeAttribute('contenteditable'));
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><foreignObject width="100%" height="100%"><div xmlns="http://www.w3.org/1999/xhtml"><style>${css}</style>${new XMLSerializer().serializeToString(clone)}</div></foreignObject></svg>`;
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><foreignObject width="100%" height="100%"><div xmlns="http://www.w3.org/1999/xhtml"><style>${css}
+  /* Version stamp: fixed top right on every screen; header buttons sit below it */
+  .ver-badge, body.home-landing .ver-badge { position: fixed !important; display: block !important; top: calc(var(--safe-top) + 2px); right: 10px; left: auto; bottom: auto; width: auto; height: auto; padding: 0 !important; margin: 0; text-align: right !important; background: none !important; border: none !important; font-size: var(--fs-caption) !important; line-height: 1.2; color: var(--muted) !important; z-index: 50; pointer-events: none; }
+  body.home-landing .ver-badge { color: #fff6ee !important; }
+  body { padding-top: calc(var(--safe-top) + 22px) !important; }
+  .db-new { top: 20px !important; }
+  .home-season { top: calc(var(--safe-top) + 30px) !important; }
+</style>${new XMLSerializer().serializeToString(clone)}</div></foreignObject></svg>`;
     const img = new Image();
     img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
     await img.decode();
