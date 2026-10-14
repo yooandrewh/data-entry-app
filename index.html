@@ -2061,7 +2061,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.87.00 · Oct 13, 8:25 PM</div>
+<div class="ver-badge">v1.88.00 · Oct 13, 8:50 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -5506,6 +5506,7 @@
   let FIN = { kitchenCost: 570, kitchenHours: 20, taxPct: 7, other: 0, wastePct: 5, topOverride: {} };   // kitchen: $570 per 20 h block + 7% tax (Andrew, 2026-10-13)
   try { Object.assign(FIN, JSON.parse(localStorage.getItem(FIN_KEY)) || {}); } catch {}
   let finMonth = '', finEntries = null; let finView = (() => { try { return localStorage.getItem('finView.v1') === 'item' ? 'item' : 'sum'; } catch { return 'sum'; } })();
+  let finSheet = null;
   let finWhat = false, finOv = null, finOpen = {}, finDays = 30;   // What-if overrides: view-only, never saved
   // Per-item economics for one recipe: ingredient cost (with and without ledger tax/fees), labor, pieces per batch.
   function itemEcon(costSel, ov) {
@@ -5846,12 +5847,34 @@
     const totExtra = r.recurring > 0 ? { rows: row('Less kitchen and other costs', '-' + fm(r.recurring) + pc(r.recurring, gt)), pf: gt.pf - r.recurring } : null;
     if (r.rows.length) itemHtml += itemBlock('Total', pace(gt) + (r.partial ? ' · full month of fixed costs' : ''), gt, totExtra);
     const itemView = (itemHtml || noRows) + (scItems.length ? `<div class="proj-sub">What-if added items are not in these blocks. See the Summary view.</div>` : '');
+    // ----- Send to Google Sheet: real (actuals) numbers from ra, same per-item math as mk() -----
+    { const c2 = v => Math.round((Number(v) || 0) * 100) / 100, tnA = ra.rows.reduce((t, x) => t + x.n, 0), g = zero();
+      const body = ra.rows.map(x => { const dv = tnA ? ra.delivLabor * x.n / tnA : 0, ing = x.cost || 0, pf = x.rev - ing - x.bl - dv; addTo(g, { n: x.n, rev: x.rev, ing, bl: x.bl, dv, tc: 0, pf });
+        return [x.p, x.n, x.n ? c2(x.rev / x.n) : 0, c2(x.rev), c2(ing), c2(x.bl), c2(dv), c2(pf), x.rev > 0 ? Math.round(pf / x.rev * 1000) / 10 : 0]; });
+      finSheet = { month: finMonth, rows: [[wi ? 'Month (What-if is on; these are the real numbers)' : 'Month', finMonth], ['Days counted', ra.days], [], ['Item', 'Pieces', 'Price per piece', 'Sales', 'Ingredients', 'Baking labor', 'Delivery labor', 'Profit', 'Margin %'], ...body,
+        ['Total', g.n, g.n ? c2(g.rev / g.n) : 0, c2(g.rev), c2(g.ing), c2(g.bl), c2(g.dv), c2(g.pf), g.rev > 0 ? Math.round(g.pf / g.rev * 1000) / 10 : 0], [],
+        ['Sales', c2(ra.sales)], ['Ingredients', c2(ra.ingr)], ['Baking labor', c2(ra.bakeLabor)], ['Delivery labor', c2(ra.delivLabor)], ['Recurring/kitchen', c2(ra.recurring)], ['Net', c2(ra.postLabor)], ['Net %', ra.sales > 0 ? Math.round(ra.postLabor / ra.sales * 1000) / 10 : 0]] }; }
     el.innerHTML = banner + `
       <div class="db-filter" id="finViewTog" style="margin-bottom:10px"><button data-finview="sum"${finView === 'sum' ? ' class="on"' : ''}>Summary</button><button data-finview="item"${finView === 'item' ? ' class="on"' : ''}>By item</button></div>
+      <button class="cp-btn" id="finSheetBtn" style="margin:0 0 10px">Send to Google Sheet</button>
       <div class="db-filter" style="margin-bottom:10px"><select id="finMonth" aria-label="Month">${months.map(m => `<option value="${m}"${m === finMonth ? ' selected' : ''}>${finMonthName(m)}</option>`).join('')}</select>
         <label class="fin-sw"><input type="checkbox" id="finWhat" role="switch"${wi ? ' checked' : ''}><span class="fin-sw-t"></span><span class="fin-sw-l">What if</span></label></div>
       ${whatIfCard}${scenCard}${finView === 'item' ? itemView : revCard + costCard + profCard}`;
   }
+  document.addEventListener('click', async e => {
+    if (e.target.id === 'finSheetBtn' && finSheet) {
+      let code = ''; try { code = localStorage.getItem('financeCode') || ''; } catch {}
+      if (!code) { code = (prompt('Ledger code (needed once on this device)') || '').trim(); if (!code) return; try { localStorage.setItem('financeCode', code); } catch {} }
+      try {
+        const r = await fetch('/api/finance-sheet', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-ledger-code': code }, body: JSON.stringify(finSheet) });
+        const j = await r.json().catch(() => ({}));
+        if (r.status === 401) { try { localStorage.removeItem('financeCode'); } catch {} rcpToast('Wrong code'); }
+        else if (!r.ok) rcpToast(j.error || 'Could not send');
+        else rcpToast('Sent to Google Sheet');
+      } catch { rcpToast('Could not reach the server'); }
+      return;
+    }
+  });
   document.addEventListener('click', e => {
     const fvb = e.target.closest && e.target.closest('[data-finview]');
     if (fvb) { finView = fvb.dataset.finview === 'item' ? 'item' : 'sum'; try { localStorage.setItem('finView.v1', finView); } catch {} renderFin(); return; }

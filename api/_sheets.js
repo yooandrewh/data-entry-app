@@ -176,6 +176,17 @@ export async function ensureTab(tab, header) {
   return true;
 }
 
+// Rewrite a whole tab: create it if missing, clear A:Z, then write the 2-D array from A1.
+// RAW keeps numbers as numbers.
+export async function replaceTab(tab, header, rows2d) {
+  await ensureTab(tab, header);
+  await api(`/values/${encodeURIComponent(tab + '!A:Z')}:clear`, { method: 'POST', body: '{}' });
+  await api(
+    `/values/${encodeURIComponent(tab)}!A1?valueInputOption=RAW`,
+    { method: 'PUT', body: JSON.stringify({ values: rows2d }) },
+  );
+}
+
 // 1-based column index -> A1 letter(s).
 export function colLetter(n) {
   let s = '';
