@@ -2125,7 +2125,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.101.00 · Oct 14, 11:00 AM</div>
+<div class="ver-badge">v1.102.00 · Oct 14, 11:30 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -5253,9 +5253,12 @@
           notes: '<b>Coating (as needed):</b> melted butter, sugar mixed with cinnamon powder, melted chocolate for dipping. Salt is ⅛ tsp, vanilla ¼ tsp.<br><br>1. 냄비에 물+설탕+소금+버터를 넣고 중불에 올려 버터가 완전히 녹을 때까지 끓인 뒤 불에서 내린다.<br>2. 밀가루를 넣고 섞은 뒤, 다시 약불에 올려 냄비 바닥에 하얀막이 생길 때까지 가열한 뒤 불에서 내리고 미지근하게 식힌다.<br>3. 계란+바닐라익스트랙을 넣고 섞은 뒤 짤주머니에 담고 오븐팬에 팬닝해 200도 예열된 오븐에서 17분정도 굽는다.<br>4. 녹인 버터를 바르고 시나몬가루+설탕 섞은 것을 묻힌다. 녹인 초콜릿을 곁들인다.',
           link: 'https://www.youtube.com/watch?v=gRbqHz6mZeY' }
       ] },
+    { key: 'churrosfinancier', type: 'simple', name: 'Chocolate Churros Financier', yield: 12, yieldText: 'makes 12 financiers',
+      rows: [['Unsalted Butter', 160], ['Egg White', 120], ['Brown Sugar', 115], ['Honey', 35], ['Almond Flour', 84], ['Cake Flour', 18], ['Cocoa Powder', 12], ['Ceylon Cinnamon', 4], ['Baking Powder', 2]],
+      notes: '<b>Coating (no amounts given):</b> sugar and cinnamon at 10 : 1 (sugar : cinnamon), plus coating chocolate. Milk chocolate is recommended over dark.<br><br>1) Brown the butter, then let it cool to 50°C.<br>2) Whisk the egg whites, brown sugar and honey until well combined and slightly pale.<br>3) Add the cooled brown butter and mix until smooth.<br>4) Sift in the almond flour, cake flour, cocoa powder, cinnamon and baking powder, then mix gently.<br>5) Transfer the batter to a piping bag and pipe into a financier pan.<br>6) Preheat to 200°C. Bake at 190°C for 8 minutes, then 180°C for 6 minutes.<br>7) Cool completely on a wire rack.<br>8) Dip in melted chocolate, then roll in the cinnamon sugar.' },
   ];
   REC_TEST.forEach(it => { if (it.vers) { it.rows = it.vers[0].rows; } });   // costing follows the first version (Ver J / Ver A)
-  const REC_ICON = { 'Dubai Chewy Ball': 'dubai', 'Pumpkin Pie Spice Muffin': 'pumpkin', 'Classic': 'madeleine', 'Dot Cake': 'cake_dot', 'Earl Grey': 'teacup', 'Ube': 'ube', 'Lemon Poppy': 'lemon', 'Chocolate': 'choco', 'Brown Butter': 'butter_brown', 'Matcha': 'matcha', 'Mugwort': 'leaf', 'Maple Pecan': 'nut', 'Pumpkin Pie Spice': 'pumpkin', 'Cheddar Jalapeno Scone': 'scone', 'Mango Mousse Cake': 'cupcake', 'Maple Pecan Brown Butter': 'nut', 'Flat Chocolate Chip Chookie': 'cookie', 'Lemon Curd': 'jar_lemon', 'Cream Cheese Frosting': 'swirl_pink', 'Pumpkin Cream Cheese Frosting': 'swirl_pumpkin', 'Anglesie Buttercream': 'butter', 'Earl Grey Paste': 'jar_tea', 'Chocolate Ganache': 'jar_choc', 'Caramel': 'drop', 'Mascarpone Cream': 'bowl', 'Milk Cream': 'milk', 'Plain Scone': 'scone', 'Strawberry Cream Cheese': 'strawberry', 'Blueberry Cream Cheese': 'blueberry', 'Gluten Free Cake': 'cake_gf', 'Sable': 'cookie', 'Macarons': 'macaron', 'Salt Bread': 'bread', 'Vegan Donut': 'donut', 'Apricot Ricotta Cake': 'cake_apricot', 'Earl Grey Fig Cake': 'cake_fig', 'Matcha Brownie': 'cupcake', 'Chocolate Espresso Snow Cap Cookies': 'cookie', 'Snickerdoodle Cookies': 'cookie', 'Fig Caramel Scone': 'scone', 'Churros': 'donut' };
+  const REC_ICON = { 'Dubai Chewy Ball': 'dubai', 'Pumpkin Pie Spice Muffin': 'pumpkin', 'Classic': 'madeleine', 'Dot Cake': 'cake_dot', 'Earl Grey': 'teacup', 'Ube': 'ube', 'Lemon Poppy': 'lemon', 'Chocolate': 'choco', 'Brown Butter': 'butter_brown', 'Matcha': 'matcha', 'Mugwort': 'leaf', 'Maple Pecan': 'nut', 'Pumpkin Pie Spice': 'pumpkin', 'Cheddar Jalapeno Scone': 'scone', 'Mango Mousse Cake': 'cupcake', 'Maple Pecan Brown Butter': 'nut', 'Flat Chocolate Chip Chookie': 'cookie', 'Lemon Curd': 'jar_lemon', 'Cream Cheese Frosting': 'swirl_pink', 'Pumpkin Cream Cheese Frosting': 'swirl_pumpkin', 'Anglesie Buttercream': 'butter', 'Earl Grey Paste': 'jar_tea', 'Chocolate Ganache': 'jar_choc', 'Caramel': 'drop', 'Mascarpone Cream': 'bowl', 'Milk Cream': 'milk', 'Plain Scone': 'scone', 'Strawberry Cream Cheese': 'strawberry', 'Blueberry Cream Cheese': 'blueberry', 'Gluten Free Cake': 'cake_gf', 'Sable': 'cookie', 'Macarons': 'macaron', 'Salt Bread': 'bread', 'Vegan Donut': 'donut', 'Apricot Ricotta Cake': 'cake_apricot', 'Earl Grey Fig Cake': 'cake_fig', 'Matcha Brownie': 'cupcake', 'Chocolate Espresso Snow Cap Cookies': 'cookie', 'Snickerdoodle Cookies': 'cookie', 'Fig Caramel Scone': 'scone', 'Churros': 'donut', 'Chocolate Churros Financier': 'cookie' };
   const recKey = name => REC_ICON[name] || 'book';
   const recIc = (name, px) => ic(recKey(name), px);
 
@@ -5476,8 +5479,15 @@
     else if (item.type === 'glutenfree') html = recGfCard(item);
     else html = recSimpleCard(item);
     if (item.star && !html.includes('rec-ver')) html = html.replace('</h3>', ' <span class="rec-ver"><button class="on">Ver 1 ★</button></span></h3>');   // finalized recipes with a single version
+    html += `<div class="proj-card"><h3>My Notes</h3><div class="proj-sub">Changes and ideas from baking this one. Saved on this device.</div>
+      <textarea id="recMyNotes" rows="4" style="width:100%;margin-top:8px" placeholder="What worked, what to change next time">${recNoteGet(recNoteKey(item)).replace(/&/g, '&amp;').replace(/</g, '&lt;')}</textarea></div>`;
     document.getElementById('recCard').innerHTML = html;
+    document.getElementById('recMyNotes').addEventListener('input', e => recNoteSet(recNoteKey(item), e.target.value));
   }
+  // Personal baking notes per recipe (this device only), keyed by section + recipe key/name.
+  const recNoteKey = it => recState.sec + ':' + (it.key || it.name);
+  function recNoteGet(k) { try { return (JSON.parse(localStorage.getItem('recipeNotes.v1') || '{}')[k]) || ''; } catch (e) { return ''; } }
+  function recNoteSet(k, v) { try { const o = JSON.parse(localStorage.getItem('recipeNotes.v1') || '{}'); if (v) o[k] = v; else delete o[k]; localStorage.setItem('recipeNotes.v1', JSON.stringify(o)); } catch (e) {} }
   document.getElementById('bakingRecipes').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
     const d = b.dataset;
