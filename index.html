@@ -1899,7 +1899,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.77.01 · Oct 13</div>
+<div class="ver-badge">v1.78.00 · Oct 13</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -5254,6 +5254,11 @@
       await fetchLedger(); return true;
     } catch { rcpToast('Could not reach the ledger'); return false; }
   }
+  // Receipt sizes can be typed in any common unit; the ledger stores g (weight) or ml (volume), so everything converts on save.
+  const UNIT_TO_BASE = { g: ['g', 1], kg: ['g', 1000], oz: ['g', 28.3495], lb: ['g', 453.592], ml: ['ml', 1], L: ['ml', 1000], 'fl oz': ['ml', 29.5735], tsp: ['ml', 4.92892], tbsp: ['ml', 14.7868], cup: ['ml', 236.588], pt: ['ml', 473.176], qt: ['ml', 946.353], gal: ['ml', 3785.41] };
+  const toBase = (amt, u) => { const c = UNIT_TO_BASE[u] || UNIT_TO_BASE.g; return { amt: Math.round(amt * c[1] * 100) / 100, unit: c[0] }; };
+  // Same price in the units people shop in: g items show per oz and per lb, ml items per fl oz and per L.
+  const perUnits = (u, unit) => unit === 'ml' ? `$${(u * 29.5735).toFixed(3)}/fl oz · $${(u * 1000).toFixed(2)}/L` : `$${(u * 28.3495).toFixed(3)}/oz · $${(u * 453.592).toFixed(2)}/lb`;
   function collectDraft() {
     const f = document.getElementById('rcpForm'); if (!f) return;
     rcpDraft = { vendor: f.querySelector('[data-r=vendor]').value, date: f.querySelector('[data-r=date]').value, tax: f.querySelector('[data-r=tax]').value, fees: f.querySelector('[data-r=fees]').value,
@@ -5268,12 +5273,12 @@
     const vendors = [...new Set(recs.map(r => r.vendor || 'Unassigned'))].sort((a, b) => a.localeCompare(b));
     const unitCost = l => l.amt ? l.price / l.amt : null;
     const rcpHtml = r => { const f = r.factor;
-      const lines = r.items.map(l => { const u = unitCost(l); return `<div class="cp-li"><span class="cp-n">${esc(l.item)}<small>${rFmt(l.amt)} ${l.unit}${u != null ? ` · $${(u * f).toFixed(4)}/${l.unit}` : ''}</small></span><span>${money(l.price)}</span><button class="cp-x" data-rm="${esc(l.id)}" title="Remove">✕</button></div>`; }).join('');
+      const lines = r.items.map(l => { const u = unitCost(l); return `<div class="cp-li"><span class="cp-n">${esc(l.item)}<small>${rFmt(l.amt)} ${l.unit}${u != null ? ` · ${perUnits(u * f, l.unit)}` : ''}</small></span><span>${money(l.price)}</span><button class="cp-x" data-rm="${esc(l.id)}" title="Remove">✕</button></div>`; }).join('');
       const ex = [...r.tax.map(l => ['Tax', l]), ...r.fees.map(l => ['Fees', l])].map(([t, l]) => `<div class="cp-li cp-tax"><span class="cp-n">${t}${l.note ? ' · ' + esc(l.note) : ''}</span><span>${money(l.price)}</span><button class="cp-x" data-rm="${esc(l.id)}" title="Remove">✕</button></div>`).join('');
       return `<div class="cp-rcp"><div class="cp-rh"><span>${esc(r.date || '')}${r.id.startsWith('seed-') ? ' · starting prices' : ''}</span><span>${r.extra ? `+${((f - 1) * 100).toFixed(1)}% tax/fees` : ''}</span></div>${lines}${ex}</div>`; };
     const d = rcpDraft;
     const dl = n => `<option value="${esc(n)}">`;
-    const lineHtml = l => `<div class="cp-ln"><input list="cpItems" data-f="item" placeholder="Item" value="${esc(l.item || '')}"><input type="number" inputmode="decimal" step="any" data-f="amt" placeholder="size" value="${esc(l.amt || '')}"><select data-f="unit" data-native><option ${l.unit === 'ml' ? '' : 'selected'}>g</option><option ${l.unit === 'ml' ? 'selected' : ''}>ml</option></select><input type="number" inputmode="decimal" step="any" data-f="price" placeholder="$" value="${esc(l.price || '')}"></div>`;
+    const lineHtml = l => `<div class="cp-ln"><input list="cpItems" data-f="item" placeholder="Item" value="${esc(l.item || '')}"><input type="number" inputmode="decimal" step="any" data-f="amt" placeholder="size" value="${esc(l.amt || '')}"><select data-f="unit" data-native>${Object.keys(UNIT_TO_BASE).map(k => `<option ${(l.unit || 'g') === k ? 'selected' : ''}>${k}</option>`).join('')}</select><input type="number" inputmode="decimal" step="any" data-f="price" placeholder="$" value="${esc(l.price || '')}"></div>`;
     const form = d ? `<div class="cp-form" id="rcpForm">
       <div class="cp-fr"><input list="cpVendors" data-r="vendor" placeholder="Vendor" value="${esc(d.vendor)}"><input type="date" data-r="date" value="${esc(d.date)}"></div>
       ${d.lines.map(lineHtml).join('')}
@@ -5295,7 +5300,7 @@
   async function saveReceipt() {
     collectDraft(); const d = rcpDraft; if (!d) return;
     const vendor = d.vendor.trim() || 'Unassigned', date = d.date || todayISO(), receipt = 'r' + Date.now().toString(36);
-    const lines = d.lines.filter(l => l.item.trim() && parseFloat(l.amt) > 0 && parseFloat(l.price) >= 0 && l.price !== '').map(l => ({ receipt, date, vendor, kind: 'item', item: l.item.trim(), amt: parseFloat(l.amt), unit: l.unit, price: parseFloat(l.price) }));
+    const lines = d.lines.filter(l => l.item.trim() && parseFloat(l.amt) > 0 && parseFloat(l.price) >= 0 && l.price !== '').map(l => ({ receipt, date, vendor, kind: 'item', item: l.item.trim(), ...toBase(parseFloat(l.amt), l.unit), price: parseFloat(l.price) }));
     if (!lines.length) { rcpToast('Add at least one item with size and price'); return; }
     if (parseFloat(d.tax) > 0) lines.push({ receipt, date, vendor, kind: 'tax', price: parseFloat(d.tax) });
     if (parseFloat(d.fees) > 0) lines.push({ receipt, date, vendor, kind: 'fee', price: parseFloat(d.fees) });
