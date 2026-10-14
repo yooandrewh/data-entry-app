@@ -2126,7 +2126,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.105.01 · Oct 14, 3:25 PM</div>
+<div class="ver-badge">v1.105.02 · Oct 14, 3:40 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -6768,7 +6768,7 @@
       const f = bsFind(b.key); if (!f) return null;
       if (f.it.type === 'dubai') {   // filling, then the outer layer as its own section
         const fl = f.it.rows.map(r => [r[0], r[1] * b.b]), ou = f.it.outer.map(r => [r[0], r[1] * (f.it.outerTimes || 1) * b.b]);
-        [...fl, ...ou].forEach(([n, g]) => { const c = bsCanon(n), t = totals.get(c) || { g: 0, uses: new Set() }; t.g += g; t.uses.add(b.key); totals.set(c, t); });
+        [...fl, ...ou].forEach(([n, g]) => { const c = bsCanon(n), t = totals.get(c) || { g: 0, uses: new Set() }; t.g += g; t.uses.add(b.key + '#' + (b.ver == null ? '' : b.ver)); totals.set(c, t); });
         return { title: costItemName(f.sec, f.it), note: `${rFmt(b.b)} batch${b.b === 1 ? '' : 'es'} · ≈ ${rFmt(b.b * f.it.yield)} pcs`, groups: [fl.map(([n, g]) => bsLine(n, g))], subs: [{ label: 'Outer layer', lines: ou.map(([n, g]) => bsLine(n, g)) }] };
       }
       // Madeleines / muffins: the batter is its own list; syrup, glaze and topping go underneath as separate sections (not part of the batter).
@@ -6780,7 +6780,7 @@
       const numr = r => [r[0], typeof r[1] === 'number' ? r[1] : lblGrams(r[1]) || parseFloat(r[1]) || 0];
       const subs = split ? [['Simple syrup', f.it.syrup], ['Glaze', f.it.glaze], ['Topping', (f.it.versions && vl && vl.topping) || f.it.topping]].filter(([, l]) => l && l.length)
         .map(([label, l]) => ({ label, rows: l.map(numr).map(r => [r[0], label === 'Topping' ? r[1] : r[1] * fkb]).filter(r => r[1] > 0) })) : [];
-      [...rows, ...subs.flatMap(sb => sb.rows)].forEach(([n, g]) => { const c = bsCanon(n), t = totals.get(c) || { g: 0, uses: new Set() }; t.g += g * b.b; t.uses.add(b.key); totals.set(c, t); });
+      [...rows, ...subs.flatMap(sb => sb.rows)].forEach(([n, g]) => { const c = bsCanon(n), t = totals.get(c) || { g: 0, uses: new Set() }; t.g += g * b.b; t.uses.add(b.key + '#' + (b.ver == null ? '' : b.ver)); totals.set(c, t); });
       const groups = [[], [], []];
       rows.forEach(([n, g]) => { const r = recMadRank(String(n)); groups[r <= 2 ? 0 : r <= 13 ? 1 : 2].push(bsLine(n, g * b.b)); });
       const y = (f.it.vers && vl && vl.yield > 0 ? vl.yield : 0) || costDefaultYield(f.sec, f.it);
@@ -6825,7 +6825,11 @@
   document.getElementById('bsPick').addEventListener('change', e => {
     const key = e.target.value; if (!key) return;
     const ex = bakeSheet.find(b => b.key === key), proj = bsProjectedBatches(key);
-    if (ex) ex.b += 1; else bakeSheet.push({ key, b: proj || 1, plan: !!proj });
+    const f = bsFind(key), vs = f && bsVers(f.it);
+    // A recipe with versions can be planned once per version (Churros Ver A and Ver B); otherwise adding again adds a batch.
+    const free = ex && vs && vs.length > 1 ? vs.findIndex((_, i) => !bakeSheet.some(b => b.key === key && bsVerOf(f.it, b) === i)) : -1;
+    if (free >= 0) bakeSheet.push({ key, b: 1, ver: free, manual: true });
+    else if (ex) ex.b += 1; else bakeSheet.push({ key, b: proj || 1, plan: !!proj });
     saveBakeSheet(); renderBakeSheet();
   });
   // ---- Edit which recipes are "this season" ----
