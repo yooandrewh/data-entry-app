@@ -2097,7 +2097,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.97.00 · Oct 13, 11:13 PM</div>
+<div class="ver-badge">v1.97.01 · Oct 14, 9:40 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -3324,7 +3324,7 @@
     order.sort(); if (!asc) order.reverse();
     return order.map(d => ({ date: d, items: map[d].slice().sort((a, b) => (((a.start || '99:99') + a.createdAt) < ((b.start || '99:99') + b.createdAt) ? -1 : 1) * (asc ? 1 : -1)) }));
   }
-  const lgYield = item => { const r = (lgData.production || []).filter(e => e.item === item && e.batchSize > 0).sort((a, b) => b.createdAt - a.createdAt)[0]; return r ? r.batchSize : ''; };
+  const lgYield = item => { const r = (lgData.production || []).filter(e => e.item === item && e.batchSize > 0).sort((a, b) => b.createdAt - a.createdAt)[0]; return r ? r.batchSize : ({ 'Pumpkin Muffin': 10, 'Blueberry Muffin': 6 }[item] || (item ? 12 : '')); };
   function lgField(f) {
     const v = f.def ? new Date().toLocaleDateString('en-CA') : (f.defTime ? lgNowTime() : '');
     if (f.t === 'area') return `<label>${f.l}<textarea name="${f.k}"></textarea></label>`;
@@ -3442,13 +3442,18 @@
     box.addEventListener('submit', e => { e.preventDefault(); lgSubmit(e.target); });
     box.addEventListener('input', e => {
       const t = e.target;
-      if (t.closest('#lgForm') && lgTab === 'production') lgCalc();
+      if (t.closest('#lgForm') && lgTab === 'production') {
+        const f = t.form;
+        if (t.name === 'batch') t.dataset.manual = t.value ? '1' : '';
+        else if (t.name === 'target' && f.item.value && !f.batch.dataset.manual) f.batch.value = lgYield(f.item.value) || f.batch.value;
+        lgCalc();
+      }
       if (t.dataset && t.dataset.act === 'actual') lgDraft[t.dataset.id] = t.value;
       if (t.id === 'lgFrom' || t.id === 'lgTo') { lgRange = { from: document.getElementById('lgFrom').value, to: document.getElementById('lgTo').value }; lgPaint(); }
     });
     box.addEventListener('change', e => {
       const t = e.target;
-      if (t.name === 'item' && lgTab === 'production') { const f = t.form, y = lgYield(t.value); if (y && !f.batch.value) { f.batch.value = y; lgCalc(); } }
+      if (t.name === 'item' && lgTab === 'production') { const f = t.form, y = lgYield(t.value); if (y && !f.batch.dataset.manual) { f.batch.value = y; lgCalc(); } }
       if (t.name === 'dest') t.form.elements.destOther.hidden = t.value !== '__other';
     });
   })();
