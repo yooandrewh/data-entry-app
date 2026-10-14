@@ -472,3 +472,16 @@ First entry: **Mango Mousse Cake** (`key: 'mangomousse'`, `type: 'simple'`, ~10 
 optional `velvet` spray note; `rows` is what costing / the buy list / the bake sheet read (frozen mango is counted once, the puree is derived from it). Its ingredients with no price yet
 (Frozen Mango, Gelatin, Pectin NH, Cocoa Butter, Food Coloring, White Chocolate Couverture) are in `DEFAULT_PRICES` with `price: null`, so they sit under "Needs a price" — don't invent prices.
 It is not a madeleine and not in `REC_MADS` or `SALES_FLAVORS`.
+
+
+## Price ledger + approved-only costs (2026-10-13)
+
+Costs read prices from the sheet's **Ledger** tab via `api/ledger.js` (`Id, Receipt, Date, Vendor, Kind item|tax|fee, Item, Amount, Unit g|ml, Price, Note, Link, Deleted, Approved`).
+**Only lines with Approved = TRUE count** (`buildCostPrices()`); there is no built-in fallback any more. `DEFAULT_PRICES` is only the seed-import source. Unapproved items show
+"Needs approval" under Needs an approved price. Newest purchase date per canonical item (`costCanon`) wins, then sheet order. A receipt's tax + fees are spread over its items
+(factor = 1 + extra ÷ item subtotal). California groceries are untaxed, so grocery receipts carry no tax line.
+
+- GET is open. POST needs header `x-ledger-code` = env `LEDGER_CODE` (503 if unset, 401 if wrong). Actions: `add` (lines start unapproved unless `approved: true`), `remove` (soft delete),
+  `approve` (`ids`, `approved: false` clears). Max 80 lines per call. Andrew doesn't log receipts in the app; Claude writes them through the API (code in `~/.kairos-ledger-code`, never printed).
+- Sizes are typed in any unit (kg, oz, lb, L, fl oz, cup, tbsp, tsp, pt, qt, gal) and converted to g/ml on save (`UNIT_TO_BASE`). No weight↔volume conversion: liquids cost as 1 ml = 1 g.
+- Costs follow each recipe's latest version. Recipes can be active or disabled; Needs-a-price lists are split that way. Version numbers: major = redesign, minor = feature, patch = fix (see above).
