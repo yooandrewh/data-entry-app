@@ -392,6 +392,18 @@
   .cp-meta { grid-column: 1 / -1; font-size: var(--fs-caption); color: var(--muted); }
   .cp-ins { display: flex; align-items: center; gap: 6px; font-size: var(--fs-caption); color: var(--muted); }
   .cp-ins input { width: 5em; font-family: inherit; font-size: var(--fs-body); color: var(--text); background: var(--field); border: 1px solid var(--sep); border-radius: 8px; padding: 6px 8px; text-align: right; }
+  .cp-btn { font-family: inherit; font-size: var(--fs-caption); padding: 7px 12px; border: 1px solid var(--sep); background: transparent; color: var(--text); margin-right: 6px; }
+  .cp-btn.pri { background: var(--accent); color: #fff; border-color: var(--accent); }
+  .cp-fr { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+  .cp-fr input { flex: 1; min-width: 0; font-family: inherit; font-size: var(--fs-body); padding: 7px 8px; border: 1px solid var(--sep); background: var(--field); color: var(--text); }
+  .cp-ln { display: grid; grid-template-columns: 1fr 4.5em 3.6em 4.5em; gap: 4px; margin-bottom: 6px; }
+  .cp-ln input, .cp-ln select { min-width: 0; font-family: inherit; font-size: var(--fs-body); padding: 7px 6px; border: 1px solid var(--sep); background: var(--field); color: var(--text); }
+  .cp-rcp { background: var(--card); padding: 8px 12px; margin-bottom: 8px; }
+  .cp-rh { display: flex; justify-content: space-between; font-size: var(--fs-micro); color: var(--muted); margin-bottom: 4px; }
+  .cp-li { display: grid; grid-template-columns: 1fr auto 1.6em; gap: 8px; align-items: center; padding: 4px 0; border-top: 1px solid var(--sep); font-size: var(--fs-caption); }
+  .cp-li small { display: block; color: var(--muted); font-size: var(--fs-micro); }
+  .cp-tax { color: var(--muted); }
+  .cp-x { background: none; border: 0; color: var(--muted); font-size: var(--fs-body); cursor: pointer; }
   .cp-row.need { box-shadow: inset 3px 0 0 var(--orange), var(--shadow); }
 
 
@@ -1887,7 +1899,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.76.03 · Oct 13</div>
+<div class="ver-badge">v1.77.00 · Oct 13</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -4719,8 +4731,13 @@
   try { const v = JSON.parse(localStorage.getItem('seasonal.v1')); if (Array.isArray(v)) SEASONAL = v.map(k => k === 'mad:Pumpkin Pie Spice' ? 'other:pumpkinmuffin' : k); if (!localStorage.getItem('seasonalDubai1')) { if (!SEASONAL.includes('other:dubaiball')) SEASONAL = [...SEASONAL, 'other:dubaiball']; localStorage.setItem('seasonal.v1', JSON.stringify(SEASONAL)); localStorage.setItem('seasonalDubai1', '1'); } if (!localStorage.getItem('seasonalBlueberry1')) { if (!SEASONAL.includes('other:blueberrymuffin')) SEASONAL = [...SEASONAL, 'other:blueberrymuffin']; localStorage.setItem('seasonal.v1', JSON.stringify(SEASONAL)); localStorage.setItem('seasonalBlueberry1', '1'); } } catch {}
   const seasonRank = (sec, it) => { const i = SEASONAL.indexOf(`${sec}:${it.key || it.name}`); return i < 0 ? 99 : i; };
   const isSeasonal = (sec, it) => seasonRank(sec, it) < 99;
+  // Active items (Andrew, 2026-10-13): Maple Pecan, Lemon Poppy, Sea Salt (the Classic recipe) and the Pumpkin + Blueberry muffins.
+  // Everything else is "disabled": still viewable everywhere (Recipes, Costs), just listed below the active ones.
+  const ACTIVE_ITEMS = ['mad:Maple Pecan', 'mad:Lemon Poppy', 'mad:Classic', 'other:pumpkinmuffin', 'other:blueberrymuffin'];
+  const isActive = (sec, it) => ACTIVE_ITEMS.includes(`${sec}:${it.key || it.name}`);
+  const activeFirst = (sec, arr) => [...arr].sort((a, b) => (isActive(sec, a) ? 0 : 1) - (isActive(sec, b) ? 0 : 1));
   const seasonalFirst = (sec, arr) => [...arr].sort((a, b) => seasonRank(sec, a) - seasonRank(sec, b));   // stable: the rest keep their order
-  function recList() { const sec = recState.sec; return seasonalFirst(sec, sec === 'mad' ? REC_MADS : sec === 'fill' ? REC_FILLINGS : sec === 'scone' ? REC_SCONES : sec === 'test' ? REC_TEST : REC_OTHER); }
+  function recList() { const sec = recState.sec; return activeFirst(sec, sec === 'mad' ? REC_MADS : sec === 'fill' ? REC_FILLINGS : sec === 'scone' ? REC_SCONES : sec === 'test' ? REC_TEST : REC_OTHER); }
   const rFmt = n => typeof n === 'string' ? n : String(Math.round(n * 10) / 10);
   // Scale the FIRST number in a string (glaze amounts, ratios).
   const rScaleStr = (str, m) => (!m || m === 1) ? str : String(str).replace(/(\d+(?:\.\d+)?)/, (x, num) => rFmt(parseFloat(num) * m));
@@ -4903,10 +4920,9 @@
     if (recState.idx >= list.length) recState.idx = 0;
     const pick = document.getElementById('recPick');
     const opt = (it, i) => `<option value="${i}" data-icon="${recKey(it.name)}">${it.name}</option>`;
-    const nSeason = list.filter(it => isSeasonal(recState.sec, it)).length;
-    pick.innerHTML = nSeason && nSeason < list.length
-      ? `<optgroup label="This season">${list.slice(0, nSeason).map((it, i) => opt(it, i)).join('')}</optgroup><optgroup label="All recipes">${list.slice(nSeason).map((it, i) => opt(it, i + nSeason)).join('')}</optgroup>`
-      : list.map(opt).join('');
+    const nAct = list.filter(it => isActive(recState.sec, it)).length;
+    pick.innerHTML = (nAct ? `<optgroup label="Active">${list.slice(0, nAct).map((it, i) => opt(it, i)).join('')}</optgroup>` : '')
+      + (nAct < list.length ? `<optgroup label="Disabled (view only)">${list.slice(nAct).map((it, i) => opt(it, i + nAct)).join('')}</optgroup>` : '');
     pick.value = recState.idx;
     const item = list[recState.idx];
     let html;
@@ -5024,7 +5040,7 @@
     'scone:plainscone': { yield: 797 / 90, toppings: [{ label: 'Strawberry Cream Cheese filling (60g)', refRecipe: { section: 'scone', key: 'strawberrycc', grams: 60 } }] },
     'scone:strawberrycc': { yield: 1368 / 60 },
   };
-  const COST_SECTIONS = [['mad', 'Madeleines', () => seasonalFirst('mad', REC_MADS)], ['fill', 'Fillings', () => seasonalFirst('fill', REC_FILLINGS)], ['scone', 'Scones', () => seasonalFirst('scone', REC_SCONES)], ['other', 'Other', () => seasonalFirst('other', REC_OTHER)], ['test', 'Testing', () => REC_TEST]];
+  const COST_SECTIONS = [['mad', 'Madeleines', () => activeFirst('mad', REC_MADS)], ['fill', 'Fillings', () => activeFirst('fill', REC_FILLINGS)], ['scone', 'Scones', () => activeFirst('scone', REC_SCONES)], ['other', 'Other', () => activeFirst('other', REC_OTHER)], ['test', 'Testing', () => REC_TEST]];
   const costItemKey = (sec, it) => `${sec}:${it.key || it.name}`;
   const costItemName = (sec, it) => sec === 'mad' ? (it.title || it.name + ' Madeleine') : (it.type === 'sable' ? 'Sable Cookies' : it.name);
 
@@ -5039,14 +5055,48 @@
     return hit || titleCase(base);
   }
   let costPrices = {}, costYields = {};
-  function loadCosts() {
-    let stored = {}; try { stored = JSON.parse(localStorage.getItem('costPrices.v1')) || {}; } catch {}
-    try { costYields = JSON.parse(localStorage.getItem('costYields.v1')) || {}; } catch { costYields = {}; }
-    costPrices = {};
-    Object.keys(DEFAULT_PRICES).forEach(k => { costPrices[k] = Object.assign({ unit: 'g', amt: null, price: null }, DEFAULT_PRICES[k], stored[k] || {}); });
-    Object.keys(stored).forEach(k => { if (!costPrices[k]) costPrices[k] = Object.assign({ unit: 'g', amt: null, price: null }, stored[k]); });
+  // Price ledger (Google Sheet "Ledger" tab via /api/ledger). Where the ledger has a purchase for an ingredient, the
+  // newest one wins and its receipt's tax + fees are spread across the receipt's items; DEFAULT_PRICES is the fallback.
+  let LEDGER = null, ledgerErr = '', ledgerBusy = false;
+  const vendorOf = p => { const s = ((p.link || '') + ' ' + (p.note || '')).toLowerCase();
+    return /costco/.test(s) ? 'Costco' : /target/.test(s) ? 'Target' : /amazon/.test(s) ? 'Amazon' : /instacart|super king/.test(s) ? 'Instacart' : /pastrydepot|pastry depot/.test(s) ? 'Pastry Depot' : /kerrygold/.test(s) ? 'Kerrygold' : 'Unassigned'; };
+  function ledgerReceipts() {   // [{id, vendor, date, items:[], tax, fees, factor}]
+    const by = new Map();
+    (LEDGER || []).forEach(l => {
+      if (!by.has(l.receipt)) by.set(l.receipt, { id: l.receipt, vendor: l.vendor, date: l.date, items: [], tax: [], fees: [] });
+      const r = by.get(l.receipt);
+      if (l.kind === 'item') r.items.push(l); else if (l.kind === 'tax') r.tax.push(l); else r.fees.push(l);
+      if (l.date > r.date) r.date = l.date;
+    });
+    const out = [...by.values()];
+    out.forEach(r => { const sub = r.items.reduce((t, l) => t + (l.price || 0), 0), extra = [...r.tax, ...r.fees].reduce((t, l) => t + (l.price || 0), 0); r.sub = sub; r.extra = extra; r.factor = sub > 0 ? 1 + extra / sub : 1; });
+    return out;
   }
-  const saveCosts = () => { try { localStorage.setItem('costPrices.v1', JSON.stringify(costPrices)); localStorage.setItem('costYields.v1', JSON.stringify(costYields)); } catch {} };
+  function buildCostPrices() {
+    costPrices = {};
+    Object.keys(DEFAULT_PRICES).forEach(k => { costPrices[k] = Object.assign({ unit: 'g', amt: null, price: null }, DEFAULT_PRICES[k], { vendor: vendorOf(DEFAULT_PRICES[k]) }); });
+    const best = {};
+    ledgerReceipts().forEach(r => r.items.forEach(l => {
+      const k = costCanon(l.item), cur = best[k];
+      if (!cur || l.date > cur.l.date || (l.date === cur.l.date && l.idx > cur.l.idx)) best[k] = { l, f: r.factor };
+    }));
+    Object.keys(best).forEach(k => { const { l, f } = best[k];
+      costPrices[k] = { unit: l.unit, amt: l.amt, price: l.price * f, base: l.price, link: l.link, note: l.note, vendor: l.vendor, date: l.date, ledger: true }; });
+  }
+  function loadCosts() {
+    try { costYields = JSON.parse(localStorage.getItem('costYields.v1')) || {}; } catch { costYields = {}; }
+    buildCostPrices();
+    if (LEDGER === null && !ledgerBusy) fetchLedger();
+  }
+  async function fetchLedger() {
+    ledgerBusy = true;
+    try { const r = await fetch('/api/ledger'); if (!r.ok) throw new Error(r.status); const j = await r.json(); LEDGER = (j.rows || []).map((l, i) => Object.assign(l, { idx: i })); ledgerErr = ''; }
+    catch (e) { ledgerErr = 'Ledger offline: showing the built-in starting prices.'; if (LEDGER === null) LEDGER = []; }
+    ledgerBusy = false;
+    buildCostPrices();
+    if (!document.getElementById('bakingCosts').hidden) renderCosts();
+  }
+  const saveCosts = () => { try { localStorage.setItem('costYields.v1', JSON.stringify(costYields)); } catch {} };
 
   // Base-recipe rows [name, grams] for one item (first version; the cost is per 1 batch).
   function costRows(sec, it) {
@@ -5139,8 +5189,9 @@
   }
   function renderCostCard() {
     const pick = document.getElementById('costPick');
-    pick.innerHTML = COST_SECTIONS.map(([sec, label, get]) =>
-      `<optgroup label="${label}">${get().map(it => `<option value="${esc(costItemKey(sec, it))}" data-icon="${recKey(it.name)}">${esc(costItemName(sec, it))}</option>`).join('')}</optgroup>`).join('');
+    const copt = (sec, it) => `<option value="${esc(costItemKey(sec, it))}" data-icon="${recKey(it.name)}">${esc(costItemName(sec, it))}</option>`;
+    pick.innerHTML = `<optgroup label="Active">${COST_SECTIONS.map(([sec, , get]) => get().filter(it => isActive(sec, it)).map(it => copt(sec, it)).join('')).join('')}</optgroup>`
+      + COST_SECTIONS.map(([sec, label, get]) => { const d = get().filter(it => !isActive(sec, it)); return d.length ? `<optgroup label="Disabled · ${label}">${d.map(it => copt(sec, it)).join('')}</optgroup>` : ''; }).join('');
     if (![...pick.options].some(o => o.value === costSel)) costSel = pick.options[0].value;
     pick.value = costSel;
     const [sec, key] = costSel.split(/:(.*)/s);
@@ -5178,7 +5229,7 @@
       <div class="proj-sub">ingredient cost for 1 batch of the base recipe</div>
       <div class="cost-sec"><div class="cost-sub">Ingredients · 1 batch</div>
       ${lines}
-      ${missing ? '<div class="cost-miss" style="margin-top:8px">Some ingredients have no price yet — add them under Ingredient prices.</div>' : ''}
+      ${missing ? '<div class="cost-miss" style="margin-top:8px">Some ingredients have no price yet — add them under Ingredient prices (Add receipt).</div>' : ''}
       <div class="proj-row"><span class="k cost-total">Batch cost</span><span class="cost-total">${missing ? '—' : '$' + batch.toFixed(2)}</span></div></div>
       <div class="cost-sec"><div class="cost-sub">Per item</div>
       <div class="proj-row"><span class="k">Pieces per batch</span><span><input class="cost-in" type="number" inputmode="decimal" step="any" min="0" placeholder="?" value="${yv === '' ? '' : rFmt(yv)}" data-cyield="1"></span></div>
@@ -5187,21 +5238,87 @@
         <div class="proj-row"><span class="k cost-total">Cost per item, finished</span><span class="cost-total">${finished != null ? money(finished) : '—'}</span></div>` : ''}</div>
     </div>`;
   }
-  function renderCostPrices() {
-    const names = costAllNames().sort((a, b) => a.localeCompare(b));
-    const has = n => costPrices[n] && costPrices[n].amt && costPrices[n].price;
-    const row = n => {
-      const p = costPrices[n] || { unit: 'g', amt: null, price: null }, u = has(n) ? p.price / p.amt : null;
-      return `<div class="cp-row ${has(n) ? '' : 'need'}" data-cname="${esc(n)}">
-        <div class="cp-name">${esc(n)}${p.link ? `<a href="${esc(p.link)}" target="_blank" rel="noopener noreferrer">source</a>` : ''}</div>
-        <div class="cp-ins"><input type="number" inputmode="decimal" step="any" placeholder="size" value="${p.amt != null ? p.amt : ''}" data-cf="amt">${p.unit}<span>$</span><input type="number" inputmode="decimal" step="any" placeholder="0.00" value="${p.price != null ? p.price : ''}" data-cf="price"></div>
-        <div class="cp-meta">${u != null ? `$${u.toFixed(4)} per ${p.unit}` : 'Enter package size and price'}${p.note ? ` · ${esc(p.note)}` : ''}</div></div>`;
-    };
-    const need = names.filter(n => !has(n)), done = names.filter(has);
-    document.getElementById('costPrices').innerHTML = `
-      ${need.length ? `<div class="cp-group">Needs a price (${need.length})</div>${need.map(row).join('')}` : ''}
-      <div class="cp-group">Priced (${done.length})</div>${done.map(row).join('')}`;
+  // ----- Price ledger view: vendors as headers, receipts and their items underneath, tax + fees at the end of each receipt -----
+  let rcpDraft = null, ledgerOpen = {};
+  const activeNames = () => { const s = new Set(); ACTIVE_ITEMS.forEach(k => { const [sec, key] = k.split(/:(.*)/s); const sc = COST_SECTIONS.find(x => x[0] === sec); const it = sc && sc[2]().find(x => (x.key || x.name) === key); if (it) costRows(sec, it).forEach(r => s.add(costCanon(r[0]))); }); return s; };
+  const todayISO = () => new Date().toLocaleDateString('en-CA');
+  const ledgerCode = () => { let c = ''; try { c = localStorage.getItem('ledgerCode') || ''; } catch {} if (!c) { c = (prompt('Ledger code (needed once on this device)') || '').trim(); if (c) try { localStorage.setItem('ledgerCode', c); } catch {} } return c; };
+  async function ledgerPost(body) {
+    const code = ledgerCode(); if (!code) return false;
+    try {
+      const r = await fetch('/api/ledger', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-ledger-code': code }, body: JSON.stringify(body) });
+      const j = await r.json().catch(() => ({}));
+      if (r.status === 401) { try { localStorage.removeItem('ledgerCode'); } catch {} rcpToast('Wrong ledger code'); return false; }
+      if (r.status === 503) { rcpToast('Ledger writes are off: set LEDGER_CODE in Vercel'); return false; }
+      if (!r.ok) { rcpToast(j.error || 'Could not save'); return false; }
+      await fetchLedger(); return true;
+    } catch { rcpToast('Could not reach the ledger'); return false; }
   }
+  function collectDraft() {
+    const f = document.getElementById('rcpForm'); if (!f) return;
+    rcpDraft = { vendor: f.querySelector('[data-r=vendor]').value, date: f.querySelector('[data-r=date]').value, tax: f.querySelector('[data-r=tax]').value, fees: f.querySelector('[data-r=fees]').value,
+      lines: [...f.querySelectorAll('.cp-ln')].map(d => ({ item: d.querySelector('[data-f=item]').value, amt: d.querySelector('[data-f=amt]').value, unit: d.querySelector('[data-f=unit]').value, price: d.querySelector('[data-f=price]').value })) };
+  }
+  function renderCostPrices() {
+    const act = activeNames(), has = n => costPrices[n] && costPrices[n].amt && costPrices[n].price;
+    const names = costAllNames().sort((a, b) => a.localeCompare(b));
+    const need = names.filter(n => !has(n)), needA = need.filter(n => act.has(n)), needO = need.filter(n => !act.has(n));
+    const needRow = n => `<div class="cp-row need"><div class="cp-name">${esc(n)}</div><button class="cp-btn" data-addprice="${esc(n)}">Add price</button></div>`;
+    const recs = ledgerReceipts().sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+    const vendors = [...new Set(recs.map(r => r.vendor || 'Unassigned'))].sort((a, b) => a.localeCompare(b));
+    const unitCost = l => l.amt ? l.price / l.amt : null;
+    const rcpHtml = r => { const f = r.factor;
+      const lines = r.items.map(l => { const u = unitCost(l); return `<div class="cp-li"><span class="cp-n">${esc(l.item)}<small>${rFmt(l.amt)} ${l.unit}${u != null ? ` · $${(u * f).toFixed(4)}/${l.unit}` : ''}</small></span><span>${money(l.price)}</span><button class="cp-x" data-rm="${esc(l.id)}" title="Remove">✕</button></div>`; }).join('');
+      const ex = [...r.tax.map(l => ['Tax', l]), ...r.fees.map(l => ['Fees', l])].map(([t, l]) => `<div class="cp-li cp-tax"><span class="cp-n">${t}${l.note ? ' · ' + esc(l.note) : ''}</span><span>${money(l.price)}</span><button class="cp-x" data-rm="${esc(l.id)}" title="Remove">✕</button></div>`).join('');
+      return `<div class="cp-rcp"><div class="cp-rh"><span>${esc(r.date || '')}${r.id.startsWith('seed-') ? ' · starting prices' : ''}</span><span>${r.extra ? `+${((f - 1) * 100).toFixed(1)}% tax/fees` : ''}</span></div>${lines}${ex}</div>`; };
+    const d = rcpDraft;
+    const dl = n => `<option value="${esc(n)}">`;
+    const lineHtml = l => `<div class="cp-ln"><input list="cpItems" data-f="item" placeholder="Item" value="${esc(l.item || '')}"><input type="number" inputmode="decimal" step="any" data-f="amt" placeholder="size" value="${esc(l.amt || '')}"><select data-f="unit" data-native><option ${l.unit === 'ml' ? '' : 'selected'}>g</option><option ${l.unit === 'ml' ? 'selected' : ''}>ml</option></select><input type="number" inputmode="decimal" step="any" data-f="price" placeholder="$" value="${esc(l.price || '')}"></div>`;
+    const form = d ? `<div class="cp-form" id="rcpForm">
+      <div class="cp-fr"><input list="cpVendors" data-r="vendor" placeholder="Vendor" value="${esc(d.vendor)}"><input type="date" data-r="date" value="${esc(d.date)}"></div>
+      ${d.lines.map(lineHtml).join('')}
+      <div class="cp-fr"><button class="cp-btn" data-rcp="line">+ line</button></div>
+      <div class="cp-fr"><input type="number" inputmode="decimal" step="any" data-r="tax" placeholder="Tax $" value="${esc(d.tax)}"><input type="number" inputmode="decimal" step="any" data-r="fees" placeholder="Fees / delivery $" value="${esc(d.fees)}"></div>
+      <div class="cp-fr"><button class="cp-btn pri" data-rcp="save">Save receipt</button><button class="cp-btn" data-rcp="cancel">Cancel</button></div>
+      <datalist id="cpVendors">${vendors.concat(['Costco', 'Target', 'Amazon', 'Instacart', 'Pastry Depot']).filter((v, i, a) => a.indexOf(v) === i).map(dl).join('')}</datalist>
+      <datalist id="cpItems">${names.map(dl).join('')}</datalist></div>` : '';
+    const seeded = (LEDGER || []).some(l => l.receipt.startsWith('seed-'));
+    document.getElementById('costPrices').innerHTML = `
+      ${ledgerErr ? `<div class="cost-miss" style="margin:8px 4px">${esc(ledgerErr)}</div>` : ''}
+      <div class="cp-fr" style="margin:8px 0">${d ? '' : '<button class="cp-btn pri" data-rcp="new">Add receipt</button>'}${!seeded && LEDGER && !ledgerErr ? '<button class="cp-btn" data-rcp="seed">Import starting prices</button>' : ''}</div>
+      ${form}
+      ${needA.length ? `<div class="cp-group">Needs a price · active recipes (${needA.length})</div>${needA.map(needRow).join('')}` : ''}
+      ${needO.length ? `<div class="cp-group">Needs a price · disabled recipes (${needO.length})</div>${needO.map(needRow).join('')}` : ''}
+      ${vendors.map(v => `<div class="cp-group">${esc(v)}</div>${recs.filter(r => (r.vendor || 'Unassigned') === v).map(rcpHtml).join('')}`).join('')}
+      ${!recs.length ? `<div class="cp-group">Built-in prices</div>${names.filter(has).map(n => `<div class="cp-row"><div class="cp-name">${esc(n)}</div><div class="cp-meta">$${(costPrices[n].price / costPrices[n].amt).toFixed(4)} per ${costPrices[n].unit}</div></div>`).join('')}` : ''}`;
+  }
+  async function saveReceipt() {
+    collectDraft(); const d = rcpDraft; if (!d) return;
+    const vendor = d.vendor.trim() || 'Unassigned', date = d.date || todayISO(), receipt = 'r' + Date.now().toString(36);
+    const lines = d.lines.filter(l => l.item.trim() && parseFloat(l.amt) > 0 && parseFloat(l.price) >= 0 && l.price !== '').map(l => ({ receipt, date, vendor, kind: 'item', item: l.item.trim(), amt: parseFloat(l.amt), unit: l.unit, price: parseFloat(l.price) }));
+    if (!lines.length) { rcpToast('Add at least one item with size and price'); return; }
+    if (parseFloat(d.tax) > 0) lines.push({ receipt, date, vendor, kind: 'tax', price: parseFloat(d.tax) });
+    if (parseFloat(d.fees) > 0) lines.push({ receipt, date, vendor, kind: 'fee', price: parseFloat(d.fees) });
+    if (await ledgerPost({ action: 'add', lines })) { rcpDraft = null; renderCostPrices(); rcpToast('Receipt saved'); }
+  }
+  async function seedLedger() {
+    if (!confirm('Copy the built-in starting prices into the ledger?')) return;
+    const by = {};
+    Object.keys(DEFAULT_PRICES).forEach(k => { const p = DEFAULT_PRICES[k]; if (!p.price || !p.amt) return; const v = vendorOf(p); (by[v] = by[v] || []).push({ receipt: 'seed-' + v.toLowerCase().replace(/\W+/g, '-'), date: '2026-01-01', vendor: v, kind: 'item', item: k, amt: p.amt, unit: p.unit === 'ml' ? 'ml' : 'g', price: p.price, note: p.note || '', link: p.link || '' }); });
+    for (const v of Object.keys(by)) for (let i = 0; i < by[v].length; i += 80) { if (!(await ledgerPost({ action: 'add', lines: by[v].slice(i, i + 80) }))) return; }
+    renderCostPrices(); rcpToast('Starting prices imported');
+  }
+  document.getElementById('costPrices').addEventListener('click', e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.addprice) { rcpDraft = { vendor: '', date: todayISO(), tax: '', fees: '', lines: [{ item: b.dataset.addprice, unit: 'g' }] }; renderCostPrices(); const f = document.getElementById('rcpForm'); if (f) f.scrollIntoView({ block: 'center' }); return; }
+    if (b.dataset.rm) { if (confirm('Remove this line from the ledger?')) ledgerPost({ action: 'remove', ids: [b.dataset.rm] }).then(() => renderCostPrices()); return; }
+    const a = b.dataset.rcp; if (!a) return;
+    if (a === 'new') { rcpDraft = { vendor: '', date: todayISO(), tax: '', fees: '', lines: [{ unit: 'g' }, { unit: 'g' }, { unit: 'g' }] }; renderCostPrices(); }
+    else if (a === 'line') { collectDraft(); rcpDraft.lines.push({ unit: 'g' }); renderCostPrices(); }
+    else if (a === 'cancel') { rcpDraft = null; renderCostPrices(); }
+    else if (a === 'save') saveReceipt();
+    else if (a === 'seed') seedLedger();
+  });
   document.getElementById('costTab').addEventListener('click', e => { const b = e.target.closest('button'); if (b) { costTab = b.dataset.ctab; renderCosts(); } });
   document.getElementById('costPick').addEventListener('change', e => { costSel = e.target.value; renderCostCard(); });
   document.getElementById('bakingCosts').addEventListener('change', e => {
@@ -5215,11 +5332,6 @@
       saveLab(); renderCostCard(); return;
     }
     if (y) { const n = parseFloat(y.value); costYields[costSel] = isNaN(n) || n <= 0 ? null : n; saveCosts(); renderCostCard(); return; }
-    const f = e.target.closest('[data-cf]'); if (!f) return;
-    const name = f.closest('[data-cname]').dataset.cname, n = parseFloat(f.value);
-    costPrices[name] = costPrices[name] || { unit: 'g', amt: null, price: null };
-    costPrices[name][f.dataset.cf] = f.value === '' || isNaN(n) ? null : n;
-    saveCosts(); renderCostPrices();
   });
 
   // ===== To Do: the roadmap in three stages (checklist saved on this device) =====
