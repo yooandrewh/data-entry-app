@@ -1679,6 +1679,29 @@
     /* Finance: one readable column, centred */
     #finBody { display: block; max-width: 720px; margin-left: auto; margin-right: auto; }
     #finBody > * { margin-bottom: 16px; }
+    /* wide screens: Revenue left, Costs + Profit stacked right, What if / Scenarios full width below */
+    #view-fin .wrap { max-width: 1280px; }
+    #finBody { display: grid; max-width: none; margin: 0; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px 24px; align-items: start; }
+    #finBody > * { margin-bottom: 0; min-width: 0; max-width: 100%; }
+    #finBody > .fin-banner, #finBody > .db-filter { grid-column: 1 / -1; }
+    #finBody > .db-filter { justify-self: start; max-width: 100%; }
+    #finBody > .fin-rev { grid-column: 1; grid-row: span 2; order: 1; }
+    #finBody > .fin-cost { grid-column: 2; order: 2; }
+    #finBody > .fin-prof { grid-column: 2; order: 3; }
+    #finBody > .fin-wic, #finBody > .fin-scen { grid-column: 1 / -1; order: 4; }
+    #finBody .proj-row .k { white-space: normal; min-width: 0; }
+    #finBody .proj-row { flex-wrap: wrap; min-width: 0; }
+    #view-fin { overflow-x: clip; }
+    @media (min-width: 1400px) {
+      #view-fin .wrap { max-width: 1480px; }
+      #finBody { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr); }
+      #finBody > .fin-rev { grid-column: 1; grid-row: span 2; }
+      #finBody > .fin-cost { grid-column: 2; }
+      #finBody > .fin-prof { grid-column: 2; }
+      #finBody { grid-auto-flow: row dense; }
+      #finBody > .fin-wic, #finBody > .fin-scen { grid-column: 3; order: 4; }
+      #finBody > .fin-scen { order: 5; }
+    }
     #costCard > .proj-card, #costCard > .cost-card { max-width: 720px; }
     #projList > .proj-sub, #projList > .proj-empty, #finBody > .sub, #finBody > .db-filter, #finBody > .filter-bar { grid-column: 1 / -1; }
     /* Data entries in columns, month/day headers span the row */
@@ -5655,7 +5678,7 @@
     const piecesList = [...new Set([...Object.keys(ra.actualPcs), ...PRODUCTS])];
     const diff = (a, b) => { const d = b - a; return (d >= 0 ? '+' : '−') + '$' + Math.abs(d).toFixed(2); };
     const whatIfCard = wi ? `
-      <div class="proj-card"><h3>What if (not saved)</h3><div class="proj-sub">Change any number; totals update when you leave the field. Blank price = invoiced price.</div>
+      <div class="proj-card fin-wic"><h3>What if (not saved)</h3><div class="proj-sub">Change any number; totals update when you leave the field. Blank price = invoiced price.</div>
         <div class="cost-sub">Pieces delivered</div>
         ${piecesList.map(p => { const n = finOv.pcs[p] != null ? finOv.pcs[p] : 0; return row(esc(p), win('pcs:' + p, n) + ' /mo ' + win('pcsw:' + p, +(n / (r.days / 7)).toFixed(1)) + ' /wk'); }).join('')}
         <div class="cost-sub" style="margin-top:12px">Price per piece <span class="cost-hint">· blank = invoice price</span></div>
@@ -5764,7 +5787,7 @@
       }
       addTo(grand, g);
     });
-    const revCard = `<div class="proj-card"><h3 class="fin-card-h">Revenue</h3><div class="proj-sub">${days} day${days === 1 ? '' : 's'} counted · tap a row for detail</div>
+    const revCard = `<div class="proj-card fin-rev"><h3 class="fin-card-h">Revenue</h3><div class="proj-sub">${days} day${days === 1 ? '' : 's'} counted · tap a row for detail</div>
       ${r.rows.length ? revHtml : noRows}${scItems.map(x => row(`${esc(x.name)}<span class="cost-hint">added item (what-if) · ${x.pw.toFixed(1)}/wk · ${x.pieces.toFixed(0)} pcs a month</span>`, fm(x.sales))).join('')}${r.rows.length || scItems.length ? row(`Total sales<span class="cost-hint">${pace(grand)}</span>`, fm(r.sales), 'cost-total') : ''}</div>`;
     const kit = wi
       ? row('Kitchen block price', '<span class="fin-u">$</span>' + win('kCost', finOv.kCost)) + row('Kitchen block hours', win('kHours', finOv.kHours) + '<span class="fin-u">h</span>') + row('Kitchen tax', win('taxPct', finOv.taxPct) + '<span class="fin-u">%</span>')
@@ -5772,7 +5795,7 @@
     const oth = wi ? row('Other monthly costs', '<span class="fin-u">$</span>' + win('other', finOv.other)) : row('Other monthly costs', '<span class="fin-u">$</span>' + inp('other', rFmt(Number(FIN.other) || 0)));
     const wst = wi ? row('Ingredient waste', win('wastePct', finOv.wastePct) + '<span class="fin-u">%</span>') : row('Ingredient waste', inp('wastePct', rFmt(finWaste(FIN.wastePct))) + '<span class="fin-u">%</span>');
     const totCost = r.ingr + r.labor + r.recurring;
-    const costCard = `<div class="proj-card"><h3 class="fin-card-h">Costs</h3>
+    const costCard = `<div class="proj-card fin-cost"><h3 class="fin-card-h">Costs</h3>
       ${row(`Ingredients<span class="cost-hint">incl. ${rFmt(r.wastePct)}% waste (${fm(r.ingrWaste)}) and ledger tax &amp; fees (${fm(r.ingrTax)})</span>`, fm(r0.ingr))}
       ${scItems.length ? row('Added items: ingredients<span class="cost-hint">what-if</span>', fm(aIng)) : ''}
       ${r.missing.length ? `<div class="cost-miss" style="padding:4px 0">No cost for ${r.missing.map(esc).join(', ')} (no recipe or an unapproved price), so those count as $0.</div>` : ''}
@@ -5789,7 +5812,7 @@
       ${row('Total recurring', fm(r.recurring), 'cost-total')}
       ${row('Total costs', fm(totCost), 'cost-total')}</div>`;
     const net = r.sales > 0 ? (r.postLabor / r.sales * 100).toFixed(0) + '%' : '—', netPre = r.sales > 0 ? (r.preLabor / r.sales * 100).toFixed(0) + '%' : '—';
-    const profCard = `<div class="proj-card"><h3 class="fin-card-h">Profit</h3>
+    const profCard = `<div class="proj-card fin-prof"><h3 class="fin-card-h">Profit</h3>
       ${row('Total sales', fm(r.sales))}${scItems.length ? row('Added items profit<span class="cost-hint">what-if, included in these totals</span>', fm(scItems.reduce((t, x) => t + x.profit, 0))) : ''}${row('Ingredients', fm(-r.ingr))}${row('Recurring', fm(-r.recurring))}
       ${row(`Net before labor<span class="cost-hint">${netPre} of sales</span>`, fm(r.preLabor), 'cost-total')}
       ${row('Total labor', fm(-r.labor))}
