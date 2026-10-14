@@ -1726,6 +1726,12 @@
     #view-home.paged .wrap { max-width: 1040px; }
     .home-card { border-radius: 18px; }
   }
+  /* Version stamp: fixed top right on every screen; header buttons sit below it */
+  .ver-badge, body.home-landing .ver-badge { position: fixed !important; display: block !important; top: calc(var(--safe-top) + 2px); right: 10px; left: auto; bottom: auto; width: auto; height: auto; padding: 0 !important; margin: 0; text-align: right !important; background: none !important; border: none !important; font-size: var(--fs-caption) !important; line-height: 1.2; color: var(--muted) !important; z-index: 50; pointer-events: none; }
+  body.home-landing .ver-badge { color: #fff6ee !important; }
+  body { padding-top: calc(var(--safe-top) + 22px) !important; }
+  .db-new { top: 20px !important; }
+  .home-season { top: calc(var(--safe-top) + 30px) !important; }
 </style>
 </head>
 <body>
@@ -2054,7 +2060,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.86.01 · Oct 13, 7:34 PM</div>
+<div class="ver-badge">v1.86.02 · Oct 13, 8:05 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -5421,8 +5427,6 @@
     const m = Math.round(KT.prepMin / KT.prepGroup + (KT.bakeMin + KT.coolMin) * pieces / (KT.perPan * KT.pans) + glaze + share);
     return { lo: m, hi: m };
   }
-  // Round up to the next 5 cents in whole cents (float error otherwise pushes 0.45 to 0.50).
-  function ceil5c(x) { return Math.ceil(Math.round(x * 100 * 1e6) / 1e6 / 5) * 5 / 100; }
   function renderCostCard() {
     const pick = document.getElementById('costPick');
     const copt = (sec, it) => `<option value="${esc(costItemKey(sec, it))}" data-icon="${recKey(it.name)}">${esc(costItemName(sec, it))}</option>`;
@@ -5454,7 +5458,7 @@
     const wkLab = labWeek(), wKey = it.type === 'muffin' ? 'muffin' : (sec === 'mad' ? 'mad' : null), delivItem = wKey && wkLab.items ? LAB.wk.deliv / 60 * LAB.rate / wkLab.items : 0;
     const totalItem = unitCost != null && labItem != null ? unitCost + labItem + delivItem : null;
     const mg = Math.min(90, Math.max(0, LAB.margin)) / 100;
-    const wholesale = totalItem != null ? ceil5c(totalItem / (1 - mg)) : null;   // to the next 5¢
+    const wholesale = totalItem != null ? totalItem / (1 - mg) : null;   // exact, not rounded
     const curW = wKey ? LAB.whole[wKey] : null;
     const curM = curW != null && totalItem != null ? curW - totalItem : null;
     const wholeHtml = wKey ? `<div class="proj-row"><span class="k">Current wholesale price<span class="cost-hint"> · all ${wKey === 'mad' ? 'madeleines' : 'muffins'}</span></span><span>$<input class="cost-in" type="number" inputmode="decimal" step="any" min="0" value="${rFmt(curW)}" data-lwhole="${wKey}"></span></div>
@@ -5597,6 +5601,7 @@
   const finMoney = n => (n < 0 ? '−$' : '$') + Math.abs(n).toFixed(2);
   const finMonthName = ym => { const [y, m] = ym.split('-'); return new Date(Number(y), Number(m) - 1, 1).toLocaleString('en-US', { month: 'long', year: 'numeric' }); };
   async function renderFin() {
+    const fm = finMoney;
     const el = document.getElementById('finBody');
     if (!Object.keys(costPrices).length) loadCosts();
     let offline = false, tmpEntries = null;
@@ -5627,7 +5632,7 @@
         const cost = finNum(it.cost) != null ? finNum(it.cost) : (ec && ec.withTax != null ? ec.withTax : 0);
         const mins = finNum(it.mins) != null ? finNum(it.mins) : (ec ? ec.mins : 0);
         const pb = finNum(it.perBatch) || (ec ? ec.yv : 0) || BATCH_YIELD, pw = finNum(it.pw) || 0;
-        const perPc = cost * wf2 + mins / 60 * r0.rate / pb, dflt = ceil5c(perPc / (1 - mg));
+        const perPc = cost * wf2 + mins / 60 * r0.rate / pb, dflt = perPc / (1 - mg);
         const price = finNum(it.price) != null ? finNum(it.price) : dflt, pieces = pw * WEEKS_PER_MONTH;
         const made = pieces * wfp, bmin = made / pb * mins, sales = pieces * price, ing = made * cost * wf2, lab = bmin / 60 * r0.rate;   // made = pieces plus piece waste, like real items
         scItems.push({ i, it, name: it.name || 'Added item', cost, mins, pb, pw, price, dflt, pieces, bmin, sales, ing, lab, profit: sales - ing - lab, ec });
@@ -5760,7 +5765,7 @@
     const am = {}; if (wi) { const tna = ra.rows.reduce((t, x) => t + x.n, 0); ra.rows.forEach(x => { am[x.p] = x.rev - (x.cost || 0) - x.bl - (tna ? ra.delivLabor * x.n / tna : 0); }); }
     const addTo = (a, b) => { ['n', 'rev', 'ing', 'bl', 'dv', 'tc', 'pf'].forEach(k => { a[k] += b[k]; }); return a; };
     const zero = () => ({ n: 0, rev: 0, ing: 0, bl: 0, dv: 0, tc: 0, pf: 0 });
-    const fm = finMoney, pct = a => a.rev > 0 ? (a.pf / a.rev * 100).toFixed(0) + '%' : '—';
+    const pct = a => a.rev > 0 ? (a.pf / a.rev * 100).toFixed(0) + '%' : '—';
     const topKey = { Madeleines: 'mad', Muffins: 'muffin' };
     const isOpen = k => k.startsWith('g:') ? finOpen[k] !== false : !!finOpen[k];
     const chev = o => `<svg class="fin-chev${o ? ' open' : ''}" viewBox="0 0 14 14" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><polyline points="4,2 10,7 4,12"/></svg>`;
@@ -6622,12 +6627,6 @@
     clone.removeAttribute('id'); clone.style.cssText = `box-sizing:border-box;width:${w}px;`;
     clone.querySelectorAll('[contenteditable]').forEach(e => e.removeAttribute('contenteditable'));
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><foreignObject width="100%" height="100%"><div xmlns="http://www.w3.org/1999/xhtml"><style>${css}
-  /* Version stamp: fixed top right on every screen; header buttons sit below it */
-  .ver-badge, body.home-landing .ver-badge { position: fixed !important; display: block !important; top: calc(var(--safe-top) + 2px); right: 10px; left: auto; bottom: auto; width: auto; height: auto; padding: 0 !important; margin: 0; text-align: right !important; background: none !important; border: none !important; font-size: var(--fs-caption) !important; line-height: 1.2; color: var(--muted) !important; z-index: 50; pointer-events: none; }
-  body.home-landing .ver-badge { color: #fff6ee !important; }
-  body { padding-top: calc(var(--safe-top) + 22px) !important; }
-  .db-new { top: 20px !important; }
-  .home-season { top: calc(var(--safe-top) + 30px) !important; }
 </style>${new XMLSerializer().serializeToString(clone)}</div></foreignObject></svg>`;
     const img = new Image();
     img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
