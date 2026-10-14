@@ -1900,7 +1900,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.80.00 · Oct 13</div>
+<div class="ver-badge">v1.80.01 · Oct 13</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -4024,9 +4024,9 @@
   // ---- Kitchen time model (commercial kitchen). Every number is editable under "Kitchen times". ----
   //  Batch prep happens before the batter rests: `prepGroup` batches at a time, ~`prepMin` minutes per go.
   //  After resting: bake `pans` pans at once (`bakeMin` + `coolMin` per round, the pans need cooling before they're refilled),
-  //  glaze the glazed flavours (`glazeSec` per madeleine), then clean (`cleanMin`). Setup is outside the booking.
-  const KT_DEFAULT = { prepGroup: 3, prepMin: 17.5, pans: 4, perPan: 12, bakeMin: 12, coolMin: 5, glazeSec: 15, setupMin: 15, cleanMin: 30 };
-  const KT_LABELS = { prepGroup: 'Batches prepped at once', prepMin: 'Minutes per prep', pans: 'Pans baked at once', perPan: 'Madeleines per pan', bakeMin: 'Bake minutes', coolMin: 'Cooling minutes', glazeSec: 'Glaze seconds each', setupMin: 'Setup minutes (not booked)', cleanMin: 'Cleaning minutes' };
+  //  glaze the glazed flavours (`glazeSec` per madeleine), then clean (`cleanMin`). Setup (`setupMin`) is booked too.
+  const KT_DEFAULT = { prepGroup: 3, prepMin: 15, pans: 3, perPan: 12, bakeMin: 13, coolMin: 5, glazeSec: 15, setupMin: 20, cleanMin: 20 };   // Andrew's timings, 2026-10-13
+  const KT_LABELS = { prepGroup: 'Batches prepped at once', prepMin: 'Minutes per prep', pans: 'Pans baked at once', perPan: 'Madeleines per pan', bakeMin: 'Bake minutes', coolMin: 'Cooling minutes', glazeSec: 'Glaze seconds each', setupMin: 'Setup minutes', cleanMin: 'Cleaning minutes' };
   const GLAZED = ['Lemon Poppy', 'Earl Grey'];
   let KT = { ...KT_DEFAULT };
   try { Object.assign(KT, JSON.parse(localStorage.getItem('kitchenTimes.v1')) || {}); } catch {}
@@ -4039,17 +4039,19 @@
     const bakeCool = rounds * (KT.bakeMin + KT.coolMin);
     const glaze = Math.round(glazed * KT.glazeSec / 60);
     const baking = pieces ? bakeCool + glaze + KT.cleanMin : 0;          // after the batter rests, cleaning included
-    return { batches, pieces, rounds, prep, bakeCool, glaze, baking, setup: pieces ? KT.setupMin : 0, min: prep + baking };
+    const setup = pieces ? KT.setupMin : 0;
+    return { batches, pieces, rounds, prep, bakeCool, glaze, baking, setup, min: setup + prep + baking };
   }
   const sumEff = list => list.reduce((a, e) => { for (const k of Object.keys(e)) a[k] = (a[k] || 0) + e[k]; return a; }, {});
   // The kitchen-time rows shown on a plan card.
   function kitchenRows(e) {
     if (!e || !e.pieces) return '';
     return `<div class="be-section-label">Kitchen time</div>
+      <div class="proj-row"><span class="k">Setup</span><span><b>${fmtDur(e.setup)}</b></span></div>
       <div class="proj-row"><span class="k">Batch prep</span><span><b>${fmtDur(e.prep)}</b></span></div>
       <div class="proj-row"><span class="k">Baking, after the batter rests</span><span><b>${fmtDur(e.baking)}</b></span></div>
       <div class="proj-row"><span class="k">Total to book</span><span><b>${fmtDur(e.min)}</b></span></div>
-      <div class="be-effort">Baking = ${e.rounds} round${e.rounds === 1 ? '' : 's'} × ${KT.bakeMin + KT.coolMin} min${e.glaze ? ` + ${fmtDur(e.glaze)} glazing` : ''} + ${KT.cleanMin} min cleaning. Setup ${KT.setupMin} min is not booked.</div>`;
+      <div class="be-effort">Baking = ${e.rounds} round${e.rounds === 1 ? '' : 's'} × ${KT.bakeMin + KT.coolMin} min${e.glaze ? ` + ${fmtDur(e.glaze)} glazing` : ''} + ${KT.cleanMin} min cleaning.</div>`;
   }
   // ---- Kitchen times: editable assumptions behind the plan's hours ----
   function paintKitchenTimes() {
@@ -5479,7 +5481,8 @@
     const prep = Math.round(Math.ceil(batches / KT.prepGroup) * KT.prepMin);
     const glaze = Math.round(glazed * KT.glazeSec / 60);
     const baking = rounds * (KT.bakeMin + KT.coolMin) + glaze + KT.cleanMin;
-    return { batches, pieces, glazed, rounds, prep, glaze, baking, min: prep + baking, names, oven: rounds * KT.bakeMin, cool: rounds * KT.coolMin };
+    const setup = KT.setupMin;
+    return { batches, pieces, glazed, rounds, prep, glaze, baking, setup, min: setup + prep + baking, names, oven: rounds * KT.bakeMin, cool: rounds * KT.coolMin };
   }
   function paintBsKitchen() {
     const el = document.getElementById('bsKitchen'); if (!el) return;
