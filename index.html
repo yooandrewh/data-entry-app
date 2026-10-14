@@ -1888,6 +1888,8 @@
         <button class="btn-primary" id="invGenBtn">Generate invoice</button>
         <button type="button" class="btn-ghost" data-gen-labels>Generate Labels</button>
       </div>
+      <div class="group-label">Invoice History</div>
+      <div class="card"><div class="sum" style="margin:0 12px" id="invHistory"></div></div>
       <button type="button" class="inv-forgot" id="invForgot">Forgot an entry?</button>
     </div>
     </div>
@@ -2098,7 +2100,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.98.00 · Oct 14, 10:05 AM</div>
+<div class="ver-badge">v1.99.00 · Oct 14, 10:30 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -3276,7 +3278,7 @@
   const LG_FORMS = {
     production: { note: 'Save the plan first. When the bake is done, enter the actual quantity. Tree nut items go last in the schedule.' },
     delivery: { note: "Place the order in the customer's freezer, take a photo, and leave the invoice.", title: 'New Delivery', fields: [
-      { k: 'date', l: 'Date', t: 'date', def: 1 }, { k: 'invoice', l: 'Invoice #', t: 'text' }, { k: 'dest', l: 'Destination', t: 'dest' },
+      { k: 'date', l: 'Date', t: 'date', def: 1 }, { k: 'invoice', l: 'Invoice #', t: 'inv' }, { k: 'dest', l: 'Destination', t: 'dest' },
       { k: 'left', l: 'Time Left', t: 'time', pair: 1, defTime: 1 }, { k: 'arrived', l: 'Time Arrived', t: 'time', pair: 1 }] },
     training: { note: 'One row per person who handles food.', title: 'New Training Record', fields: [
       { k: 'name', l: 'Name', t: 'text' }, { k: 'role', l: 'Role', t: 'text' },
@@ -3329,6 +3331,7 @@
   function lgField(f) {
     const v = f.def ? new Date().toLocaleDateString('en-CA') : (f.defTime ? lgNowTime() : '');
     if (f.t === 'area') return `<label>${f.l}<textarea name="${f.k}"></textarea></label>`;
+    if (f.t === 'inv') return `<label>${f.l}<select name="${f.k}"><option value="">Choose Invoice</option>${invHistory().map(h => `<option value="${lgEsc(h.num)}">${lgEsc(h.num)} · ${lgEsc(h.store)} · ${lgEsc(h.total)}</option>`).join('')}<option value="__other">Other (Type Below)</option></select><input type="text" name="invOther" placeholder="Invoice number" hidden></label>`;
     if (f.t === 'dest') return `<label>${f.l}<select name="${f.k}"><option value="">Choose Destination</option>${LG_DESTS.map(d => `<option>${lgEsc(d)}</option>`).join('')}<option value="__other">Other (Type Below)</option></select><input type="text" name="destOther" placeholder="Other destination" hidden></label>`;
     return `<label>${f.l}<input type="${f.t}" name="${f.k}" value="${v}"></label>`;
   }
@@ -3414,6 +3417,7 @@
       rec = { date: f.date.value, item: f.item.value, target: t, batchSize: y, batches: n, start: f.start.value, status: 'planned' };
     } else {
       rec = {}; LG_FORMS[key].fields.forEach(x => { rec[x.k] = (f.elements[x.k].value || '').trim(); });
+      if (key === 'delivery' && rec.invoice === '__other') rec.invoice = (f.elements.invOther.value || '').trim();
       if (key === 'delivery' && rec.dest === '__other') rec.dest = (f.elements.destOther.value || '').trim() || 'Other';
       const need = { delivery: ['invoice', 'dest', 'date'], training: ['name'], complaints: ['customer', 'problem', 'date'] }[key];
       if (need.some(k => !rec[k])) { rcpToast('Fill in the required fields'); return; }
@@ -3457,6 +3461,7 @@
       const t = e.target;
       if (t.name === 'item' && lgTab === 'production') lgCalc();
       if (t.name === 'dest') t.form.elements.destOther.hidden = t.value !== '__other';
+      if (t.name === 'invoice') t.form.elements.invOther.hidden = t.value !== '__other';
     });
   })();
 
@@ -3472,7 +3477,19 @@
   const INV_PRICE_KEY = 'invoicePrices.v1';
   const INV_DEFAULT_PRICE = UNIT_PRICE;   // everything else defaults to PRICE_PER_UNIT
   const invScrim = document.getElementById('invScrim');
-  let invText = '', invNum = 'invoice';
+  let invText = '', invNum = 'invoice', invMeta = null;
+  const INV_HIST_KEY = 'invoiceHistory.v1';
+  function invHistory() { try { const a = JSON.parse(localStorage.getItem(INV_HIST_KEY) || '[]'); return Array.isArray(a) ? a : []; } catch { return []; } }
+  function invSaveHistory(h) {
+    const a = invHistory().filter(x => x.num !== h.num); a.unshift(h);
+    try { localStorage.setItem(INV_HIST_KEY, JSON.stringify(a.slice(0, 200))); } catch {}
+    paintInvHistory();
+  }
+  function paintInvHistory() {
+    const box = document.getElementById('invHistory'); if (!box) return;
+    const a = invHistory();
+    box.innerHTML = a.length ? a.map(h => `<div class="proj-row"><span>${esc(h.num)}<small style="display:block;color:var(--muted)">${esc(h.store)} · printed ${esc(h.printed)}</small></span><b>${esc(h.total)}</b></div>`).join('') : '<div class="inv-empty">No printed invoices yet. They show here after you press Download PDF.</div>';
+  }
   function invPrices() {
     let saved = {};
     try { saved = JSON.parse(localStorage.getItem(INV_PRICE_KEY)) || {}; } catch {}
@@ -3487,6 +3504,7 @@
   // Dubai Ball's price row only matters for Stanton invoices.
   function syncInvDubai() { const r = document.getElementById('invDubaiRow'); if (r) r.hidden = document.getElementById('invStore').value === 'La Mirada'; }
   function initInvoiceForm() {
+    paintInvHistory();
     const today = nowPST().slice(0, 10);
     if (!document.getElementById('invFrom').value) document.getElementById('invFrom').value = today;
     if (!document.getElementById('invTo').value) document.getElementById('invTo').value = today;
@@ -3568,7 +3586,7 @@
       <div class="inv-total"><span>Total</span><span>${usd(total)}</span></div>`
       : `<div class="inv-empty">No deliveries for ${both ? 'either store' : esc(store)} in this period.</div>`}
       ${ok ? '' : '<div class="inv-empty inv-noprint">Offline — only entries on this device are included.</div>'}`;
-    invNum = num;
+    invNum = num; invMeta = { num, store: both ? 'Both Stores' : store, total: usd(total) };
     document.getElementById('invPrintBtn').hidden = document.getElementById('invCopyBtn').hidden = !lines.length;
     invScrim.classList.add('show');
     track('invoice_create', { store, days: from === to ? 1 : 2, lines: lines.length });
@@ -3581,6 +3599,7 @@
     const el = document.createElement('div'); el.className = 'inv-pdf';
     el.innerHTML = document.getElementById('invDoc').innerHTML;
     el.querySelectorAll('.inv-noprint').forEach(n => n.remove());
+    if (invMeta) invSaveHistory({ ...invMeta, printed: nowPST().slice(0, 10) });
     downloadPdf(document.getElementById('invPrintBtn'), [el], `${invNum.toLowerCase()}.pdf`, '.inv-');
   });
   document.getElementById('invCopyBtn').addEventListener('click', async () => {
