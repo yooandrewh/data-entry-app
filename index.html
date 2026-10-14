@@ -2061,7 +2061,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.92.00 · Oct 13, 10:45 PM</div>
+<div class="ver-badge">v1.93.00 · Oct 13, 11:05 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -5506,7 +5506,8 @@
   const FIN_KEY = 'finCfg.v1';
   let FIN = { kitchenCost: 570, kitchenHours: 20, taxPct: 7, other: 0, wastePct: 5, topOverride: {} };   // kitchen: $570 per 20 h block + 7% tax (Andrew, 2026-10-13)
   try { Object.assign(FIN, JSON.parse(localStorage.getItem(FIN_KEY)) || {}); } catch {}
-  let finMonth = '', finEntries = null; let finView = (() => { try { return localStorage.getItem('finView.v1') === 'item' ? 'item' : 'sum'; } catch { return 'sum'; } })();
+  let finMonth = '', finEntries = null; let finView = (() => { try { const v = localStorage.getItem('finView.v1'); return v === 'item' || v === 'labor' ? v : 'sum'; } catch { return 'sum'; } })();
+  let finLab = (() => { try { return Object.assign({ mad: 400, mu: 90 }, JSON.parse(localStorage.getItem('finLabor.v1') || '{}')); } catch { return { mad: 400, mu: 90 }; } })();
   let finSheet = null;
   let finWhat = false, finOv = null, finOpen = {}, finDays = 30;   // What-if overrides: view-only, never saved
   // Per-item economics for one recipe: ingredient cost (with and without ledger tax/fees), labor, pieces per batch.
@@ -5884,12 +5885,42 @@
         [], ['Edit the Pieces column and the kitchen cell. Sending again from the app overwrites this tab.']);
       finSheet.model = { rows2d: mrows }; }
     el.innerHTML = banner + `
-      <div class="db-filter" id="finViewTog" style="margin-bottom:10px"><button data-finview="sum"${finView === 'sum' ? ' class="on"' : ''}>Summary</button><button data-finview="item"${finView === 'item' ? ' class="on"' : ''}>By item</button></div>
+      <div class="db-filter" id="finViewTog" style="margin-bottom:10px"><button data-finview="sum"${finView === 'sum' ? ' class="on"' : ''}>Summary</button><button data-finview="item"${finView === 'item' ? ' class="on"' : ''}>By item</button><button data-finview="labor"${finView === 'labor' ? ' class="on"' : ''}>Labor</button></div>
       <button class="cp-btn" id="finSheetBtn" style="margin:0 0 10px">Send to Google Sheet</button>
       <div class="db-filter" style="margin-bottom:10px"><select id="finMonth" aria-label="Month">${months.map(m => `<option value="${m}"${m === finMonth ? ' selected' : ''}>${finMonthName(m)}</option>`).join('')}</select>
         <label class="fin-sw"><input type="checkbox" id="finWhat" role="switch"${wi ? ' checked' : ''}><span class="fin-sw-t"></span><span class="fin-sw-l">What if</span></label></div>
-      ${whatIfCard}${scenCard}${finView === 'item' ? itemView : revCard + costCard + profCard}`;
+      ${finView === 'labor' ? laborView() : whatIfCard + scenCard + (finView === 'item' ? itemView : revCard + costCard + profCard)}`;
   }
+  // Labor planner: monthly madeleine and muffin totals spread over 3, 4 or 5 bake sessions. Prep, setup and cleaning are fixed per session; only oven time scales.
+  function laborView() {
+    const mad = Math.max(0, Number(finLab.mad) || 0), mu = Math.max(0, Number(finLab.mu) || 0), glazedShare = 0.25, muYield = PRODUCT_YIELD['Pumpkin Muffin'] || 10;
+    const hh = m => (m / 60).toFixed(1) + ' h', rate = LAB.rate;
+    const opt = n => {
+      const mp = mad / n, up = mu / n, mBatches = Math.ceil(mp / BATCH_YIELD), uBatches = Math.ceil(up / muYield);
+      const mOven = mp ? Math.ceil(Math.ceil(mp / KT.perPan) / KT.pans) * (KT.bakeMin + KT.coolMin) + Math.round(mp * glazedShare * KT.glazeSec / 60) : 0;
+      const uOven = uBatches ? Math.ceil(uBatches / KT.pans) * (KT.muBakeLo + KT.muBakeHi) / 2 : 0;
+      const prep = (uBatches ? KT.muPrepMin : 0) + (mBatches ? Math.max(0, KT.prepMin - (uBatches ? Math.min(KT.prepMin, KT.hideMax) : 0)) : 0);   // madeleine prep hides inside the muffin bake
+      const fixed = (mp || up) ? Math.max(uBatches ? KT.muSetup : 0, mBatches ? KT.setupMin : 0) + (mp && up ? KT.togetherClean : mp ? KT.cleanMin : KT.muClean) : 0;
+      const bake = mOven + uOven, per = prep + bake + fixed;
+      return { n, mp, up, mBatches, uBatches, prep: prep * n, bake: bake * n, fixed: fixed * n, per, tot: per * n };
+    };
+    const os = [3, 4, 5].map(opt);
+    const col = f => os.map(o => `<td align="right">${f(o)}</td>`).join('');
+    return `<div class="proj-card fin-lab"><h3 class="fin-card-h">Labor planner</h3><div class="proj-sub">Sample 3, 4 or 5 = that many bake sessions a month. Prep, setup and cleaning are fixed per session; only baking grows with pieces.</div>
+      <div class="proj-row"><span>Madeleines a month</span><span><input type="number" inputmode="numeric" min="0" id="finLabMad" value="${mad}" style="width:80px;text-align:right"></span></div>
+      <div class="proj-row"><span>Muffins a month</span><span><input type="number" inputmode="numeric" min="0" id="finLabMu" value="${mu}" style="width:80px;text-align:right"></span></div>
+      <table style="width:100%;margin-top:10px;border-collapse:collapse"><tr><th align="left"></th><th align="right">Sample 3</th><th align="right">Sample 4</th><th align="right">Sample 5</th></tr>
+      <tr><td>Madeleines / session</td>${col(o => Math.round(o.mp))}</tr>
+      <tr><td>Muffins / session</td>${col(o => Math.round(o.up))}</tr>
+      <tr><td>Batch prep</td>${col(o => hh(o.prep))}</tr>
+      <tr><td>Baking</td>${col(o => hh(o.bake))}</tr>
+      <tr><td>Setup + cleaning</td>${col(o => hh(o.fixed))}</tr>
+      <tr><td><b>Total a month</b></td>${col(o => '<b>' + hh(o.tot) + '</b>')}</tr>
+      <tr><td>Per session</td>${col(o => hh(o.per))}</tr>
+      <tr><td>Labor at $${rFmt(rate)}/hr</td>${col(o => fm0(o.tot / 60 * rate))}</tr></table>
+      <div class="cost-hint" style="padding-top:6px">Madeleines at ${BATCH_YIELD} a batch with a quarter glazed, muffins at ${muYield} a batch, baked together each session. Delivery time is not included.</div></div>`;
+  }
+  const fm0 = n => '$' + Math.round(n);
   document.addEventListener('click', async e => {
     if (e.target.id === 'finSheetBtn' && finSheet) {
       let code = ''; try { code = localStorage.getItem('financeCode') || ''; } catch {}
@@ -5906,7 +5937,7 @@
   });
   document.addEventListener('click', e => {
     const fvb = e.target.closest && e.target.closest('[data-finview]');
-    if (fvb) { finView = fvb.dataset.finview === 'item' ? 'item' : 'sum'; try { localStorage.setItem('finView.v1', finView); } catch {} renderFin(); return; }
+    if (fvb) { finView = ['item', 'labor'].includes(fvb.dataset.finview) ? fvb.dataset.finview : 'sum'; try { localStorage.setItem('finView.v1', finView); } catch {} renderFin(); return; }
     if (e.target.id === 'finReset') { finOv = null; renderFin(); return; }
     const sb = e.target.closest && e.target.closest('[data-scmax],[data-scadd],[data-scdel]');
     if (sb && finOv && finOv.scen) {
@@ -5925,6 +5956,7 @@
     renderFin();
   });
   document.addEventListener('change', e => {
+    if (e.target.id === 'finLabMad' || e.target.id === 'finLabMu') { finLab[e.target.id === 'finLabMad' ? 'mad' : 'mu'] = Math.max(0, Number(e.target.value) || 0); try { localStorage.setItem('finLabor.v1', JSON.stringify(finLab)); } catch {} renderFin(); return; }
     if (e.target.id === 'finMonth') { finMonth = e.target.value; renderFin(); }
     else if (e.target.id === 'finWhat') { finWhat = e.target.checked; finOv = null; renderFin(); }
     else if (e.target.dataset && e.target.dataset.top) {
