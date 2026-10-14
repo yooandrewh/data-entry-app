@@ -2061,7 +2061,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.95.04 · Oct 14, 1:20 AM</div>
+<div class="ver-badge">v1.95.05 · Oct 14, 1:35 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -5932,7 +5932,7 @@
       <div class="cost-hint" style="padding-top:6px">Labor at $${rFmt(rate)}/hr. Madeleines ${BATCH_YIELD} a batch (a quarter glazed), muffins ${muYield} a batch, all baked in the same sessions. Extra items bake like their type and add no extra prep. Delivery time is not included.</div></div>`;
   }
   // Simulator: total volume as a share of capacity (two scenarios side by side) -> hours, labor and the cost per piece items 3-5 can afford.
-  let finSim = (() => { const d = { a: 20, b: 30, cap: 90, mad: 10.7, mu: 4.3, days: 30, pMad: 2.5, pMu: 2.75, share: 60, price: 5, cost: 1.6, type: 'mad', sess: 4, target: 4000, fixed: 0, rate: LAB.rate }; try { return Object.assign(d, JSON.parse(localStorage.getItem('finSim.v2') || '{}')); } catch { return d; } })();
+  let finSim = (() => { const d = { a: 20, b: 30, hrs: 160, cap: 90, mad: 10.7, mu: 4.3, days: 30, pMad: 2.5, pMu: 2.75, share: 60, price: 5, cost: 1.6, type: 'mad', sess: 4, target: 4000, fixed: 0, rate: LAB.rate }; try { return Object.assign(d, JSON.parse(localStorage.getItem('finSim.v2') || '{}')); } catch { return d; } })();
   // Editable scenario table: today vs 20% vs 30% of capacity, each row's pieces, price, margin and hours editable.
   let finSimT = (() => { const d = [['Today', 16.67], ['', 20], ['', 25], ['', 30]].map(([l, c]) => ({ l: l || c + '%', c, p: 2.57, m: 85, d: 6 })); try { const v = JSON.parse(localStorage.getItem('finSimT.v3') || 'null'); return Array.isArray(v) && v.length === 4 ? v : d; } catch { return d; } })();
   let finSimSel = (() => { try { const v = Number(localStorage.getItem('finSimSel.v1')); return v >= 0 && v < 4 ? v : 1; } catch { return 1; } })();
@@ -5957,7 +5957,13 @@
       ${big('Share of capacity', sel.c.toFixed(sel.c % 1 ? 1 : 0) + '%')}${big('Pieces a day', rFmt(+sel.perDay.toFixed(1)))}${big('Pieces a month', Math.round(sel.q))}${big('Average price', '$' + sel.pr.toFixed(2))}
       ${big('Profit before labor', fm0(sel.pre))}${big('Hours (baking + delivery)', sel.bakeH.toFixed(1) + ' + ' + sel.dl.toFixed(1) + ' = ' + sel.allH.toFixed(1))}${big('Profit before kitchen', fm0(sel.post))}${big('After the kitchen cost', fm0(sel.aft))}
       ${big('Price needed for ' + fm0(goal), '$' + sel.needPost.toFixed(2))}</div>`;
-    return changer + `<div class="proj-card fin-lab"><h3 class="fin-card-h">All scenarios</h3><div class="proj-sub">Change any white box. Type the % of capacity or the pieces a day; margin is before labor. Baking hours use the bake sessions and today's madeleine-to-muffin mix from below.</div>
+    const hrsCap = Math.max(1, n0(finSim.hrs) || 160), maxQ = (() => { let lo = 0, hi = 200000; while (hi - lo > 1) { const q = (lo + hi) >> 1; if (labPlan([{ type: 'mad', n: q * madShare }, { type: 'mu', n: q * (1 - madShare) }], sess).tot / 60 <= hrsCap) lo = q; else hi = q; } return lo; })();
+    const fullQ = cap * days, fullH = labPlan([{ type: 'mad', n: fullQ * madShare }, { type: 'mu', n: fullQ * (1 - madShare) }], sess).tot / 60;
+    const maxCard = `<div class="proj-card fin-lab"><h3 class="fin-card-h">Most she could bake</h3><div class="proj-sub">Baking hours only (no delivery), ${sess} bake sessions a month, today's madeleine-to-muffin mix.</div>
+      <div class="proj-row"><span>Baking hours a month</span><span><input type="number" inputmode="decimal" step="any" min="1" data-simf="hrs" value="${hrsCap}" style="width:60px;text-align:right"></span></div>
+      ${big('Pieces a month', maxQ.toLocaleString())}${big('Pieces a day', Math.round(maxQ / days))}${big('Share of capacity (' + cap + ' a day)', Math.round(maxQ / fullQ * 100) + '%')}
+      ${big('Hours to fill capacity', fullH.toFixed(0) + ' h for ' + fullQ.toLocaleString() + ' pieces')}</div>`;
+    return changer + maxCard + `<div class="proj-card fin-lab"><h3 class="fin-card-h">All scenarios</h3><div class="proj-sub">Change any white box. Type the % of capacity or the pieces a day; margin is before labor. Baking hours use the bake sessions and today's madeleine-to-muffin mix from below.</div>
       <div style="overflow-x:auto"><table style="min-width:860px;width:100%;border-collapse:collapse;font-size:var(--fs-caption)"><tr><th align="left"></th><th align="right">% of capacity</th><th align="right">Pieces a day</th><th align="right">Pieces a month</th><th align="right">Avg price</th><th align="right">Margin</th><th align="right">Sales</th><th align="right">Profit before labor</th><th align="right">Baking hrs</th><th align="right">Delivery hrs</th><th align="right">Total hrs</th><th align="right">Profit before kitchen</th><th align="right">After kitchen</th><th align="right">Price needed for the goal</th></tr>${body}</table></div>
       <div class="cost-hint" style="padding-top:6px">Profit before kitchen = profit before labor minus all hours at $${rFmt(rate)}/h. After kitchen takes off ${fm0(kitchen)} (the block plus tax). Delivery hours are a guess you set per row. Price needed = the average price that makes profit before kitchen hit the profit goal below ($${rFmt(n0(finSim.target) || 4000)}).</div></div>`;
   }
