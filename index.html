@@ -2061,7 +2061,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.95.03 · Oct 14, 1:05 AM</div>
+<div class="ver-badge">v1.95.04 · Oct 14, 1:20 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -5935,6 +5935,7 @@
   let finSim = (() => { const d = { a: 20, b: 30, cap: 90, mad: 10.7, mu: 4.3, days: 30, pMad: 2.5, pMu: 2.75, share: 60, price: 5, cost: 1.6, type: 'mad', sess: 4, target: 4000, fixed: 0, rate: LAB.rate }; try { return Object.assign(d, JSON.parse(localStorage.getItem('finSim.v2') || '{}')); } catch { return d; } })();
   // Editable scenario table: today vs 20% vs 30% of capacity, each row's pieces, price, margin and hours editable.
   let finSimT = (() => { const d = [['Today', 16.67], ['', 20], ['', 25], ['', 30]].map(([l, c]) => ({ l: l || c + '%', c, p: 2.57, m: 85, d: 6 })); try { const v = JSON.parse(localStorage.getItem('finSimT.v3') || 'null'); return Array.isArray(v) && v.length === 4 ? v : d; } catch { return d; } })();
+  let finSimSel = (() => { try { const v = Number(localStorage.getItem('finSimSel.v1')); return v >= 0 && v < 4 ? v : 1; } catch { return 1; } })();
   function simTable() {
     const S = finSim, n0 = v => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
     const sess = Math.max(1, Math.round(n0(S.sess) || 4)), rate = n0(S.rate) || 20, cap = Math.max(1, n0(S.cap) || 180), days = Math.max(1, n0(S.days) || 30);
@@ -5942,13 +5943,21 @@
     const kitchen = FIN.kitchenCost * (1 + (Number(FIN.taxPct) || 0) / 100);
     const inp = (i, f, v, w) => `<input type="number" inputmode="decimal" step="any" min="0" data-simt="${i}:${f}" value="${v}" style="width:${w}px;text-align:right">`;
     const hh = h => h.toFixed(1);
+    const res = [];
     const body = finSimT.map((r, i) => {
       const perDay = n0(r.c) / 100 * cap, q = perDay * days, pr = n0(r.p), m = n0(r.m) / 100, dl = n0(r.d);
       const plan = labPlan([{ type: 'mad', n: q * madShare }, { type: 'mu', n: q * (1 - madShare) }], sess), bakeH = plan.tot / 60, allH = bakeH + dl;
       const sales = q * pr, pre = sales * m, post = pre - allH * rate, goal = n0(finSim.target) || 4000, needPost = q * m > 0 ? (goal + allH * rate) / (q * m) : 0, needPre = q * m > 0 ? goal / (q * m) : 0;
+      res.push({ l: r.l, c: n0(r.c), perDay, q, pr, m, bakeH, allH, dl, pre, post, needPost, needPre, aft: post - kitchen });
       return `<tr><td>${r.l}</td><td align="right">${inp(i, 'c', r.c, 44)}%</td><td align="right">${inp(i, 'q', +perDay.toFixed(1), 52)}</td><td align="right">${Math.round(q)}</td><td align="right">$${inp(i, 'p', r.p, 50)}</td><td align="right">${inp(i, 'm', r.m, 44)}%</td><td align="right">${fm0(sales)}</td><td align="right"><b>${fm0(pre)}</b></td><td align="right">${hh(bakeH)}</td><td align="right">${inp(i, 'd', r.d, 40)}</td><td align="right">${hh(allH)}</td><td align="right"><b>${fm0(post)}</b></td><td align="right">${fm0(post - kitchen)}</td><td align="right"><b>$${needPost.toFixed(2)}</b><br><small>$${needPre.toFixed(2)} before labor</small></td></tr>`;
     }).join('');
-    return `<div class="proj-card fin-lab"><h3 class="fin-card-h">Today vs 20% vs 30%</h3><div class="proj-sub">Change any white box. Type the % of capacity or the pieces a day; margin is before labor. Baking hours use the bake sessions and today's madeleine-to-muffin mix from below.</div>
+    const sel = res[Math.min(finSimSel, res.length - 1)], goal = n0(finSim.target) || 4000;
+    const big = (k, v) => `<div class="proj-row"><span>${k}</span><b>${v}</b></div>`;
+    const changer = `<div class="proj-card fin-lab"><h3 class="fin-card-h">Scenario</h3><div class="db-filter" style="margin-bottom:10px">${res.map((x, i) => `<button data-simsel="${i}"${i === finSimSel ? ' class="on"' : ''}>${x.l === 'Today' ? 'Today' : x.l}</button>`).join('')}</div>
+      ${big('Share of capacity', sel.c.toFixed(sel.c % 1 ? 1 : 0) + '%')}${big('Pieces a day', rFmt(+sel.perDay.toFixed(1)))}${big('Pieces a month', Math.round(sel.q))}${big('Average price', '$' + sel.pr.toFixed(2))}
+      ${big('Profit before labor', fm0(sel.pre))}${big('Hours (baking + delivery)', sel.bakeH.toFixed(1) + ' + ' + sel.dl.toFixed(1) + ' = ' + sel.allH.toFixed(1))}${big('Profit before kitchen', fm0(sel.post))}${big('After the kitchen cost', fm0(sel.aft))}
+      ${big('Price needed for ' + fm0(goal), '$' + sel.needPost.toFixed(2))}</div>`;
+    return changer + `<div class="proj-card fin-lab"><h3 class="fin-card-h">All scenarios</h3><div class="proj-sub">Change any white box. Type the % of capacity or the pieces a day; margin is before labor. Baking hours use the bake sessions and today's madeleine-to-muffin mix from below.</div>
       <div style="overflow-x:auto"><table style="min-width:860px;width:100%;border-collapse:collapse;font-size:var(--fs-caption)"><tr><th align="left"></th><th align="right">% of capacity</th><th align="right">Pieces a day</th><th align="right">Pieces a month</th><th align="right">Avg price</th><th align="right">Margin</th><th align="right">Sales</th><th align="right">Profit before labor</th><th align="right">Baking hrs</th><th align="right">Delivery hrs</th><th align="right">Total hrs</th><th align="right">Profit before kitchen</th><th align="right">After kitchen</th><th align="right">Price needed for the goal</th></tr>${body}</table></div>
       <div class="cost-hint" style="padding-top:6px">Profit before kitchen = profit before labor minus all hours at $${rFmt(rate)}/h. After kitchen takes off ${fm0(kitchen)} (the block plus tax). Delivery hours are a guess you set per row. Price needed = the average price that makes profit before kitchen hit the profit goal below ($${rFmt(n0(finSim.target) || 4000)}).</div></div>`;
   }
@@ -6013,6 +6022,8 @@
     }
   });
   document.addEventListener('click', e => {
+    const ssb = e.target.closest && e.target.closest('[data-simsel]');
+    if (ssb) { finSimSel = Number(ssb.dataset.simsel) || 0; try { localStorage.setItem('finSimSel.v1', String(finSimSel)); } catch {} renderFin(); return; }
     const fvb = e.target.closest && e.target.closest('[data-finview]');
     if (fvb) { finView = ['item', 'labor', 'sim'].includes(fvb.dataset.finview) ? fvb.dataset.finview : 'sum'; try { localStorage.setItem('finView.v1', finView); } catch {} renderFin(); return; }
     if (e.target.id === 'finReset') { finOv = null; renderFin(); return; }
