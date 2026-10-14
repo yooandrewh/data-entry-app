@@ -1581,6 +1581,58 @@
   body[data-tab="db"] .tabbar, body[data-tab="plan"] .tabbar, body[data-tab="fin"] .tabbar { background: #f3f1ed; border-top: 1px solid #e2dfda; }
   body[data-tab="db"] .tabbar button, body[data-tab="plan"] .tabbar button, body[data-tab="fin"] .tabbar button { color: #242c35; opacity: .75; }
   body[data-tab="db"] .tabbar button.on, body[data-tab="plan"] .tabbar button.on, body[data-tab="fin"] .tabbar button.on { background: rgba(36,44,53,.16); color: #242c35; opacity: 1; font-weight: 700; }
+  /* Desktop pass 2: non-Finance */
+  @media (min-width: 900px) {
+    /* wider page for every screen but Finance */
+    #view-db .wrap, #view-plan .wrap, #view-home.paged .wrap { max-width: 1400px; }
+    /* bottom nav: centred, tabs share the width */
+    .tabbar .tab-pill { width: 100%; max-width: 1400px; margin: 0 auto; }
+    .tabbar .tab-pill button { flex: 1 1 0; }
+
+    /* Baking > Costs: ingredient table beside the per-item block */
+    #view-plan #costCard { display: block; }
+    #view-plan #costCard > .proj-card { max-width: none; display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 0 40px; align-items: start; }
+    #view-plan #costCard > .proj-card > h3, #view-plan #costCard > .proj-card > .proj-sub { grid-column: 1 / -1; }
+    #view-plan #costCard > .proj-card > .cost-sec { margin-top: 8px; }
+    #view-plan #costCard .cost-sec .proj-row:has(.rec-conv) { display: grid; grid-template-columns: minmax(0, 1fr) 110px 90px; gap: 12px; }
+    #view-plan #costCard .cost-sec .proj-row:has(.rec-conv) > .k { display: contents; }
+    #view-plan #costCard .cost-sec .proj-row:has(.rec-conv) .rec-conv { text-align: right; color: var(--muted); }
+    #view-plan #costCard .cost-sec .proj-row:has(.rec-conv) > span:last-child { text-align: right; }
+    /* Ingredient prices: receipts and price cards in columns */
+    #view-plan #costPrices:not([hidden]) { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 0 20px; align-items: start; }
+    #view-plan #costPrices > :not(.cp-row):not(.cp-rcp) { grid-column: 1 / -1; }
+    #view-plan #costPrices > .cp-row, #view-plan #costPrices > .cp-rcp { min-width: 0; }
+
+    /* Baking > Recipes: section tabs and picker on one line; card content in two columns */
+    #view-plan #bakingRecipes:not([hidden]) { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0 20px; align-items: start; }
+    #view-plan #bakingRecipes > #recSection { grid-column: 1; margin-bottom: 12px; }
+    #view-plan #bakingRecipes > .filter-bar { grid-column: 2; margin-bottom: 12px; }
+    #view-plan #bakingRecipes > #recCard { grid-column: 1 / -1; }
+    #recCard > .proj-card { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 40px; align-items: start; }
+    #recCard > .proj-card > * { grid-column: 1 / -1; }
+    #recCard > .proj-card > .proj-row, #recCard > .proj-card > .rec-box { grid-column: auto; min-width: 0; }
+
+    /* Home pages */
+    #bakingPlan:not([hidden]) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 24px; align-items: start; }
+    #bakingPlan > .card:first-child { grid-column: 1; grid-row: 1; }
+    #bakingPlan > .bs-card { grid-column: 2; grid-row: 1; margin-top: 0; }
+    #bakingPlan > #planSplitWrap { grid-column: 1 / -1; grid-row: 2; }
+    #bakingPlan > #planList { grid-column: 1 / -1; grid-row: 3; }
+    #homeInvoice:not([hidden]) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 24px; align-items: start; }
+    #homeInvoice > .card:nth-child(1) { grid-column: 1; grid-row: 1 / span 3; }
+    #homeInvoice > .group-label { grid-column: 2; grid-row: 1; margin-top: 0; }
+    #homeInvoice > .card:nth-child(3) { grid-column: 2; grid-row: 2; }
+    #homeInvoice > .inv-actions { grid-column: 2; grid-row: 3; }
+    #homeInvoice > .inv-forgot { grid-column: 1 / -1; }
+
+    /* Data: one table row per entry (type, store, date | flavor counts across) */
+    #view-db #dbList { display: block; }
+    #view-db #dbList .db-entry:not(.db-fold) { display: grid; grid-template-columns: minmax(380px, 440px) minmax(0, 1fr); gap: 0 28px; align-items: center; padding: 8px 16px; margin-bottom: 6px; }
+    #view-db #dbList .db-entry:not(.db-fold) > .db-head { grid-column: 1; grid-row: 1; margin-bottom: 0; }
+    #view-db #dbList .db-entry:not(.db-fold) > .db-amts { grid-column: 2; grid-row: 1; display: flex; flex-wrap: wrap; gap: 2px 28px; margin: 0; }
+    #view-db #dbList .db-entry:not(.db-fold) > .db-amts .proj-row { border-bottom: none; padding: 4px 0; gap: 8px; }
+    #view-db #dbList .db-entry:not(.db-fold) > .db-note, #view-db #dbList .db-entry:not(.db-fold) > .db-sync { grid-column: 1 / -1; grid-row: 2; margin: 4px 0 0; }
+  }
   /* ===== Desktop (>= 900px): spread out; phone layout untouched ===== */
   @media (min-width: 900px) {
     .wrap { max-width: 1120px; padding: 0 32px; }
