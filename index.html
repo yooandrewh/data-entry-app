@@ -1900,7 +1900,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.79.01 · Oct 13</div>
+<div class="ver-badge">v1.79.02 · Oct 13</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -5037,7 +5037,7 @@
     'mad:Dot Cake': { toppings: [{ label: 'Cream Cheese Frosting filling', refFilling: 'Cream Cheese Frosting', coversItems: 200 }, { label: 'Nonpareil Sprinkles', ingredient: 'Nonpareil Sprinkles', coversItems: 100 }] },
     'mad:Earl Grey': { toppings: [{ label: 'Anglesie Buttercream filling', refFilling: 'Anglesie Buttercream', coversItems: 33 }, { label: 'Earl Grey Paste filling', refFilling: 'Earl Grey Paste', coversItems: 33 }] },
     'mad:Ube': { toppings: [{ label: 'Coconut Flakes topping', ingredient: 'Coconut Flakes', coversItems: 150 }] },
-    'other:pumpkinmuffin': { yield: 18, toppings: [{ label: 'Pumpkin Cream Cheese Frosting (20g)', refFilling: 'Pumpkin Cream Cheese Frosting', grams: 20 }] },
+    'other:pumpkinmuffin': { yield: 10, toppings: [{ label: 'Pumpkin Cream Cheese Frosting (20g)', refFilling: 'Pumpkin Cream Cheese Frosting', grams: 20 }] },
     'scone:plainscone': { yield: 797 / 90, toppings: [{ label: 'Strawberry Cream Cheese filling (60g)', refRecipe: { section: 'scone', key: 'strawberrycc', grams: 60 } }] },
     'scone:strawberrycc': { yield: 1368 / 60 },
   };
@@ -5152,6 +5152,8 @@
   }
   function costDefaultYield(sec, it) {
     const m = COST_META[costItemKey(sec, it)]; if (m && m.yield) return m.yield;
+    if (sec === 'mad') return 12;   // hardcoded for now (Andrew, 2026-10-13): every madeleine costs as 12 per batch
+    if (it.key === 'blueberrymuffin') return 6;   // hardcoded for now
     if (sec === 'mad' && it.versions) return verYield(it, verLatest(it));   // the latest version's own piece count
     if (it.yield) return it.yield;
     if (sec === 'mad') return it.yield || BATCH_YIELD;   // a recipe can say how many it makes (Chocolate 7, Brown Butter 12); the rest use the standard 18
