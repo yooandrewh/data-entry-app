@@ -2061,7 +2061,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.89.00 · Oct 13, 7:45 PM</div>
+<div class="ver-badge">v1.90.00 · Oct 13, 7:47 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -5838,15 +5838,15 @@
       <div class="cost-hint" style="padding-top:6px">Sales use the invoice prices (retail unless you changed them). Kitchen time is estimated from weekly bake sessions of the delivered pieces; delivery doesn't use kitchen hours. Ingredient cost is delivered pieces × the recipe's cost per item plus waste.</div></div>`;
     // ----- By item view: same mk() numbers as the Summary rows, so both always agree (What-if overrides already live in r) -----
     // Kitchen and other costs split by share of baking minutes (items with 0 minutes use pieces at the average minutes per piece); last item takes the rounding remainder so parts sum exactly to the total.
-    const kAlloc = (rows, total) => { const nz = x => Math.max(0, Number(x) || 0);
-      const norm = w => { const t = w.reduce((a, v) => a + v, 0); return t > 0 ? w.map(v => v / t) : w.map(() => 0); };
+    const kAlloc = (rows, res) => { const nz = x => Math.max(0, Number(x) || 0);
+      const rate = res.kHours > 0 ? res.kCost * (1 + (Number(res.taxPct) || 0) / 100) / res.kHours : 0;
       const tm = rows.reduce((t, x) => t + nz(x.bm), 0), tp = rows.reduce((t, x) => t + (x.bm > 0 ? x.n : 0), 0), per = tp ? tm / tp : 0;
-      // (B) together: share of the combined session's baking minutes (0-minute items use pieces at the average minutes per piece)
-      const wB = norm(rows.map(x => x.bm > 0 ? x.bm : (per ? x.n * per : x.n)));
-      // (A) alone: each item as its own session (setup + prep + baking rounds + glaze + cleaning, same KT as bakeEffort); items it can't time fall back to their baking minutes
-      const alone = rows.map(x => { let m = 0; try { m = bakeEffort({ [x.p]: x.n }).min; } catch (e) {} return nz(m) || nz(x.bm) || (per ? x.n * per : x.n); });
-      const wA = norm(alone), out = []; let used = 0;
-      rows.forEach((x, i) => { const sh = (wA[i] + wB[i]) / 2, v = i === rows.length - 1 ? total - used : total * sh; out.push(v); used += v; }); return out; };
+      const bmw = rows.map(x => x.bm > 0 ? x.bm : (per ? x.n * per : x.n)), tw = bmw.reduce((a, v) => a + v, 0);
+      const eff = m => { try { return nz(bakeEffort(m).min); } catch (e) { return 0; } };
+      const all = {}; rows.forEach(x => { all[x.p] = x.n; }); const comb = eff(all);
+      // minutes if baked alone (own session) and together (share of the combined session by baking minutes); blended = midpoint
+      const mins = rows.map((x, i) => { const al = eff({ [x.p]: x.n }) || nz(x.bm), tg = tw > 0 ? comb * bmw[i] / tw : 0; return (al + (tg || al)) / 2; });
+      return { rate, mins, amts: mins.map(m => m / 60 * rate) }; };
     const ppct = (v, rev) => rev > 0 ? (v / rev * 100).toFixed(0).replace('-', '\u2212') + '%' : '\u2014';
     const pc = (v, a) => a.rev > 0 ? `<span class="cost-hint"> ${(v / a.rev * 100).toFixed(0)}%</span>` : '';
     const itemBlock = (title, sub, a, extra) => `<div class="proj-card fin-item"><h3 class="fin-card-h">${title}</h3><div class="proj-sub">${sub}</div>
@@ -5854,18 +5854,20 @@
       ${row('Less ingredients (incl. waste)', '-' + fm(a.ing) + pc(a.ing, a))}${row('Less baking labor', '-' + fm(a.bl) + pc(a.bl, a))}${row('Less delivery labor', '-' + fm(a.dv) + pc(a.dv, a))}${extra && extra.rows || ''}
       ${row('Profit', fm(extra && extra.pf != null ? extra.pf : a.pf), 'cost-total')}${row('Profit % of sales', ppct(extra && extra.pf != null ? extra.pf : a.pf, a.rev))}</div>`;
     let itemHtml = ''; const gt = zero();
-    const kShare = kAlloc(r.rows, r.recurring || 0);
-    r.rows.forEach((x, i) => { const a = mk(x); addTo(gt, a); const kc = kShare[i]; itemHtml += itemBlock(esc(x.p), pace(a), a, { rows: row('Less kitchen and other costs<span class="cost-hint">Blend of baking alone and baking together</span>', '-' + fm(kc) + pc(kc, a)), pf: a.pf - kc }); });
-    const totExtra = r.recurring > 0 ? { rows: row('Less kitchen and other costs', '-' + fm(r.recurring) + pc(r.recurring, gt)), pf: gt.pf - r.recurring } : { rows: '', pf: gt.pf };
+    const kA = kAlloc(r.rows, r), kSum = kA.amts.reduce((t, v) => t + v, 0);
+    r.rows.forEach((x, i) => { const a = mk(x); addTo(gt, a); const kc = kA.amts[i]; itemHtml += itemBlock(esc(x.p), pace(a), a, { rows: row('Less kitchen time<span class="cost-hint">Blended: baking alone and together, at the kitchen hourly rate</span>', '-' + fm(kc) + pc(kc, a)), pf: a.pf - kc }); });
+    const kUnused = (r.recurring || 0) - kSum;
+    const totExtra = r.recurring > 0 ? { rows: row('Kitchen time (items)', '-' + fm(kSum) + pc(kSum, gt)) + row('Unused kitchen time and other costs', (kUnused < 0 ? fm(-kUnused) : '-' + fm(kUnused)) + pc(kUnused, gt)), pf: gt.pf - r.recurring } : { rows: '', pf: gt.pf };
     if (r.rows.length) itemHtml += itemBlock('Total', pace(gt) + (r.partial ? ' · full month of fixed costs' : ''), gt, totExtra);
     const itemView = (itemHtml || noRows) + (scItems.length ? `<div class="proj-sub">What-if added items are not in these blocks. See the Summary view.</div>` : '');
     // ----- Send to Google Sheet: real (actuals) numbers from ra, same per-item math as mk() -----
     { const c2 = v => Math.round((Number(v) || 0) * 100) / 100, tnA = ra.rows.reduce((t, x) => t + x.n, 0), g = zero();
-      const kS = kAlloc(ra.rows, ra.recurring || 0);
+      const kS = kAlloc(ra.rows, ra).amts, kSumA = kS.reduce((t, v) => t + v, 0);
       const body = ra.rows.map((x, xi) => { const dv = tnA ? ra.delivLabor * x.n / tnA : 0, ing = x.cost || 0, kc = kS[xi], pf = x.rev - ing - x.bl - dv - kc; addTo(g, { n: x.n, rev: x.rev, ing, bl: x.bl, dv, tc: kc, pf });
         return [x.p, x.n, x.n ? c2(x.rev / x.n) : 0, c2(x.rev), c2(ing), c2(x.bl), c2(dv), c2(kc), c2(pf), x.rev > 0 ? Math.round(pf / x.rev * 1000) / 10 : 0]; });
-      finSheet = { month: finMonth, rows: [[wi ? 'Month (What-if is on; these are the real numbers)' : 'Month', finMonth], ['Days counted', ra.days], [], ['Item', 'Pieces', 'Price per piece', 'Sales', 'Ingredients', 'Baking labor', 'Delivery labor', 'Kitchen and other costs', 'Profit', 'Margin %'], ...body,
-        ['Total', g.n, g.n ? c2(g.rev / g.n) : 0, c2(g.rev), c2(g.ing), c2(g.bl), c2(g.dv), c2(g.tc), c2(g.pf), g.rev > 0 ? Math.round(g.pf / g.rev * 1000) / 10 : 0], [],
+      const kUnA = (ra.recurring || 0) - kSumA;
+      finSheet = { month: finMonth, rows: [[wi ? 'Month (What-if is on; these are the real numbers)' : 'Month', finMonth], ['Days counted', ra.days], [], ['Item', 'Pieces', 'Price per piece', 'Sales', 'Ingredients', 'Baking labor', 'Delivery labor', 'Kitchen time', 'Profit', 'Margin %'], ...body,
+        ['Total', g.n, g.n ? c2(g.rev / g.n) : 0, c2(g.rev), c2(g.ing), c2(g.bl), c2(g.dv), c2(g.tc), c2(g.pf - kUnA), g.rev > 0 ? Math.round((g.pf - kUnA) / g.rev * 1000) / 10 : 0], ['Unused kitchen time and other costs', '', '', '', '', '', '', c2(kUnA)], [],
         ['Sales', c2(ra.sales)], ['Ingredients', c2(ra.ingr)], ['Baking labor', c2(ra.bakeLabor)], ['Delivery labor', c2(ra.delivLabor)], ['Recurring/kitchen', c2(ra.recurring)], ['Net', c2(ra.postLabor)], ['Net %', ra.sales > 0 ? Math.round(ra.postLabor / ra.sales * 1000) / 10 : 0]] }; }
     el.innerHTML = banner + `
       <div class="db-filter" id="finViewTog" style="margin-bottom:10px"><button data-finview="sum"${finView === 'sum' ? ' class="on"' : ''}>Summary</button><button data-finview="item"${finView === 'item' ? ' class="on"' : ''}>By item</button></div>
