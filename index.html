@@ -2031,7 +2031,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.85.00 · Oct 13, 7:20 PM</div>
+<div class="ver-badge">v1.86.00 · Oct 13, 7:28 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -5470,6 +5470,7 @@
       <div class="proj-row"><span class="k cost-hint">with ${rFmt(finWaste(FIN.wastePct))}% waste<span class="cost-hint"> · what Finance uses</span></span><span class="cost-hint">${per != null ? money(per * (1 + finWaste(FIN.wastePct) / 100)) : '—'}</span></div>
       ${tops.length ? `${topHtml}
         <div class="proj-row"><span class="k cost-total">Cost per item, finished</span><span class="cost-total">${finished != null ? money(finished) : '—'}</span></div>` : ''}</div>
+      ${laborHtml}
     </div>`;
   }
   // ===== Finance tab: one month of sales, cost of goods, kitchen, and what is left =====
