@@ -1887,7 +1887,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.76.01 · Oct 13</div>
+<div class="ver-badge">v1.76.02 · Oct 13</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -5051,15 +5051,17 @@
     const num = r => [r[0], typeof r[1] === 'number' ? r[1] : lblGrams(r[1]) || parseFloat(r[1]) || 0];
     let rows;
     if (sec === 'mad') {
-      const base = it.versions ? it.versions[0].rows : it.custom ? it.custom
+      const lv = it.versions ? it.versions[verLatest(it)] : null;   // costs follow the latest version, same as the label
+      const base = lv ? lv.rows : it.custom ? it.custom
         : [['Cake Flour', it.flour], ['Baking Powder', REC_MAD_BASE['Baking Powder']], ['Salt', it.salt], ['Eggs', REC_MAD_BASE['Eggs']], ['Sugar', REC_MAD_BASE['Sugar']], ['Vanilla Extract', REC_MAD_BASE['Vanilla Extract']], ['Unsalted Butter', REC_MAD_BASE['Unsalted Butter']]];
       // flavoring, glaze and topping are part of the batch too (the old costing left them out)
       // Syrup / glaze / topping rows keep their own section's label when the same ingredient is already used earlier in the recipe
       // (Chocolate: sugar and cocoa appear in the batter, the syrup and the glaze) — so they read as separate lines, as in the book.
-      const seen = new Set([...base, ...lblNoteRows(it.note)].map(r => costCanon(r[0])));
+      const noteRows = lv && lv.skipNote ? [] : lblNoteRows(it.note), topList = (lv && lv.topping) || it.topping;
+      const seen = new Set([...base, ...noteRows].map(r => costCanon(r[0])));
       const fk = (it.finishFor ? (it.yield || BATCH_YIELD) / it.finishFor : 1);   // syrup/glaze amounts are for `finishFor` pieces; costs are per batch
       const tag = (list, label, always, k = 1) => (list || []).map(r => { const c = costCanon(r[0]), dup = always || seen.has(c); seen.add(c); const amt = k === 1 ? r[1] : num(r)[1] * k; return dup ? [`${r[0]} (${label})`, amt] : [r[0], amt]; });
-      rows = [...base, ...lblNoteRows(it.note), ...tag(it.syrup, 'syrup', true, fk), ...tag(it.glaze, 'glaze', !!it.syrup, fk), ...tag(it.topping, 'topping')].map(num);
+      rows = [...base, ...noteRows, ...tag(it.syrup, 'syrup', true, fk), ...tag(it.glaze, 'glaze', !!it.syrup, fk), ...tag(topList, 'topping')].map(num);
     } else if (sec === 'fill') {
       if (it.type === 'twocol') rows = it.rows.map(r => [r[0], r[1]]);
       else if (it.type === 'ratio') { const [a, b] = it.ratio.split(':').map(parseFloat); rows = [['Sugar', a], ['Heavy Cream', b]]; }
@@ -5098,6 +5100,7 @@
   }
   function costDefaultYield(sec, it) {
     const m = COST_META[costItemKey(sec, it)]; if (m && m.yield) return m.yield;
+    if (sec === 'mad' && it.versions) return verYield(it, verLatest(it));   // the latest version's own piece count
     if (it.yield) return it.yield;
     if (sec === 'mad') return it.yield || BATCH_YIELD;   // a recipe can say how many it makes (Chocolate 7, Brown Butter 12); the rest use the standard 18
     const y = String(it.yieldText || '').match(/makes (?:about )?(\d+)/); return y ? Number(y[1]) : '';
