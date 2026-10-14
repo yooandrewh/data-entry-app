@@ -2061,7 +2061,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.94.00 · Oct 13, 11:59 PM</div>
+<div class="ver-badge">v1.95.00 · Oct 14, 12:25 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -5933,6 +5933,25 @@
   }
   // Simulator: total volume as a share of capacity (two scenarios side by side) -> hours, labor and the cost per piece items 3-5 can afford.
   let finSim = (() => { const d = { a: 20, b: 30, cap: 180, mad: 10, mu: 4, days: 30, pMad: 2.5, pMu: 2.75, share: 60, price: 5, cost: 1.6, type: 'mad', sess: 4, target: 4000, fixed: 0, rate: LAB.rate }; try { return Object.assign(d, JSON.parse(localStorage.getItem('finSim.v1') || '{}')); } catch { return d; } })();
+  // Editable scenario table: today vs 20% vs 30% of capacity, each row's pieces, price, margin and hours editable.
+  let finSimT = (() => { const d = [{ l: 'Today', q: 420, p: 2.57, m: 85, d: 6 }, { l: '20%', q: 1080, p: 2.57, m: 85, d: 6 }, { l: '30%', q: 1620, p: 2.57, m: 85, d: 6 }]; try { const v = JSON.parse(localStorage.getItem('finSimT.v1') || 'null'); return Array.isArray(v) && v.length === 3 ? v : d; } catch { return d; } })();
+  function simTable() {
+    const S = finSim, n0 = v => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
+    const sess = Math.max(1, Math.round(n0(S.sess) || 4)), rate = n0(S.rate) || 20, cap = Math.max(1, n0(S.cap) || 180), days = Math.max(1, n0(S.days) || 30);
+    const mad0 = n0(S.mad), mu0 = n0(S.mu), madShare = mad0 + mu0 > 0 ? mad0 / (mad0 + mu0) : 1;
+    const kitchen = FIN.kitchenCost * (1 + (Number(FIN.taxPct) || 0) / 100);
+    const inp = (i, f, v, w) => `<input type="number" inputmode="decimal" step="any" min="0" data-simt="${i}:${f}" value="${v}" style="width:${w}px;text-align:right">`;
+    const hh = h => h.toFixed(1);
+    const body = finSimT.map((r, i) => {
+      const q = n0(r.q), pr = n0(r.p), m = n0(r.m) / 100, dl = n0(r.d);
+      const plan = labPlan([{ type: 'mad', n: q * madShare }, { type: 'mu', n: q * (1 - madShare) }], sess), bakeH = plan.tot / 60, allH = bakeH + dl;
+      const sales = q * pr, pre = sales * m, post = pre - allH * rate;
+      return `<tr><td>${r.l}<br><small>${(q / days / cap * 100).toFixed(0)}% of capacity</small></td><td align="right">${inp(i, 'q', r.q, 60)}</td><td align="right">$${inp(i, 'p', r.p, 50)}</td><td align="right">${inp(i, 'm', r.m, 44)}%</td><td align="right">${fm0(sales)}</td><td align="right"><b>${fm0(pre)}</b></td><td align="right">${hh(bakeH)}</td><td align="right">${inp(i, 'd', r.d, 40)}</td><td align="right">${hh(allH)}</td><td align="right"><b>${fm0(post)}</b></td><td align="right">${fm0(post - kitchen)}</td></tr>`;
+    }).join('');
+    return `<div class="proj-card fin-lab"><h3 class="fin-card-h">Today vs 20% vs 30%</h3><div class="proj-sub">Change any white box. Pieces are a month; margin is before labor. Baking hours use the bake sessions and today's madeleine-to-muffin mix from below.</div>
+      <div style="overflow-x:auto"><table style="min-width:640px;width:100%;border-collapse:collapse;font-size:var(--fs-caption)"><tr><th align="left"></th><th align="right">Pieces</th><th align="right">Avg price</th><th align="right">Margin</th><th align="right">Sales</th><th align="right">Profit before labor</th><th align="right">Baking hrs</th><th align="right">Delivery hrs</th><th align="right">Total hrs</th><th align="right">Profit before kitchen</th><th align="right">After kitchen</th></tr>${body}</table></div>
+      <div class="cost-hint" style="padding-top:6px">Profit before kitchen = profit before labor minus all hours at $${rFmt(rate)}/h. After kitchen takes off ${fm0(kitchen)} (the block plus tax). Delivery hours are a guess you set per row.</div></div>`;
+  }
   function simView() {
     const S = finSim, N = (v, d) => { const n = Number(v); return Number.isFinite(n) ? n : d; };
     const days = Math.max(1, N(S.days, 30)), sess = Math.max(1, Math.round(N(S.sess, 4))), rate = N(S.rate, 20), price = N(S.price, 5), cost = N(S.cost, 0), target = N(S.target, 0), fixedX = N(S.fixed, 0);
@@ -5956,7 +5975,7 @@
     const sgn = n => (n >= 0 ? '+' : '-') + fm0(Math.abs(n));
     const tr = (k, f) => `<tr><td>${k}</td><td align="right">${f(A)}</td><td align="right">${f(B)}</td></tr>`;
     const good = x => `<span style="color:${x >= 0 ? 'var(--green,#2e7d32)' : 'var(--red,#c0392b)'}">${sgn(x)}</span>`;
-    return `<div class="proj-card fin-lab"><h3 class="fin-card-h">Simulator</h3><div class="proj-sub">Pick how full the kitchen output is (share of ${cap} pastries a day) and what items 3–5 sell and cost. It shows hours, labor, and the most each piece can cost to hit your profit goal.</div>
+    return simTable() + `<div class="proj-card fin-lab"><h3 class="fin-card-h">Simulator</h3><div class="proj-sub">Pick how full the kitchen output is (share of ${cap} pastries a day) and what items 3–5 sell and cost. It shows hours, labor, and the most each piece can cost to hit your profit goal.</div>
       <table style="width:100%;border-collapse:collapse;margin-top:6px"><tr><th align="left">Scenario</th><th align="right">A</th><th align="right">B</th></tr>
       <tr><td>Share of capacity</td><td align="right">${inp('a', S.a, 56)}%</td><td align="right">${inp('b', S.b, 56)}%</td></tr>
       ${tr('Pastries a day', x => x.day.toFixed(0))}${tr('Items 3–5 a month', x => Math.round(x.n).toLocaleString())}${tr('Items 3–5 revenue', x => fm0(x.rev))}
@@ -6014,6 +6033,8 @@
     renderFin();
   });
   document.addEventListener('change', e => {
+    if (e.target.dataset && e.target.dataset.simt) { const [i, f] = e.target.dataset.simt.split(':'); finSimT[i][f] = Math.max(0, Number(e.target.value) || 0);
+      try { localStorage.setItem('finSimT.v1', JSON.stringify(finSimT)); } catch {} renderFin(); return; }
     if (e.target.dataset && e.target.dataset.simf) { const t = e.target, f = t.dataset.simf; finSim[f] = f === 'type' ? t.value : Math.max(0, Number(t.value) || 0);
       try { localStorage.setItem('finSim.v1', JSON.stringify(finSim)); } catch {} renderFin(); return; }
     if (e.target.dataset && e.target.dataset.labf) { const t = e.target, f = t.dataset.labf, i = t.dataset.labi;
