@@ -1733,6 +1733,40 @@
   body { padding-top: calc(var(--safe-top) + 22px) !important; }
   .db-new { top: 20px !important; }
   .home-season { top: calc(var(--safe-top) + 30px) !important; }
+
+  /* ---- Kairos Logs (Home page) ---- */
+  .lg-tabs { display: flex; gap: 6px; overflow-x: auto; margin-bottom: 12px; }
+  .lg-tabs button { flex: 1 0 auto; font-size: var(--fs-caption); font-weight: 600; padding: 9px 12px; border-radius: 999px; border: 1px solid var(--sep); background: rgba(255,255,255,.30); color: var(--text); font-family: inherit; cursor: pointer; white-space: nowrap; }
+  .lg-tabs button.on { border-color: var(--accent); color: var(--accent); background: rgba(164,90,34,.10); }
+  .lg-note { font-size: var(--fs-caption); color: var(--muted); margin-bottom: 10px; }
+  .lg-form { display: grid; gap: 10px; margin-bottom: 14px; }
+  .lg-form label { display: grid; gap: 4px; font-size: var(--fs-caption); font-weight: 600; color: var(--muted); }
+  .lg-form input, .lg-form select, .lg-form textarea { width: 100%; font: inherit; font-size: var(--fs-body); color: var(--text); background: rgba(255,255,255,.30); border: 1px solid var(--sep); border-radius: 12px; padding: 10px 12px; min-width: 0; box-sizing: border-box; }
+  .lg-form textarea { min-height: 64px; resize: vertical; }
+  .lg-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .lg-calc { font-size: var(--fs-body); padding: 10px 12px; border: 1px dashed var(--sep); border-radius: 12px; }
+  .lg-day { font-size: var(--fs-caption); font-weight: 700; color: var(--muted); border-bottom: 1px solid var(--sep); padding: 10px 0 4px; display: flex; justify-content: space-between; }
+  .lg-entry { padding: 10px 0; border-bottom: 1px solid var(--sep); display: grid; gap: 4px; }
+  .lg-entry .t { font-weight: 700; font-size: var(--fs-body); }
+  .lg-entry .kv { font-size: var(--fs-caption); color: var(--muted); display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; }
+  .lg-entry .kv span:nth-child(even) { color: var(--text); overflow-wrap: anywhere; }
+  .lg-badge { font-size: var(--fs-micro); font-weight: 700; justify-self: start; border: 1px solid var(--sep); padding: 1px 8px; border-radius: 999px; }
+  .lg-badge.done { color: var(--green); border-color: var(--green); }
+  .lg-badge.open { color: var(--red); border-color: var(--red); }
+  .lg-acts { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+  .lg-acts button, .lg-btn { font: inherit; font-size: var(--fs-caption); font-weight: 600; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--sep); background: rgba(255,255,255,.30); color: var(--text); cursor: pointer; }
+  .lg-acts button.danger { color: var(--red); border-color: var(--red); }
+  .lg-btn.pri { background: var(--accent); color: #fff; border-color: var(--accent); font-size: var(--fs-body); padding: 12px; }
+  .lg-finish { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: end; }
+  .lg-empty { text-align: center; color: var(--muted); padding: 22px 8px; font-size: var(--fs-caption); }
+  .lg-rep { overflow-x: auto; background: #fff; color: #111; border: 1px solid var(--sep); padding: 12px; margin-top: 12px; }
+  .lg-rep h2 { font-size: var(--fs-lg); margin: 0 0 2px; color: #111; }
+  .lg-rep h4 { font-size: var(--fs-caption); margin: 14px 0 6px; color: #111; }
+  .lg-rep table { border-collapse: collapse; width: 100%; font-size: var(--fs-micro); min-width: 460px; }
+  .lg-rep th, .lg-rep td { border: 1px solid #999; padding: 4px 6px; text-align: left; vertical-align: top; }
+  .lg-rep th { background: #eee8da; }
+  .lg-rep td.dt { background: #f6f2e8; font-weight: 700; }
+  .lg-rep .s { color: #555; font-size: var(--fs-micro); }
 </style>
 </head>
 <body>
@@ -1755,6 +1789,7 @@
       <button type="button" data-hpage="plan"><span class="hm-ic" data-ic="book"></span><span class="hm-t">Baking Plan</span><span class="hm-go">›</span></button>
       <button type="button" data-hpage="invoice"><span class="hm-ic" data-ic="tag"></span><span class="hm-t">Invoice / Labels</span><span class="hm-go">›</span></button>
       <button type="button" data-hpage="todo"><span class="hm-ic" data-ic="book"></span><span class="hm-t">To Do</span><span class="hm-go">›</span></button>
+      <button type="button" data-hpage="logs"><span class="hm-ic" data-ic="book"></span><span class="hm-t">Kairos Logs</span><span class="hm-go">›</span></button>
       <a class="hm-link" href="https://app.thefoodcorridor.com/tfc_food_business_dashboard/69084-kairosbaking/bookings?locale=en" target="_blank" rel="noopener noreferrer">Book Commercial Kitchen ↗</a>
     </div>
     
@@ -1835,6 +1870,7 @@
 
     <!-- To Do -->
     <div id="homeTodo" hidden></div>
+    <div id="homeLogs" hidden></div>
 
     <!-- Invoice -->
     <div id="homeInvoice" hidden>
@@ -2061,7 +2097,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.96.03 · Oct 14, 3:25 AM</div>
+<div class="ver-badge">v1.97.00 · Oct 13, 11:13 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -3204,7 +3240,7 @@
 
   // ---- Home: a landing screen with three buttons; each opens its own page ----
   let homeTab = null;   // null = landing | 'forecast' | 'plan' | 'invoice'
-  const HOME_TITLES = { forecast: 'Forecast', plan: 'Baking Plan', invoice: 'Invoice / Labels', timers: 'Timers', todo: 'To Do' };
+  const HOME_TITLES = { forecast: 'Forecast', plan: 'Baking Plan', invoice: 'Invoice / Labels', timers: 'Timers', todo: 'To Do', logs: 'Kairos Logs' };
   // The version line lives over the photo on Home's landing; everywhere else it is the fixed strip.
   function syncVer() {
     const onHome = (document.querySelector('.tabbar button.on') || {}).dataset?.tab === 'home';
@@ -3221,13 +3257,202 @@
     document.getElementById('homeInvoice').hidden = homeTab !== 'invoice';
     document.getElementById('homeTimers').hidden = homeTab !== 'timers';
     document.getElementById('homeTodo').hidden = homeTab !== 'todo';
+    document.getElementById('homeLogs').hidden = homeTab !== 'logs';
     document.getElementById('hpTitle').textContent = HOME_TITLES[homeTab] || '';
     if (homeTab === 'plan') { renderBakeSheet(); renderPlan(); }
     if (homeTab === 'invoice') initInvoiceForm();
     if (homeTab === 'todo') renderTodo();
+    if (homeTab === 'logs') logsOpen();
     if (homeTab === 'timers') renderTimers(); else stopTick();
     syncVer(); window.scrollTo(0, 0);
   }
+
+  // ---- Kairos Logs: Production / Delivery / Training / Complaints / Print (api/logs.js, one Sheet tab each) ----
+  const LG_ITEMS = ['Lemon Poppy', 'Sea Salt', 'Maple Pecan', 'Pumpkin Muffin', 'Blueberry Muffin'];
+  const LG_DESTS = ['Here and There Coffee, La Mirada', 'Here and There Coffee, Stanton'];
+  const LG_KEYS = ['production', 'delivery', 'training', 'complaints'];
+  const LG_NAMES = { production: 'Production', delivery: 'Delivery Log', training: 'Training Record', complaints: 'Customer Complaints' };
+  const LG_FORMS = {
+    production: { note: 'Save the plan first. When the bake is done, enter the actual quantity. Tree nut items go last in the schedule.' },
+    delivery: { note: "Place the order in the customer's freezer, take a photo, and leave the invoice.", title: 'New Delivery', fields: [
+      { k: 'date', l: 'Date', t: 'date', def: 1 }, { k: 'invoice', l: 'Invoice #', t: 'text' }, { k: 'dest', l: 'Destination', t: 'dest' },
+      { k: 'left', l: 'Time Left', t: 'time', pair: 1, defTime: 1 }, { k: 'arrived', l: 'Time Arrived', t: 'time', pair: 1 }] },
+    training: { note: 'One row per person who handles food.', title: 'New Training Record', fields: [
+      { k: 'name', l: 'Name', t: 'text' }, { k: 'role', l: 'Role', t: 'text' },
+      { k: 'handler', l: 'Food Handler Card (Expiry)', t: 'text' }, { k: 'manager', l: 'Food Manager Certified (Expiry)', t: 'text' },
+      { k: 'binder', l: 'Read Food Safety Binder (Date)', t: 'date' }, { k: 'sig', l: 'Signature (Type Full Name)', t: 'text' }] },
+    complaints: { note: 'Record every complaint, especially illness or allergic reactions.', title: 'New Complaint', fields: [
+      { k: 'date', l: 'Date', t: 'date', def: 1 }, { k: 'customer', l: 'Customer', t: 'text' }, { k: 'product', l: 'Product and Production Date', t: 'text' },
+      { k: 'problem', l: 'Problem', t: 'area' }, { k: 'action', l: 'Action Taken', t: 'area' }] },
+  };
+  const LG_SHOW = {
+    delivery: [['invoice', 'Invoice'], ['left', 'Left', 'time'], ['arrived', 'Arrived', 'time']],
+    training: [['role', 'Role'], ['handler', 'Food Handler Card'], ['manager', 'Food Manager'], ['binder', 'Read Binder', 'date'], ['sig', 'Signature']],
+    complaints: [['product', 'Product'], ['problem', 'Problem'], ['action', 'Action'], ['closed', 'Closed', 'date']],
+  };
+  const LG_COLS = {
+    production: [['Item', e => e.item], ['Start', e => lgTime(e.start)], ['Target', e => e.target], ['Batch Size', e => e.batchSize], ['Batches', e => e.batches], ['Actual', e => e.status === 'done' ? e.actual : ''], ['Status', e => e.status === 'done' ? 'Done' : 'Planned']],
+    delivery: [['Invoice #', e => e.invoice], ['Destination', e => e.dest], ['Time Left', e => lgTime(e.left)], ['Time Arrived', e => lgTime(e.arrived)]],
+    training: [['Name', e => e.name], ['Role', e => e.role], ['Food Handler Card (Expiry)', e => e.handler], ['Food Manager Certified (Expiry)', e => e.manager], ['Read Binder', e => lgDate(e.binder)], ['Signature', e => e.sig]],
+    complaints: [['Customer', e => e.customer], ['Product and Production Date', e => e.product], ['Problem', e => e.problem], ['Action Taken', e => e.action], ['Closed', e => lgDate(e.closed)]],
+  };
+  let lgTab = 'production', lgData = {}, lgLoaded = {}, lgRange = { from: '', to: '' }, lgConfirm = null, lgDraft = {};
+  const lgEsc = v => String(v == null ? '' : v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const lgDate = s => { const p = String(s || '').split('-'); return p.length === 3 ? `${+p[1]}/${+p[2]}/${p[0]}` : (s || ''); };
+  const lgTime = s => { if (!s) return ''; const p = String(s).split(':'); let h = +p[0]; const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return `${h}:${p[1]} ${ap}`; };
+  const lgLong = s => { const p = String(s || '').split('-'); return p.length === 3 ? new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) : 'No Date'; };
+  const lgNowTime = () => new Date().toTimeString().slice(0, 5);
+  const lgNum = v => { const n = parseFloat(String(v).replace(/,/g, '')); return isFinite(n) ? n : 0; };
+  const lgCode = () => { let c = ''; try { c = localStorage.getItem('ledgerCode') || ''; } catch {} if (!c) { c = (prompt('Access code (needed once on this device)') || '').trim(); if (c) try { localStorage.setItem('ledgerCode', c); } catch {} } return c; };
+  async function lgCall(method, body, log) {
+    const code = lgCode(); if (!code) return null;
+    try {
+      const r = await fetch(method === 'GET' ? '/api/logs?log=' + log : '/api/logs', { method, headers: { 'Content-Type': 'application/json', 'x-logs-code': code }, body: method === 'GET' ? undefined : JSON.stringify(body) });
+      const j = await r.json().catch(() => ({}));
+      if (r.status === 401) { try { localStorage.removeItem('ledgerCode'); } catch {} rcpToast('Wrong code'); return null; }
+      if (r.status === 503) { rcpToast('Logs are off until LOGS_CODE is set in Vercel'); return null; }
+      if (!r.ok) { rcpToast(j.error || 'Could not save'); return null; }
+      return j;
+    } catch { rcpToast('Could not reach the server'); return null; }
+  }
+  async function lgLoad(key) { const j = await lgCall('GET', null, key); if (j) { lgData[key] = j.rows; lgLoaded[key] = true; } return !!j; }
+  async function logsOpen() { lgTab = lgTab || 'production'; lgPaint(true); const keys = lgTab === 'print' ? LG_KEYS : [lgTab]; await Promise.all(keys.map(lgLoad)); lgPaint(true); }
+  const lgInRange = d => !((lgRange.from && d < lgRange.from) || (lgRange.to && d > lgRange.to));
+  function lgGroup(arr, asc) {
+    const map = {}, order = [];
+    arr.forEach(e => { const d = e.date || ''; if (!map[d]) { map[d] = []; order.push(d); } map[d].push(e); });
+    order.sort(); if (!asc) order.reverse();
+    return order.map(d => ({ date: d, items: map[d].slice().sort((a, b) => (((a.start || '99:99') + a.createdAt) < ((b.start || '99:99') + b.createdAt) ? -1 : 1) * (asc ? 1 : -1)) }));
+  }
+  const lgYield = item => { const r = (lgData.production || []).filter(e => e.item === item && e.batchSize > 0).sort((a, b) => b.createdAt - a.createdAt)[0]; return r ? r.batchSize : ''; };
+  function lgField(f) {
+    const v = f.def ? new Date().toLocaleDateString('en-CA') : (f.defTime ? lgNowTime() : '');
+    if (f.t === 'area') return `<label>${f.l}<textarea name="${f.k}"></textarea></label>`;
+    if (f.t === 'dest') return `<label>${f.l}<select name="${f.k}"><option value="">Choose Destination</option>${LG_DESTS.map(d => `<option>${lgEsc(d)}</option>`).join('')}<option value="__other">Other (Type Below)</option></select><input type="text" name="destOther" placeholder="Other destination" hidden></label>`;
+    return `<label>${f.l}<input type="${f.t}" name="${f.k}" value="${v}"></label>`;
+  }
+  function lgFormHtml(key) {
+    if (key === 'production') return `<form class="lg-form" id="lgForm"><div class="lg-2"><label>Date<input type="date" name="date" value="${new Date().toLocaleDateString('en-CA')}"></label><label>Item<select name="item"><option value="">Choose Item</option>${LG_ITEMS.map(i => `<option>${i}</option>`).join('')}</select></label></div><div class="lg-2"><label>Target Quantity<input type="text" inputmode="numeric" name="target" placeholder="e.g. 120"></label><label>Batch Size<input type="text" inputmode="numeric" name="batch" placeholder="pieces per batch"></label></div><div class="lg-calc" id="lgCalc"></div><label>Scheduled Start Time (Optional)<input type="time" name="start"></label><button class="lg-btn pri" type="submit">Save Plan</button></form>`;
+    const c = LG_FORMS[key], fs = c.fields; let h = `<form class="lg-form" id="lgForm">`;
+    for (let i = 0; i < fs.length;) { if (fs[i].pair) { h += '<div class="lg-2">'; while (i < fs.length && fs[i].pair) h += lgField(fs[i++]); h += '</div>'; } else h += lgField(fs[i++]); }
+    return h + `<button class="lg-btn pri" type="submit">Save Entry</button></form>`;
+  }
+  function lgEntryHtml(key, e) {
+    const kv = []; const add = (l, v) => { if (v !== '' && v != null) kv.push(`<span>${l}</span><span>${lgEsc(v)}</span>`); };
+    let title, badge = '';
+    if (key === 'production') {
+      title = e.item; badge = `<span class="lg-badge ${e.status === 'done' ? 'done' : 'open'}">${e.status === 'done' ? 'Done' : 'Planned'}</span>`;
+      add('Start', lgTime(e.start)); add('Target', e.target); add('Batch Size', e.batchSize); add('Batches', e.batches);
+      if (e.status === 'done') add('Actual', e.actual);
+    } else {
+      title = key === 'delivery' ? (e.dest || 'Delivery') : key === 'training' ? (e.name || 'Person') : (e.customer || 'Customer');
+      for (const [k, l, t] of LG_SHOW[key] || []) add(l, t === 'time' ? lgTime(e[k]) : t === 'date' ? lgDate(e[k]) : e[k]);
+      if (key === 'complaints') badge = `<span class="lg-badge ${e.closed ? 'done' : 'open'}">${e.closed ? 'Closed' : 'Open'}</span>`;
+    }
+    let h = `<div class="lg-entry"><div class="t">${lgEsc(title)}</div>${badge}<div class="kv">${kv.join('')}</div>`;
+    if (key === 'production' && e.status !== 'done') h += `<div class="lg-finish"><label class="lg-form" style="margin:0;display:grid;gap:4px"><span style="font-size:var(--fs-caption);color:var(--muted);font-weight:600">When Finished: Actual Qty</span><input type="text" inputmode="numeric" data-act="actual" data-id="${e.id}" value="${lgEsc(lgDraft[e.id] || '')}" style="font:inherit;padding:10px 12px;border:1px solid var(--sep);background:rgba(255,255,255,.30);border-radius:12px;width:100%;box-sizing:border-box"></label><button class="lg-btn pri" data-act="done" data-id="${e.id}" style="width:auto">Mark Done</button></div>`;
+    h += '<div class="lg-acts">';
+    if (key === 'production' && e.status === 'done') h += `<button data-act="reopen" data-id="${e.id}">Reopen</button>`;
+    if (key === 'complaints' && !e.closed) h += `<button data-act="close" data-id="${e.id}">Mark Closed Today</button>`;
+    h += lgConfirm === e.id ? `<button data-act="keep">Keep</button><button class="danger" data-act="remove" data-id="${e.id}">Delete</button>` : `<button data-act="ask" data-id="${e.id}">Delete</button>`;
+    return h + '</div></div>';
+  }
+  function lgReportHtml() {
+    let h = `<h2>Kairosbaking Food Safety Records</h2><div class="s">Hyebin Kim LLC · LGI Kitchen, 3519 W Commonwealth Ave #L, Fullerton, CA 92833 · (714) 357-6137</div><div class="s">${lgRange.from || lgRange.to ? `Dates: ${lgRange.from ? lgDate(lgRange.from) : 'start'} to ${lgRange.to ? lgDate(lgRange.to) : 'today'}` : 'All dates'} · Printed ${lgDate(new Date().toLocaleDateString('en-CA'))}</div>`;
+    for (const key of LG_KEYS) {
+      const cols = LG_COLS[key]; h += `<h4>${LG_NAMES[key]}</h4>`;
+      const arr = (lgData[key] || []).filter(e => key === 'training' || lgInRange(e.date || ''));
+      if (!arr.length) { h += '<div class="s">No entries.</div>'; continue; }
+      h += `<table><thead><tr>${cols.map(c => `<th>${lgEsc(c[0])}</th>`).join('')}</tr></thead><tbody>`;
+      const row = e => `<tr>${cols.map(c => `<td>${lgEsc(c[1](e))}</td>`).join('')}</tr>`;
+      if (key === 'training') arr.slice().sort((a, b) => (a.name || '').localeCompare(b.name || '')).forEach(e => { h += row(e); });
+      else lgGroup(arr, true).forEach(g => { h += `<tr><td class="dt" colspan="${cols.length}">${lgEsc(lgLong(g.date))} (${g.items.length})</td></tr>`; g.items.forEach(e => { h += row(e); }); });
+      h += '</tbody></table>';
+    }
+    return h;
+  }
+  function lgPrint() {
+    const w = window.open('', '_blank'); if (!w) { rcpToast('Allow pop-ups to print'); return; }
+    w.document.write(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Kairosbaking Records</title><style>body{font:13px/1.4 Arial,sans-serif;color:#111;margin:24px}h2{margin:0 0 2px}h4{margin:18px 0 6px;font-size:14px}table{border-collapse:collapse;width:100%;font-size:12px}tr{page-break-inside:avoid}th,td{border:1px solid #888;padding:4px 6px;text-align:left;vertical-align:top}th{background:#eee}td.dt{background:#f4f4f4;font-weight:700}.s{color:#555;font-size:12px}@media print{body{margin:0}}</style></head><body>${lgReportHtml()}</body></html>`);
+    w.document.close(); w.focus(); setTimeout(() => w.print(), 300);
+  }
+  function lgPaint(force) {
+    const box = document.getElementById('homeLogs'); if (!box) return;
+    const tabs = `<div class="lg-tabs">${[...LG_KEYS, 'print'].map(k => `<button type="button" data-tab="${k}" class="${k === lgTab ? 'on' : ''}">${k === 'print' ? 'Print' : LG_NAMES[k].split(' ')[0] === 'Customer' ? 'Complaints' : LG_NAMES[k].split(' ')[0]}</button>`).join('')}</div>`;
+    if (lgTab === 'print') {
+      const act = document.activeElement;
+      if (!force && act && box.contains(act) && act.tagName === 'INPUT') { const r = box.querySelector('.lg-rep'); if (r) r.innerHTML = lgReportHtml(); return; }
+      box.innerHTML = tabs + `<div class="lg-note">All entries, grouped by date. Leave the dates empty for everything.</div><div class="lg-form"><div class="lg-2"><label>From<input type="date" id="lgFrom" value="${lgRange.from}"></label><label>To<input type="date" id="lgTo" value="${lgRange.to}"></label></div><button class="lg-btn pri" type="button" id="lgPrintBtn">Print Records</button></div><div class="lg-rep">${lgReportHtml()}</div>`;
+      return;
+    }
+    const key = lgTab, arr = (lgData[key] || []).slice().sort((a, b) => key === 'training' ? (a.name || '').localeCompare(b.name || '') : (((a.date || '') + '|' + (a.start || '99:99') + '|' + a.createdAt) < ((b.date || '') + '|' + (b.start || '99:99') + '|' + b.createdAt) ? 1 : -1));
+    const keep = !force && box.dataset.key === key && box.querySelector('#lgForm');
+    const saved = keep ? box.querySelector('#lgForm') : null; if (saved) saved.remove();
+    let list = `<div class="lg-day"><span>${lgLoaded[key] ? (arr.length === 1 ? '1 entry' : arr.length + ' entries') : 'Loading'}</span></div>`;
+    if (lgLoaded[key] && !arr.length) list += '<div class="lg-empty">No entries yet. Your first one will show up here.</div>';
+    if (key === 'training') list += arr.map(e => lgEntryHtml(key, e)).join('');
+    else lgGroup(arr, false).forEach(g => { list += `<div class="lg-day"><span>${lgEsc(lgLong(g.date))}</span><span>${g.items.length}</span></div>` + g.items.map(e => lgEntryHtml(key, e)).join(''); });
+    box.innerHTML = tabs + `<div class="lg-note">${lgEsc(LG_FORMS[key].note)}</div>` + (saved ? '<div id="lgSlot"></div>' : lgFormHtml(key)) + `<div id="lgList">${list}</div>`;
+    if (saved) box.querySelector('#lgSlot').replaceWith(saved);
+    box.dataset.key = key; if (key === 'production') lgCalc();
+  }
+  function lgCalc() {
+    const f = document.getElementById('lgForm'), c = document.getElementById('lgCalc'); if (!f || !c) return;
+    const t = lgNum(f.target.value), b = lgNum(f.batch.value);
+    if (t > 0 && b > 0) { const n = Math.ceil(t / b); c.innerHTML = `Make <b>${n}</b> ${n === 1 ? 'batch' : 'batches'} = ${n * b} pieces${n * b > t ? ` (${n * b - t} extra)` : ''}`; }
+    else c.textContent = 'Enter target quantity and batch size to see how many batches to make.';
+  }
+  async function lgSubmit(f) {
+    const key = lgTab, btn = f.querySelector('button[type=submit]'); let rec;
+    if (key === 'production') {
+      const t = lgNum(f.target.value), b = lgNum(f.batch.value);
+      if (!f.item.value || !(t > 0 && b > 0)) { rcpToast('Pick an item, then enter a target and batch size'); return; }
+      rec = { date: f.date.value, item: f.item.value, target: t, batchSize: b, batches: Math.ceil(t / b), start: f.start.value, status: 'planned' };
+    } else {
+      rec = {}; LG_FORMS[key].fields.forEach(x => { rec[x.k] = (f.elements[x.k].value || '').trim(); });
+      if (key === 'delivery' && rec.dest === '__other') rec.dest = (f.elements.destOther.value || '').trim() || 'Other';
+      const need = { delivery: ['invoice', 'dest', 'date'], training: ['name'], complaints: ['customer', 'problem', 'date'] }[key];
+      if (need.some(k => !rec[k])) { rcpToast('Fill in the required fields'); return; }
+    }
+    btn.disabled = true; const j = await lgCall('POST', { action: 'add', log: key, rec }); btn.disabled = false;
+    if (!j) return;
+    track('log_add', { log: key }); rcpToast('Saved'); await lgLoad(key); lgPaint(true);
+  }
+  async function lgAct(b) {
+    const key = lgTab, id = b.dataset.id, a = b.dataset.act;
+    if (a === 'ask') { lgConfirm = id; lgPaint(); return; }
+    if (a === 'keep') { lgConfirm = null; lgPaint(); return; }
+    let body;
+    if (a === 'done') { const v = (document.querySelector(`#homeLogs input[data-act=actual][data-id="${id}"]`) || {}).value || ''; if (v.trim() === '' || !(lgNum(v) >= 0)) { rcpToast('Enter the actual quantity first'); return; } body = { action: 'update', fields: { status: 'done', actual: lgNum(v), doneAt: Date.now() } }; }
+    else if (a === 'reopen') body = { action: 'update', fields: { status: 'planned' } };
+    else if (a === 'close') body = { action: 'update', fields: { closed: new Date().toLocaleDateString('en-CA') } };
+    else if (a === 'remove') { lgConfirm = null; body = { action: 'remove' }; }
+    else return;
+    b.disabled = true; const j = await lgCall('POST', { ...body, log: key, id }); if (!j) { b.disabled = false; return; }
+    delete lgDraft[id]; await lgLoad(key); lgPaint();
+  }
+  (() => {
+    const box = document.getElementById('homeLogs');
+    box.addEventListener('click', async e => {
+      const t = e.target.closest('button'); if (!t) return;
+      if (t.dataset.tab) { lgTab = t.dataset.tab; lgConfirm = null; track('log_tab', { tab: lgTab }); logsOpen(); return; }
+      if (t.id === 'lgPrintBtn') { lgPrint(); return; }
+      if (t.dataset.act) lgAct(t);
+    });
+    box.addEventListener('submit', e => { e.preventDefault(); lgSubmit(e.target); });
+    box.addEventListener('input', e => {
+      const t = e.target;
+      if (t.closest('#lgForm') && lgTab === 'production') lgCalc();
+      if (t.dataset && t.dataset.act === 'actual') lgDraft[t.dataset.id] = t.value;
+      if (t.id === 'lgFrom' || t.id === 'lgTo') { lgRange = { from: document.getElementById('lgFrom').value, to: document.getElementById('lgTo').value }; lgPaint(); }
+    });
+    box.addEventListener('change', e => {
+      const t = e.target;
+      if (t.name === 'item' && lgTab === 'production') { const f = t.form, y = lgYield(t.value); if (y && !f.batch.value) { f.batch.value = y; lgCalc(); } }
+      if (t.name === 'dest') t.form.elements.destOther.hidden = t.value !== '__other';
+    });
+  })();
+
   document.getElementById('homeMenu').addEventListener('click', e => {
     const b = e.target.closest('button'); if (!b) return;
     if ('hbuy' in b.dataset) { openBuyList(); return; }
