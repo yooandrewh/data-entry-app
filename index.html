@@ -2061,7 +2061,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.91.02 · Oct 13, 10:00 PM</div>
+<div class="ver-badge">v1.91.03 · Oct 13, 10:10 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -4182,7 +4182,7 @@
   // (glaze happens during the bake, so it's free). Batches are counted per flavor
   // (you can't mix flavors in a batch). Sequential single-oven estimate.
   const BATCH_YIELD = 12;   // hardcoded for now (Andrew, 2026-10-13): a madeleine batch is 12
-  const PRODUCT_YIELD = { 'Pumpkin Muffin': 10 };   // pieces per batch for products that aren't madeleines
+  const PRODUCT_YIELD = { 'Pumpkin Muffin': 10, 'Maple Pecan': 11 };   // pieces per batch for products that aren't madeleines
   const flavorBatches = (n, p) => Math.ceil(Math.max(0, n) / (PRODUCT_YIELD[p] || BATCH_YIELD));
   // ---- Kitchen time model (commercial kitchen). Every number is editable under "Kitchen times". ----
   //  Batch prep happens before the batter rests: `prepGroup` batches at a time, ~`prepMin` minutes per go.
