@@ -1739,6 +1739,7 @@
   .lg-tabs button { flex: 1 0 auto; font-size: var(--fs-caption); font-weight: 600; padding: 9px 12px; border-radius: 999px; border: 1px solid var(--sep); background: rgba(255,255,255,.30); color: var(--text); font-family: inherit; cursor: pointer; white-space: nowrap; }
   .lg-tabs button.on { border-color: var(--accent); color: var(--accent); background: rgba(164,90,34,.10); }
   .lg-note { font-size: var(--fs-caption); color: var(--muted); margin-bottom: 10px; }
+  label .lg-note { display: block; margin: 6px 0 0; font-weight: 400; }
   .lg-form { display: grid; gap: 10px; margin-bottom: 14px; }
   .lg-form label { display: grid; gap: 4px; font-size: var(--fs-caption); font-weight: 600; color: var(--muted); }
   .lg-form input, .lg-form select, .lg-form textarea { width: 100%; font: inherit; font-size: var(--fs-body); color: var(--text); background: rgba(255,255,255,.30); border: 1px solid var(--sep); border-radius: 12px; padding: 10px 12px; min-width: 0; box-sizing: border-box; }
@@ -2097,7 +2098,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.97.01 · Oct 14, 9:40 AM</div>
+<div class="ver-badge">v1.98.00 · Oct 14, 10:05 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -3291,7 +3292,7 @@
     complaints: [['product', 'Product'], ['problem', 'Problem'], ['action', 'Action'], ['closed', 'Closed', 'date']],
   };
   const LG_COLS = {
-    production: [['Item', e => e.item], ['Start', e => lgTime(e.start)], ['Target', e => e.target], ['Batch Size', e => e.batchSize], ['Batches', e => e.batches], ['Actual', e => e.status === 'done' ? e.actual : ''], ['Status', e => e.status === 'done' ? 'Done' : 'Planned']],
+    production: [['Item', e => e.item], ['Start', e => lgTime(e.start)], ['Target', e => e.target], ['Batches', e => e.batches], ['Yield Each', e => e.batchSize], ['Actual', e => e.status === 'done' ? e.actual : ''], ['Status', e => e.status === 'done' ? 'Done' : 'Planned']],
     delivery: [['Invoice #', e => e.invoice], ['Destination', e => e.dest], ['Time Left', e => lgTime(e.left)], ['Time Arrived', e => lgTime(e.arrived)]],
     training: [['Name', e => e.name], ['Role', e => e.role], ['Food Handler Card (Expiry)', e => e.handler], ['Food Manager Certified (Expiry)', e => e.manager], ['Read Binder', e => lgDate(e.binder)], ['Signature', e => e.sig]],
     complaints: [['Customer', e => e.customer], ['Product and Production Date', e => e.product], ['Problem', e => e.problem], ['Action Taken', e => e.action], ['Closed', e => lgDate(e.closed)]],
@@ -3332,7 +3333,7 @@
     return `<label>${f.l}<input type="${f.t}" name="${f.k}" value="${v}"></label>`;
   }
   function lgFormHtml(key) {
-    if (key === 'production') return `<form class="lg-form" id="lgForm"><div class="lg-2"><label>Date<input type="date" name="date" value="${new Date().toLocaleDateString('en-CA')}"></label><label>Item<select name="item"><option value="">Choose Item</option>${LG_ITEMS.map(i => `<option>${i}</option>`).join('')}</select></label></div><div class="lg-2"><label>Target Quantity<input type="text" inputmode="numeric" name="target" placeholder="e.g. 120"></label><label>Batch Size<input type="text" inputmode="numeric" name="batch" placeholder="pieces per batch"></label></div><div class="lg-calc" id="lgCalc"></div><label>Scheduled Start Time (Optional)<input type="time" name="start"></label><button class="lg-btn pri" type="submit">Save Plan</button></form>`;
+    if (key === 'production') return `<form class="lg-form" id="lgForm"><div class="lg-2"><label>Date<input type="date" name="date" value="${new Date().toLocaleDateString('en-CA')}"></label><label>Item<select name="item"><option value="">Choose Item</option>${LG_ITEMS.map(i => `<option>${i}</option>`).join('')}</select></label></div><div class="lg-2"><label>Target Quantity<input type="text" inputmode="numeric" name="target" placeholder="e.g. 120"></label><label># of Batches<input type="text" inputmode="numeric" name="batch" placeholder="auto"><span class="lg-note" id="lgYieldNote">Choose an item to see what each batch yields.</span></label></div><div class="lg-calc" id="lgCalc"></div><label>Scheduled Start Time (Optional)<input type="time" name="start"></label><button class="lg-btn pri" type="submit">Save Plan</button></form>`;
     const c = LG_FORMS[key], fs = c.fields; let h = `<form class="lg-form" id="lgForm">`;
     for (let i = 0; i < fs.length;) { if (fs[i].pair) { h += '<div class="lg-2">'; while (i < fs.length && fs[i].pair) h += lgField(fs[i++]); h += '</div>'; } else h += lgField(fs[i++]); }
     return h + `<button class="lg-btn pri" type="submit">Save Entry</button></form>`;
@@ -3342,7 +3343,7 @@
     let title, badge = '';
     if (key === 'production') {
       title = e.item; badge = `<span class="lg-badge ${e.status === 'done' ? 'done' : 'open'}">${e.status === 'done' ? 'Done' : 'Planned'}</span>`;
-      add('Start', lgTime(e.start)); add('Target', e.target); add('Batch Size', e.batchSize); add('Batches', e.batches);
+      add('Start', lgTime(e.start)); add('Target', e.target); add('Batches', e.batches); add('Yield Each', e.batchSize);
       if (e.status === 'done') add('Actual', e.actual);
     } else {
       title = key === 'delivery' ? (e.dest || 'Delivery') : key === 'training' ? (e.name || 'Person') : (e.customer || 'Customer');
@@ -3397,17 +3398,20 @@
     box.dataset.key = key; if (key === 'production') lgCalc();
   }
   function lgCalc() {
-    const f = document.getElementById('lgForm'), c = document.getElementById('lgCalc'); if (!f || !c) return;
-    const t = lgNum(f.target.value), b = lgNum(f.batch.value);
-    if (t > 0 && b > 0) { const n = Math.ceil(t / b); c.innerHTML = `Make <b>${n}</b> ${n === 1 ? 'batch' : 'batches'} = ${n * b} pieces${n * b > t ? ` (${n * b - t} extra)` : ''}`; }
-    else c.textContent = 'Enter target quantity and batch size to see how many batches to make.';
+    const f = document.getElementById('lgForm'), c = document.getElementById('lgCalc'), nt = document.getElementById('lgYieldNote'); if (!f || !c) return;
+    const y = lgNum(lgYield(f.item.value)), t = lgNum(f.target.value);
+    if (nt) nt.textContent = y > 0 ? `Each batch yields ${y} pieces` : 'Choose an item to see what each batch yields.';
+    if (y > 0 && t > 0 && !f.batch.dataset.manual) f.batch.value = Math.ceil(t / y);
+    const n = lgNum(f.batch.value);
+    if (y > 0 && n > 0) c.innerHTML = `<b>${n}</b> ${n === 1 ? 'batch' : 'batches'} × ${y} = ${n * y} pieces${t > 0 && n * y > t ? ` (${n * y - t} extra)` : ''}${t > 0 && n * y < t ? ` (${t - n * y} short of target)` : ''}`;
+    else c.textContent = 'Enter a target quantity to see how many batches to make.';
   }
   async function lgSubmit(f) {
     const key = lgTab, btn = f.querySelector('button[type=submit]'); let rec;
     if (key === 'production') {
-      const t = lgNum(f.target.value), b = lgNum(f.batch.value);
-      if (!f.item.value || !(t > 0 && b > 0)) { rcpToast('Pick an item, then enter a target and batch size'); return; }
-      rec = { date: f.date.value, item: f.item.value, target: t, batchSize: b, batches: Math.ceil(t / b), start: f.start.value, status: 'planned' };
+      const t = lgNum(f.target.value), n = lgNum(f.batch.value), y = lgNum(lgYield(f.item.value));
+      if (!f.item.value || !(t > 0 && n > 0 && y > 0)) { rcpToast('Pick an item, then enter a target quantity'); return; }
+      rec = { date: f.date.value, item: f.item.value, target: t, batchSize: y, batches: n, start: f.start.value, status: 'planned' };
     } else {
       rec = {}; LG_FORMS[key].fields.forEach(x => { rec[x.k] = (f.elements[x.k].value || '').trim(); });
       if (key === 'delivery' && rec.dest === '__other') rec.dest = (f.elements.destOther.value || '').trim() || 'Other';
@@ -3443,9 +3447,7 @@
     box.addEventListener('input', e => {
       const t = e.target;
       if (t.closest('#lgForm') && lgTab === 'production') {
-        const f = t.form;
         if (t.name === 'batch') t.dataset.manual = t.value ? '1' : '';
-        else if (t.name === 'target' && f.item.value && !f.batch.dataset.manual) f.batch.value = lgYield(f.item.value) || f.batch.value;
         lgCalc();
       }
       if (t.dataset && t.dataset.act === 'actual') lgDraft[t.dataset.id] = t.value;
@@ -3453,7 +3455,7 @@
     });
     box.addEventListener('change', e => {
       const t = e.target;
-      if (t.name === 'item' && lgTab === 'production') { const f = t.form, y = lgYield(t.value); if (y && !f.batch.dataset.manual) { f.batch.value = y; lgCalc(); } }
+      if (t.name === 'item' && lgTab === 'production') lgCalc();
       if (t.name === 'dest') t.form.elements.destOther.hidden = t.value !== '__other';
     });
   })();
