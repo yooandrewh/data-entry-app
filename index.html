@@ -2125,7 +2125,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.102.00 · Oct 14, 11:30 AM</div>
+<div class="ver-badge">v1.103.00 · Oct 14, 12:30 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -3545,9 +3545,38 @@
     const a = invHistory().filter(x => x.num !== h.num); a.unshift(h);
     try { localStorage.setItem(INV_HIST_KEY, JSON.stringify(a.slice(0, 200))); } catch {}
     paintInvHistory();
+    invRemote('POST', { action: 'save', inv: h });
   }
-  function invHistClick(b) {
-    const h = invHistory()[+b.dataset.i]; if (!h || !h.html) { rcpToast('Print it again to save a copy'); return; }
+  // Shared copy in the Sheet ("Invoice History" tab, /api/invoices). The local list is a cache that also works offline.
+  // Uses the access code already saved on this device and never prompts; without one, invoices stay local until it is saved.
+  async function invRemote(method, body, num) {
+    let code = ''; try { code = localStorage.getItem('ledgerCode') || ''; } catch {}
+    if (!code) return null;
+    try {
+      const r = await fetch('/api/invoices' + (num ? '?num=' + encodeURIComponent(num) : ''), { method, headers: { 'Content-Type': 'application/json', 'x-logs-code': code }, body: method === 'GET' ? undefined : JSON.stringify(body) });
+      return r.ok ? await r.json().catch(() => null) : null;
+    } catch { return null; }
+  }
+  let invSynced = false;
+  async function invSync() {
+    if (invSynced) return; invSynced = true;
+    const j = await invRemote('GET');
+    if (!j || !Array.isArray(j.rows)) { invSynced = false; return; }
+    const local = invHistory(), have = new Set(local.map(x => x.num)), remote = new Set(j.rows.map(x => x.num));
+    j.rows.forEach(r => { if (!have.has(r.num)) local.push({ num: r.num, store: r.store, printed: r.printed, total: r.total, html: '', text: '', at: r.createdAt }); });
+    local.sort((a, b) => String(b.printed).localeCompare(String(a.printed)) || (b.at || 0) - (a.at || 0));
+    try { localStorage.setItem(INV_HIST_KEY, JSON.stringify(local.slice(0, 200))); } catch {}
+    paintInvHistory();
+    local.filter(x => x.html && !remote.has(x.num)).forEach(x => invRemote('POST', { action: 'save', inv: x }));   // invoices made before sharing existed
+  }
+  async function invHistClick(b) {
+    const h = invHistory()[+b.dataset.i]; if (!h) return;
+    if (!h.html) {   // listed from another device: fetch its copy once, then keep it
+      const j = await invRemote('GET', null, h.num);
+      if (!j || !j.row || !j.row.html) { rcpToast('No saved copy. Print it again'); return; }
+      h.html = j.row.html; h.text = j.row.text || '';
+      try { const a = invHistory(); const i = a.findIndex(x => x.num === h.num); if (i >= 0) { a[i] = { ...a[i], html: h.html, text: h.text }; localStorage.setItem(INV_HIST_KEY, JSON.stringify(a)); } } catch {}
+    }
     if (b.dataset.hist === 'open') {
       document.getElementById('invDoc').innerHTML = h.html; invNum = h.num; invText = h.text || ''; invMeta = null;
       document.getElementById('invPrintBtn').hidden = document.getElementById('invCopyBtn').hidden = false;
@@ -3559,6 +3588,7 @@
     }
   }
   document.addEventListener('click', e => { const b = e.target.closest('[data-hist]'); if (b) invHistClick(b); });
+  setTimeout(invSync, 2000);   // so the Delivery log's invoice list is shared too
   function paintInvHistory() {
     const box = document.getElementById('invHistory'); if (!box) return;
     const a = invHistory();
@@ -3578,7 +3608,7 @@
   // Dubai Ball's price row only matters for Stanton invoices.
   function syncInvDubai() { const r = document.getElementById('invDubaiRow'); if (r) r.hidden = document.getElementById('invStore').value === 'La Mirada'; }
   function initInvoiceForm() {
-    paintInvHistory();
+    paintInvHistory(); invSync();
     const today = nowPST().slice(0, 10);
     if (!document.getElementById('invFrom').value) document.getElementById('invFrom').value = today;
     if (!document.getElementById('invTo').value) document.getElementById('invTo').value = today;
@@ -5256,9 +5286,12 @@
     { key: 'churrosfinancier', type: 'simple', name: 'Chocolate Churros Financier', yield: 12, yieldText: 'makes 12 financiers',
       rows: [['Unsalted Butter', 160], ['Egg White', 120], ['Brown Sugar', 115], ['Honey', 35], ['Almond Flour', 84], ['Cake Flour', 18], ['Cocoa Powder', 12], ['Ceylon Cinnamon', 4], ['Baking Powder', 2]],
       notes: '<b>Coating (no amounts given):</b> sugar and cinnamon at 10 : 1 (sugar : cinnamon), plus coating chocolate. Milk chocolate is recommended over dark.<br><br>1) Brown the butter, then let it cool to 50°C.<br>2) Whisk the egg whites, brown sugar and honey until well combined and slightly pale.<br>3) Add the cooled brown butter and mix until smooth.<br>4) Sift in the almond flour, cake flour, cocoa powder, cinnamon and baking powder, then mix gently.<br>5) Transfer the batter to a piping bag and pipe into a financier pan.<br>6) Preheat to 200°C. Bake at 190°C for 8 minutes, then 180°C for 6 minutes.<br>7) Cool completely on a wire rack.<br>8) Dip in melted chocolate, then roll in the cinnamon sugar.' },
+    { key: 'coffeecake', type: 'simple', name: 'Cinnamon Crumb Coffee Cake', yield: 9, yieldText: 'makes 9 servings (8×8 in pan)', link: 'https://preppykitchen.com/coffee-cake/',
+      rows: [['All-Purpose Flour', 330], ['Baking Powder', 8], ['Salt', 6], ['Unsalted Butter', 227], ['Sugar', 150], ['Brown Sugar', 312], ['Eggs', 100], ['Sour Cream', 160], ['Vanilla Extract', 12.5], ['Ceylon Cinnamon', 10], ['Powdered Sugar', 120], ['Milk', 30]],
+      notes: '<b>Cake:</b> 210 g all-purpose flour, 8 g baking powder (2 tsp), 4.5 g salt (¾ tsp), 142 g softened butter, 150 g sugar, 55 g light brown sugar, 2 large eggs (100 g), 160 g sour cream, 10 g vanilla (2 tsp).<br><b>Cinnamon filling:</b> 147 g brown sugar, 30 g flour, 5 g cinnamon (2 tsp).<br><b>Streusel:</b> 90 g flour, 110 g brown sugar, 5 g cinnamon (2 tsp), 1.5 g salt (¼ tsp), 85 g cold butter, diced.<br><b>Vanilla glaze (optional):</b> 120 g powdered sugar, 30 g whole milk (2 tbsp), 2.5 g vanilla (½ tsp). Counted in the totals above.<br><br>1) Heat the oven to 175°C (350°F). Grease an 8×8 in pan and line it with parchment.<br>2) Filling: whisk the brown sugar, flour and cinnamon. Set aside.<br>3) Streusel: whisk the flour, brown sugar, cinnamon and salt. Press the diced cold butter in with your fingers until it looks like wet sand. Squeeze a handful for bigger crumbles.<br>4) Cake: whisk the flour, baking powder and salt. Beat the butter and both sugars on medium for about 3 min until light and fluffy. Add the eggs one at a time. Scrape down, add the sour cream and vanilla, mix on low.<br>5) Add the dry mix and beat on low until just combined. Finish by hand with a spatula.<br>6) Spread half the batter in the pan, sprinkle on the filling, dollop and spread the rest on top (center out to the edges).<br>7) Sprinkle the streusel over the top, starting at the edges and working in.<br>8) Bake about 55 min, until a toothpick in the center comes out clean. Cool in the pan at least 30 min.<br>9) Glaze: whisk the powdered sugar, milk and vanilla until smooth. Drizzle over the cake.<br><br><b>Storage:</b> airtight at room temperature about 3 days. Freeze wrapped slices (plastic, then foil) up to 3 months.<br><b>Other pans:</b> 9 in round, same recipe. 9×13 in, double it and bake about 1 hour (15 to 18 servings).' },
   ];
   REC_TEST.forEach(it => { if (it.vers) { it.rows = it.vers[0].rows; } });   // costing follows the first version (Ver J / Ver A)
-  const REC_ICON = { 'Dubai Chewy Ball': 'dubai', 'Pumpkin Pie Spice Muffin': 'pumpkin', 'Classic': 'madeleine', 'Dot Cake': 'cake_dot', 'Earl Grey': 'teacup', 'Ube': 'ube', 'Lemon Poppy': 'lemon', 'Chocolate': 'choco', 'Brown Butter': 'butter_brown', 'Matcha': 'matcha', 'Mugwort': 'leaf', 'Maple Pecan': 'nut', 'Pumpkin Pie Spice': 'pumpkin', 'Cheddar Jalapeno Scone': 'scone', 'Mango Mousse Cake': 'cupcake', 'Maple Pecan Brown Butter': 'nut', 'Flat Chocolate Chip Chookie': 'cookie', 'Lemon Curd': 'jar_lemon', 'Cream Cheese Frosting': 'swirl_pink', 'Pumpkin Cream Cheese Frosting': 'swirl_pumpkin', 'Anglesie Buttercream': 'butter', 'Earl Grey Paste': 'jar_tea', 'Chocolate Ganache': 'jar_choc', 'Caramel': 'drop', 'Mascarpone Cream': 'bowl', 'Milk Cream': 'milk', 'Plain Scone': 'scone', 'Strawberry Cream Cheese': 'strawberry', 'Blueberry Cream Cheese': 'blueberry', 'Gluten Free Cake': 'cake_gf', 'Sable': 'cookie', 'Macarons': 'macaron', 'Salt Bread': 'bread', 'Vegan Donut': 'donut', 'Apricot Ricotta Cake': 'cake_apricot', 'Earl Grey Fig Cake': 'cake_fig', 'Matcha Brownie': 'cupcake', 'Chocolate Espresso Snow Cap Cookies': 'cookie', 'Snickerdoodle Cookies': 'cookie', 'Fig Caramel Scone': 'scone', 'Churros': 'donut', 'Chocolate Churros Financier': 'cookie' };
+  const REC_ICON = { 'Dubai Chewy Ball': 'dubai', 'Pumpkin Pie Spice Muffin': 'pumpkin', 'Classic': 'madeleine', 'Dot Cake': 'cake_dot', 'Earl Grey': 'teacup', 'Ube': 'ube', 'Lemon Poppy': 'lemon', 'Chocolate': 'choco', 'Brown Butter': 'butter_brown', 'Matcha': 'matcha', 'Mugwort': 'leaf', 'Maple Pecan': 'nut', 'Pumpkin Pie Spice': 'pumpkin', 'Cheddar Jalapeno Scone': 'scone', 'Mango Mousse Cake': 'cupcake', 'Maple Pecan Brown Butter': 'nut', 'Flat Chocolate Chip Chookie': 'cookie', 'Lemon Curd': 'jar_lemon', 'Cream Cheese Frosting': 'swirl_pink', 'Pumpkin Cream Cheese Frosting': 'swirl_pumpkin', 'Anglesie Buttercream': 'butter', 'Earl Grey Paste': 'jar_tea', 'Chocolate Ganache': 'jar_choc', 'Caramel': 'drop', 'Mascarpone Cream': 'bowl', 'Milk Cream': 'milk', 'Plain Scone': 'scone', 'Strawberry Cream Cheese': 'strawberry', 'Blueberry Cream Cheese': 'blueberry', 'Gluten Free Cake': 'cake_gf', 'Sable': 'cookie', 'Macarons': 'macaron', 'Salt Bread': 'bread', 'Vegan Donut': 'donut', 'Apricot Ricotta Cake': 'cake_apricot', 'Earl Grey Fig Cake': 'cake_fig', 'Matcha Brownie': 'cupcake', 'Chocolate Espresso Snow Cap Cookies': 'cookie', 'Snickerdoodle Cookies': 'cookie', 'Fig Caramel Scone': 'scone', 'Churros': 'donut', 'Chocolate Churros Financier': 'cookie', 'Cinnamon Crumb Coffee Cake': 'cake_apricot' };
   const recKey = name => REC_ICON[name] || 'book';
   const recIc = (name, px) => ic(recKey(name), px);
 
