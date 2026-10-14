@@ -1900,7 +1900,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.81.00 · Oct 13</div>
+<div class="ver-badge">v1.82.00 · Oct 13</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -5189,8 +5189,16 @@
   }
   // Labor + wholesale: hourly rate and margin are global; minutes per batch default from Kitchen Times (per-recipe override).
   const LAB_KEY = 'laborCfg.v1', LAB_SESSION_BATCHES = 4;   // cleaning is shared across a typical session of 4 batches
-  let LAB = { rate: 35, margin: 40, mins: {} };
+  let LAB = { rate: 35, margin: 40, mins: {}, wk: { mad: 70, pump: 10, blue: 12, deliv: 60 } };   // wk = a typical week: pieces made, and delivery minutes
   try { Object.assign(LAB, JSON.parse(localStorage.getItem(LAB_KEY)) || {}); } catch {}
+  LAB.wk = Object.assign({ mad: 70, pump: 10, blue: 12, deliv: 60 }, LAB.wk);
+  const WEEKS_PER_MONTH = 52 / 12;
+  // One week's labor: a single muffin + madeleine bake day, plus delivery. Delivery is shared over every piece made that week.
+  function labWeek() {
+    const w = LAB.wk, mad = Math.ceil(w.mad / BATCH_YIELD), mu = Math.ceil(w.pump / PRODUCT_YIELD['Pumpkin Muffin']) + Math.ceil(w.blue / 6);
+    const s = sessionMin(mu, mad, mad), items = w.mad + w.pump + w.blue;
+    return { mad, mu, items, lo: s.bothlo + w.deliv, hi: s.bothhi + w.deliv, bakeLo: s.bothlo, bakeHi: s.bothhi };
+  }
   const saveLab = () => { try { localStorage.setItem(LAB_KEY, JSON.stringify(LAB)); } catch {} };
   // A muffin + madeleine day (yesterday's: 6 muffin batches, 7 madeleine batches prepped, 4 baked): setup once at the larger value,
   // madeleine prep partly hidden in the muffin oven time, cleaning once. mu / madPrep / madBake are batch counts.
@@ -5249,7 +5257,8 @@
     const labRange = LAB.mins[costSel] == null && labDef.lo !== labDef.hi && yv ? [labDef.lo, labDef.hi].map(m => m / 60 * LAB.rate / yv) : null;
     const day = (it.type === 'muffin' || sec === 'mad') ? sessionMin(LAB_DAY.mu, LAB_DAY.madPrep, LAB_DAY.madBake) : null;
     const labItem = yv ? labMins / 60 * LAB.rate / yv : null;
-    const totalItem = unitCost != null && labItem != null ? unitCost + labItem : null;
+    const wkLab = labWeek(), delivItem = wkLab.items ? LAB.wk.deliv / 60 * LAB.rate / wkLab.items : 0;
+    const totalItem = unitCost != null && labItem != null ? unitCost + labItem + delivItem : null;
     const mg = Math.min(90, Math.max(0, LAB.margin)) / 100;
     const wholesale = totalItem != null ? Math.ceil(totalItem / (1 - mg) * 20) / 20 : null;   // to the next 5¢
     const laborHtml = `<div class="cost-sec"><div class="cost-sub">Labor &amp; pricing</div>
@@ -5257,9 +5266,17 @@
       <div class="proj-row"><span class="k">Labor rate per hour</span><span>$<input class="cost-in" type="number" inputmode="decimal" step="any" min="0" value="${rFmt(LAB.rate)}" data-lrate="1"></span></div>
       <div class="proj-row"><span class="k">Labor per item</span><span><b>${labItem != null ? money(labItem) : '—'}</b></span></div>
       ${labRange ? `<div class="proj-row"><span class="k">Labor per item, range</span><span>${money(labRange[0])} – ${money(labRange[1])}</span></div>` : ''}
+      <div class="proj-row"><span class="k">Delivery per item<span class="cost-hint"> · ${rFmt(LAB.wk.deliv)} min a week over ${wkLab.items} pieces</span></span><span><b>${money(delivItem)}</b></span></div>
       <div class="proj-row"><span class="k cost-total">Total cost per item</span><span class="cost-total">${totalItem != null ? money(totalItem) : '—'}</span></div>
       <div class="proj-row"><span class="k">Margin on wholesale</span><span><input class="cost-in" type="number" inputmode="decimal" step="any" min="0" max="90" value="${rFmt(LAB.margin)}" data-lmargin="1">%</span></div>
       <div class="proj-row"><span class="k cost-total">Suggested wholesale price</span><span class="cost-total">${wholesale != null ? '$' + wholesale.toFixed(2) : '—'}</span></div>
+      <div class="cost-sub" style="margin-top:12px">A typical week</div>
+      ${[['mad', 'Madeleines made'], ['pump', 'Pumpkin muffins made'], ['blue', 'Blueberry muffins made'], ['deliv', 'Delivery minutes']].map(([k, l]) => `<div class="proj-row"><span class="k">${l}</span><span><input class="cost-in" type="number" inputmode="decimal" step="any" min="0" value="${rFmt(LAB.wk[k])}" data-lwk="${k}"></span></div>`).join('')}
+      <div class="proj-row"><span class="k">Batches</span><span>${wkLab.mad} madeleine · ${wkLab.mu} muffin</span></div>
+      <div class="proj-row"><span class="k">Kitchen time, one bake day</span><span>${fmtDur(wkLab.bakeLo)} – ${fmtDur(wkLab.bakeHi)}</span></div>
+      <div class="proj-row"><span class="k cost-total">Labor per week, with delivery</span><span class="cost-total">${fmtDur(wkLab.lo)} – ${fmtDur(wkLab.hi)}</span></div>
+      <div class="proj-row"><span class="k cost-total">Labor per month<span class="cost-hint"> · ${WEEKS_PER_MONTH.toFixed(2)} weeks</span></span><span class="cost-total">${(wkLab.lo * WEEKS_PER_MONTH / 60).toFixed(1)} – ${(wkLab.hi * WEEKS_PER_MONTH / 60).toFixed(1)} h</span></div>
+      <div class="proj-row"><span class="k">Labor cost per month</span><span>${money(wkLab.lo * WEEKS_PER_MONTH / 60 * LAB.rate)} – ${money(wkLab.hi * WEEKS_PER_MONTH / 60 * LAB.rate)}</span></div>
       ${day ? `<div class="cost-hint" style="padding:4px 0">A day with ${LAB_DAY.mu} muffin batches and ${LAB_DAY.madPrep} madeleine batches takes about ${day.bothlo}–${day.bothhi} min together, against ${day.sepLo}–${day.sepHi} min done on separate days. Each batch's minutes above include an even share of the day's setup and cleaning.</div>` : ''}
       ${wholesale != null && sec === 'mad' ? `<div class="cost-hint" style="padding:4px 0">Retail price in the app is ${money(PRICE_PER_UNIT)}${wholesale > PRICE_PER_UNIT ? ' — this wholesale price is above it' : ''}.</div>` : ''}</div>`;
     document.getElementById('costCard').innerHTML = `<div class="proj-card">
@@ -5368,10 +5385,11 @@
   document.getElementById('costPick').addEventListener('change', e => { costSel = e.target.value; renderCostCard(); });
   document.getElementById('bakingCosts').addEventListener('change', e => {
     const y = e.target.closest('[data-cyield]');
-    const lab = e.target.closest('[data-clab],[data-lrate],[data-lmargin]');
+    const lab = e.target.closest('[data-clab],[data-lrate],[data-lmargin],[data-lwk]');
     if (lab) {
       const n = parseFloat(lab.value);
-      if (lab.dataset.clab) { if (n >= 0) LAB.mins[costSel] = n; else delete LAB.mins[costSel]; }
+      if (lab.dataset.lwk) { if (n >= 0) LAB.wk[lab.dataset.lwk] = n; }
+      else if (lab.dataset.clab) { if (n >= 0) LAB.mins[costSel] = n; else delete LAB.mins[costSel]; }
       else if (lab.dataset.lrate) { if (n >= 0) LAB.rate = n; }
       else if (n >= 0) LAB.margin = n;
       saveLab(); renderCostCard(); return;
