@@ -2061,7 +2061,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.93.00 · Oct 13, 11:05 PM</div>
+<div class="ver-badge">v1.93.01 · Oct 13, 11:30 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -5507,7 +5507,7 @@
   let FIN = { kitchenCost: 570, kitchenHours: 20, taxPct: 7, other: 0, wastePct: 5, topOverride: {} };   // kitchen: $570 per 20 h block + 7% tax (Andrew, 2026-10-13)
   try { Object.assign(FIN, JSON.parse(localStorage.getItem(FIN_KEY)) || {}); } catch {}
   let finMonth = '', finEntries = null; let finView = (() => { try { const v = localStorage.getItem('finView.v1'); return v === 'item' || v === 'labor' ? v : 'sum'; } catch { return 'sum'; } })();
-  let finLab = (() => { try { return Object.assign({ mad: 400, mu: 90 }, JSON.parse(localStorage.getItem('finLabor.v1') || '{}')); } catch { return { mad: 400, mu: 90 }; } })();
+  let finLab = (() => { const d = { sess: 4, items: [{ name: 'Madeleines', type: 'mad', n: 400 }, { name: 'Muffins', type: 'mu', n: 90 }, { name: '', type: 'mad', n: 0 }, { name: '', type: 'mad', n: 0 }, { name: '', type: 'mad', n: 0 }] }; try { const s = JSON.parse(localStorage.getItem('finLabor.v2') || 'null'); return s && Array.isArray(s.items) && s.items.length === 5 ? Object.assign(d, s) : d; } catch { return d; } })();
   let finSheet = null;
   let finWhat = false, finOv = null, finOpen = {}, finDays = 30;   // What-if overrides: view-only, never saved
   // Per-item economics for one recipe: ingredient cost (with and without ledger tax/fees), labor, pieces per batch.
@@ -5893,32 +5893,38 @@
   }
   // Labor planner: monthly madeleine and muffin totals spread over 3, 4 or 5 bake sessions. Prep, setup and cleaning are fixed per session; only oven time scales.
   function laborView() {
-    const mad = Math.max(0, Number(finLab.mad) || 0), mu = Math.max(0, Number(finLab.mu) || 0), glazedShare = 0.25, muYield = PRODUCT_YIELD['Pumpkin Muffin'] || 10;
-    const hh = m => (m / 60).toFixed(1) + ' h', rate = LAB.rate;
-    const opt = n => {
-      const mp = mad / n, up = mu / n, mBatches = Math.ceil(mp / BATCH_YIELD), uBatches = Math.ceil(up / muYield);
-      const mOven = mp ? Math.ceil(Math.ceil(mp / KT.perPan) / KT.pans) * (KT.bakeMin + KT.coolMin) + Math.round(mp * glazedShare * KT.glazeSec / 60) : 0;
-      const uOven = uBatches ? Math.ceil(uBatches / KT.pans) * (KT.muBakeLo + KT.muBakeHi) / 2 : 0;
-      const prep = (uBatches ? KT.muPrepMin : 0) + (mBatches ? Math.max(0, KT.prepMin - (uBatches ? Math.min(KT.prepMin, KT.hideMax) : 0)) : 0);   // madeleine prep hides inside the muffin bake
-      const fixed = (mp || up) ? Math.max(uBatches ? KT.muSetup : 0, mBatches ? KT.setupMin : 0) + (mp && up ? KT.togetherClean : mp ? KT.cleanMin : KT.muClean) : 0;
-      const bake = mOven + uOven, per = prep + bake + fixed;
-      return { n, mp, up, mBatches, uBatches, prep: prep * n, bake: bake * n, fixed: fixed * n, per, tot: per * n };
-    };
-    const os = [3, 4, 5].map(opt);
-    const col = f => os.map(o => `<td align="right">${f(o)}</td>`).join('');
-    return `<div class="proj-card fin-lab"><h3 class="fin-card-h">Labor planner</h3><div class="proj-sub">Sample 3, 4 or 5 = that many bake sessions a month. Prep, setup and cleaning are fixed per session; only baking grows with pieces.</div>
-      <div class="proj-row"><span>Madeleines a month</span><span><input type="number" inputmode="numeric" min="0" id="finLabMad" value="${mad}" style="width:80px;text-align:right"></span></div>
-      <div class="proj-row"><span>Muffins a month</span><span><input type="number" inputmode="numeric" min="0" id="finLabMu" value="${mu}" style="width:80px;text-align:right"></span></div>
-      <table style="width:100%;margin-top:10px;border-collapse:collapse"><tr><th align="left"></th><th align="right">Sample 3</th><th align="right">Sample 4</th><th align="right">Sample 5</th></tr>
-      <tr><td>Madeleines / session</td>${col(o => Math.round(o.mp))}</tr>
-      <tr><td>Muffins / session</td>${col(o => Math.round(o.up))}</tr>
-      <tr><td>Batch prep</td>${col(o => hh(o.prep))}</tr>
-      <tr><td>Baking</td>${col(o => hh(o.bake))}</tr>
-      <tr><td>Setup + cleaning</td>${col(o => hh(o.fixed))}</tr>
-      <tr><td><b>Total a month</b></td>${col(o => '<b>' + hh(o.tot) + '</b>')}</tr>
-      <tr><td>Per session</td>${col(o => hh(o.per))}</tr>
-      <tr><td>Labor at $${rFmt(rate)}/hr</td>${col(o => fm0(o.tot / 60 * rate))}</tr></table>
-      <div class="cost-hint" style="padding-top:6px">Madeleines at ${BATCH_YIELD} a batch with a quarter glazed, muffins at ${muYield} a batch, baked together each session. Delivery time is not included.</div></div>`;
+    const sess = Math.max(1, Math.round(Number(finLab.sess) || 4)), muYield = PRODUCT_YIELD['Pumpkin Muffin'] || 10, glazedShare = 0.25, rate = LAB.rate;
+    const hh = m => (m / 60).toFixed(1) + ' h';
+    const items = (finLab.items || []).map(it => ({ name: it.name, type: it.type === 'mu' ? 'mu' : 'mad', n: Math.max(0, Number(it.n) || 0) }));
+    const rows = items.map(it => {
+      const p = it.n / sess;
+      if (!p) return Object.assign(it, { p: 0, oven: 0 });
+      const oven = it.type === 'mu' ? Math.ceil(Math.ceil(p / muYield) / KT.pans) * (KT.muBakeLo + KT.muBakeHi) / 2
+        : Math.ceil(Math.ceil(p / KT.perPan) / KT.pans) * (KT.bakeMin + KT.coolMin) + Math.round(p * glazedShare * KT.glazeSec / 60);
+      return Object.assign(it, { p, oven });
+    });
+    const anyMu = rows.some(r => r.p && r.type === 'mu'), anyMad = rows.some(r => r.p && r.type === 'mad');
+    const prep = (anyMu ? KT.muPrepMin : 0) + (anyMad ? Math.max(0, KT.prepMin - (anyMu ? Math.min(KT.prepMin, KT.hideMax) : 0)) : 0);
+    const fixed = (anyMu || anyMad) ? Math.max(anyMu ? KT.muSetup : 0, anyMad ? KT.setupMin : 0) + (anyMu && anyMad ? KT.togetherClean : anyMad ? KT.cleanMin : KT.muClean) : 0;
+    const bake = rows.reduce((a, r) => a + r.oven, 0), per = prep + bake + fixed, tot = per * sess;
+    const cols = rows.map((r, i) => `<th align="right">${i < 2 ? r.name : 'Item ' + (i + 1)}</th>`).join('') + '<th align="right">Total</th>';
+    const cell = f => rows.map(r => `<td align="right">${f(r)}</td>`).join('');
+    const inp = (i, f, v, w, type) => `<input ${type === 'text' ? 'type="text"' : 'type="number" inputmode="numeric" min="0"'} data-labi="${i}" data-labf="${f}" value="${String(v).replace(/"/g, '&quot;')}" style="width:${w}px;text-align:right">`;
+    const sel = i => `<select data-native data-labi="${i}" data-labf="type"><option value="mad"${rows[i].type === 'mad' ? ' selected' : ''}>Madeleine</option><option value="mu"${rows[i].type === 'mu' ? ' selected' : ''}>Muffin</option></select>`;
+    const sum = f => rows.reduce((a, r) => a + f(r), 0);
+    return `<div class="proj-card fin-lab"><h3 class="fin-card-h">Labor planner</h3><div class="proj-sub">Madeleines and muffins, plus up to three more items. Prep, setup and cleaning are fixed per bake session; only baking grows with pieces.</div>
+      <div class="proj-row"><span>Bake sessions a month</span><span>${inp('s', 'sess', sess, 60)}</span></div>
+      <table style="width:100%;margin-top:10px;border-collapse:collapse"><tr><th align="left"></th>${cols}</tr>
+      <tr><td>Name</td>${rows.map((r, i) => `<td align="right">${i < 2 ? '' : inp(i, 'name', r.name, 70, 'text')}</td>`).join('')}<td></td></tr>
+      <tr><td>Type</td>${rows.map((r, i) => `<td align="right">${i < 2 ? (i ? 'Muffin' : 'Madeleine') : sel(i)}</td>`).join('')}<td></td></tr>
+      <tr><td>Pieces / month</td>${rows.map((r, i) => `<td align="right">${inp(i, 'n', r.n, 64)}</td>`).join('')}<td align="right">${sum(r => r.n)}</td></tr>
+      <tr><td>Pieces / session</td>${cell(r => Math.round(r.p))}<td align="right">${Math.round(sum(r => r.p))}</td></tr>
+      <tr><td>Baking / month</td>${cell(r => hh(r.oven * sess))}<td align="right">${hh(bake * sess)}</td></tr></table>
+      <div class="proj-row"><span>Batch prep (month)</span><span>${hh(prep * sess)}</span></div>
+      <div class="proj-row"><span>Setup + cleaning (month)</span><span>${hh(fixed * sess)}</span></div>
+      <div class="proj-row cost-total"><span>Total a month</span><span>${hh(tot)} · ${fm0(tot / 60 * rate)}</span></div>
+      <div class="proj-row"><span>Per session</span><span>${hh(per)}</span></div>
+      <div class="cost-hint" style="padding-top:6px">Labor at $${rFmt(rate)}/hr. Madeleines ${BATCH_YIELD} a batch (a quarter glazed), muffins ${muYield} a batch, all baked in the same sessions. Extra items bake like their type and add no extra prep. Delivery time is not included.</div></div>`;
   }
   const fm0 = n => '$' + Math.round(n);
   document.addEventListener('click', async e => {
@@ -5956,7 +5962,9 @@
     renderFin();
   });
   document.addEventListener('change', e => {
-    if (e.target.id === 'finLabMad' || e.target.id === 'finLabMu') { finLab[e.target.id === 'finLabMad' ? 'mad' : 'mu'] = Math.max(0, Number(e.target.value) || 0); try { localStorage.setItem('finLabor.v1', JSON.stringify(finLab)); } catch {} renderFin(); return; }
+    if (e.target.dataset && e.target.dataset.labf) { const t = e.target, f = t.dataset.labf, i = t.dataset.labi;
+      if (f === 'sess') finLab.sess = Math.max(1, Math.round(Number(t.value) || 4)); else if (f === 'n') finLab.items[i].n = Math.max(0, Number(t.value) || 0); else finLab.items[i][f] = t.value;
+      try { localStorage.setItem('finLabor.v2', JSON.stringify(finLab)); } catch {} renderFin(); return; }
     if (e.target.id === 'finMonth') { finMonth = e.target.value; renderFin(); }
     else if (e.target.id === 'finWhat') { finWhat = e.target.checked; finOv = null; renderFin(); }
     else if (e.target.dataset && e.target.dataset.top) {
