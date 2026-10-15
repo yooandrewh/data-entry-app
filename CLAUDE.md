@@ -485,3 +485,12 @@ Costs read prices from the sheet's **Ledger** tab via `api/ledger.js` (`Id, Rece
   `approve` (`ids`, `approved: false` clears). Max 80 lines per call. Andrew doesn't log receipts in the app; Claude writes them through the API (code in `~/.kairos-ledger-code`, never printed).
 - Sizes are typed in any unit (kg, oz, lb, L, fl oz, cup, tbsp, tsp, pt, qt, gal) and converted to g/ml on save (`UNIT_TO_BASE`). No weight↔volume conversion: liquids cost as 1 ml = 1 g.
 - Costs follow each recipe's latest version. Recipes can be active or disabled; Needs-a-price lists are split that way. Version numbers: major = redesign, minor = feature, patch = fix (see above).
+
+
+## Goal and pricing rules (2026-10-15, Kairos manager chat)
+
+- **Goal:** $4,000/month profit after kitchen and rent (maybe $4,500 pre-rent). Source: the Finance → Simulator scenarios (20/25/30% of the 180 pastries/day capacity; today ~15/day ≈ 8%). Not yet confirmed whether it counts wholesale cafes or only the two stores.
+- **Pricing:** retail ≈ 2× wholesale. Ingredient cost 25–30% of wholesale price. Costs come only from **approved** Ledger lines — estimates are labeled as estimates.
+- **Current run-rate (28 days to 2026-10-14, app data):** ~116 pieces/week delivered, ~83/week sold, across La Mirada + Stanton. No cafe accounts exist yet; the two stores are the only accounts.
+- **Kitchen:** 20 hours/month included, then ~$30.50/h. Batch yield 18.
+- **Pipeline:** new products are ranked by margin and freezability; the list lives in `wholesale/` once built.
