@@ -2126,7 +2126,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.106.00 · Oct 16, 9:00 AM</div>
+<div class="ver-badge">v1.106.01 · Oct 16, 9:20 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -4073,6 +4073,7 @@
   // Products a store doesn't carry anymore: the forecast and the bake plan ignore their sales there (Stanton no longer sells Lemon Poppy).
   const STORE_SKIP = { 'Stanton': ['Lemon Poppy'] };
   const storeSells = (loc, p) => !(STORE_SKIP[loc] || []).includes(p);
+  const ASSUMED_RATE = { 'Blueberry Muffin': { wd: 2, we: 3 } };   // per day, products with no sales feed
   function locStats(loc, sales, entries) {
     const locSales = sales.filter(s => s.location === loc);
     const latestSale = locSales.reduce((m, s) => s.date > m ? s.date : m, '');
@@ -4168,6 +4169,13 @@
           if (r > 0) { rate[p] = r; dowRate[p] = { wd: r, we: r }; }   // flat (no weekday signal from counts)
         }
       }
+    }
+    // Blueberry Muffin has no sales source (Andrew, 2026-10-16): assume 2/day weekdays, 3/day weekends. Count-implied
+    // depletion above wins when there are two counts; this only fills the gap. Edit ASSUMED_RATE when it changes.
+    for (const p of Object.keys(ASSUMED_RATE)) {
+      if (!PRODUCTS.includes(p) || rate[p] > 0 || !storeSells(loc, p)) continue;
+      const a = ASSUMED_RATE[p];
+      rate[p] = (a.wd * 5 + a.we * 2) / 7; dowRate[p] = { wd: a.wd, we: a.we };
     }
     // Stock estimate is good through the later of the count and the last sales data.
     const asOf = (invDate && invDate > (latestSale || '')) ? invDate : (latestSale || invDate);
