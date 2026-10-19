@@ -2126,7 +2126,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.109.01 · Oct 19, 10:45 AM</div>
+<div class="ver-badge">v1.110.00 · Oct 19, 11:21 AM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -5304,6 +5304,18 @@
       notes: '<b>Cake:</b> 209 g flour, 2.5 g baking powder, 1 g baking soda, 3 g salt, 113 g softened butter, 200 g sugar, 50 g egg, 8 g vanilla, 245 g whole milk.<br><b>Frosting:</b> 99 g softened butter, 210 g powdered sugar, 12 g heavy cream (or milk), 4 g vanilla.<br><b>Coating:</b> 678 g candy melts (or white chocolate), plus sprinkles (no amount given). Costed as white chocolate couverture. With real white chocolate, add 1/2 tsp vegetable oil to thin it.<br><br><b>Method</b><br>1. Heat the oven to 350°F (177°C). Grease a 9-inch springform pan (a 10-inch springform or 11x7-inch pan also works).<br>2. Whisk flour, baking powder, baking soda and salt. Beat butter and sugar about 3 minutes until creamed. Add egg and vanilla and beat on high. Scrape the bowl.<br>3. Add the dry mix and milk, mix on low until combined, then stir by hand to catch lumps. Spread in the pan. Bake 30 to 36 minutes until a toothpick comes out clean. Tent with foil if the top browns too fast.<br>4. Cool completely in the pan on a rack. Best made the day before.<br>5. Frosting: beat the butter on medium about 2 minutes. Add powdered sugar, cream and vanilla, mix on low, then beat on high 3 full minutes.<br>6. Crumble the cooled cake into the frosting with no big lumps. Beat on low until combined.<br>7. Scoop 20 g (1 Tbsp) and roll into balls on a lined tray. Chill 2 hours or freeze 1 hour. Re-roll to smooth. Keep the tray cold and work a few at a time.<br>8. Melt the coating in a 2-cup liquid measuring cup in the microwave, 20-second bursts, stirring each time. Let it cool about 5 minutes so it does not crack the pops.<br>9. Take 2 or 3 balls out at a time. Dip a stick 1/2 inch into the coating, push it halfway into a ball, dip the whole ball, cover the base, tap off the excess, add sprinkles, and stand upright in a styrofoam block or a box with holes. The balls must stay very cold.<br>10. Coating sets within an hour. Keep in the fridge up to 1 week. Undipped balls keep 2 days in the fridge or 6 weeks frozen; finished pops freeze 6 weeks.' },
   ];
   REC_TEST.forEach(it => { if (it.vers) { it.rows = it.vers[0].rows; } });   // costing follows the first version
+  // Finalized test recipes (this device): { recipeKey: 'mad'|'fill'|'scone'|'other' } — moved out of Testing into that tab.
+  const REC_ARR = { mad: REC_MADS, fill: REC_FILLINGS, scone: REC_SCONES, other: REC_OTHER, test: REC_TEST };
+  const recFinGet = () => { try { return JSON.parse(localStorage.getItem('recFinal.v1') || '{}') || {}; } catch (e) { return {}; } };
+  const REC_TEST_ALL = [...REC_TEST];
+  function recFinApply() {
+    const fin = recFinGet();
+    Object.values(REC_ARR).forEach(a => { for (let i = a.length - 1; i >= 0; i--) if (a[i].finFrom) a.splice(i, 1); });
+    REC_TEST.length = 0;
+    REC_TEST_ALL.forEach(it => { const k = it.key || it.name, t = REC_ARR[fin[k]]; if (t && fin[k] !== 'test') { it.finFrom = true; t.push(it); } else { it.finFrom = false; REC_TEST.push(it); } });
+  }
+  function recFinSet(k, sec) { const o = recFinGet(); if (sec) o[k] = sec; else delete o[k]; try { localStorage.setItem('recFinal.v1', JSON.stringify(o)); } catch (e) {} recFinApply(); }
+  recFinApply();
   const REC_ICON = { 'Dubai Chewy Ball': 'dubai', 'Pumpkin Pie Spice Muffin': 'pumpkin', 'Classic': 'madeleine', 'Dot Cake': 'cake_dot', 'Earl Grey': 'teacup', 'Ube': 'ube', 'Lemon Poppy': 'lemon', 'Chocolate': 'choco', 'Brown Butter': 'butter_brown', 'Matcha': 'matcha', 'Mugwort': 'leaf', 'Maple Pecan': 'nut', 'Pumpkin Pie Spice': 'pumpkin', 'Cheddar Jalapeno Scone': 'scone', 'Mango Mousse Cake': 'cupcake', 'Maple Pecan Brown Butter': 'nut', 'Flat Chocolate Chip Chookie': 'cookie', 'Lemon Curd': 'jar_lemon', 'Cream Cheese Frosting': 'swirl_pink', 'Pumpkin Cream Cheese Frosting': 'swirl_pumpkin', 'Anglesie Buttercream': 'butter', 'Earl Grey Paste': 'jar_tea', 'Chocolate Ganache': 'jar_choc', 'Caramel': 'drop', 'Mascarpone Cream': 'bowl', 'Milk Cream': 'milk', 'Plain Scone': 'scone', 'Strawberry Cream Cheese': 'strawberry', 'Blueberry Cream Cheese': 'blueberry', 'Gluten Free Cake': 'cake_gf', 'Sable': 'cookie', 'Macarons': 'macaron', 'Salt Bread': 'bread', 'Vegan Donut': 'donut', 'Apricot Ricotta Cake': 'cake_apricot', 'Earl Grey Fig Cake': 'cake_fig', 'Matcha Brownie': 'cupcake', 'Chocolate Espresso Snow Cap Cookies': 'cookie', 'Snickerdoodle Cookies': 'cookie', 'Fig Caramel Scone': 'scone', 'Churros': 'donut', 'Chocolate Churros Financier': 'cookie', 'Cinnamon Crumb Coffee Cake': 'cake_apricot', 'Earl Grey Mini Pound Cake': 'cake_fig', 'Cake Pop': 'cupcake' };
   const recKey = name => REC_ICON[name] || 'book';
   const recIc = (name, px) => ic(recKey(name), px);
@@ -5320,9 +5332,11 @@
   // Everything else is "disabled": still viewable everywhere (Recipes, Costs), just listed below the active ones.
   const ACTIVE_ITEMS = ['mad:Maple Pecan', 'mad:Lemon Poppy', 'mad:Classic', 'other:pumpkinmuffin', 'other:blueberrymuffin'];
   const isActive = (sec, it) => ACTIVE_ITEMS.includes(`${sec}:${it.key || it.name}`);
-  const activeFirst = (sec, arr) => [...arr].sort((a, b) => (isActive(sec, a) ? 0 : 1) - (isActive(sec, b) ? 0 : 1));
+  const recNm = it => it.title || it.name;
+  const byName = (a, b) => recNm(a).localeCompare(recNm(b));
+  const activeFirst = (sec, arr) => [...arr].sort((a, b) => (isActive(sec, a) ? 0 : 1) - (isActive(sec, b) ? 0 : 1) || byName(a, b));   // active first, each group A–Z
   const seasonalFirst = (sec, arr) => [...arr].sort((a, b) => seasonRank(sec, a) - seasonRank(sec, b));   // stable: the rest keep their order
-  function recList() { const sec = recState.sec; return activeFirst(sec, sec === 'mad' ? REC_MADS : sec === 'fill' ? REC_FILLINGS : sec === 'scone' ? REC_SCONES : sec === 'test' ? REC_TEST : REC_OTHER); }
+  function recList() { const sec = recState.sec; return activeFirst(sec, sec === 'mad' ? REC_MADS : sec === 'fill' ? REC_FILLINGS : sec === 'scone' ? REC_SCONES : sec === 'test' ? REC_TEST : REC_OTHER); }   // (sorted by activeFirst)
   const rFmt = n => typeof n === 'string' ? n : String(Math.round(n * 10) / 10);
   // Scale the FIRST number in a string (glaze amounts, ratios).
   const rScaleStr = (str, m) => (!m || m === 1) ? str : String(str).replace(/(\d+(?:\.\d+)?)/, (x, num) => rFmt(parseFloat(num) * m));
@@ -5525,10 +5539,18 @@
     else if (item.type === 'glutenfree') html = recGfCard(item);
     else html = recSimpleCard(item);
     if (item.star && !html.includes('rec-ver')) html = html.replace('</h3>', ' <span class="rec-ver"><button class="on">Ver 1 ★</button></span></h3>');   // finalized recipes with a single version
+    if (recState.sec === 'test') html += `<div class="proj-card"><h3>Finalize</h3><div class="proj-sub">Done testing? Check it off to move it to its own tab. You can move it back any time.</div>
+      <div style="display:flex;gap:8px;align-items:center;margin-top:8px"><label style="display:flex;gap:8px;align-items:center;flex:1"><input type="checkbox" id="recFinChk"> Finalized, move to</label>
+      <select id="recFinTo" data-native><option value="other" selected>Other</option><option value="scone">Scones</option></select></div></div>`;
+    else if (item.finFrom) html += `<div class="proj-card"><h3>Finalized</h3><div class="proj-sub">This recipe finished testing.</div>
+      <label style="display:flex;gap:8px;align-items:center;margin-top:8px"><input type="checkbox" id="recUnfinChk" checked> Finalized (uncheck to move back to Testing)</label></div>`;
     html += `<div class="proj-card"><h3>My Notes</h3><div class="proj-sub">Changes and ideas from baking this one. Saved on this device.</div>
       <textarea id="recMyNotes" rows="4" style="width:100%;margin-top:8px" placeholder="What worked, what to change next time">${recNoteGet(recNoteKey(item)).replace(/&/g, '&amp;').replace(/</g, '&lt;')}</textarea></div>`;
     document.getElementById('recCard').innerHTML = html;
     document.getElementById('recMyNotes').addEventListener('input', e => recNoteSet(recNoteKey(item), e.target.value));
+    const fc = document.getElementById('recFinChk'), uc = document.getElementById('recUnfinChk');
+    if (fc) fc.addEventListener('change', () => { if (!fc.checked) return; const to = document.getElementById('recFinTo').value; recFinSet(item.key || item.name, to); recState.sec = to; recState.idx = Math.max(0, recList().indexOf(item)); recResetVariants(); renderRecipes(); });
+    if (uc) uc.addEventListener('change', () => { if (uc.checked) return; recFinSet(item.key || item.name, null); recState.sec = 'test'; recState.idx = Math.max(0, recList().indexOf(item)); recResetVariants(); renderRecipes(); });
   }
   // Personal baking notes per recipe (this device only), keyed by section + recipe key/name.
   const recNoteKey = it => recState.sec + ':' + (it.key || it.name);
@@ -5639,7 +5661,7 @@
     'scone:plainscone': { yield: 797 / 90, toppings: [{ label: 'Strawberry Cream Cheese filling (60g)', refRecipe: { section: 'scone', key: 'strawberrycc', grams: 60 } }] },
     'scone:strawberrycc': { yield: 1368 / 60 },
   };
-  const COST_SECTIONS = [['mad', 'Madeleines', () => activeFirst('mad', REC_MADS)], ['fill', 'Fillings', () => activeFirst('fill', REC_FILLINGS)], ['scone', 'Scones', () => activeFirst('scone', REC_SCONES)], ['other', 'Other', () => activeFirst('other', REC_OTHER)], ['test', 'Testing', () => REC_TEST]];
+  const COST_SECTIONS = [['mad', 'Madeleines', () => activeFirst('mad', REC_MADS)], ['fill', 'Fillings', () => activeFirst('fill', REC_FILLINGS)], ['scone', 'Scones', () => activeFirst('scone', REC_SCONES)], ['other', 'Other', () => activeFirst('other', REC_OTHER)], ['test', 'Testing', () => [...REC_TEST].sort(byName)]];
   const costItemKey = (sec, it) => `${sec}:${it.key || it.name}`;
   const costItemName = (sec, it) => sec === 'mad' ? (it.title || it.name + ' Madeleine') : (it.type === 'sable' ? 'Sable Cookies' : it.name);
 
@@ -6727,7 +6749,7 @@
   function renderBakeSheet() {
     const pick = document.getElementById('bsPick');
     const optHtml = ({ sec, it }) => `<option value="${esc(costItemKey(sec, it))}" data-icon="${recKey(it.name)}">${esc(costItemName(sec, it))}</option>`;
-    const seasonal = COST_SECTIONS.flatMap(([sec, , get]) => get().filter(it => isSeasonal(sec, it)).map(it => ({ sec, it })));
+    const seasonal = COST_SECTIONS.flatMap(([sec, , get]) => get().filter(it => isSeasonal(sec, it)).map(it => ({ sec, it }))).sort((a, b) => byName(a.it, b.it));
     const rest = COST_SECTIONS.map(([sec, label, get]) => [label, get().filter(it => !isSeasonal(sec, it)).map(it => ({ sec, it }))]).filter(([, l]) => l.length);
     pick.innerHTML = `<option value="" selected disabled>Add a recipe…</option>`
       + (seasonal.length ? `<optgroup label="This season">${seasonal.map(optHtml).join('')}</optgroup>` : '')
