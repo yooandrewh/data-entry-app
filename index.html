@@ -2105,7 +2105,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.110.03 · Oct 20, 3:10 PM</div>
+<div class="ver-badge">v1.110.04 · Oct 20, 3:40 PM</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -5560,6 +5560,8 @@
     'earl grey': 'Earl Grey Tea Leaves', 'fresh cream': 'Heavy Cream', 'vanilla bean paste': 'Vanilla Extract',
     'pure vanilla extract': 'Vanilla Extract', 'lemon poppy seed': 'Poppy Seed', 'lemon extract': 'Lemon Emulsion', 'kosher salt': 'Salt', 'flaked sea salt': 'Salt',
     'semisweet chocolate chips': 'Chocolate Chips', 'toasted pecans': 'Pecans', 'pure maple syrup': 'Maple Syrup', 'avocado oil': 'Vegetable Oil', 'cream of tartar': 'Cream of Tartar', 'ceylon cinnamon': 'Ground Cinnamon',
+    // Butter: two items, never mixed. Kerrygold is for madeleines ONLY (costRows swaps it in for the 'mad' section); every other recipe is Kirkland.
+    'unsalted butter': 'Kirkland Butter', 'costco unsalted butter': 'Kirkland Butter', 'butter': 'Kirkland Butter',
   };
   // amt = package size (g, or ml for liquids); price = package price in USD; null = not entered yet.
   const DEFAULT_PRICES = {
@@ -5573,8 +5575,8 @@
     'Brown Sugar': { amt: 907.2, unit: 'g', price: 1.99 },
     'Powdered Sugar': { amt: 907.2, unit: 'g', price: 3.89 },
     'Eggs': { amt: 3400, unit: 'g', price: 8.29, link: 'https://sameday.costco.com/store/costco/products/19232662-kirkland-signature-cage-free-eggs-ussa-grade-aa-60-ct', note: 'Costco Kirkland Cage Free, 60 ct. Egg White / Yolk cost derives from this same $/g.' },
-    'Unsalted Butter': { amt: 907.2, unit: 'g', price: 18.49, note: 'Kerrygold Pure Unsalted Irish Butter, 8oz x4-count (madeleines only)' },
-    'Costco Unsalted Butter': { amt: 1814.4, unit: 'g', price: 10.20, link: 'https://sameday.costco.com/store/costco/products/19502188-kirkland-signature-unsalted-butter-quarters-4-x-1-lb-1-lb', note: 'Costco Kirkland Unsalted Butter Quarters, 4 x 1 lb (muffins only)' },
+    'Kerrygold Butter': { amt: 907.2, unit: 'g', price: 14.99, note: 'MADELEINES ONLY. Kerrygold Pure Unsalted Irish Butter, 8 oz x 4' },
+    'Kirkland Butter': { amt: 1814.4, unit: 'g', price: 8.99, note: 'Everything except madeleines. Kirkland Signature Unsalted Sweet Cream Butter, 16 oz x 4' },
     'Salt': { amt: 850.5, unit: 'g', price: 3.99, link: 'https://sameday.costco.com/store/costco/products/19231239-kirkland-signature-pure-sea-salt-30-oz-30-oz', note: 'Costco Kirkland Pure Sea Salt, 30oz' },
     'Vanilla Extract': { amt: 473, unit: 'ml', price: 10.87, link: 'https://sameday.costco.com/store/costco/products/31874-kirkland-signature-pure-vanilla-16-ounces-16-oz', note: 'Costco Kirkland Pure Vanilla, 16oz. Vanilla Bean Paste uses this same $/g.' },
     'Cream Cheese': { amt: 1360.8, unit: 'g', price: 10.49, link: 'https://sameday.costco.com/store/costco/products/17314404-philadelphia-cream-cheese-48-oz', note: 'Costco Philadelphia, 48oz' },
@@ -5718,11 +5720,13 @@
       if (it.type === 'twocol') rows = it.rows.map(r => [r[0], r[1]]);
       else if (it.type === 'ratio') { const [a, b] = it.ratio.split(':').map(parseFloat); rows = [['Sugar', a], ['Heavy Cream', b]]; }
       else rows = it.rows.map(num);
-    } else if (it.type === 'muffin' || it.type === 'mad') rows = [...it.custom, ...(it.glaze || []), ...(it.topping || [])].map(num).map(r => it.type === 'muffin' && costCanon(r[0]) === 'Unsalted Butter' ? ['Costco Unsalted Butter', r[1]] : r);   // muffins use the Costco butter; Kerrygold is for madeleines
+    } else if (it.type === 'muffin' || it.type === 'mad') rows = [...it.custom, ...(it.glaze || []), ...(it.topping || [])].map(num);   // muffins use the Costco butter; Kerrygold is for madeleines
     else if (it.type === 'sable') rows = [...REC_SABLE.types[0].rows, ...REC_SABLE.types[0].addins].map(num);
     else if (it.type === 'macaron') rows = it.base.map(num);
     else if (it.type === 'glutenfree') rows = it.sizes[0].rows.map(num);
     else rows = [...it.rows, ...(it.soak || []), ...(it.outer || []).map(r => [r[0], num(r)[1] * (it.outerTimes || 1)])].map(num);
+    // Butter rule (hard): Kerrygold only in madeleines, Kirkland everywhere else — whatever a recipe row says.
+    rows = rows.map(r => { const c = costCanon(r[0]), k = c === 'Kirkland Butter' || c === 'Kerrygold Butter'; return k ? [(sec === 'mad' ? 'Kerrygold' : 'Kirkland') + ' Butter' + (/\(.*?\)/.test(r[0]) ? ' ' + r[0].match(/\(.*?\)/)[0] : ''), r[1]] : r; });
     return rows.filter(r => r[1] > 0);
   }
   function costUnit(name) { const p = costPrices[costCanon(name)]; return p && p.amt && p.price ? p.price / p.amt : null; }
