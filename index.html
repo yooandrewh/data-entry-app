@@ -2106,7 +2106,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.112.01 · Oct 23, 2:52 PM</div>
+<div class="ver-badge">v1.113.00 · Oct 23, 9:03 PM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -5297,6 +5297,12 @@
     { key: 'basquecheesecake', type: 'simple', name: 'Basque Cheesecake', yield: 8, yieldText: 'one 21 × 9 × 6 cm tin (8 slices assumed)', link: 'https://www.youtube.com/watch?v=U6pdm3Yl2n0',
       rows: [['Cream Cheese', 420], ['Heavy Cream', 200], ['Eggs', 155], ['Egg Yolk', 36], ['Sugar', 105], ['Lemon Juice', 10]],
       notes: 'Everything at room temperature.<br>1) Preheat the oven to 450°F (220°C) for 20+ min. Line the tin with parchment.<br>2) Loosen the cream cheese with a spatula until smooth, no lumps.<br>3) Add the sugar and mix until the grains dissolve.<br>4) Beat the eggs and yolks. Add in 3 parts, mixing smooth each time. Do not add the next part before the last is fully mixed in.<br>5) Add the lemon juice, mix.<br>6) Add the cream, mix until fully combined.<br>7) Strain through a sieve into the tin.<br>8) Tap the tin on the counter 30+ times to release bubbles.<br>9) Bake at 410°F (210°C) for 20–25 min, until deep brown. For a darker top bake at 430–450°F.<br>10) Turn the oven off and leave the door open for 10 min.<br>11) Cool completely in the tin, seal and chill 12+ hours.<br>12) Wrap a warm damp towel around the tin to loosen the edge, lift out, peel the parchment, cut with a heated knife.<br>Keeps 7 days in the fridge, 30 in the freezer.<br><br><b>Other sizes (cream cheese / cream / whole egg / yolk / sugar / lemon):</b><br>#1: 180 / 86 / 1 egg (50–55 g) / 1 / 45 / 4 g · 410°F 12–16 min<br>#2: 300 / 146 / 2 eggs (100–110 g) / 1 / 75 / 7 g · 15–20 min<br>#3 (this recipe): 420 / 200 / 3 eggs / 2 / 105 / 10 g · 20–25 min<br>#4: 588 / 280 / 4 eggs (200–210 g) / 3 / 147 / 14 g · 25–30 min<br>Tin to batch: 4 in round × 2 in tall = #1 ×0.9; 4 × 2.75 in = #1 ×1.2; 4.3 × 2 in = #1; 4.3 × 2.75 in = #2 ×0.9; 4.7 × 2.75 in = #2; 6 × 2 in = #2; 6 × 2.75 in = #3; 7 × 2 in = #3; 7 × 2.75 in = #4. Times are a guide, bake to colour.' },
+    { key: 'chocobasque', type: 'simple', name: 'Choco Basque Cheesecake', yield: 8, yieldText: 'one cheesecake (8 slices assumed)', link: 'https://www.youtube.com/watch?v=t1bh9qL4ZLE',
+      rows: [['Cream Cheese', 350], ['Sugar', 90], ['Eggs', 100], ['Egg Yolk', 20], ['Cornstarch', 5], ['Cocoa Powder', 9], ['Heavy Cream', 180], ['Dark Chocolate Couverture', 100]],
+      notes: 'Made with a spatula and bowl. Dark chocolate is 55% cacao. Everything else at room temperature.<br>1) Press the cream cheese with a spatula and loosen it well, no lumps.<br>2) Add the sugar and mix with the spatula until it dissolves.<br>3) Sift in the cornstarch and cocoa powder and whisk smooth.<br>4) Mix the whole eggs and yolks well, then whisk them in, no lumps.<br>5) Add the melted dark chocolate and whisk until emulsified.<br>6) Add the heavy cream and whisk.<br>7) Strain the batter through a sieve into a mold lined with parchment.<br>8) Bake in a preheated oven at 230°C (446°F) for 23 minutes (Wizwell Lumi, top and bottom heat + convection). The centre may flow like liquid or overcook depending on time, so test a few bakes to find the right time and temperature for your oven.<br>9) Cool at room temperature until lukewarm, then chill in the fridge at least 7 hours.<br>Keeps 3–4 days in the fridge in a food container, 2 weeks in the freezer.' },
+    { key: 'matchabasque', type: 'simple', name: 'Matcha Basque Cheesecake', yield: 8, yieldText: 'one cheesecake (8 slices assumed)', link: 'https://www.youtube.com/watch?v=t1bh9qL4ZLE',
+      rows: [['Cream Cheese', 400], ['Sugar', 100], ['Eggs', 100], ['Egg Yolk', 20], ['Cornstarch', 5], ['Matcha Powder', 13], ['Heavy Cream', 220], ['Vanilla Extract', 4]],
+      notes: 'Made in a food processor (a spatula and bowl works too). Everything at room temperature.<br>1) Process the cream cheese until smooth, no lumps.<br>2) Add the sugar and process until smooth.<br>3) Add the cornstarch and matcha and process, no lumps.<br>4) Add the whole eggs and yolks and process, no lumps.<br>5) Add the heavy cream and vanilla and process smooth.<br>6) Strain the batter through a sieve into a mold lined with parchment.<br>7) Bake in a preheated oven at 230°C (446°F) for 23 minutes (Wizwell Lumi, top and bottom heat + convection). The centre may flow like liquid or overcook depending on time, so test a few bakes to find the right time and temperature for your oven.<br>8) Cool at room temperature until lukewarm, then chill in the fridge more than 7 hours.<br>Keeps 3–4 days in the fridge in a food container, 2 weeks in the freezer.' },
   ];
   REC_TEST.forEach(it => { if (it.vers) { it.rows = it.vers[0].rows; } });   // costing follows the first version
   // Finalized test recipes (this device): { recipeKey: 'mad'|'fill'|'scone'|'other' } — moved out of Testing into that tab.
@@ -5311,7 +5317,7 @@
   }
   function recFinSet(k, sec) { const o = recFinGet(); if (sec) o[k] = sec; else delete o[k]; try { localStorage.setItem('recFinal.v1', JSON.stringify(o)); } catch (e) {} recFinApply(); }
   recFinApply();
-  const REC_ICON = { 'Basque Cheesecake': 'cake', 'Pumpkin Bundt Cake': 'bundt', 'Dubai Chewy Ball': 'dubai', 'Pumpkin Pie Spice Muffin': 'pumpkin', 'Classic': 'madeleine', 'Dot Cake': 'cake_dot', 'Earl Grey': 'teacup', 'Ube': 'ube', 'Lemon Poppy': 'lemon', 'Chocolate': 'choco', 'Brown Butter': 'butter_brown', 'Matcha': 'matcha', 'Mugwort': 'leaf', 'Maple Pecan': 'nut', 'Pumpkin Pie Spice': 'pumpkin', 'Cheddar Jalapeno Scone': 'scone', 'Mango Mousse Cake': 'cupcake', 'Maple Pecan Brown Butter': 'nut', 'Flat Chocolate Chip Chookie': 'cookie', 'Lemon Curd': 'jar_lemon', 'Cream Cheese Frosting': 'swirl_pink', 'Pumpkin Cream Cheese Frosting': 'swirl_pumpkin', 'Anglesie Buttercream': 'butter', 'Earl Grey Paste': 'jar_tea', 'Chocolate Ganache': 'jar_choc', 'Caramel': 'drop', 'Mascarpone Cream': 'bowl', 'Milk Cream': 'milk', 'Plain Scone': 'scone', 'Strawberry Cream Cheese': 'strawberry', 'Blueberry Cream Cheese': 'blueberry', 'Gluten Free Cake': 'cake_gf', 'Sable': 'cookie', 'Macarons': 'macaron', 'Salt Bread': 'bread', 'Vegan Donut': 'donut', 'Apricot Ricotta Cake': 'cake_apricot', 'Earl Grey Fig Cake': 'cake_fig', 'Matcha Brownie': 'cupcake', 'Chocolate Espresso Snow Cap Cookies': 'cookie', 'Snickerdoodle Cookies': 'cookie', 'Fig Caramel Scone': 'scone', 'Churros': 'donut', 'Chocolate Churros Financier': 'cookie', 'Cinnamon Crumb Coffee Cake': 'cake_apricot', 'Earl Grey Mini Pound Cake': 'cake_fig', 'Cake Pop': 'cupcake' };
+  const REC_ICON = { 'Basque Cheesecake': 'cake', 'Choco Basque Cheesecake': 'cake', 'Matcha Basque Cheesecake': 'cake', 'Pumpkin Bundt Cake': 'bundt', 'Dubai Chewy Ball': 'dubai', 'Pumpkin Pie Spice Muffin': 'pumpkin', 'Classic': 'madeleine', 'Dot Cake': 'cake_dot', 'Earl Grey': 'teacup', 'Ube': 'ube', 'Lemon Poppy': 'lemon', 'Chocolate': 'choco', 'Brown Butter': 'butter_brown', 'Matcha': 'matcha', 'Mugwort': 'leaf', 'Maple Pecan': 'nut', 'Pumpkin Pie Spice': 'pumpkin', 'Cheddar Jalapeno Scone': 'scone', 'Mango Mousse Cake': 'cupcake', 'Maple Pecan Brown Butter': 'nut', 'Flat Chocolate Chip Chookie': 'cookie', 'Lemon Curd': 'jar_lemon', 'Cream Cheese Frosting': 'swirl_pink', 'Pumpkin Cream Cheese Frosting': 'swirl_pumpkin', 'Anglesie Buttercream': 'butter', 'Earl Grey Paste': 'jar_tea', 'Chocolate Ganache': 'jar_choc', 'Caramel': 'drop', 'Mascarpone Cream': 'bowl', 'Milk Cream': 'milk', 'Plain Scone': 'scone', 'Strawberry Cream Cheese': 'strawberry', 'Blueberry Cream Cheese': 'blueberry', 'Gluten Free Cake': 'cake_gf', 'Sable': 'cookie', 'Macarons': 'macaron', 'Salt Bread': 'bread', 'Vegan Donut': 'donut', 'Apricot Ricotta Cake': 'cake_apricot', 'Earl Grey Fig Cake': 'cake_fig', 'Matcha Brownie': 'cupcake', 'Chocolate Espresso Snow Cap Cookies': 'cookie', 'Snickerdoodle Cookies': 'cookie', 'Fig Caramel Scone': 'scone', 'Churros': 'donut', 'Chocolate Churros Financier': 'cookie', 'Cinnamon Crumb Coffee Cake': 'cake_apricot', 'Earl Grey Mini Pound Cake': 'cake_fig', 'Cake Pop': 'cupcake' };
   const recKey = name => REC_ICON[name] || 'book';
   const recIc = (name, px) => ic(recKey(name), px);
 
@@ -5347,7 +5353,7 @@
     }).join('');
   }
   function recBatchRow() {
-    return `<div class="rec-scale"><span class="lbl">Batches</span>${[0.5, 1, 2, 3].map(n => `<button data-rbatch="${n}" class="${recState.batches === n ? 'on' : ''}">${n === 0.5 ? '½' : n}×</button>`).join('')}</div>`;
+    return `<div class="rec-scale"><span class="lbl">Batches</span><div class="bs-step"><button type="button" data-rbstep="-" aria-label="Fewer batches">−</button><input type="number" inputmode="decimal" step="0.5" min="0.5" value="${rFmt(recState.batches)}" data-rbatchin aria-label="Batches"><button type="button" data-rbstep="+" aria-label="More batches">+</button></div></div>`;
   }
   function recFillingRef(name) {
     const f = REC_FILLINGS.find(x => x.name === name); if (!f) return '';
@@ -5468,7 +5474,7 @@
         <h3>${recIc(item.name)} ${item.name}</h3>
         <div class="proj-sub">${item.yieldText || 'base recipe'}${b !== 1 ? ` · scaled ${rFmt(b)}×` : ''}</div>
         ${verChips}${recBatchRow()}
-        ${item.components ? item.components.map(c => `<div class="rec-box"><b>${esc(c.title)}</b>${c.rows.map(g => `<div class="gl"><span>${esc(g[0])}</span><span>${typeof g[1] === 'number' ? rFmt(g[1] * b) + (g[3] || 'g') + (g[2] != null ? ` <small class="was">was ${rFmt(g[2] * b)}${g[3] || 'g'}</small>` : '') : esc(g[1])}</span></div>`).join('')}${c.note ? `<p>${c.note}</p>` : ''}</div>`).join('') : recIngRows(item.rows, b)}
+        ${item.components ? item.components.map(c => `<div class="rec-box"><b>${esc(c.title)}</b>${c.rows.map(g => `<div class="gl"><span>${esc(g[0])}</span><span>${typeof g[1] === 'number' ? (g[3] ? rFmt(g[1] * b) + g[3] : `<input class="rec-qty" type="number" inputmode="decimal" step="any" value="${rFmt(g[1] * b)}" data-base="${g[1]}" data-ctx="batches">g`) + (g[2] != null ? ` <small class="was">was ${rFmt(g[2] * b)}${g[3] || 'g'}</small>` : '') : esc(g[1])}</span></div>`).join('')}${c.note ? `<p>${c.note}</p>` : ''}</div>`).join('') : recIngRows(item.rows, b)}
         ${item.velvet ? `<div class="rec-box"><b>Optional · velvet spray finish</b><p>${item.velvet}</p></div>` : ''}
         ${item.outer ? `<div class="rec-box"><b>Outer Layer · per outer batch</b>${item.outer.map(g => `<div class="gl"><span>${g[0]}</span><span>${rFmt(g[1] * b)}g</span></div>`).join('')}${item.outerNote ? `<p>${item.outerNote}</p>` : ''}</div>` : ''}
         ${item.soak ? `<div class="rec-box"><b>Soak (2+ hrs)</b>${item.soak.map(s => `<div class="gl"><span>${s[0]}</span><span>${rFmt(s[1] * b)}g</span></div>`).join('')}</div>` : ''}
@@ -5555,7 +5561,7 @@
     const b = e.target.closest('button'); if (!b) return;
     const d = b.dataset;
     if (d.sec) { recState.sec = d.sec; recState.idx = 0; recResetVariants(); }
-    else if (d.rbatch != null) recState.batches = Number(d.rbatch);
+    else if (d.rbstep != null) recState.batches = Math.max(0.5, Math.round((recState.batches + (d.rbstep === '+' ? 0.5 : -0.5)) * 2) / 2);
     else if (d.rmadver != null) recState.madVer = Number(d.rmadver);
     else if (d.rsabletype != null) { recState.sableType = Number(d.rsabletype); recState.sableFlav = 0; }
     else if (d.rsableflav != null) recState.sableFlav = Number(d.rsableflav);
@@ -7264,6 +7270,12 @@
     document.body.classList.add('printing-label');
     window.addEventListener('afterprint', () => document.body.classList.remove('printing-label'), { once: true });
     window.print();
+  });
+  document.getElementById('recCard').addEventListener('change', e => {
+    const inp = e.target.closest('input[data-rbatchin]'); if (!inp) return;
+    const n = parseFloat(inp.value);
+    recState.batches = (isNaN(n) || n <= 0) ? 1 : Math.max(0.5, Math.round(n * 2) / 2);
+    renderRecipes();
   });
   // Type any amount over a dashed number to rescale the whole recipe from it.
   document.getElementById('recCard').addEventListener('change', e => {
