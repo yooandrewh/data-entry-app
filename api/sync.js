@@ -38,6 +38,7 @@ const PRODUCT_MAP = {
   'Pumpkin Bundt': 'Pumpkin Bundt',
   'Earl Grey Mini': 'Earl Grey Mini',
   'Cake Pop': 'Cake Pop',
+  'Chookie': 'Chookie',
   'Maple Pecan': 'Maple Pecan',   // column is added to the tab automatically the first time it is written (see _sheets.js AUTO_COLUMNS)
 };
 
