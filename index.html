@@ -1777,6 +1777,9 @@
   .lg-rep th { background: #eee8da; }
   .lg-rep td.dt { background: #f6f2e8; font-weight: 700; }
   .lg-rep .s { color: #555; font-size: var(--fs-micro); }
+  /* Recipes tab: eight view buttons wrap to two rows of four (2026-10-25) */
+  #recSection { flex-wrap: wrap; }
+  #recSection button { flex: 1 0 22%; padding: 10px 4px; font-size: var(--fs-caption); }
 </style>
 </head>
 <body>
@@ -2106,9 +2109,12 @@
     <div id="bakingRecipes" hidden>
       <div class="db-filter" id="recSection">
         <button class="on" data-sec="mad"><span data-ic="madeleine"></span> Mads</button>
-        <button data-sec="fill"><span data-ic="jar_lemon"></span> Fillings</button>
+        <button data-sec="season"><span data-ic="leaf"></span> Season</button>
+        <button data-sec="muffin"><span data-ic="cupcake"></span> Muffins</button>
+        <button data-sec="sweet"><span data-ic="cookie"></span> Sweets</button>
+        <button data-sec="cake"><span data-ic="cake"></span> Cake/Bread</button>
         <button data-sec="scone"><span data-ic="scone"></span> Scones</button>
-        <button data-sec="other"><span data-ic="cupcake"></span> Other</button>
+        <button data-sec="fill"><span data-ic="jar_lemon"></span> Fillings</button>
         <button data-sec="test"><span data-ic="flask"></span> Test</button>
       </div>
       <div class="filter-bar"><select id="recPick" aria-label="Recipe"></select></div>
@@ -2130,7 +2136,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.115.01 · Oct 25, 12:59 AM PST</div>
+<div class="ver-badge">v1.116.00 · Oct 25, 1:14 AM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -5221,7 +5227,7 @@
     { key: 'earlgreyfigcake', name: 'Earl Grey Fig Cake', type: 'simple', link: 'https://www.youtube.com/watch?v=f-rtq3rZe1I', yieldText: '6 inch cake',
       rows: [['All Purpose Flour', 160], ['Almond Flour', 20], ['Baking Powder', 4], ['Brown Sugar', 110], ['Unsalted Butter', 150], ['Eggs', 130], ['Salt', 2], ['Heavy Cream', 90]],
       soak: [['Earl Grey', 4], ['Dried Fig', 100], ['Wine', 60]] },
-    { key: 'flatchookie', labFlat: 0.4, wholesale: 2.75, retail: 4.5, star: true, name: 'Flat Chocolate Chip Chookie', type: 'simple', yield: 13, oven: { lo: 10, hi: 12, cap: 32 }, prep: 20, yieldText: 'makes 13 cookies (70 g of dough each)',
+    { key: 'flatchookie', labFlat: 0.4, wholesale: 2.75, retail: 4.5, star: true, name: 'Chocolate Chip Chookie', type: 'simple', yield: 13, oven: { lo: 10, hi: 12, cap: 32 }, prep: 20, yieldText: 'makes 13 cookies (70 g of dough each)',
       rows: [['All-Purpose Flour', 375], ['Baking Soda', 5], ['Kosher Salt', 4], ['Unsalted Butter', 227], ['Light Brown Sugar', 160], ['Granulated Sugar', 120], ['Eggs', 100], ['Pure Vanilla Extract', 10], ['Semisweet Chocolate Chips', 100], ['Flaked Sea Salt', 5]],
       notes: 'Bake at 350°F (175°C) for 10–11 minutes.' },
     { key: 'snickerdoodle', labFlat: 0.4, wholesale: 2.75, retail: 4.5, star: true, type: 'simple', name: 'Snickerdoodle Cookies', yield: 14, oven: { lo: 10, hi: 12, cap: 32 }, prep: 20, yieldText: 'makes 14 cookies (70 g of dough each; lilluna.com, amounts converted from cups and spoons)',
@@ -5338,11 +5344,11 @@
     const fin = recFinGet();
     Object.values(REC_ARR).forEach(a => { for (let i = a.length - 1; i >= 0; i--) if (a[i].finFrom) a.splice(i, 1); });
     REC_TEST.length = 0;
-    REC_TEST_ALL.forEach(it => { const k = it.key || it.name, t = REC_ARR[fin[k]]; if (t && fin[k] !== 'test') { it.finFrom = true; t.push(it); } else { it.finFrom = false; REC_TEST.push(it); } });
+    REC_TEST_ALL.forEach(it => { const k = it.key || it.name, f = String(fin[k] || '').split(':'), t = REC_ARR[f[0]]; if (t && f[0] !== 'test') { it.finFrom = true; it.cat = f[1]; t.push(it); } else { it.finFrom = false; it.cat = undefined; REC_TEST.push(it); } });
   }
   function recFinSet(k, sec) { const o = recFinGet(); if (sec) o[k] = sec; else delete o[k]; try { localStorage.setItem('recFinal.v1', JSON.stringify(o)); } catch (e) {} recFinApply(); }
   recFinApply();
-  const REC_ICON = { 'Basque Cheesecake': 'cake', 'Choco Basque Cheesecake': 'cake', 'Matcha Basque Cheesecake': 'cake', 'Pumpkin Bundt Cake': 'bundt', 'Dubai Chewy Ball': 'dubai', 'Pumpkin Pie Spice Muffin': 'pumpkin', 'Classic': 'madeleine', 'Dot Cake': 'cake_dot', 'Earl Grey': 'teacup', 'Ube': 'ube', 'Lemon Poppy': 'lemon', 'Chocolate': 'choco', 'Brown Butter': 'butter_brown', 'Matcha': 'matcha', 'Mugwort': 'leaf', 'Maple Pecan': 'nut', 'Pumpkin Pie Spice': 'pumpkin', 'Cheddar Jalapeno Scone': 'scone', 'Mango Mousse Cake': 'cupcake', 'Maple Pecan Brown Butter': 'nut', 'Flat Chocolate Chip Chookie': 'cookie', 'Lemon Curd': 'jar_lemon', 'Cream Cheese Frosting': 'swirl_pink', 'Pumpkin Cream Cheese Frosting': 'swirl_pumpkin', 'Anglesie Buttercream': 'butter', 'Earl Grey Paste': 'jar_tea', 'Chocolate Ganache': 'jar_choc', 'Caramel': 'drop', 'Mascarpone Cream': 'bowl', 'Milk Cream': 'milk', 'Plain Scone': 'scone', 'Strawberry Cream Cheese': 'strawberry', 'Blueberry Cream Cheese': 'blueberry', 'Gluten Free Cake': 'cake_gf', 'Sable': 'cookie', 'Macarons': 'macaron', 'Salt Bread': 'bread', 'Vegan Donut': 'donut', 'Apricot Ricotta Cake': 'cake_apricot', 'Earl Grey Fig Cake': 'cake_fig', 'Matcha Brownie': 'cupcake', 'Chocolate Espresso Snow Cap Cookies': 'cookie', 'Snickerdoodle Cookies': 'cookie', 'Fig Caramel Scone': 'scone', 'Churros': 'donut', 'Chocolate Churros Financier': 'cookie', 'Cinnamon Crumb Coffee Cake': 'cake_apricot', 'Earl Grey Mini Pound Cake': 'cake_fig', 'Cake Pop': 'cupcake' };
+  const REC_ICON = { 'Basque Cheesecake': 'cake', 'Choco Basque Cheesecake': 'cake', 'Matcha Basque Cheesecake': 'cake', 'Pumpkin Bundt Cake': 'bundt', 'Dubai Chewy Ball': 'dubai', 'Pumpkin Pie Spice Muffin': 'pumpkin', 'Classic': 'madeleine', 'Dot Cake': 'cake_dot', 'Earl Grey': 'teacup', 'Ube': 'ube', 'Lemon Poppy': 'lemon', 'Chocolate': 'choco', 'Brown Butter': 'butter_brown', 'Matcha': 'matcha', 'Mugwort': 'leaf', 'Maple Pecan': 'nut', 'Pumpkin Pie Spice': 'pumpkin', 'Cheddar Jalapeno Scone': 'scone', 'Mango Mousse Cake': 'cupcake', 'Maple Pecan Brown Butter': 'nut', 'Chocolate Chip Chookie': 'cookie', 'Lemon Curd': 'jar_lemon', 'Cream Cheese Frosting': 'swirl_pink', 'Pumpkin Cream Cheese Frosting': 'swirl_pumpkin', 'Anglesie Buttercream': 'butter', 'Earl Grey Paste': 'jar_tea', 'Chocolate Ganache': 'jar_choc', 'Caramel': 'drop', 'Mascarpone Cream': 'bowl', 'Milk Cream': 'milk', 'Plain Scone': 'scone', 'Strawberry Cream Cheese': 'strawberry', 'Blueberry Cream Cheese': 'blueberry', 'Gluten Free Cake': 'cake_gf', 'Sable': 'cookie', 'Macarons': 'macaron', 'Salt Bread': 'bread', 'Vegan Donut': 'donut', 'Apricot Ricotta Cake': 'cake_apricot', 'Earl Grey Fig Cake': 'cake_fig', 'Matcha Brownie': 'cupcake', 'Chocolate Espresso Snow Cap Cookies': 'cookie', 'Snickerdoodle Cookies': 'cookie', 'Fig Caramel Scone': 'scone', 'Churros': 'donut', 'Chocolate Churros Financier': 'cookie', 'Cinnamon Crumb Coffee Cake': 'cake_apricot', 'Earl Grey Mini Pound Cake': 'cake_fig', 'Cake Pop': 'cupcake' };
   const recKey = name => REC_ICON[name] || 'book';
   const recIc = (name, px) => ic(recKey(name), px);
 
@@ -5362,7 +5368,22 @@
   const byName = (a, b) => recNm(a).localeCompare(recNm(b));
   const activeFirst = (sec, arr) => [...arr].sort((a, b) => (isActive(sec, a) ? 0 : 1) - (isActive(sec, b) ? 0 : 1) || byName(a, b));   // active first, each group A–Z
   const seasonalFirst = (sec, arr) => [...arr].sort((a, b) => seasonRank(sec, a) - seasonRank(sec, b));   // stable: the rest keep their order
-  function recList() { const sec = recState.sec; return activeFirst(sec, sec === 'mad' ? REC_MADS : sec === 'fill' ? REC_FILLINGS : sec === 'scone' ? REC_SCONES : sec === 'test' ? REC_TEST : REC_OTHER); }   // (sorted by activeFirst)
+  // Recipes-tab views (2026-10-25). The real sections (mad / fill / scone / other / test) stay as they are, because Costs, the bake sheet,
+  // labels and saved plans key off them; these views only decide which recipes each button shows. Everything but Mads is A–Z.
+  const REC_CATMAP = { pumpkinmuffin: 'muffin', blueberrymuffin: 'muffin', glutenfree: 'cake', saltbread: 'cake', apricotricotta: 'cake', earlgreyfigcake: 'cake', pumpkinbundt: 'cake', earlgreymini: 'cake' };   // the rest of REC_OTHER is Sweets
+  const REC_UNDER_PLAIN = ['strawberrycc', 'blueberrycc'];   // shown as sections under Plain Scone, not in the list
+  const recCatOf = it => it.cat || REC_CATMAP[it.key] || 'sweet';
+  const recRealSec = it => Object.keys(REC_ARR).find(s => REC_ARR[s].includes(it)) || 'other';
+  const recAct = it => isActive(recRealSec(it), it);
+  function recList() {
+    const v = recState.sec;
+    if (v === 'mad') return activeFirst('mad', REC_MADS);
+    const all = v === 'season' ? Object.keys(REC_ARR).flatMap(s => REC_ARR[s].filter(it => isSeasonal(s, it)))
+      : v === 'fill' ? REC_FILLINGS : v === 'test' ? REC_TEST
+      : v === 'scone' ? REC_SCONES.filter(it => !REC_UNDER_PLAIN.includes(it.key))
+      : REC_OTHER.filter(it => recCatOf(it) === v);
+    return [...all].sort(byName);
+  }
   const rFmt = n => typeof n === 'string' ? n : String(Math.round(n * 10) / 10);
   // Scale the FIRST number in a string (glaze amounts, ratios).
   const rScaleStr = (str, m) => (!m || m === 1) ? str : String(str).replace(/(\d+(?:\.\d+)?)/, (x, num) => rFmt(parseFloat(num) * m));
@@ -5551,23 +5572,30 @@
     if (recState.idx >= list.length) recState.idx = 0;
     const pick = document.getElementById('recPick');
     const opt = (it, i) => `<option value="${i}" data-icon="${recKey(it.name)}">${it.name}</option>`;
-    const nAct = list.filter(it => isActive(recState.sec, it)).length;
-    pick.innerHTML = (nAct ? `<optgroup label="Active">${list.slice(0, nAct).map((it, i) => opt(it, i)).join('')}</optgroup>` : '')
-      + (nAct < list.length ? `<optgroup label="Disabled (view only)">${list.slice(nAct).map((it, i) => opt(it, i + nAct)).join('')}</optgroup>` : '');
+    if (recState.sec === 'mad') {
+      const nAct = list.filter(recAct).length;
+      pick.innerHTML = (nAct ? `<optgroup label="Active">${list.slice(0, nAct).map((it, i) => opt(it, i)).join('')}</optgroup>` : '')
+        + (nAct < list.length ? `<optgroup label="Disabled (view only)">${list.slice(nAct).map((it, i) => opt(it, i + nAct)).join('')}</optgroup>` : '');
+    } else {
+      const mark = !['test', 'season'].includes(recState.sec);   // Testing and Season are all-or-nothing, so no "(disabled)" tag there
+      pick.innerHTML = list.map((it, i) => `<option value="${i}" data-icon="${recKey(it.name)}">${it.name}${mark && !recAct(it) ? ' (disabled)' : ''}</option>`).join('');
+    }
     pick.value = recState.idx;
     const item = list[recState.idx];
     let html;
-    if (recState.sec === 'mad') html = recMadCard(item);
-    else if (recState.sec === 'fill') html = recFillCard(item);
+    const rsec = recRealSec(item);
+    if (rsec === 'mad') html = recMadCard(item);
+    else if (rsec === 'fill') html = recFillCard(item);
     else if (item.type === 'muffin' || item.type === 'mad') html = recMadCard(item);
     else if (item.type === 'sable') html = recSableCard();
     else if (item.type === 'macaron') html = recMacCard(item);
     else if (item.type === 'glutenfree') html = recGfCard(item);
     else html = recSimpleCard(item);
+    if (item.key === 'plainscone') REC_UNDER_PLAIN.forEach(k => { const x = REC_SCONES.find(r => r.key === k); if (x) html += recSimpleCard(x); });   // cream cheese scones sit under Plain Scone
     if (item.star && !html.includes('rec-ver')) html = html.replace('</h3>', ' <span class="rec-ver"><button class="on">Ver 1 ★</button></span></h3>');   // finalized recipes with a single version
     if (recState.sec === 'test') html += `<div class="proj-card"><h3>Finalize</h3><div class="proj-sub">Done testing? Check it off to move it to its own tab. You can move it back any time.</div>
       <div style="display:flex;gap:8px;align-items:center;margin-top:8px"><label style="display:flex;gap:8px;align-items:center;flex:1"><input type="checkbox" id="recFinChk"> Finalized, move to</label>
-      <select id="recFinTo" data-native><option value="other" selected>Other</option><option value="scone">Scones</option></select></div></div>`;
+      <select id="recFinTo" data-native><option value="other:sweet" selected>Sweets</option><option value="other:muffin">Muffins</option><option value="other:cake">Cake/Bread</option><option value="scone">Scones</option></select></div></div>`;
     else if (item.finFrom) html += `<div class="proj-card"><h3>Finalized</h3><div class="proj-sub">This recipe finished testing.</div>
       <label style="display:flex;gap:8px;align-items:center;margin-top:8px"><input type="checkbox" id="recUnfinChk" checked> Finalized (uncheck to move back to Testing)</label></div>`;
     html += `<div class="proj-card"><h3>My Notes</h3><div class="proj-sub">Changes and ideas from baking this one. Saved on this device.</div>
@@ -5575,11 +5603,11 @@
     document.getElementById('recCard').innerHTML = html;
     document.getElementById('recMyNotes').addEventListener('input', e => recNoteSet(recNoteKey(item), e.target.value));
     const fc = document.getElementById('recFinChk'), uc = document.getElementById('recUnfinChk');
-    if (fc) fc.addEventListener('change', () => { if (!fc.checked) return; const to = document.getElementById('recFinTo').value; recFinSet(item.key || item.name, to); recState.sec = to; recState.idx = Math.max(0, recList().indexOf(item)); recResetVariants(); renderRecipes(); });
+    if (fc) fc.addEventListener('change', () => { if (!fc.checked) return; const to = document.getElementById('recFinTo').value; recFinSet(item.key || item.name, to); recState.sec = to === 'scone' ? 'scone' : to.split(':')[1]; recState.idx = Math.max(0, recList().indexOf(item)); recResetVariants(); renderRecipes(); });
     if (uc) uc.addEventListener('change', () => { if (uc.checked) return; recFinSet(item.key || item.name, null); recState.sec = 'test'; recState.idx = Math.max(0, recList().indexOf(item)); recResetVariants(); renderRecipes(); });
   }
   // Personal baking notes per recipe (this device only), keyed by section + recipe key/name.
-  const recNoteKey = it => recState.sec + ':' + (it.key || it.name);
+  const recNoteKey = it => recRealSec(it) + ':' + (it.key || it.name);
   function recNoteGet(k) { try { return (JSON.parse(localStorage.getItem('recipeNotes.v1') || '{}')[k]) || ''; } catch (e) { return ''; } }
   function recNoteSet(k, v) { try { const o = JSON.parse(localStorage.getItem('recipeNotes.v1') || '{}'); if (v) o[k] = v; else delete o[k]; localStorage.setItem('recipeNotes.v1', JSON.stringify(o)); } catch (e) {} }
   document.getElementById('bakingRecipes').addEventListener('click', e => {
