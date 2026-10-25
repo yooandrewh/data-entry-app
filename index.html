@@ -2136,7 +2136,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.117.03 · Oct 25, 1:43 AM PST</div>
+<div class="ver-badge">v1.117.04 · Oct 25, 1:45 AM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -3678,7 +3678,7 @@
       return { st, lines, total: lines.reduce((a, l) => a + l.amt, 0), units: lines.reduce((a, l) => a + l.qty, 0) };
     }).filter(g => g.lines.length);
     const NEWP = ['Pumpkin Bundt', 'Earl Grey Mini', 'Cake Pop', 'Chookie'];
-    const invName = p => ['Dubai Ball', 'Pumpkin Muffin', 'Blueberry Muffin', ...NEWP].includes(p) ? (p === 'Dubai Ball' ? 'Dubai Chewy Ball' : p) : `${p} Madeleine`;   // madeleine flavors say so
+    const invName = p => ['Dubai Ball', 'Pumpkin Muffin', 'Blueberry Muffin', ...NEWP].includes(p) ? (p === 'Dubai Ball' ? 'Dubai Chewy Ball' : p === 'Chookie' ? 'Chocolate Chip Chookie' : p) : `${p} Madeleine`;   // madeleine flavors say so
     const lines = groups.flatMap(g => g.lines);
     const total = groups.reduce((a, g) => a + g.total, 0);
     const units = groups.reduce((a, g) => a + g.units, 0);
@@ -5579,9 +5579,7 @@
     const pick = document.getElementById('recPick');
     const opt = (it, i) => `<option value="${i}" data-icon="${recKey(it.name)}">${it.name}</option>`;
     if (recState.sec === 'mad') {
-      const nAct = list.filter(recAct).length;
-      pick.innerHTML = (nAct ? `<optgroup label="Active">${list.slice(0, nAct).map((it, i) => opt(it, i)).join('')}</optgroup>` : '')
-        + (nAct < list.length ? `<optgroup label="Disabled (view only)">${list.slice(nAct).map((it, i) => opt(it, i + nAct)).join('')}</optgroup>` : '');
+      pick.innerHTML = list.map((it, i) => `<option value="${i}" data-icon="${recKey(it.name)}">${it.name}${seasonRank('mad', it) < 99 ? ' (season)' : ''}</option>`).join('');
     } else {
       pick.innerHTML = list.map((it, i) => `<option value="${i}" data-icon="${recKey(it.name)}">${it.name}${it.key === 'pumpkinmuffin' ? ' (disabled)' : ''}</option>`).join('');
     }
