@@ -2136,7 +2136,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.116.00 · Oct 25, 1:14 AM PST</div>
+<div class="ver-badge">v1.116.01 · Oct 25, 1:18 AM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -5577,8 +5577,7 @@
       pick.innerHTML = (nAct ? `<optgroup label="Active">${list.slice(0, nAct).map((it, i) => opt(it, i)).join('')}</optgroup>` : '')
         + (nAct < list.length ? `<optgroup label="Disabled (view only)">${list.slice(nAct).map((it, i) => opt(it, i + nAct)).join('')}</optgroup>` : '');
     } else {
-      const mark = !['test', 'season'].includes(recState.sec);   // Testing and Season are all-or-nothing, so no "(disabled)" tag there
-      pick.innerHTML = list.map((it, i) => `<option value="${i}" data-icon="${recKey(it.name)}">${it.name}${mark && !recAct(it) ? ' (disabled)' : ''}</option>`).join('');
+      pick.innerHTML = list.map((it, i) => `<option value="${i}" data-icon="${recKey(it.name)}">${it.name}${it.key === 'pumpkinmuffin' ? ' (disabled)' : ''}</option>`).join('');
     }
     pick.value = recState.idx;
     const item = list[recState.idx];
