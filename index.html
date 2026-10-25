@@ -2136,7 +2136,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.117.02 · Oct 25, 1:31 AM PST</div>
+<div class="ver-badge">v1.117.03 · Oct 25, 1:43 AM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -3547,6 +3547,8 @@
 
   // ---- Invoice: deliveries for one store over a date range, priced per unit ----
   const INV_PRICE_KEY = 'invoicePrices.v1';
+  // Never billed on a given store's invoice (Stanton: no Lemon Poppy, no Dubai Ball), even if a delivery was logged.
+  const INV_SKIP = { Stanton: ['Lemon Poppy', 'Dubai Ball'] };
   const INV_DEFAULT_PRICE = UNIT_PRICE;   // everything else defaults to PRICE_PER_UNIT
   const invScrim = document.getElementById('invScrim');
   let invText = '', invNum = 'invoice', invMeta = null;
@@ -3616,8 +3618,8 @@
     try { if (!localStorage.getItem('invPriceDubai350')) { saved['Dubai Ball'] = 3.5; localStorage.setItem(INV_PRICE_KEY, JSON.stringify(saved)); localStorage.setItem('invPriceDubai350', '1'); } } catch {}
     return Object.fromEntries(ENTRY_PRODUCTS.map(p => [p, Number.isFinite(saved[p]) ? saved[p] : (INV_DEFAULT_PRICE[p] ?? PRICE_PER_UNIT)]));
   }
-  // Dubai Ball's price row only matters for Stanton invoices.
-  function syncInvDubai() { const r = document.getElementById('invDubaiRow'); if (r) r.hidden = document.getElementById('invStore').value === 'La Mirada'; }
+  // Dubai Ball's price row stays hidden: Stanton invoices skip it.
+  function syncInvDubai() { const r = document.getElementById('invDubaiRow'); if (r) r.hidden = true; }   // Dubai Ball is no longer billed on any invoice
   function initInvoiceForm() {
     paintInvHistory(); invSync();
     const today = nowPST().slice(0, 10);
@@ -3669,7 +3671,7 @@
     const groups = stores.map(st => {
       const qty = Object.fromEntries(HIST_PRODUCTS.map(p => [p, 0]));
       for (const e of all) if (e.location === st) for (const p of HIST_PRODUCTS) qty[p] += e.amounts[p] || 0;
-      const lines = HIST_PRODUCTS.filter(p => qty[p] > 0).map(p => {
+      const lines = HIST_PRODUCTS.filter(p => qty[p] > 0 && !(INV_SKIP[st] || []).includes(p)).map(p => {
         const unit = prices[p] != null ? prices[p] : PRICE_PER_UNIT;
         return { p, qty: qty[p], unit, amt: qty[p] * unit };
       });
