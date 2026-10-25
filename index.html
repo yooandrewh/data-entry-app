@@ -2136,7 +2136,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.116.01 · Oct 25, 1:18 AM PST</div>
+<div class="ver-badge">v1.117.00 · Oct 25, 1:19 AM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -5493,16 +5493,20 @@
         ${recLink(item.link)}
       </div>`;
   }
+  // Editable amount: typing over it rescales the whole recipe (same handler as .rec-qty elsewhere).
+  const recQtyIn = (base, b, unit) => `<input class="rec-qty" type="number" inputmode="decimal" step="any" value="${rFmt(base * b)}" data-base="${base}" data-ctx="batches">${unit}`;
+  // "113g" / "150ml" become editable; anything else ("2" tea bags) just scales as text.
+  const recFillAmt = (str, b) => { const m = /^(\d+(?:\.\d+)?)\s*(g|ml)$/.exec(String(str).trim()); return m ? recQtyIn(parseFloat(m[1]), b, m[2]) : `<b>${rScaleStr(str, b)}</b>`; };
   function recFillCard(item) {
     const b = recState.batches;
     let body = '';
     if (item.type === 'twocol') {
-      body = item.rows.map(r => `<div class="proj-row"><span class="k">${r[0]}</span><span style="display:flex;gap:24px"><b style="min-width:58px;text-align:right">${rFmt(r[1] * b)}g</b><b style="min-width:58px;text-align:right">${rFmt(r[2] * b)}g</b></span></div>`).join('');
+      body = item.rows.map(r => `<div class="proj-row"><span class="k">${r[0]}</span><span style="display:flex;gap:24px"><span style="min-width:58px;text-align:right">${recQtyIn(r[1], b, 'g')}</span><span style="min-width:58px;text-align:right">${recQtyIn(r[2], b, 'g')}</span></span></div>`).join('');
       body = `<div class="proj-row" style="border-bottom:none;padding-bottom:0"><span class="k"></span><span style="display:flex;gap:24px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em"><span style="min-width:58px;text-align:right">${item.cols[0]}</span><span style="min-width:58px;text-align:right">${item.cols[1]}</span></span></div>` + body;
     } else if (item.type === 'ratio') {
-      body = `<div class="rec-ratio">${item.ratio.split(':').map(p => rScaleStr(p.trim(), b)).join(' : ')}</div><div class="rec-ratio-lbl">${item.label}</div>`;
+      body = `<div class="rec-ratio">${item.ratio.split(':').map(p => recFillAmt(p.trim(), b)).join(' : ')}</div><div class="rec-ratio-lbl">${item.label}</div>`;
     } else {
-      body = item.rows.map(r => `<div class="proj-row"><span class="k">${r[0]}</span><span><b>${rScaleStr(r[1], b)}</b></span></div>`).join('');
+      body = item.rows.map(r => `<div class="proj-row"><span class="k">${r[0]}</span><span>${recFillAmt(r[1], b)}</span></div>`).join('');
     }
     return `<div class="proj-card">
         <h3>${recIc(item.name)} ${item.name}</h3>
