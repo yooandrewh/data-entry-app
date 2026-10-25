@@ -35,6 +35,9 @@ const PRODUCT_MAP = {
   'Dubai Ball': 'Dubai Ball',
   'Pumpkin Muffin': 'Pumpkin Muffin',
   'Blueberry Muffin': 'Blueberry Muffin',
+  'Pumpkin Bundt': 'Pumpkin Bundt',
+  'Earl Grey Mini': 'Earl Grey Mini',
+  'Cake Pop': 'Cake Pop',
   'Maple Pecan': 'Maple Pecan',   // column is added to the tab automatically the first time it is written (see _sheets.js AUTO_COLUMNS)
 };
 
