@@ -494,4 +494,4 @@ Labels follow US/California packaged-food rules: net weight in **ounces first, g
 (Lemon Poppy 42 g, Classic 37, Maple Pecan 40, Blueberry Muffin 137); everything else is computed. Every label prints **Frozen: best by
 production date + 21 days · Thawed: keep refrigerated, 7 days · Room temperature: 2 days**, plus "Made in a facility where nuts are used."
 Lemon Poppy and anything with a dairy filling print "discard after 4 hours" instead of the 2-day room-temperature line, plus the 4-hour note.
-Pumpkin Bundt is 80 g of batter each (yield 21). The manufacturer line has no street address or ZIP yet; US rules want one.
+Pumpkin Bundt is 80 g of batter each (yield 21). The manufacturer line reads Kairosbaking, 3519 W Commonwealth Ave #L, Fullerton, CA 92833. Cake Pop is 62 pops per batch (2 batches made 124); the struck-out "was Xg" for cut sugar prints before the amount.
