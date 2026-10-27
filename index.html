@@ -2016,7 +2016,7 @@
           </div>
         </div>
         <div class="row">
-          <span class="lbl lbl-flavor"><span class="tok" data-tok="Chookie"></span>Chookie</span>
+          <span class="lbl lbl-flavor"><span class="tok" data-tok="Chookie"></span>Cookie</span>
           <div class="amt" data-product="Chookie">
             <button type="button" class="step minus">−</button>
             <input class="val" type="number" inputmode="numeric" value="0" min="0" />
@@ -2136,7 +2136,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.117.04 · Oct 25, 1:45 AM PST</div>
+<div class="ver-badge">v1.117.05 · Oct 27, 9:24 AM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -2371,6 +2371,7 @@
   const SALES_FLAVORS = ['Lemon Poppy', 'Sea Salt', 'Maple Pecan', 'Pumpkin Muffin', 'Blueberry Muffin', 'Ube', 'Dot', 'Earl Grey', 'Matcha', 'Chocolate', 'Dubai Ball', 'Unknown'];
   const PRICE_PER_UNIT = 2.50;   // $/madeleine (from Financial Dashboard: $192.50 / 77 units)
   const UNIT_PRICE = { 'Pumpkin Muffin': 2.75, 'Blueberry Muffin': 2.75, 'Pumpkin Bundt': 3.35, 'Earl Grey Mini': 2.75, 'Cake Pop': 2.75, 'Chookie': 2.75, 'Dubai Ball': 3.50 };   // items that sell for something other than PRICE_PER_UNIT
+  const pdisp = p => p === 'Chookie' ? 'Cookie' : p;   // display name only; 'Chookie' stays the id and sheet column
   // Extra revenue over PRICE_PER_UNIT for sales rows (assumes those units are already counted in each row's total).
   const salesAdj = rows => rows.reduce((a, s) => a + Object.entries(UNIT_PRICE).reduce((b, [p, pr]) => b + ((s.amounts && s.amounts[p]) || 0) * (pr - PRICE_PER_UNIT), 0), 0);
   const usd = n => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n);
@@ -2627,7 +2628,7 @@
       .map(p => {
         const n = pending.amounts[p];
         const shown = isGoodwill ? `−${Math.abs(n)}` : isXfer ? Math.abs(n) : n;
-        return `<div class="l"><span class="k">${tok(p)}${p}</span><span class="v">${shown}</span></div>`;
+        return `<div class="l"><span class="k">${tok(p)}${pdisp(p)}</span><span class="v">${shown}</span></div>`;
       })
       .join('') || `<div class="l"><span class="k">Amounts</span><span class="v">All zero</span></div>`;
     const goodwillNote = isGoodwill
@@ -2882,7 +2883,7 @@
     }
     const mag = v => (gw || isXferView) ? Math.abs(v) : v;
     const breakdown = HIST_PRODUCTS.filter(p => (totals[p] || 0) !== 0)
-      .map(p => kvRow(tok(p), p, mag(totals[p]))).join('');
+      .map(p => kvRow(tok(p), pdisp(p), mag(totals[p]))).join('');
     const locBreak = LOCATIONS.map(l => `<span>${l} <b>${mag(locTotals[l] || 0)}</b></span>`).join('');
     const sumLabel = gw ? `madeleine${Math.abs(grand) === 1 ? '' : 's'} given out`
       : isXferView ? `madeleine${mag(grand) === 1 ? '' : 's'} moved`
@@ -2896,7 +2897,7 @@
       const eTotal = HIST_PRODUCTS.reduce((s, p) => s + (e.amounts[p] || 0), 0);
       const shown = HIST_PRODUCTS.filter(p => (e.amounts[p] || 0) !== 0);   // a missing key is not a zero row
       const flavorRows = shown
-        .map(p => kvRow(tok(p), p, signAdj ? Math.abs(e.amounts[p]) : e.amounts[p]))
+        .map(p => kvRow(tok(p), pdisp(p), signAdj ? Math.abs(e.amounts[p]) : e.amounts[p]))
         .join('') || `<div class="proj-row"><span class="k">No amounts</span></div>`;
       let dirRow = '';
       if (isXfer) {
@@ -2954,7 +2955,7 @@
       const tot = {}; HIST_PRODUCTS.forEach(p => tot[p] = live.reduce((a, e) => a + (isXferView ? Math.max(0, e.amounts[p] || 0) : (e.amounts[p] || 0)), 0));
       const sum = HIST_PRODUCTS.reduce((a, p) => a + tot[p], 0);
       const head = dbFilter === 'inventory' ? `${es.length} count${es.length === 1 ? '' : 's'}` : `${mag(sum)} ${verb}`;
-      const rows = dbFilter === 'inventory' ? '' : HIST_PRODUCTS.filter(p => tot[p] !== 0).map(p => kvRow(tok(p), p, mag(tot[p]))).join('');
+      const rows = dbFilter === 'inventory' ? '' : HIST_PRODUCTS.filter(p => tot[p] !== 0).map(p => kvRow(tok(p), pdisp(p), mag(tot[p]))).join('');
       html += `<details class="db-entry db-fold db-month"><summary class="db-head"><span class="db-daylabel">${monthName(ym)}</span><span class="db-when">${head}</span></summary>
           ${rows ? `<div class="db-amts">${rows}</div>` : ''}<div class="db-mdays">${withDays(es)}</div></details>`;
     }
@@ -3628,7 +3629,7 @@
     if (!document.getElementById('invIssue').value) document.getElementById('invIssue').value = today;
     const pr = invPrices();
     document.getElementById('invPrices').innerHTML = ENTRY_PRODUCTS.map(p =>
-      `<div class="inv-field"${p === 'Dubai Ball' ? ' id="invDubaiRow"' : ''}><span>${tok(p)} ${esc(p === 'Dubai Ball' ? 'Dubai Chewy Ball' : p)}</span><input class="price" type="number" inputmode="decimal" step="0.01" min="0" data-inv-price="${esc(p)}" value="${pr[p]}" /></div>`).join('');
+      `<div class="inv-field"${p === 'Dubai Ball' ? ' id="invDubaiRow"' : ''}><span>${tok(p)} ${esc(p === 'Dubai Ball' ? 'Dubai Chewy Ball' : pdisp(p))}</span><input class="price" type="number" inputmode="decimal" step="0.01" min="0" data-inv-price="${esc(p)}" value="${pr[p]}" /></div>`).join('');
     syncInvDubai();
     const stSel = document.getElementById('invStore');
     const paintStore = () => document.querySelectorAll('#invStoreBtns button').forEach(b => b.classList.toggle('on', b.dataset.store === stSel.value));
@@ -3678,7 +3679,7 @@
       return { st, lines, total: lines.reduce((a, l) => a + l.amt, 0), units: lines.reduce((a, l) => a + l.qty, 0) };
     }).filter(g => g.lines.length);
     const NEWP = ['Pumpkin Bundt', 'Earl Grey Mini', 'Cake Pop', 'Chookie'];
-    const invName = p => ['Dubai Ball', 'Pumpkin Muffin', 'Blueberry Muffin', ...NEWP].includes(p) ? (p === 'Dubai Ball' ? 'Dubai Chewy Ball' : p === 'Chookie' ? 'Chocolate Chip Chookie' : p) : `${p} Madeleine`;   // madeleine flavors say so
+    const invName = p => ['Dubai Ball', 'Pumpkin Muffin', 'Blueberry Muffin', ...NEWP].includes(p) ? (p === 'Dubai Ball' ? 'Dubai Chewy Ball' : p === 'Chookie' ? 'Chocolate Chip Cookie' : p) : `${p} Madeleine`;   // madeleine flavors say so
     const lines = groups.flatMap(g => g.lines);
     const total = groups.reduce((a, g) => a + g.total, 0);
     const units = groups.reduce((a, g) => a + g.units, 0);
@@ -3879,7 +3880,7 @@
     document.querySelectorAll('#editLocPills .pill').forEach(p => p.classList.toggle('on', p.dataset.loc === editLoc));
     document.getElementById('editAmounts').innerHTML = ENTRY_PRODUCTS.map(p => `
       <div class="row"${p === 'Dubai Ball' ? ' id="editDubaiRow"' : ''}>
-        <span class="lbl">${tok(p)}${p}</span>
+        <span class="lbl">${tok(p)}${pdisp(p)}</span>
         <div class="amt" data-product="${p}">
           <button type="button" class="step minus">−</button>
           <input class="val" type="number" inputmode="numeric" value="${ent.amounts[p] || 0}" />
@@ -4434,7 +4435,7 @@
       // the same flavor names right above this list.
       // First view: one short line per flavor (left · run-out date). Rates and bands are behind the i.
       const rateRows = PRODUCTS.map(p =>
-        `<div class="proj-row pr-fc"><span class="k">${tok(p)}${p}</span><span class="fc-v"><b>${st.stock[p]}</b> left <span class="fc-sub"><b>${fmtD(pick(ro, p))}</b></span></span></div>`).join('');
+        `<div class="proj-row pr-fc"><span class="k">${tok(p)}${pdisp(p)}</span><span class="fc-v"><b>${st.stock[p]}</b> left <span class="fc-sub"><b>${fmtD(pick(ro, p))}</b></span></span></div>`).join('');
       const detailRows = PRODUCTS.map(p => {
         const dp = st.sellDaysFor ? st.sellDaysFor[p] : st.sellDays;
         const span = (dp && dp < st.sellDays) ? ` <span style="color:var(--muted)">(${dp}d)</span>` : '';
@@ -4468,7 +4469,7 @@
       html += `<div class="proj-card pg-card" style="--n:${cols.length};--w:84px">
           <div class="pg-row pg-head"><h3 class="pg-t">By store${infoBtn()}</h3>${cells(c => `<span class="pg-c">${ab(c)}</span>`)}</div>
           <div class="pg-row pg-time"><span class="k">Runs out in</span>${cells(c => c.none ? '<span class="pg-c">—</span>' : `<span class="pg-c"><b>${c.runout.t}</b><small>${esc(c.runout.sub)}</small></span>`)}</div>
-          ${PRODUCTS.map(p => `<div class="pg-row"><span class="k">${tok(p)}${p}</span>${cells(c => { if (c.none) return '<span class="pg-c">—</span>'; const x = c.cell(p); return `<span class="pg-c"><span><b>${x.n}</b> left</span><small>${x.d}</small></span>`; })}</div>`).join('')}
+          ${PRODUCTS.map(p => `<div class="pg-row"><span class="k">${tok(p)}${pdisp(p)}</span>${cells(c => { if (c.none) return '<span class="pg-c">—</span>'; const x = c.cell(p); return `<span class="pg-c"><span><b>${x.n}</b> left</span><small>${x.d}</small></span>`; })}</div>`).join('')}
           ${cols.map(c => c.warn ? `<div class="pg-stale"><b>${ab(c)}</b> ${c.warn}</div>` : '').join('')}
           <div class="info-body" hidden>${cols.map(c => c.none ? `<div class="be-section-label">${c.loc}</div><div class="proj-sub">No inventory count logged yet.</div>` : `<div class="be-section-label">${c.loc}</div>${c.detail}`).join('')}</div>
         </div>`;
@@ -4837,13 +4838,13 @@
     const flavorRows = totNeed > 0
       ? `<div class="be-section-label">Per flavor · whole plan</div>` +
         PRODUCTS.filter(p => perFlavor[p] > 0).map(p =>
-          `<div class="proj-row pr-fc"><span class="k">${tok(p)}${p}</span><span class="fc-v"><b>${perFlavor[p]}</b> madeleines<span class="fc-sub">${batchLabel(perFlavorB[p])}</span></span></div>`).join('')
+          `<div class="proj-row pr-fc"><span class="k">${tok(p)}${pdisp(p)}</span><span class="fc-v"><b>${perFlavor[p]}</b> madeleines<span class="fc-sub">${batchLabel(perFlavorB[p])}</span></span></div>`).join('')
       : '';
     const evRows = `<div class="be-section-label">By bake day</div>` + events.map(ev => {
       const eff = bakeEffort(ev.bake);
       const chips = ev.any
         ? `<div class="be-chips">${PRODUCTS.filter(p => ev.bake[p] > 0).map(p =>
-             kvRow(tok(p), p, ev.bake[p], ` · ${batchLabel(flavorBatches(ev.bake[p], p))}`)).join('')}</div>
+             kvRow(tok(p), pdisp(p), ev.bake[p], ` · ${batchLabel(flavorBatches(ev.bake[p], p))}`)).join('')}</div>
              <div class="be-effort">${batchLabel(eff.batches)} · prep ${fmtDur(eff.prep)} · baking ${fmtDur(eff.baking)}</div>`
         : `<div class="be-enough">enough on hand — no bake needed</div>`;
       return `<div class="bake-event">
@@ -4869,7 +4870,7 @@
   const LOC_ABBR = { 'La Mirada': 'LM', 'Stanton': 'ST' };
   function gridCardHtml(cols) {
     const cells = f => cols.map(f).join('');
-    const rows = PRODUCTS.map(p => `<div class="pg-row"><span class="k">${tok(p)}${p}</span>${cells(c => {
+    const rows = PRODUCTS.map(p => `<div class="pg-row"><span class="k">${tok(p)}${pdisp(p)}</span>${cells(c => {
       const n = c.bake[p] || 0;
       return n > 0 ? `<span class="pg-c"><b>bake ${n}</b><small>${batchLabel(flavorBatches(n, p))}</small></span>` : `<span class="pg-c pg-ok">enough</span>`;
     })}</div>`).join('');
@@ -4888,7 +4889,7 @@
       const right = safe > 0
         ? `<b>bake ${safe}</b>`
         : `<span style="color:var(--green);font-weight:700">enough</span>`;
-      rows += `<div class="proj-row pr-fc"><span class="k">${tok(p)}${p}</span><span class="fc-v">${right}${safe > 0 ? `<span class="fc-sub">${batchLabel(flavorBatches(safe, p))}</span>` : ''}</span></div>`;
+      rows += `<div class="proj-row pr-fc"><span class="k">${tok(p)}${pdisp(p)}</span><span class="fc-v">${right}${safe > 0 ? `<span class="fc-sub">${batchLabel(flavorBatches(safe, p))}</span>` : ''}</span></div>`;
       haveRows += `<div class="proj-row"><span class="k">${p}</span><span>have <b>${haveMap[p]}</b> · expected need ${Math.ceil(expMap[p])}</span></div>`;
     }
     const eff = bakeEffort(bakeMap);
@@ -5229,7 +5230,7 @@
     { key: 'earlgreyfigcake', name: 'Earl Grey Fig Cake', type: 'simple', link: 'https://www.youtube.com/watch?v=f-rtq3rZe1I', yieldText: '6 inch cake',
       rows: [['All Purpose Flour', 160], ['Almond Flour', 20], ['Baking Powder', 4], ['Brown Sugar', 110], ['Unsalted Butter', 150], ['Eggs', 130], ['Salt', 2], ['Heavy Cream', 90]],
       soak: [['Earl Grey', 4], ['Dried Fig', 100], ['Wine', 60]] },
-    { key: 'flatchookie', labFlat: 0.4, wholesale: 2.75, retail: 4.5, star: true, name: 'Chocolate Chip Chookie', type: 'simple', yield: 13, oven: { lo: 10, hi: 12, cap: 32 }, prep: 20, yieldText: 'makes 13 cookies (70 g of dough each)',
+    { key: 'flatchookie', labFlat: 0.4, wholesale: 2.75, retail: 4.5, star: true, name: 'Chocolate Chip Cookie', type: 'simple', yield: 13, oven: { lo: 10, hi: 12, cap: 32 }, prep: 20, yieldText: 'makes 13 cookies (70 g of dough each)',
       rows: [['All-Purpose Flour', 375], ['Baking Soda', 5], ['Kosher Salt', 4], ['Unsalted Butter', 227], ['Light Brown Sugar', 160], ['Granulated Sugar', 120], ['Eggs', 100], ['Pure Vanilla Extract', 10], ['Semisweet Chocolate Chips', 100], ['Flaked Sea Salt', 5]],
       notes: 'Bake at 350°F (175°C) for 10–11 minutes.' },
     { key: 'snickerdoodle', labFlat: 0.4, wholesale: 2.75, retail: 4.5, star: true, type: 'simple', name: 'Snickerdoodle Cookies', yield: 14, oven: { lo: 10, hi: 12, cap: 32 }, prep: 20, yieldText: 'makes 14 cookies (70 g of dough each; lilluna.com, amounts converted from cups and spoons)',
@@ -5350,7 +5351,7 @@
   }
   function recFinSet(k, sec) { const o = recFinGet(); if (sec) o[k] = sec; else delete o[k]; try { localStorage.setItem('recFinal.v1', JSON.stringify(o)); } catch (e) {} recFinApply(); }
   recFinApply();
-  const REC_ICON = { 'Basque Cheesecake': 'cake', 'Choco Basque Cheesecake': 'cake', 'Matcha Basque Cheesecake': 'cake', 'Pumpkin Bundt Cake': 'bundt', 'Dubai Chewy Ball': 'dubai', 'Pumpkin Pie Spice Muffin': 'pumpkin', 'Classic': 'madeleine', 'Dot Cake': 'cake_dot', 'Earl Grey': 'teacup', 'Ube': 'ube', 'Lemon Poppy': 'lemon', 'Chocolate': 'choco', 'Brown Butter': 'butter_brown', 'Matcha': 'matcha', 'Mugwort': 'leaf', 'Maple Pecan': 'nut', 'Pumpkin Pie Spice': 'pumpkin', 'Cheddar Jalapeno Scone': 'scone', 'Mango Mousse Cake': 'cupcake', 'Maple Pecan Brown Butter': 'nut', 'Chocolate Chip Chookie': 'cookie', 'Lemon Curd': 'jar_lemon', 'Cream Cheese Frosting': 'swirl_pink', 'Pumpkin Cream Cheese Frosting': 'swirl_pumpkin', 'Anglesie Buttercream': 'butter', 'Earl Grey Paste': 'jar_tea', 'Chocolate Ganache': 'jar_choc', 'Caramel': 'drop', 'Mascarpone Cream': 'bowl', 'Milk Cream': 'milk', 'Plain Scone': 'scone', 'Strawberry Cream Cheese': 'strawberry', 'Blueberry Cream Cheese': 'blueberry', 'Gluten Free Cake': 'cake_gf', 'Sable': 'cookie', 'Macarons': 'macaron', 'Salt Bread': 'bread', 'Vegan Donut': 'donut', 'Apricot Ricotta Cake': 'cake_apricot', 'Earl Grey Fig Cake': 'cake_fig', 'Matcha Brownie': 'cupcake', 'Chocolate Espresso Snow Cap Cookies': 'cookie', 'Snickerdoodle Cookies': 'cookie', 'Fig Caramel Scone': 'scone', 'Churros': 'donut', 'Chocolate Churros Financier': 'cookie', 'Cinnamon Crumb Coffee Cake': 'cake_apricot', 'Earl Grey Mini Pound Cake': 'cake_fig', 'Cake Pop': 'cupcake' };
+  const REC_ICON = { 'Basque Cheesecake': 'cake', 'Choco Basque Cheesecake': 'cake', 'Matcha Basque Cheesecake': 'cake', 'Pumpkin Bundt Cake': 'bundt', 'Dubai Chewy Ball': 'dubai', 'Pumpkin Pie Spice Muffin': 'pumpkin', 'Classic': 'madeleine', 'Dot Cake': 'cake_dot', 'Earl Grey': 'teacup', 'Ube': 'ube', 'Lemon Poppy': 'lemon', 'Chocolate': 'choco', 'Brown Butter': 'butter_brown', 'Matcha': 'matcha', 'Mugwort': 'leaf', 'Maple Pecan': 'nut', 'Pumpkin Pie Spice': 'pumpkin', 'Cheddar Jalapeno Scone': 'scone', 'Mango Mousse Cake': 'cupcake', 'Maple Pecan Brown Butter': 'nut', 'Chocolate Chip Cookie': 'cookie', 'Lemon Curd': 'jar_lemon', 'Cream Cheese Frosting': 'swirl_pink', 'Pumpkin Cream Cheese Frosting': 'swirl_pumpkin', 'Anglesie Buttercream': 'butter', 'Earl Grey Paste': 'jar_tea', 'Chocolate Ganache': 'jar_choc', 'Caramel': 'drop', 'Mascarpone Cream': 'bowl', 'Milk Cream': 'milk', 'Plain Scone': 'scone', 'Strawberry Cream Cheese': 'strawberry', 'Blueberry Cream Cheese': 'blueberry', 'Gluten Free Cake': 'cake_gf', 'Sable': 'cookie', 'Macarons': 'macaron', 'Salt Bread': 'bread', 'Vegan Donut': 'donut', 'Apricot Ricotta Cake': 'cake_apricot', 'Earl Grey Fig Cake': 'cake_fig', 'Matcha Brownie': 'cupcake', 'Chocolate Espresso Snow Cap Cookies': 'cookie', 'Snickerdoodle Cookies': 'cookie', 'Fig Caramel Scone': 'scone', 'Churros': 'donut', 'Chocolate Churros Financier': 'cookie', 'Cinnamon Crumb Coffee Cake': 'cake_apricot', 'Earl Grey Mini Pound Cake': 'cake_fig', 'Cake Pop': 'cupcake' };
   const recKey = name => REC_ICON[name] || 'book';
   const recIc = (name, px) => ic(recKey(name), px);
 
@@ -7204,7 +7205,7 @@
     const dairyFilling = /butter|cream|milk|cheese|mascarpone/.test(lblList(c.filling, ex.filling).join(', ').toLowerCase().replace(/coconut milk/g, ''));
     return `
       <div class="lbl-brand">[KAIROSBAKING]</div>
-      <div class="lbl-title">${esc(title || item.title || item.name + ' Madeleine')} <small>(Perishable Keep Refrigerated)</small></div>
+      <div class="lbl-title">${esc(title || item.title || item.name + ' Madeleine')}${item.name === 'Lemon Poppy' ? ' <small>(Perishable Keep Refrigerated)</small>' : ''}</div>
       ${parts}
       ${al.length ? `<p class="lbl-contains" contenteditable="true">Contains: ${al.join(', ')}.</p>` : ''}
       <p><span class="k">Net wt.:</span> <span contenteditable="true">${esc(netText)}</span></p>
