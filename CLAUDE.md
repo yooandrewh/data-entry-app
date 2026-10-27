@@ -104,7 +104,7 @@ Cost of the merge: one extra `fetchRemoteEntries()` per Home load (`getSales()` 
 (`📅 Plan` / `📖 Recipes`) — `renderBaking()` shows `#bakingPlan` or `#bakingRecipes` and calls
 `renderPlan()` / `renderRecipes()`. There is no separate Recipes tab/view anymore.
 
-**Stanton is paused (~mid-July 2026), so it's gone from all forward-looking views** — Home,
+**Stanton was paused mid-July 2026 and is selling again (data through 10/26), but it is still out of the forward-looking views** — Home,
 Forecast, and Baking have no location toggle and default to La Mirada (`homeLoc`/`projLoc`/`planLoc`
 = `'La Mirada'`). Stanton's **historical** data still shows in the **Data** tab (its `dataLoc`
 filter keeps All/LM/Stanton). Don't delete stored Stanton data — it's history.
@@ -123,7 +123,7 @@ uncapped, a single outlier widens the band until real dips stop being detected.
 
 Scenario toggle is 🐻 Bear / Expected / 🐂 Bull.
 
-Bake effort constants: `BATCH_YIELD=18, SETUP_MIN=20, PREP_MIN=15, BAKE_MIN=14`. Time is
+Bake effort constants: `BATCH_YIELD=12 (was 18), SETUP_MIN=20, PREP_MIN=15, BAKE_MIN=14`. Time is
 `20 + batches×(15+14)` min — sequential single oven, glaze overlaps the bake.
 
 Plan bake dates are **specific calendar dates**, not a recurring weekly pattern (they vary week
@@ -191,7 +191,7 @@ Ported from the old `kairos.html` Costing section (which CLAUDE.md used to say w
 to anyone with the repo. Every ingredient any recipe uses appears in the price list; ones with no
 price are flagged "Needs a price" and block that recipe's total. Cake Flour = AP + cornstarch
 (436:64), Egg White/Yolk = Eggs, Tea Bags = 2g tea leaves. Unlike the old page, flavoring notes,
-glaze and toppings count toward the batch. Madeleine yield defaults to `BATCH_YIELD` (18).
+glaze and toppings count toward the batch. Madeleine yield defaults to `BATCH_YIELD` (12 since 2026-10-13).
 
 **Receipt scan** (Baking → Costs → Ingredient prices → *Scan a receipt*): `api/receipt.js` sends the
 photo (downsized to ~1600px JPEG client-side) to the Anthropic API with a `record_receipt` tool and
