@@ -2136,7 +2136,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.117.05 · Oct 27, 9:24 AM PST</div>
+<div class="ver-badge">v1.118.00 · Oct 27, 9:33 AM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -2218,7 +2218,7 @@
       <div class="inv-field"><span>Manufactured</span><input type="date" id="lblMfg" /></div>
       <div class="inv-field"><span>Net weight</span><input type="text" id="lblNet" /></div>
     </div>
-    <div class="warn inv-noprint">Best-by dates fill in from the manufactured date: fridge 7 days, freezer 3 weeks. Tap any text on the label to edit it before printing.</div>
+    <div class="warn inv-noprint">Best-by dates fill in from the manufactured date: frozen 3 weeks, thawed 7 days in the fridge, room temperature 2 days. Tap any text on the label to edit it before printing.</div>
     <div class="inv-noprint" id="lblVers"></div>
     <div class="lbl-doc" id="lblDoc"></div>
     <div class="actions inv-noprint" style="margin-top:16px">
@@ -2276,7 +2276,7 @@
   <div class="sheet inv-sheet" role="dialog" aria-modal="true" aria-labelledby="mlTitle">
     <div id="mlPick">
       <h2 id="mlTitle">Generate Labels</h2>
-      <div class="warn">Tick the items you're labelling. Best-by dates fill in from the manufactured date: fridge 7 days, freezer 3 weeks.</div>
+      <div class="warn">Tick the items you're labelling. Best-by dates fill in from the manufactured date: frozen 3 weeks, thawed 7 days in the fridge, room temperature 2 days.</div>
       <div class="sum"><div class="inv-field"><span>Manufactured</span><input type="date" id="mlMfg" /></div></div>
       <div class="bs-links" style="padding:0 2px 4px"><button type="button" id="mlSeason">Seasonal</button><button type="button" id="mlAll">All</button><button type="button" id="mlNone">None</button></div>
       <div id="mlList"></div>
@@ -5237,9 +5237,9 @@
       rows: [['Unsalted Butter', 227], ['Sugar', 300], ['Eggs', 100], ['Vanilla Extract', 4], ['All Purpose Flour', 344], ['Cream of Tartar', 6], ['Baking Soda', 5], ['Salt', 3], ['Sugar (topping)', 39], ['Cinnamon (topping)', 9.3]],
       notes: 'Conversions: 2¾ cups flour = 344g, 1 cup butter = 227g, 1½ cups sugar = 300g. The dough totals about 989 g, so 70 g per cookie makes 14. The cinnamon sugar (39 g sugar, 9.3 g cinnamon) is scaled down from the original 24-cookie coating to fit 14.<br><br>1. Cream butter and sugar.<br>2. Beat in eggs and vanilla.<br>3. Mix in the dry ingredients. Chill if soft.<br>4. Roll into balls (70 g), roll twice in the cinnamon sugar.<br>5. Bake at 350°F (175°C) for 8 to 10 minutes.',
       link: 'https://lilluna.com/snickerdoodles/' },
-    { key: 'pumpkinbundt', labFlat: 0.4, wholesale: 3.35, retail: 6.5, type: 'simple', name: 'Pumpkin Bundt Cake', yield: 11, oven: { lo: 25, hi: 25, cap: 24 }, prep: 20, glazeFixed: 5, glazeSec: 5, yieldText: 'makes 11 bundt cakes (150 g of batter each)',
+    { key: 'pumpkinbundt', labFlat: 0.4, wholesale: 3.35, retail: 6.5, type: 'simple', name: 'Pumpkin Bundt Cake', yield: 21, oven: { lo: 25, hi: 25, cap: 24 }, prep: 20, glazeFixed: 5, glazeSec: 5, yieldText: 'makes 21 bundt cakes (80 g of batter each)',
       components: [
-        { title: 'Cake', rows: [['All-Purpose Flour', 384], ['Baking Powder', 8], ['Baking Soda', 5], ['Salt', 5], ['Ground Cinnamon', 5], ['Cardamom', 3], ['Allspice', 1], ['Black Pepper', 0.5], ['Light Brown Sugar', 440], ['Butter', 114], ['Avocado Oil', 108], ['Eggs', 100], ['Pumpkin Puree', 425], ['Sour Cream', 120]], note: 'The batter comes to about 1,718 g, which is 11 cakes at 150 g each.' },
+        { title: 'Cake', rows: [['All-Purpose Flour', 384], ['Baking Powder', 8], ['Baking Soda', 5], ['Salt', 5], ['Ground Cinnamon', 5], ['Cardamom', 3], ['Allspice', 1], ['Black Pepper', 0.5], ['Light Brown Sugar', 440], ['Butter', 114], ['Avocado Oil', 108], ['Eggs', 100], ['Pumpkin Puree', 425], ['Sour Cream', 120]], note: 'The batter comes to about 1,718 g, which is 21 cakes at 80 g each.' },
         { title: 'Glaze', rows: [['Powdered Sugar', 275], ['Pumpkin Pie Spice', 6.9], ['Milk', 60]], note: 'The source glaze (200 g powdered sugar, 5 g spice, 8 g milk) tops 8 cakes. Sugar and spice are scaled to 11; the milk is set to 60 g per batch.' } ],
       rows: [['All-Purpose Flour', 384], ['Baking Powder', 8], ['Baking Soda', 5], ['Salt', 5], ['Ground Cinnamon', 5], ['Cardamom', 3], ['Allspice', 1], ['Black Pepper', 0.5], ['Brown Sugar', 440], ['Unsalted Butter', 114], ['Avocado Oil', 108], ['Eggs', 100], ['Pumpkin Puree', 425], ['Sour Cream', 120], ['Powdered Sugar', 275], ['Pumpkin Pie Spice', 6.9], ['Milk', 60]],
       notes: '1) <b>Prep:</b> oven 350°F (175°C). Butter and flour the bundt pan. Batter prep about 20 minutes.<br>2) <b>Dry:</b> whisk flour, powder, soda, salt, spices.<br>3) <b>Cream:</b> paddle sugar, butter, oil, medium-high 3 min until fluffy.<br>4) <b>Eggs:</b> one at a time, 20 s each.<br>5) <b>Wet:</b> add pumpkin and sour cream, mix, scrape bowl.<br>6) <b>Fold:</b> dry into wet by hand, scrape bottom and sides.<br>7) <b>Pan:</b> pour, smooth top, tap on counter to release air.<br>8) <b>Bake:</b> 25 minutes, until golden and a skewer comes out clean. The oven takes 24 cakes at once for now (more with more pans).<br>9) <b>Glaze:</b> whisk about 5 minutes, glaze each cake about 5 seconds.' },
@@ -7113,7 +7113,9 @@
   }
   // ---- Ingredient label: mix order → weight order, allergens, net weight, best-by dates ----
   const LBL_PDF_W = 400;   // layout width (px) each label is drawn at for the PDF
-  const LBL_FRIDGE_DAYS = 7, LBL_FREEZER_DAYS = 21;
+  const LBL_FREEZER_DAYS = 21, LBL_THAWED_DAYS = 7, LBL_ROOM_DAYS = 2;   // frozen best-by is counted from the production date; thawed and room-temperature days print as text
+  // Net weight per piece, fixed by hand (g). Anything not listed is worked out from the recipe.
+  const LBL_NET_G = { 'Lemon Poppy': 42, 'Classic': 37, 'Maple Pecan': 40, 'Blueberry Muffin': 137 };
   const LBL_SUB = { 'white chocolate': 'sugar, fractionated palm kernel oil, milk, nonfat milk, hydrogenated palm oil, soy lecithin, and natural flavor' };
   const lblClean = n => {
     let t = String(n).split(',')[0].replace(/\(.*?\)/g, '').replace(/\*/g, '').trim().toLowerCase()
@@ -7147,13 +7149,18 @@
     });
     return out;
   }
+  // The 9 major allergens (FDA / California): milk, egg, fish, shellfish, tree nuts (name the nut), peanuts, wheat, soy, sesame.
   function lblAllergens(text) {
-    const t = text.toLowerCase(), out = [];
+    const low = text.toLowerCase();
+    const t = low.replace(/coconut (milk|cream)|cream of tartar|cocoa butter|shea butter|(peanut|pistachio|almond|nut) butter/g, ' '), out = [];
     if (/egg/.test(t)) out.push('Egg');
-    if (/butter|cream|milk|cheese|mascarpone/.test(t.replace(/coconut milk/g, ''))) out.push('Milk');
-    if (/flour/.test(t)) out.push('Wheat');
-    if (/pecan|almond|walnut|hazelnut|pistachio|cashew/.test(t)) out.push('Tree nuts');
+    if (/butter|cream|milk|cheese|mascarpone|yogurt|whey|custard/.test(t)) out.push('Milk');
+    if (/(?<!almond |coconut |rice |oat |corn |chickpea )flour|wheat|bread|waffle cone|graham|semolina|kataifi/.test(t)) out.push('Wheat');
+    const nuts = ['almond', 'pecan', 'walnut', 'hazelnut', 'pistachio', 'cashew', 'macadamia', 'pine nut'].filter(n => low.includes(n));
+    if (nuts.length) out.push('Tree nuts (' + nuts.map(n => n === 'pine nut' ? 'pine nuts' : n + 's').join(', ') + ')');
+    if (/peanut/.test(low)) out.push('Peanuts');
     if (/soy/.test(t)) out.push('Soy');
+    if (/sesame|tahini/.test(t)) out.push('Sesame');
     return out;
   }
   const lblDate = ymd => { const [y, m, d] = ymd.split('-'); return `${m}.${d}.${y}`; };
@@ -7178,15 +7185,15 @@
     const filling = lblFillingRows(item);
     const syrup = (item.syrup || []).map(g => [g[0], lblGrams(g[1]) * fk]);
     const total = [...batter, ...syrup, ...glaze, ...topping].reduce((a, r) => a + r[1], 0);
-    return { batter, glaze, topping, filling, perPiece: total / vy };
+    return { batter, glaze, topping, filling, perPiece: LBL_NET_G[item.name] || total / vy };
   }
-  const lblNetText = c => c.perPiece > 0 ? `${Math.round(c.perPiece)} g (${(c.perPiece / 28.3495).toFixed(1)} oz) each` : '— g';
+  const lblNetText = c => c.perPiece > 0 ? `${(c.perPiece / 28.3495).toFixed(1)} oz (${Math.round(c.perPiece)} g)` : '— oz (— g)';   // ounces first, metric in brackets: the US label rule
   // Any recipe except fillings can be labelled. Madeleines and muffins use their full batter / glaze / topping data; the rest use their ingredient rows.
   function lblCalcAny(c) {
     if (c.sec === 'mad' || c.it.type === 'muffin' || c.it.type === 'mad') return lblCalc(c.it, verLatest(c.it));
     const batter = costRows(c.sec, c.it).map(r => [r[0], r[1]]);
     const y = costDefaultYield(c.sec, c.it);
-    return { batter, glaze: [], topping: [], filling: [], perPiece: y ? batter.reduce((a, r) => a + r[1], 0) / y : 0 };
+    return { batter, glaze: [], topping: [], filling: [], perPiece: LBL_NET_G[c.it.name] || (y ? batter.reduce((a, r) => a + r[1], 0) / y : 0) };
   }
   const mlCands = () => COST_SECTIONS.filter(([sec]) => sec !== 'fill').flatMap(([sec, label, get]) => get().map(it => ({ key: costItemKey(sec, it), sec, it, group: label, title: costItemName(sec, it) })));
   function lblMarkup(item, c, mfg, netText, title) {
@@ -7203,6 +7210,7 @@
     const al = lblAllergens(all);
     // The room-temperature note only applies to products with a dairy filling (cream cheese frosting, cream…), not dairy in the batter.
     const dairyFilling = /butter|cream|milk|cheese|mascarpone/.test(lblList(c.filling, ex.filling).join(', ').toLowerCase().replace(/coconut milk/g, ''));
+    const perishable = dairyFilling || item.name === 'Lemon Poppy';   // lemon curd / dairy fillings: no 2-day room-temperature shelf life
     return `
       <div class="lbl-brand">[KAIROSBAKING]</div>
       <div class="lbl-title">${esc(title || item.title || item.name + ' Madeleine')}${item.name === 'Lemon Poppy' ? ' <small>(Perishable Keep Refrigerated)</small>' : ''}</div>
@@ -7212,8 +7220,11 @@
       <p><span class="k">Manufactured / packed by:</span> Kairosbaking, Fullerton, CA</p>
       <p><span class="k">Prepared in:</span> LGI Kitchen in Fullerton, CA</p>
       <p><span class="k">Manufactured:</span> ${lblDate(mfg)}</p>
-      <p><span class="k">Best by / use by:</span> ${lblDate(addDays(mfg, LBL_FRIDGE_DAYS))} refrigerated · ${lblDate(addDays(mfg, LBL_FREEZER_DAYS))} frozen</p>
-      ${dairyFilling ? '<p class="lbl-note">Note: Product must be refrigerated or discarded after 4 hours of sitting at room temperature.</p>' : ''}`;
+      <p><span class="k">Frozen:</span> best by ${lblDate(addDays(mfg, LBL_FREEZER_DAYS))}</p>
+      <p><span class="k">Thawed:</span> keep refrigerated, good for ${LBL_THAWED_DAYS} days</p>
+      <p><span class="k">Room temperature:</span> ${perishable ? 'discard after 4 hours' : LBL_ROOM_DAYS + ' days'}</p>
+      ${perishable ? '<p class="lbl-note">Note: Product must be refrigerated or discarded after 4 hours of sitting at room temperature.</p>' : ''}
+      <p class="lbl-note">Made in a facility where nuts are used.</p>`;
   }
   let lblVer = 0;
   function paintLblVers() {

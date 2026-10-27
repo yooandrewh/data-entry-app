@@ -485,3 +485,13 @@ Costs read prices from the sheet's **Ledger** tab via `api/ledger.js` (`Id, Rece
   `approve` (`ids`, `approved: false` clears). Max 80 lines per call. Andrew doesn't log receipts in the app; Claude writes them through the API (code in `~/.kairos-ledger-code`, never printed).
 - Sizes are typed in any unit (kg, oz, lb, L, fl oz, cup, tbsp, tsp, pt, qt, gal) and converted to g/ml on save (`UNIT_TO_BASE`). No weight↔volume conversion: liquids cost as 1 ml = 1 g.
 - Costs follow each recipe's latest version. Recipes can be active or disabled; Needs-a-price lists are split that way. Version numbers: major = redesign, minor = feature, patch = fix (see above).
+
+
+## Label rules (2026-10-27)
+
+Labels follow US/California packaged-food rules: net weight in **ounces first, grams in brackets** (`lblNetText`); ingredients by weight; a
+`Contains:` line for the 9 major allergens, with the tree nut named (`lblAllergens`). Fixed per-piece net weights live in `LBL_NET_G`
+(Lemon Poppy 42 g, Classic 37, Maple Pecan 40, Blueberry Muffin 137); everything else is computed. Every label prints **Frozen: best by
+production date + 21 days · Thawed: keep refrigerated, 7 days · Room temperature: 2 days**, plus "Made in a facility where nuts are used."
+Lemon Poppy and anything with a dairy filling print "discard after 4 hours" instead of the 2-day room-temperature line, plus the 4-hour note.
+Pumpkin Bundt is 80 g of batter each (yield 21). The manufacturer line has no street address or ZIP yet; US rules want one.
