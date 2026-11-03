@@ -674,6 +674,8 @@
   .rec-box p { margin: 6px 0 0; }
   .rec-conv { font-size: var(--fs-micro); color: var(--muted); font-weight: 400; }
   .rec-addin { font-style: italic; }
+  .rec-split { padding-left: 14px; color: var(--muted); font-size: var(--fs-caption); }
+  .rec-split .rec-conv { font-size: var(--fs-micro); }
   .rec-ratio { font-size: var(--fs-figure); text-align: center; padding: 8px 0 2px; color: var(--accent); font-weight: 700; }
   .rec-ratio-lbl { text-align: center; font-size: var(--fs-caption); color: var(--muted); margin-bottom: 6px; }
   .rec-link { display: block; margin-top: 12px; font-size: var(--fs-caption); font-weight: 600; color: var(--accent); text-decoration: none; }
@@ -2136,7 +2138,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.118.08 · Nov 3, 3:22 PM PST</div>
+<div class="ver-badge">v1.118.09 · Nov 3, 3:25 PM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -5405,13 +5407,17 @@
   const rScaleStr = (str, m) => (!m || m === 1) ? str : String(str).replace(/(\d+(?:\.\d+)?)/, (x, num) => rFmt(parseFloat(num) * m));
   // Scale every "Ng" amount in a note ("20g ube powder" → "40g ube powder"), leaving non-gram numbers alone.
   const rScaleNote = (str, m) => (!m || m === 1) ? str : String(str).replace(/(\d+(?:\.\d+)?)g/g, (x, num) => `${rFmt(parseFloat(num) * m)}g`);
-  const recFlourConv = amt => ` <span class="rec-conv">(= AP ${Math.round(amt * 436 / 500)}g + cornstarch ${Math.round(amt * 64 / 500)}g)</span>`;
+  // Cake flour = 436 g all-purpose + 64 g cornstarch per 500 g. The split is derived from the Cake Flour amount on every render, so it follows batch scaling and typed quantities.
+  const recFlourParts = amt => [['All Purpose Flour', Math.round(amt * 436 / 500 * 10) / 10], ['Cornstarch', Math.round(amt * 64 / 500 * 10) / 10]];
+  const recFlourRows = amt => recFlourParts(amt).map(([n, g]) => `<div class="proj-row rec-split"><span class="k">${n} <span class="rec-conv">(in the cake flour)</span></span><span>${rFmt(g)}g</span></div>`).join('');
+  const recFlourGl = amt => recFlourParts(amt).map(([n, g]) => `<div class="gl rec-split"><span>${n} <span class="rec-conv">(in the cake flour)</span></span><span>${rFmt(g)}g</span></div>`).join('');
+  const recFlourNote = rows => rows.some(r => r[0] === 'Cake Flour' && typeof r[1] === 'number') ? `<div class="rec-box"><b>Cake Flour</b>Make it: sift together 436 g all-purpose flour and 64 g cornstarch (87.2% / 12.8%) for every 500 g of cake flour. For example, 120 g cake flour = 104.6 g all-purpose + 15.4 g cornstarch (about 105 g + 15 g). The two lines under Cake Flour update when you change the amount or the batches.</div>` : '';
   function recIngRows(rows, mult, ctx, addin) {
     return rows.map(r => {
       const cls = addin ? ' rec-addin' : '';
       if (typeof r[1] !== 'number') return `<div class="proj-row"><span class="k${cls}">${r[0]}</span><span><b>${r[1]}</b></span></div>`;
-      const conv = r[0] === 'Cake Flour' ? recFlourConv(r[1] * (mult || 1)) : '';
-      return `<div class="proj-row"><span class="k${cls}">${r[0]}${conv}</span><span><input class="rec-qty" type="number" inputmode="decimal" step="any" value="${rFmt(r[1] * (mult || 1))}" data-base="${r[1]}" data-ctx="${ctx || 'batches'}">g</span></div>`;
+      const split = r[0] === 'Cake Flour' ? recFlourRows(r[1] * (mult || 1)) : '';
+      return `<div class="proj-row"><span class="k${cls}">${r[0]}</span><span><input class="rec-qty" type="number" inputmode="decimal" step="any" value="${rFmt(r[1] * (mult || 1))}" data-base="${r[1]}" data-ctx="${ctx || 'batches'}">g</span></div>${split}`;
     }).join('');
   }
   function recBatchRow() {
@@ -5498,7 +5504,7 @@
         <h3 class="rec-h">${recIc(item.name)} <span>${item.title || item.name + ' Madeleine'}</span>${verChips}</h3>
         <div class="proj-sub">1 batch ≈ ${(item.versions && item.versions[recState.madVer].yield) || item.yield || BATCH_YIELD} ${item.type === 'muffin' ? 'pieces' : 'madeleines'}${item.versions && item.versions[recState.madVer].sub ? ` (${item.versions[recState.madVer].sub})` : ''}${b !== 1 ? ` · scaled ${rFmt(b)}×` : ''}</div>
         ${recBatchRow()}
-        ${recIngRows(rows, b)}
+        ${recIngRows(rows, b)}${recFlourNote(rows)}
         ${item.note && !(item.versions && item.versions[recState.madVer].skipNote) ? `<div class="rec-box"><b>Flavoring</b>${rScaleNote(item.note, b)}</div>` : ''}
         ${item.finishFor ? `<div class="rec-box"><b>Syrup &amp; glaze yield</b>The syrup and glaze below are enough for ${item.finishFor} pieces (${rFmt(item.finishFor / (item.yield || BATCH_YIELD))} batches). Cost, the bake plan and the buy list use the share for one batch.</div>` : ''}
         ${item.syrup ? `<div class="rec-box"><b>Simple Syrup</b>${item.syrup.map(g => `<div class="gl"><span>${g[0]}</span><span>${rScaleStr(g[1], b)}</span></div>`).join('')}</div>` : ''}
@@ -5540,7 +5546,8 @@
         <h3>${recIc(item.name)} ${item.name}</h3>
         <div class="proj-sub">${item.yieldText || 'base recipe'}${b !== 1 ? ` · scaled ${rFmt(b)}×` : ''}</div>
         ${verChips}${recBatchRow()}
-        ${item.components ? item.components.map(c => `<div class="rec-box"><b>${esc(c.title)}</b>${c.rows.map(g => `<div class="gl"><span>${esc(g[0])}</span><span>${typeof g[1] === 'number' ? (g[2] != null ? `<small class="was">was ${rFmt(g[2] * b)}${g[3] || 'g'}</small> ` : '') + (g[3] ? rFmt(g[1] * b) + g[3] : `<input class="rec-qty" type="number" inputmode="decimal" step="any" value="${rFmt(g[1] * b)}" data-base="${g[1]}" data-ctx="batches">g`) : esc(g[1])}</span></div>`).join('')}${c.note ? `<p>${c.note}</p>` : ''}</div>`).join('') : recIngRows(item.rows, b)}
+        ${item.components ? item.components.map(c => `<div class="rec-box"><b>${esc(c.title)}</b>${c.rows.map(g => `<div class="gl"><span>${esc(g[0])}</span><span>${typeof g[1] === 'number' ? (g[2] != null ? `<small class="was">was ${rFmt(g[2] * b)}${g[3] || 'g'}</small> ` : '') + (g[3] ? rFmt(g[1] * b) + g[3] : `<input class="rec-qty" type="number" inputmode="decimal" step="any" value="${rFmt(g[1] * b)}" data-base="${g[1]}" data-ctx="batches">g`) : esc(g[1])}</span></div>${g[0] === 'Cake Flour' && typeof g[1] === 'number' && !g[3] ? recFlourGl(g[1] * b) : ''}`).join('')}${c.note ? `<p>${c.note}</p>` : ''}</div>`).join('') : recIngRows(item.rows, b) + recFlourNote(item.rows)}
+        ${item.components ? recFlourNote(item.components.flatMap(c => c.rows)) : ''}
         ${item.velvet ? `<div class="rec-box"><b>Optional · velvet spray finish</b><p>${item.velvet}</p></div>` : ''}
         ${item.outer ? `<div class="rec-box"><b>Outer Layer · per outer batch</b>${item.outer.map(g => `<div class="gl"><span>${g[0]}</span><span>${rFmt(g[1] * b)}g</span></div>`).join('')}${item.outerNote ? `<p>${item.outerNote}</p>` : ''}</div>` : ''}
         ${item.soak ? `<div class="rec-box"><b>Soak (2+ hrs)</b>${item.soak.map(s => `<div class="gl"><span>${s[0]}</span><span>${rFmt(s[1] * b)}g</span></div>`).join('')}</div>` : ''}
@@ -5559,7 +5566,7 @@
         <h3>${ic('cookie')} Sable Cookies</h3>
         <div class="proj-sub">${sub} · ${REC_SABLE.yieldText}${b !== 1 ? ` · scaled ${rFmt(b)}×` : ''}</div>
         ${typeChips}${flavChips}${recBatchRow()}
-        ${recIngRows(t.rows, b)}${recIngRows(extra, b, 'batches', true)}
+        ${recIngRows(t.rows, b)}${recIngRows(extra, b, 'batches', true)}${recFlourNote(t.rows)}
         <div class="rec-box"><b>Notes</b><b>1 batch</b> = 30 cookies, 2 x 2 in each.<br><br>${REC_SABLE.notes}</div>
       </div>`;
   }
@@ -5569,7 +5576,7 @@
         <h3>${recIc(item.name)} ${item.name}</h3>
         <div class="proj-sub">swiss meringue method${mult !== 1 ? ` · scaled ${rFmt(mult)}×` : ''}</div>
         <div class="rec-scale"><span class="lbl">Scale</span>${item.scales.map((s, i) => `<button data-rmacscale="${i}" class="${recState.macCustom == null && recState.macScale === i ? 'on' : ''}">${s.label}</button>`).join('')}</div>
-        ${recIngRows(item.base, mult, 'macaron')}
+        ${recIngRows(item.base, mult, 'macaron')}${recFlourNote(item.base)}
         <div class="rec-box"><b>Notes</b>${item.notes}</div>
         ${recLink(item.link)}
       </div>`;
@@ -5581,7 +5588,7 @@
         <div class="proj-sub">${sz.yieldText || 'base recipe'}${b !== 1 ? ` · scaled ${rFmt(b)}×` : ''}</div>
         <div class="rec-scale">${item.sizes.map((s, i) => `<button data-rgfsize="${i}" class="${recState.gfSize === i ? 'on' : ''}">${s.label}</button>`).join('')}</div>
         ${recBatchRow()}
-        ${recIngRows(sz.rows, b)}
+        ${recIngRows(sz.rows, b)}${recFlourNote(sz.rows)}
         <div class="rec-box"><b>Notes</b>${item.notes}</div>
         ${recLink(item.link)}
       </div>`;
