@@ -2138,7 +2138,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.118.10 · Nov 3, 3:56 PM PST</div>
+<div class="ver-badge">v1.118.11 · Nov 4, 9:22 PM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -4562,7 +4562,7 @@
   // (glaze happens during the bake, so it's free). Batches are counted per flavor
   // (you can't mix flavors in a batch). Sequential single-oven estimate.
   const BATCH_YIELD = 12;   // hardcoded for now (Andrew, 2026-10-13): a madeleine batch is 12
-  const PRODUCT_YIELD = { 'Pumpkin Muffin': 10, 'Maple Pecan': 11, 'Blueberry Muffin': 36 };   // pieces per batch for products that aren't madeleines
+  const PRODUCT_YIELD = { 'Pumpkin Muffin': 10, 'Maple Pecan': 11, 'Blueberry Muffin': 36, 'Chookie': 18 };   // pieces per batch for products that aren't madeleines
   const flavorBatches = (n, p) => Math.ceil(Math.max(0, n) / (PRODUCT_YIELD[p] || BATCH_YIELD));
   // ---- Kitchen time model (commercial kitchen). Every number is editable under "Kitchen times". ----
   //  Batch prep happens before the batter rests: `prepGroup` batches at a time, ~`prepMin` minutes per go.
@@ -5389,14 +5389,14 @@
   const recState = { sec: 'mad', idx: 0, batches: 1, madVer: 0, sableType: 0, sableFlav: 0, macScale: 1, macCustom: null, gfSize: 0 };
   function recResetVariants() { recState.batches = 1; recState.madVer = 0; recState.sableType = 0; recState.sableFlav = 0; recState.macScale = 1; recState.macCustom = null; recState.gfSize = 0; }
   // This season's recipes — pulled to the top of every recipe dropdown, and the only ones the bake sheet offers.
-  const SEASONAL_DEFAULT = ['other:pumpkinbundt', 'other:earlgreymini', 'other:cakepop', 'other:blueberrymuffin', 'mad:Classic', 'mad:Lemon Poppy', 'mad:Maple Pecan', 'other:flatchookie'];
+  const SEASONAL_DEFAULT = ['other:pumpkinbundt', 'other:earlgreymini', 'other:cakepop', 'other:blueberrymuffin', 'mad:Classic', 'mad:Lemon Poppy', 'mad:Maple Pecan', 'other:brownbutterchip'];
   let SEASONAL = SEASONAL_DEFAULT;   // editable in the app ("This season's recipes"), saved on this device
-  try { const v = JSON.parse(localStorage.getItem('seasonal.v1')); if (Array.isArray(v)) SEASONAL = v.map(k => k === 'mad:Pumpkin Pie Spice' ? 'other:pumpkinmuffin' : k); if (!localStorage.getItem('seasonalOct23')) { SEASONAL = SEASONAL_DEFAULT; localStorage.setItem('seasonal.v1', JSON.stringify(SEASONAL)); localStorage.setItem('seasonalOct23', '1'); } } catch {}   // 2026-10-23: one-time reset to the new season (bundt, Earl Grey, cake pop, blueberry, 3 madeleines, chookie)
+  try { const v = JSON.parse(localStorage.getItem('seasonal.v1')); if (Array.isArray(v)) SEASONAL = v.map(k => k === 'mad:Pumpkin Pie Spice' ? 'other:pumpkinmuffin' : k === 'other:flatchookie' ? 'other:brownbutterchip' : k); if (!localStorage.getItem('seasonalOct23')) { SEASONAL = SEASONAL_DEFAULT; localStorage.setItem('seasonal.v1', JSON.stringify(SEASONAL)); localStorage.setItem('seasonalOct23', '1'); } } catch {}   // 2026-10-23: one-time reset to the new season (bundt, Earl Grey, cake pop, blueberry, 3 madeleines, chookie)
   const seasonRank = (sec, it) => { const i = SEASONAL.indexOf(`${sec}:${it.key || it.name}`); return i < 0 ? 99 : i; };
   const isSeasonal = (sec, it) => seasonRank(sec, it) < 99;
   // Active items (Andrew, 2026-10-13): Maple Pecan, Lemon Poppy, Sea Salt (the Classic recipe) and the Pumpkin + Blueberry muffins.
   // Everything else is "disabled": still viewable everywhere (Recipes, Costs), just listed below the active ones.
-  const ACTIVE_ITEMS = ['mad:Maple Pecan', 'mad:Lemon Poppy', 'mad:Classic', 'other:blueberrymuffin', 'other:pumpkinbundt', 'other:earlgreymini', 'other:cakepop', 'other:flatchookie'];   // Pumpkin Muffin disabled 2026-10-23 (replaced by the bundt cake)
+  const ACTIVE_ITEMS = ['mad:Maple Pecan', 'mad:Lemon Poppy', 'mad:Classic', 'other:blueberrymuffin', 'other:pumpkinbundt', 'other:earlgreymini', 'other:cakepop', 'other:brownbutterchip'];   // Pumpkin Muffin disabled 2026-10-23 (replaced by the bundt cake)
   const isActive = (sec, it) => ACTIVE_ITEMS.includes(`${sec}:${it.key || it.name}`);
   const recNm = it => it.title || it.name;
   const byName = (a, b) => recNm(a).localeCompare(recNm(b));
@@ -6755,9 +6755,11 @@
   // Versions a recipe can be baked in: madeleines have `versions`, test recipes have `vers`. Default = the latest madeleine version, else the first.
   const bsVers = it => it.versions || it.vers || null;
   const bsVerOf = (it, b) => { const v = bsVers(it); if (!v) return null; return b.ver != null && v[b.ver] ? b.ver : (it.versions ? verLatest(it) : 0); };
+  // Cake Flour shows as its parts (All Purpose Flour + Cornstarch, 436:64), merged into an existing flour line of the same name.
+  const bsSplitFlour = rows => { if (!rows.some(r => r[0] === 'Cake Flour' && typeof r[1] === 'number')) return rows; const parts = new Set(recFlourParts(500).map(p => bsCanon(p[0]))); const out = []; const add = (n, g) => { const e = parts.has(bsCanon(n)) && typeof g === 'number' ? out.find(r => bsCanon(r[0]) === bsCanon(n) && typeof r[1] === 'number') : null; if (e) e[1] += g; else out.push([n, g]); }; rows.forEach(([n, g]) => { if (n === 'Cake Flour' && typeof g === 'number') recFlourParts(g).forEach(([pn, pg]) => add(pn, pg)); else add(n, g); }); return out; };
   const bsFind = key => { const [sec, k] = key.split(/:(.*)/s); const it = (COST_SECTIONS.find(x => x[0] === sec) || [])[2]?.().find(x => (x.key || x.name) === k); return it ? { sec, it } : null; };
   // Which forecast product a recipe's batches come from (recipes with no product just start at 1 batch).
-  const BS_PRODUCT = { 'other:dubaiball': 'Dubai Ball', 'mad:Lemon Poppy': 'Lemon Poppy', 'mad:Maple Pecan': 'Maple Pecan', 'mad:Classic': 'Sea Salt', 'other:pumpkinmuffin': 'Pumpkin Muffin', 'other:blueberrymuffin': 'Blueberry Muffin', 'other:pumpkinbundt': 'Pumpkin Bundt', 'other:earlgreymini': 'Earl Grey Mini', 'other:cakepop': 'Cake Pop', 'other:flatchookie': 'Chookie' };
+  const BS_PRODUCT = { 'other:dubaiball': 'Dubai Ball', 'mad:Lemon Poppy': 'Lemon Poppy', 'mad:Maple Pecan': 'Maple Pecan', 'mad:Classic': 'Sea Salt', 'other:pumpkinmuffin': 'Pumpkin Muffin', 'other:blueberrymuffin': 'Blueberry Muffin', 'other:pumpkinbundt': 'Pumpkin Bundt', 'other:earlgreymini': 'Earl Grey Mini', 'other:cakepop': 'Cake Pop', 'other:brownbutterchip': 'Chookie' };
   const bsProjectedBatches = key => { const p = BS_PRODUCT[key], n = p && planBakeTotals[p]; return n > 0 ? flavorBatches(n, p) : 0; };
   // The bake plan follows the forecast: recipes whose product the plan says to bake are added, and their batches track the
   // plan until you change them by hand (then they're yours). Removing one keeps it off until the page is reloaded.
@@ -6828,7 +6830,7 @@
     const blocks = bakeSheet.map(b => {
       const f = bsFind(b.key); if (!f) return null;
       if (f.it.type === 'dubai') {   // filling, then the outer layer as its own section
-        const fl = f.it.rows.map(r => [r[0], r[1] * b.b]), ou = f.it.outer.map(r => [r[0], r[1] * (f.it.outerTimes || 1) * b.b]);
+        const fl = bsSplitFlour(f.it.rows.map(r => [r[0], r[1] * b.b])), ou = bsSplitFlour(f.it.outer.map(r => [r[0], r[1] * (f.it.outerTimes || 1) * b.b]));
         [...fl, ...ou].forEach(([n, g]) => { const c = bsCanon(n), t = totals.get(c) || { g: 0, uses: new Set() }; t.g += g; t.uses.add(b.key + '#' + (b.ver == null ? '' : b.ver)); totals.set(c, t); });
         return { title: costItemName(f.sec, f.it), note: `${rFmt(b.b)} batch${b.b === 1 ? '' : 'es'} · ≈ ${rFmt(b.b * f.it.yield)} pcs`, groups: [fl.map(([n, g]) => bsLine(n, g))], subs: [{ label: 'Outer layer', lines: ou.map(([n, g]) => bsLine(n, g)) }] };
       }
@@ -6836,11 +6838,11 @@
       const split = f.sec === 'mad' || f.it.type === 'muffin' || f.it.type === 'mad';
       const ver = bsVerOf(f.it, b), vl = bsVers(f.it) ? bsVers(f.it)[ver] : null;
       const noTop = f.it.versions ? f.it.versions.map((v, i) => i === ver ? { ...v, topping: null } : v) : null;
-      const rows = recMadSort(split ? costRows(f.sec, { ...f.it, syrup: null, glaze: null, topping: null, ...(noTop ? { versions: noTop } : {}) }, ver) : costRows(f.sec, f.it, ver));
+      const rows = recMadSort(bsSplitFlour(split ? costRows(f.sec, { ...f.it, syrup: null, glaze: null, topping: null, ...(noTop ? { versions: noTop } : {}) }, ver) : costRows(f.sec, f.it, ver)));
       const fkb = f.it.finishFor ? (f.it.yield || BATCH_YIELD) / f.it.finishFor : 1;   // syrup + glaze are written for `finishFor` pieces
       const numr = r => [r[0], typeof r[1] === 'number' ? r[1] : lblGrams(r[1]) || parseFloat(r[1]) || 0];
       const subs = split ? [['Simple syrup', f.it.syrup], ['Glaze', f.it.glaze], ['Topping', (f.it.versions && vl && vl.topping) || f.it.topping]].filter(([, l]) => l && l.length)
-        .map(([label, l]) => ({ label, rows: l.map(numr).map(r => [r[0], label === 'Topping' ? r[1] : r[1] * fkb]).filter(r => r[1] > 0) })) : [];
+        .map(([label, l]) => ({ label, rows: bsSplitFlour(l.map(numr).map(r => [r[0], label === 'Topping' ? r[1] : r[1] * fkb]).filter(r => r[1] > 0)) })) : [];
       [...rows, ...subs.flatMap(sb => sb.rows)].forEach(([n, g]) => { const c = bsCanon(n), t = totals.get(c) || { g: 0, uses: new Set() }; t.g += g * b.b; t.uses.add(b.key + '#' + (b.ver == null ? '' : b.ver)); totals.set(c, t); });
       const groups = [[], [], []];
       rows.forEach(([n, g]) => { const r = recMadRank(String(n)); groups[r <= 2 ? 0 : r <= 13 ? 1 : 2].push(bsLine(n, g * b.b)); });
