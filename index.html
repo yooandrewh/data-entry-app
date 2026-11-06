@@ -2138,7 +2138,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.118.11 · Nov 4, 9:22 PM PST</div>
+<div class="ver-badge">v1.119.00 · Nov 6, 11:31 AM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -2370,7 +2370,7 @@
   document.querySelectorAll('[data-tok]').forEach(el => { el.outerHTML = tok(el.dataset.tok); });   // Entry's amount rows: logo left of the name
   const LOCATIONS = ['La Mirada', 'Stanton'];
   // Flavors the app stocks (PRODUCTS) plus extra ones that show up in sales.
-  const SALES_FLAVORS = ['Lemon Poppy', 'Sea Salt', 'Maple Pecan', 'Pumpkin Muffin', 'Blueberry Muffin', 'Ube', 'Dot', 'Earl Grey', 'Matcha', 'Chocolate', 'Dubai Ball', 'Unknown'];
+  const SALES_FLAVORS = ['Lemon Poppy', 'Sea Salt', 'Maple Pecan', 'Pumpkin Muffin', 'Blueberry Muffin', 'Ube', 'Dot', 'Earl Grey', 'Matcha', 'Chocolate', 'Dubai Ball', 'Pumpkin Bundt', 'Cake Pop', 'Unknown'];
   const PRICE_PER_UNIT = 2.50;   // $/madeleine (from Financial Dashboard: $192.50 / 77 units)
   const UNIT_PRICE = { 'Pumpkin Muffin': 2.75, 'Blueberry Muffin': 2.75, 'Pumpkin Bundt': 3.35, 'Earl Grey Mini': 2.75, 'Cake Pop': 2.75, 'Chookie': 2.75, 'Dubai Ball': 3.50 };   // items that sell for something other than PRICE_PER_UNIT
   const pdisp = p => p === 'Chookie' ? 'Cookie' : p;   // display name only; 'Chookie' stays the id and sheet column
@@ -3184,7 +3184,7 @@
     const mix = {};
     for (const s of rows) {
       if (s.date < from) continue;
-      for (const f of SALES_FLAVORS) mix[f] = (mix[f] || 0) + (s.amounts[f] || 0);
+      for (const f of SALES_FLAVORS) if (!EXTRA_SOLD.includes(f)) mix[f] = (mix[f] || 0) + (s.amounts[f] || 0);
     }
     return Object.values(mix).some(v => v > 0) ? mix : null;
   }
@@ -3948,8 +3948,45 @@
     const r = await fetch('/api/sales', { cache: 'no-store' });
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const d = await r.json();
-    salesCache = Array.isArray(d.sales) ? d.sales : [];
+    const rows = Array.isArray(d.sales) ? d.sales : [];
+    try { addExtraSales(rows, await fetchRemoteEntries()); } catch (e) { /* extras are optional */ }
+    salesCache = rows;
     return salesCache;
+  }
+  // Pumpkin Bundt and Cake Pop have no OCR sales, so sold is worked out from stock:
+  // previous count + deliveries since (goodwill/transfers are signed) - new count, per store,
+  // booked on the date of the newer count. Rows get `extra` (not added to `total`, so the madeleine forecast is untouched).
+  const EXTRA_SOLD = ['Pumpkin Bundt', 'Cake Pop'];
+  function addExtraSales(rows, entries) {
+    const live = entries.filter(e => !e.taggedForDeletion && e.datetime);
+    const by = new Map();
+    for (const loc of new Set(live.map(e => e.location))) {
+      const allInv = live.filter(e => e.type === 'inventory' && e.location === loc).sort((a, b) => a.datetime.localeCompare(b.datetime));
+      const dlv = live.filter(e => e.type === 'delivery' && e.location === loc);
+      for (const p of EXTRA_SOLD) {
+        const cnt = (e) => e.amounts && e.amounts[p];
+        const between = (x, y) => dlv.some(e => e.datetime > x.datetime && e.datetime <= y.datetime && ((e.amounts && e.amounts[p]) || 0) > 0);
+        // a 0 count followed by a higher count with no delivery between is an unfilled field, not an empty shelf
+        const inv = allInv.filter((e, i) => !(cnt(e) === 0 && i + 1 < allInv.length && cnt(allInv[i + 1]) > 0 && !between(e, allInv[i + 1])));
+        for (let i = 1; i < inv.length; i++) {
+          const a = inv[i - 1].amounts && inv[i - 1].amounts[p], b = inv[i].amounts && inv[i].amounts[p];
+          if (typeof a !== 'number' || typeof b !== 'number') continue;
+          let sold = a - b;
+          for (const e of dlv) if (e.datetime > inv[i - 1].datetime && e.datetime <= inv[i].datetime) sold += (e.amounts && e.amounts[p]) || 0;
+          if (sold <= 0) continue;   // a count that rose with no delivery is a miscount, not negative sales
+          const key = inv[i].datetime.slice(0, 10) + '|' + loc;
+          if (!by.has(key)) by.set(key, {});
+          by.get(key)[p] = (by.get(key)[p] || 0) + sold;
+        }
+      }
+    }
+    for (const [key, add] of by) {
+      const [date, location] = key.split('|');
+      let row = rows.find(r => r.date === date && r.location === location);
+      if (!row) { row = { date, location, amounts: {}, total: 0, flights: 0 }; rows.push(row); }
+      row.extra = 0;
+      for (const p of EXTRA_SOLD) { row.amounts[p] = add[p] || 0; row.extra += add[p] || 0; }
+    }
   }
   function weekStart(ymd) {
     const [y, mo, d] = ymd.split('-').map(Number);
@@ -3981,7 +4018,7 @@
       const key = salesGroup === 'week' ? weekStart(s.date) : s.date;
       if (!groups[key]) { groups[key] = { key, amounts: {}, total: 0, flights: 0 }; SALES_FLAVORS.forEach(f => groups[key].amounts[f] = 0); }
       for (const f of SALES_FLAVORS) groups[key].amounts[f] += (s.amounts[f] || 0);
-      groups[key].total += (typeof s.total === 'number' ? s.total : SALES_FLAVORS.reduce((t, f) => t + (s.amounts[f] || 0), 0));
+      groups[key].total += (typeof s.total === 'number' ? s.total : SALES_FLAVORS.reduce((t, f) => t + (s.amounts[f] || 0), 0)) + (s.extra || 0);
       groups[key].flights += (s.flights || 0);
     }
     const ordered = Object.values(groups).sort((a, b) => b.key.localeCompare(a.key));
@@ -3999,7 +4036,7 @@
     let totalFlights = 0;
     for (const s of rows) {
       for (const f of SALES_FLAVORS) flavorTotals[f] += (s.amounts[f] || 0);
-      const st = (typeof s.total === 'number' ? s.total : SALES_FLAVORS.reduce((t, f) => t + (s.amounts[f] || 0), 0));
+      const st = (typeof s.total === 'number' ? s.total : SALES_FLAVORS.reduce((t, f) => t + (s.amounts[f] || 0), 0)) + (s.extra || 0);
       locTotals[s.location] = (locTotals[s.location] || 0) + st;
       totalFlights += (s.flights || 0);
     }
