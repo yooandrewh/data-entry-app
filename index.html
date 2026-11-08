@@ -2138,7 +2138,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.119.02 · Nov 7, 7:06 PM PST</div>
+<div class="ver-badge">v1.119.03 · Nov 8, 9:30 AM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -5543,7 +5543,7 @@
     }
     // Hardcoded yields (Andrew, 2026-10-13): every madeleine batch is 12, Pumpkin Pie Spice Muffin 10, Blueberry Muffin 36.
     for (const it of REC_MADS) { const y = it.name === 'Maple Pecan' ? 11 : 12; it.yield = y; (it.versions || []).forEach(v => { v.yield = y; }); }   // Maple Pecan counted as 11 per batch (Andrew, 2026-10-13); the other madeleines 12
-    REC_MADS.find(x => x.name === 'Lemon Poppy').versions[0].yield = 19;   // Lemon Poppy Ver 1: 12 batches made 227, so about 19 per batch (Andrew, 2026-11-07). The plan and costs follow the latest version.
+    { const lp = REC_MADS.find(x => x.name === 'Lemon Poppy'); lp.yield = 19; lp.versions.forEach(v => { v.yield = 19; }); }   // Lemon Poppy: 12 batches made 227, so about 19 per batch (Andrew, 2026-11-07; plan, costs and both versions use 19).
     for (const it of REC_OTHER) if (it.key === 'pumpkinmuffin') it.yield = 10; else if (it.key === 'blueberrymuffin') it.yield = 36;
     // Every version is numbered by age: Ver 1 is the oldest, the highest number is the newest.
     for (const it of [...REC_MADS, ...REC_OTHER]) if (it.versions) it.versions.forEach((v, i) => { v.label = 'Ver ' + (i + 1); });
