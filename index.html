@@ -2138,7 +2138,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.119.01 · Nov 7, 7:02 PM PST</div>
+<div class="ver-badge">v1.119.02 · Nov 7, 7:06 PM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -3550,8 +3550,8 @@
 
   // ---- Invoice: deliveries for one store over a date range, priced per unit ----
   const INV_PRICE_KEY = 'invoicePrices.v1';
-  // Never billed on a given store's invoice (Stanton: no Lemon Poppy, no Dubai Ball), even if a delivery was logged.
-  const INV_SKIP = { Stanton: ['Lemon Poppy', 'Dubai Ball'] };
+  // Never billed on a given store's invoice (Stanton: no Dubai Ball), even if a delivery was logged. Lemon Poppy goes to Stanton from November 2026.
+  const INV_SKIP = { Stanton: ['Dubai Ball'] };
   const INV_DEFAULT_PRICE = UNIT_PRICE;   // everything else defaults to PRICE_PER_UNIT
   const invScrim = document.getElementById('invScrim');
   let invText = '', invNum = 'invoice', invMeta = null;
@@ -4122,9 +4122,12 @@
   // Per-location stats: run-rate (anchored to that location's latest sales date,
   // so un-entered days don't dilute it) + current stock (latest inventory +
   // deliveries since − sales since).
-  // Products a store doesn't carry anymore: the forecast and the bake plan ignore their sales there (Stanton no longer sells Lemon Poppy).
-  const STORE_SKIP = { 'Stanton': ['Lemon Poppy'] };
-  const storeSells = (loc, p) => !(STORE_SKIP[loc] || []).includes(p);
+  // Products a store doesn't carry anymore: the forecast and the bake plan ignore their sales there.
+  const STORE_SKIP = {};
+  // Products a store carries only from a date (Andrew, 2026-11-07: Lemon Poppy is delivered to Stanton starting in November).
+  // Earlier sales of it there are OCR noise, so with a date given they are ignored.
+  const STORE_FROM = { 'Stanton': { 'Lemon Poppy': '2026-11-01' } };
+  const storeSells = (loc, p, date) => !(STORE_SKIP[loc] || []).includes(p) && !(date && STORE_FROM[loc] && STORE_FROM[loc][p] && date < STORE_FROM[loc][p]);
   const ASSUMED_RATE = { 'Blueberry Muffin': { wd: 2, we: 3 } };   // per day, products with no sales feed
   function locStats(loc, sales, entries) {
     const locSales = sales.filter(s => s.location === loc);
@@ -4141,7 +4144,7 @@
       if (!latestSale || s.date < winStart || s.date > latestSale) continue;
       let any = false, dayTot = 0;
       for (const p of PRODUCTS) {
-        const v = storeSells(loc, p) ? (s.amounts[p] || 0) : 0; rate[p] += v; dayTot += v;
+        const v = storeSells(loc, p, s.date) ? (s.amounts[p] || 0) : 0; rate[p] += v; dayTot += v;
         if (v > 0) { any = true; if (!firstSeen[p] || s.date < firstSeen[p]) firstSeen[p] = s.date; }
       }
       if (any) {
@@ -4532,7 +4535,7 @@
       if (s.date < from) continue;
       const isWe = [0, 6].includes(parseEntryDate(s.date).getDay());
       let any = false;
-      for (const p of PRODUCTS) { const v = storeSells(loc, p) ? (s.amounts[p] || 0) : 0; (isWe ? we : wd)[p] += v; if (v) any = true; }
+      for (const p of PRODUCTS) { const v = storeSells(loc, p, s.date) ? (s.amounts[p] || 0) : 0; (isWe ? we : wd)[p] += v; if (v) any = true; }
       if (any) (isWe ? weD : wdD).add(s.date);
     }
     const nWd = wdD.size || 1, nWe = weD.size || 1, rate = {};
@@ -5158,7 +5161,7 @@
     // Classic is the Brown Butter madeleine now (Original); the old Classic recipe is Ver B. (2026-10-05)
     { name: 'Classic', yield: 12,
       versions: [
-        { label: 'Original', star: true, sub: 'brown butter', yield: 12,
+        { label: 'Original', star: true, sub: 'brown butter', yield: 12, bakeNote: 'Preheat the oven to 410°F (210°C), then bake at 374°F (190°C) for 11–12 minutes.',
           rows: [['Cake Flour', 125], ['Baking Powder', 5], ['Caramelized Milk Powder', 3], ['Salt', 2], ['Unsalted Butter', 105], ['Milk', 7], ['Eggs', 85], ['Sugar', 80], ['Honey', 10]],
           notes: 'Mould: Woojung / Chiyoda madeleine, 22mm deep. Whole eggs are strained. Caramelized milk powder is made ahead. From the cookbook — the method page wasn’t captured, so add your own steps here if you want them.' },
       ] },
@@ -5426,9 +5429,9 @@
   const recState = { sec: 'mad', idx: 0, batches: 1, madVer: 0, sableType: 0, sableFlav: 0, macScale: 1, macCustom: null, gfSize: 0 };
   function recResetVariants() { recState.batches = 1; recState.madVer = 0; recState.sableType = 0; recState.sableFlav = 0; recState.macScale = 1; recState.macCustom = null; recState.gfSize = 0; }
   // This season's recipes — pulled to the top of every recipe dropdown, and the only ones the bake sheet offers.
-  const SEASONAL_DEFAULT = ['other:pumpkinbundt', 'other:earlgreymini', 'other:cakepop', 'other:blueberrymuffin', 'mad:Classic', 'mad:Lemon Poppy', 'mad:Maple Pecan', 'other:brownbutterchip'];
+  const SEASONAL_DEFAULT = ['other:pumpkinbundt', 'other:cakepop', 'other:blueberrymuffin', 'mad:Classic', 'mad:Lemon Poppy', 'mad:Maple Pecan', 'other:brownbutterchip'];
   let SEASONAL = SEASONAL_DEFAULT;   // editable in the app ("This season's recipes"), saved on this device
-  try { const v = JSON.parse(localStorage.getItem('seasonal.v1')); if (Array.isArray(v)) SEASONAL = v.map(k => k === 'mad:Pumpkin Pie Spice' ? 'other:pumpkinmuffin' : k === 'other:flatchookie' ? 'other:brownbutterchip' : k); if (!localStorage.getItem('seasonalOct23')) { SEASONAL = SEASONAL_DEFAULT; localStorage.setItem('seasonal.v1', JSON.stringify(SEASONAL)); localStorage.setItem('seasonalOct23', '1'); } } catch {}   // 2026-10-23: one-time reset to the new season (bundt, Earl Grey, cake pop, blueberry, 3 madeleines, chookie)
+  try { const v = JSON.parse(localStorage.getItem('seasonal.v1')); if (Array.isArray(v)) SEASONAL = v.map(k => k === 'mad:Pumpkin Pie Spice' ? 'other:pumpkinmuffin' : k === 'other:flatchookie' ? 'other:brownbutterchip' : k); if (!localStorage.getItem('seasonalOct23')) { SEASONAL = SEASONAL_DEFAULT; localStorage.setItem('seasonal.v1', JSON.stringify(SEASONAL)); localStorage.setItem('seasonalOct23', '1'); } if (!localStorage.getItem('seasonalNov7')) { SEASONAL = SEASONAL.filter(k => k !== 'other:earlgreymini'); localStorage.setItem('seasonal.v1', JSON.stringify(SEASONAL)); localStorage.setItem('seasonalNov7', '1'); } } catch {}   // 2026-10-23: one-time reset to the new season (bundt, Earl Grey, cake pop, blueberry, 3 madeleines, chookie)
   const seasonRank = (sec, it) => { const i = SEASONAL.indexOf(`${sec}:${it.key || it.name}`); return i < 0 ? 99 : i; };
   const isSeasonal = (sec, it) => seasonRank(sec, it) < 99;
   // Active items (Andrew, 2026-10-13): Maple Pecan, Lemon Poppy, Sea Salt (the Classic recipe) and the Pumpkin + Blueberry muffins.
@@ -5540,6 +5543,7 @@
     }
     // Hardcoded yields (Andrew, 2026-10-13): every madeleine batch is 12, Pumpkin Pie Spice Muffin 10, Blueberry Muffin 36.
     for (const it of REC_MADS) { const y = it.name === 'Maple Pecan' ? 11 : 12; it.yield = y; (it.versions || []).forEach(v => { v.yield = y; }); }   // Maple Pecan counted as 11 per batch (Andrew, 2026-10-13); the other madeleines 12
+    REC_MADS.find(x => x.name === 'Lemon Poppy').versions[0].yield = 19;   // Lemon Poppy Ver 1: 12 batches made 227, so about 19 per batch (Andrew, 2026-11-07). The plan and costs follow the latest version.
     for (const it of REC_OTHER) if (it.key === 'pumpkinmuffin') it.yield = 10; else if (it.key === 'blueberrymuffin') it.yield = 36;
     // Every version is numbered by age: Ver 1 is the oldest, the highest number is the newest.
     for (const it of [...REC_MADS, ...REC_OTHER]) if (it.versions) it.versions.forEach((v, i) => { v.label = 'Ver ' + (i + 1); });
