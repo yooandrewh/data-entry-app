@@ -2138,7 +2138,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.119.00 · Nov 6, 11:31 AM PST</div>
+<div class="ver-badge">v1.119.01 · Nov 7, 7:02 PM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -4599,7 +4599,7 @@
   // (glaze happens during the bake, so it's free). Batches are counted per flavor
   // (you can't mix flavors in a batch). Sequential single-oven estimate.
   const BATCH_YIELD = 12;   // hardcoded for now (Andrew, 2026-10-13): a madeleine batch is 12
-  const PRODUCT_YIELD = { 'Pumpkin Muffin': 10, 'Maple Pecan': 11, 'Blueberry Muffin': 36, 'Chookie': 18 };   // pieces per batch for products that aren't madeleines
+  const PRODUCT_YIELD = { 'Pumpkin Muffin': 10, 'Maple Pecan': 11, 'Blueberry Muffin': 36, 'Chookie': 13 };   // pieces per batch for products that aren't madeleines
   const flavorBatches = (n, p) => Math.ceil(Math.max(0, n) / (PRODUCT_YIELD[p] || BATCH_YIELD));
   // ---- Kitchen time model (commercial kitchen). Every number is editable under "Kitchen times". ----
   //  Batch prep happens before the batter rests: `prepGroup` batches at a time, ~`prepMin` minutes per go.
@@ -5273,12 +5273,12 @@
     { key: 'flatchookie', labFlat: 0.4, wholesale: 2.75, retail: 4.5, star: true, name: 'Chocolate Chip Cookie', type: 'simple', yield: 13, oven: { lo: 10, hi: 12, cap: 32 }, prep: 20, yieldText: 'makes 13 cookies (70 g of dough each)',
       rows: [['All-Purpose Flour', 375], ['Baking Soda', 5], ['Kosher Salt', 4], ['Unsalted Butter', 227], ['Light Brown Sugar', 160], ['Granulated Sugar', 120], ['Eggs', 100], ['Pure Vanilla Extract', 10], ['Semisweet Chocolate Chips', 100], ['Flaked Sea Salt', 5]],
       notes: 'Bake at 350°F (175°C) for 10–11 minutes.' },
-    { key: 'brownbutterchip', labFlat: 0.4, wholesale: 2.75, retail: 4.5, star: true, name: 'Brown Butter Chocolate Chip Cookie', type: 'simple', yield: 18, oven: { lo: 10, hi: 12, cap: 32 }, prep: 20, yieldText: 'makes 18 cookies (70 g of dough each)',
+    { key: 'brownbutterchip', labFlat: 0.4, wholesale: 2.75, retail: 4.5, star: true, name: 'Brown Butter Chocolate Chip Cookie', type: 'simple', yield: 13, oven: { lo: 10, hi: 12, cap: 32 }, prep: 20, yieldText: 'makes 13 cookies (90 g of dough each)',
       components: [
         { title: 'Brown Butter', rows: [['Unsalted Butter', 227], ['Water (added after browning)', 30]] },
-        { title: 'Dough', rows: [['Granulated Sugar', 100], ['Dark Brown Sugar', 320], ['Espresso Powder', 4], ['Kosher Salt', 6], ['Baking Soda', 2.5], ['Eggs', 100], ['Vanilla Extract', 9], ['All-Purpose Flour', 310], ['Dark Chocolate (70% cacao minimum)', 170]], note: 'Dark brown sugar: if you only have light brown sugar, add about 10 g molasses to the 320 g (roughly 1½ tsp). Use up to 20 g for a stronger flavor.' } ],
-      rows: [['Unsalted Butter', 227], ['Water', 30], ['Granulated Sugar', 100], ['Dark Brown Sugar', 320], ['Espresso Powder', 4], ['Kosher Salt', 6], ['Baking Soda', 2.5], ['Eggs', 100], ['Pure Vanilla Extract', 9], ['All-Purpose Flour', 310], ['Dark Chocolate 70%', 170]],
-      notes: 'The dough totals about 1,278.5 g, so 70 g per cookie makes 18.' },
+        { title: 'Dough', rows: [['Granulated Sugar', 100], ['Dark Brown Sugar', 320], ['Kosher Salt', 6], ['Baking Soda', 2.5], ['Eggs', 100], ['Vanilla Extract', 9], ['All-Purpose Flour', 310], ['Dark Chocolate (70% cacao minimum)', 85]], note: 'Dark brown sugar: if you only have light brown sugar, add about 10 g molasses to the 320 g (roughly 1½ tsp). Use up to 20 g for a stronger flavor.' } ],
+      rows: [['Unsalted Butter', 227], ['Water', 30], ['Granulated Sugar', 100], ['Dark Brown Sugar', 320], ['Kosher Salt', 6], ['Baking Soda', 2.5], ['Eggs', 100], ['Pure Vanilla Extract', 9], ['All-Purpose Flour', 310], ['Dark Chocolate 70%', 85]],
+      notes: 'Espresso powder (optional): 4 g, added to the dough with the salt.<br><br>The dough totals about 1,189.5 g, so 90 g per cookie makes 13.' },
     { key: 'snickerdoodle', labFlat: 0.4, wholesale: 2.75, retail: 4.5, star: true, type: 'simple', name: 'Snickerdoodle Cookies', yield: 14, oven: { lo: 10, hi: 12, cap: 32 }, prep: 20, yieldText: 'makes 14 cookies (70 g of dough each; lilluna.com, amounts converted from cups and spoons)',
       rows: [['Unsalted Butter', 227], ['Sugar', 300], ['Eggs', 100], ['Vanilla Extract', 4], ['All Purpose Flour', 344], ['Cream of Tartar', 6], ['Baking Soda', 5], ['Salt', 3], ['Sugar (topping)', 39], ['Cinnamon (topping)', 9.3]],
       notes: 'Conversions: 2¾ cups flour = 344g, 1 cup butter = 227g, 1½ cups sugar = 300g. The dough totals about 989 g, so 70 g per cookie makes 14. The cinnamon sugar (39 g sugar, 9.3 g cinnamon) is scaled down from the original 24-cookie coating to fit 14.<br><br>1. Cream butter and sugar.<br>2. Beat in eggs and vanilla.<br>3. Mix in the dry ingredients. Chill if soft.<br>4. Roll into balls (70 g), roll twice in the cinnamon sugar.<br>5. Bake at 350°F (175°C) for 8 to 10 minutes.',
