@@ -3,7 +3,7 @@ U="https://data-entry-app-roan.vercel.app/api/"
 g=lambda p:json.load(urllib.request.urlopen(urllib.request.Request(U+p,headers={"User-Agent":"x"})))
 e=g("entries");e=e.get('entries') or e.get('rows')
 S=g("sales")["sales"]
-P=['Lemon Poppy','Sea Salt','Maple Pecan','Pumpkin Muffin','Blueberry Muffin']
+P=['Lemon Poppy','Sea Salt','Maple Pecan','Pumpkin Muffin','Blueberry Muffin','Pumpkin Bundt','Cake Pop']
 e=[x for x in e if not x.get('taggedForDeletion')]
 BAD=[]   # variance > 5% of units sold = re-OCR that window (Andrew, 2026-11-09)
 for loc in ['La Mirada','Stanton']:

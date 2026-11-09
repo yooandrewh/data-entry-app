@@ -2138,7 +2138,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.119.04 · Nov 9, 1:31 PM PST</div>
+<div class="ver-badge">v1.119.05 · Nov 9, 4:20 PM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -3953,7 +3953,7 @@
     salesCache = rows;
     return salesCache;
   }
-  // Pumpkin Bundt and Cake Pop have no OCR sales, so sold is worked out from stock:
+  // Pumpkin Bundt and Cake Pop: OCR sales on the sheet win. Where a date has none, sold is worked out from stock:
   // previous count + deliveries since (goodwill/transfers are signed) - new count, per store,
   // booked on the date of the newer count. Rows get `extra` (not added to `total`, so the madeleine forecast is untouched).
   const EXTRA_SOLD = ['Pumpkin Bundt', 'Cake Pop'];
@@ -3984,8 +3984,13 @@
       const [date, location] = key.split('|');
       let row = rows.find(r => r.date === date && r.location === location);
       if (!row) { row = { date, location, amounts: {}, total: 0, flights: 0 }; rows.push(row); }
-      row.extra = 0;
-      for (const p of EXTRA_SOLD) { row.amounts[p] = add[p] || 0; row.extra += add[p] || 0; }
+      row.extra = row.extra || 0;
+      for (const p of EXTRA_SOLD) {
+        if ((row.amounts[p] || 0) > 0) continue;   // OCR sales already on the sheet win; stock only fills gaps
+        if (!add[p]) continue;
+        row.amounts[p] = add[p]; row.extra += add[p];
+        (row.derived = row.derived || []).push(p);   // derived from stock counts, not read from a receipt
+      }
     }
   }
   function weekStart(ymd) {
@@ -4018,6 +4023,7 @@
       const key = salesGroup === 'week' ? weekStart(s.date) : s.date;
       if (!groups[key]) { groups[key] = { key, amounts: {}, total: 0, flights: 0 }; SALES_FLAVORS.forEach(f => groups[key].amounts[f] = 0); }
       for (const f of SALES_FLAVORS) groups[key].amounts[f] += (s.amounts[f] || 0);
+      if (s.derived) { groups[key].derived = groups[key].derived || new Set(); s.derived.forEach(d => groups[key].derived.add(d)); }
       groups[key].total += (typeof s.total === 'number' ? s.total : SALES_FLAVORS.reduce((t, f) => t + (s.amounts[f] || 0), 0)) + (s.extra || 0);
       groups[key].flights += (s.flights || 0);
     }
@@ -4052,7 +4058,7 @@
         ? 'Week of ' + new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(parseEntryDate(g.key))
         : dayKey(g.key);
       const flavorChips = SALES_FLAVORS.filter(f => g.amounts[f] > 0)
-        .map(f => kvRow(tok(f), f, g.amounts[f]))
+        .map(f => kvRow(tok(f), f, g.amounts[f] + (g.derived && g.derived.has(f) ? '*' : '')))
         .join('') || `<div class="proj-row"><span class="k">No sales</span></div>`;
       const flightChip = g.flights > 0
         ? kvRow(tok('Flights'), `Flight${g.flights === 1 ? '' : 's'}`, g.flights, '', 'pr-flight') : '';
