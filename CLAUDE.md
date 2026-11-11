@@ -524,3 +524,16 @@ The list starts with this season's recipes; `autoFillBakePlan()` only updates th
   (madeleines fall back to `REC_MAD_NOTES`), else the `oven` minutes. **Maple Pecan has no bake temperature on file**, so it shows minutes only or nothing. Don't invent one.
 - **Total ingredients needed lists every ingredient** (biggest first); ones used by 2+ planned recipes print **bold italic**. Block lines are strings or `{t, c}` (`bsLineHtml`).
 - **Pumpkin Bundt spices:** the cake takes 6 g ground cinnamon per batch (18 g per 3 batches); the glaze takes 9.33 g pumpkin pie spice per batch (28 g per 3). The old cardamom, allspice and black pepper are gone.
+
+
+## Names, butter tags, cone pieces, Preview Plan steps (2026-11-10, v1.122.00)
+
+- **Unified names:** "Whole Milk" → **Milk**, "Pure Maple Syrup (dark/robust)" → **Maple Syrup** in every recipe. `PRICE_ALIASES` still maps the old names, so ledger lines under them keep matching.
+- **Butter shows as `Unsalted Butter (KS)` or `(KG)`** (Kirkland Signature / Kerrygold) everywhere on screen: recipe cards, Bake Plan, bake sheet, totals, Costs, buy list. `bkName(name, mad)` does it (`BK_RE`): a Kerrygold prefix → KG, Kirkland / Costco / Signature → KS, plain "Unsalted/Softened/Melted Butter" → KG in madeleines, KS elsewhere. Cocoa, brown and peanut butter are untouched. **Printed labels keep plain "Unsalted Butter"** (see Label rules).
+- **Mini Waffle Cones are counted in pieces**, never grams (`isCone`): recipe rows `' pcs'`, bake sheet "62 pieces Mini waffle cones", Costs view and buy list in pcs. Cake Pop's flat costing row is 62 (was 76 g-equivalent), so cone cost per batch drops from about $47.4 to $38.7 (ledger: 40 units for $24.95). Labels still print "waffle cone (wheat flour, sugar, …)".
+- **Preview Plan shows mixing steps** like the Recipes tab: madeleines / `steps` recipes group by ingredient step (`bsStepsOf`), `components` recipes by component (`bsCompSteps`), flat recipes keep wet/dry/fat groups. Saved sheets in `bakeHistory.v1` predate this and have no `steps`, so `bsBlockHtml` falls back to `groups`.
+- **Total ingredients needed is two lists:** "Used in 2+ recipes" (bold italic) and "Other ingredients". Kirkland and Kerrygold butter stay separate lines because totals key on the costed names.
+
+## v1.121.01 (2026-11-10)
+
+Home has an **Entry** button (opens the same popup as Data's + Entry); the *This season* button is gone from Home. The Brown Butter Cookie's four steps use the same `.rec-step` style as the madeleine step cards.

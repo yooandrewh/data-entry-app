@@ -1055,6 +1055,7 @@
   .bs2-block h4 small { display: block; font-weight: 400; text-transform: none; color: #666; font-size: 12px; letter-spacing: 0; }
   .bs2-grp { margin-bottom: 12px; }
   .bs2-bake { font-size: 12px; font-weight: 700; margin: 0 0 8px; }
+  .bs2-step { font-size: 12px; font-weight: 700; margin: 8px 0 2px; } .bs2-step small { display: block; font-weight: 400; font-size: 11px; }
   @media print { body.printing-bake .bs2-doc { font-size: 11pt; } }
 
   /* ---- Home: booking link + kitchen times ---- */
@@ -1196,6 +1197,8 @@
   body:not(.printing-bake) #bsScrim .bs2-block h4 { font-size: var(--fs-body); font-weight: 700; text-transform: none; letter-spacing: 0; color: var(--text); margin: 0 0 4px; }
   body:not(.printing-bake) #bsScrim .bs2-block h4 small { color: var(--muted); font-size: var(--fs-caption); font-weight: 500; }
   body:not(.printing-bake) #bsScrim .bs2-bake { font-size: var(--fs-caption); color: var(--accent); margin: 2px 0 8px; }
+  body:not(.printing-bake) #bsScrim .bs2-step { font-size: var(--fs-caption); font-weight: 600; color: var(--accent); margin: 12px 0 2px; }
+  body:not(.printing-bake) #bsScrim .bs2-step small { display: block; font-weight: 400; color: var(--muted); font-size: var(--fs-micro); }
   body:not(.printing-bake) #bsScrim .bs2-grp { margin: 0 0 6px; }
   body:not(.printing-bake) #bsScrim .bs2-grp > div { padding: 5px 0; border-bottom: 1px solid var(--sep); font-size: var(--fs-caption); }
   body:not(.printing-bake) #bsScrim .bs2-grp > div:last-child { border-bottom: none; }
@@ -2136,7 +2139,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.121.01 · Nov 10, 10:29 PM PST</div>
+<div class="ver-badge">v1.122.00 · Nov 10, 11:11 PM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -5215,7 +5218,7 @@
     { name: 'Mugwort', title: 'Mugwort Madeleine', link: 'https://www.youtube.com/watch?v=vZBX4NI951A',
       custom: [['All Purpose Flour', 40], ['Cake Flour', 65], ['Baking Powder', 5], ['Baking Soda', 1], ['White Sugar', 25], ['Brown Sugar', 35], ['Unsalted Butter', 110], ['Eggs', 72], ['Salt', 1], ['White Chocolate', 120], ['Skim Milk Powder', 5], ['Milk', 25], ['Honey', 20], ['Mugwort Powder', 15]] },
     { name: 'Maple Pecan',
-      custom: [['Cake Flour', 144], ['Toasted Pecans (ground fine)', 30], ['Baking Powder', 5], ['Salt', 2], ['Eggs', 190], ['Brown Sugar', 70], ['Pure Maple Syrup (dark/robust)', 30], ['Vanilla Extract', 5], ['Unsalted Butter', 180], ['Avocado Oil', 20]],
+      custom: [['Cake Flour', 144], ['Toasted Pecans (ground fine)', 30], ['Baking Powder', 5], ['Salt', 2], ['Eggs', 190], ['Brown Sugar', 70], ['Maple Syrup', 30], ['Vanilla Extract', 5], ['Unsalted Butter', 180], ['Avocado Oil', 20]],
       topping: [['Toasted Pecans', '30g'], ['Maple Syrup', '15g']] },
   ];
   const REC_FILLINGS = [
@@ -5327,10 +5330,10 @@
       notes: '<b>Bake:</b> 180°C (356°F), 23 min (to try). Method follows the video.' },
     { key: 'cakepop', labFlat: 0.4, wholesale: 2.75, retail: 4.5, type: 'simple', name: 'Cake Pop', link: 'https://sallysbakingaddiction.com/homemade-cake-pops/', yield: 62, oven: { lo: 30, hi: 30, cap: 62 }, prep: 20, bake: '350°F (177°C) · 30 min', yieldText: 'makes about 62 cake pops from one quarter sheet pan (a full sheet pan is 4 batches, about 248 pops; coated with vanilla almond bark and cocoa butter, one mini waffle cone each)',
       components: [
-        { title: 'Cake', rows: [['Flour', 397], ['Baking Powder', 4.8], ['Baking Soda', 1.9], ['Salt', 5.7], ['Softened Butter', 215], ['Sugar', 266, 380], ['Egg', 95], ['Vanilla Extract', 15], ['Whole Milk', 466]] },
+        { title: 'Cake', rows: [['Flour', 397], ['Baking Powder', 4.8], ['Baking Soda', 1.9], ['Salt', 5.7], ['Softened Butter', 215], ['Sugar', 266, 380], ['Egg', 95], ['Vanilla Extract', 15], ['Milk', 466]] },
         { title: 'Frosting', rows: [['Softened Butter', 188], ['Powdered Sugar', 239.4, 399], ['Heavy Cream (or milk)', 23], ['Vanilla Extract', 7.6]] },
         { title: 'Coating', rows: [['Vanilla Almond Bark', 454], ['Cocoa Butter', 20], ['Mini Waffle Cones', 62, null, ' pcs']], note: '454 g of vanilla almond bark melted with 20 g cocoa butter per batch. Sprinkles (no amount given). With real white chocolate, add 1/2 tsp vegetable oil to thin it.' } ],
-      rows: [['All Purpose Flour', 397], ['Baking Powder', 4.8], ['Baking Soda', 1.9], ['Salt', 5.7], ['Unsalted Butter', 215], ['Sugar', 266], ['Eggs', 95], ['Vanilla Extract', 15], ['Whole Milk', 466], ['Unsalted Butter (frosting)', 188], ['Powdered Sugar', 239.4], ['Heavy Cream', 23], ['Vanilla Extract (frosting)', 7.6], ['Vanilla Almond Bark', 454], ['Cocoa Butter', 20], ['Mini Waffle Cones', 76]],
+      rows: [['All Purpose Flour', 397], ['Baking Powder', 4.8], ['Baking Soda', 1.9], ['Salt', 5.7], ['Unsalted Butter', 215], ['Sugar', 266], ['Eggs', 95], ['Vanilla Extract', 15], ['Milk', 466], ['Unsalted Butter (frosting)', 188], ['Powdered Sugar', 239.4], ['Heavy Cream', 23], ['Vanilla Extract (frosting)', 7.6], ['Vanilla Almond Bark', 454], ['Cocoa Butter', 20], ['Mini Waffle Cones', 62]],
       notes: '<b>Sugar is cut.</b> Cake sugar is 30% less: 266 g, from an original 380 g (the source recipe\'s 200 g for a 9-inch pan, scaled 1.9 times to the sheet pan). Frosting powdered sugar is 40% less: 239.4 g, from an original 399 g. Everything else is the original amount scaled 1.9 times.<br><br><b>1 batch</b> = one quarter sheet pan, about 62 pops. Batter prep takes about 20 minutes and it bakes 30 minutes.<br><br><b>Pan options</b><br>Quarter sheet pan: 1 batch (the amounts above).<br>Full sheet pan: 4 batches, about 248 pops. Set Batches to 4, or use: flour 1,588 g, baking powder 19.2 g, baking soda 7.6 g, salt 22.8 g, butter 860 g, sugar 1,064 g, eggs 380 g, vanilla 60 g, milk 1,864 g; frosting butter 752 g, powdered sugar 957.6 g, cream 92 g, vanilla 30.4 g; coating 1,816 g bark + 80 g cocoa butter; 248 cones.<br><br><b>Method</b><br>1. Heat the oven to 350°F (177°C). Grease and line the pan.<br>2. Flour, baking powder, baking soda and salt.<br><br>3. Beat butter and sugar until creamed.<br>4. Egg and vanilla, beat on high.<br><br>5. Dry mix and milk, mix on low until combined. Spread in the pan, bake 30 minutes. Cool completely (best made the day before).<br><i>Tips:</i> Stir by hand to catch lumps. Tent with foil if the top browns too fast.<br><br><b>Frosting:</b><br>Beat the butter on medium about 2 minutes.<br>Add powdered sugar, cream and vanilla, mix on low.<br><br>6. Crumble the cooled cake into the frosting with no big lumps. Beat on low until combined.<br>7. Roll into balls (25g). Chill 2 hours or freeze 1 hour.<br><i>Tips:</i> Keep the tray cold and work a few at a time.<br>8. Melt the coating. Let it cool about 5 minutes so it does not crack the pops.<br><i>Tips:</i> The balls must stay very cold.<br>9. Dip a stick 1/2 inch in the coating, push halfway into a ball, dip the whole ball, tap off the excess, add sprinkles, stand upright.<br><br><b>Shelf life:</b><br>Keep in the fridge up to 1 week.<br>Undipped balls keep 2 days in the fridge or 6 weeks frozen; finished pops freeze 6 weeks.' },
     { key: 'churrosfinancier', type: 'simple', name: 'Chocolate Churros Financier', yield: 12, yieldText: 'makes 12 financiers',
       rows: [['Unsalted Butter', 160], ['Egg White', 120], ['Brown Sugar', 115], ['Honey', 35], ['Almond Flour', 84], ['Cake Flour', 18], ['Cocoa Powder', 12], ['Cinnamon', 4], ['Baking Powder', 2]],
@@ -5372,11 +5375,11 @@
       notes: '1) 화이트초콜릿과 무염버터를 함께 녹인다.<br>2) 계란에 설탕, 소금을 넣고 핸드믹서 고속으로 휘핑한다.<br>3) 계란 쪽에 녹여 둔 초콜릿과 버터, 그리고 바닐라 익스트랙을 넣고 섞는다.<br>4) 중력분, 말차가루, 베이킹파우더를 체 쳐서 넣고 섞는다.<br>5) 유산지를 두른 팬에 반죽을 팬닝하고, 검은깨 페이스트로 표면에 무늬를 낸다.<br>6) 예열한 오븐에 160도(320°F) 25분 굽는다 (위즈웰 루미오븐 상하열선 모드, 컨벡션 x).<br><br><b>Pattern:</b> black sesame paste on top (no amount given).<br><b>보관:</b> (더운 여름 제외) 밀폐하거나 밀봉해서 실온 4일, 냉동 1달. 잘라서 비닐로 개별포장해서 보관해 주세요.',
       link: 'https://www.youtube.com/watch?v=JSwMpDiHD8U' },
     { key: 'snowcap', type: 'simple', name: 'Chocolate Espresso Snow Cap Cookies', yield: 19, yieldText: 'makes 19 cookies · 20g each',
-      rows: [['Unsalted Butter', 57], ['Brown Sugar', 70], ['Salt', 1], ['Eggs', 50], ['All Purpose Flour', 65], ['Cocoa Powder', 30], ['Baking Powder', 4], ['Espresso Powder', 7], ['Dark Chocolate Couverture', 113], ['Whole Milk', 15]],
+      rows: [['Unsalted Butter', 57], ['Brown Sugar', 70], ['Salt', 1], ['Eggs', 50], ['All Purpose Flour', 65], ['Cocoa Powder', 30], ['Baking Powder', 4], ['Espresso Powder', 7], ['Dark Chocolate Couverture', 113], ['Milk', 15]],
       notes: '<b>Rolling:</b> Powdered Sugar, as needed (roll twice).<br><br>1) 실온의 버터를 핸드믹서로 가볍게 풀어 주세요.<br>2) 황설탕, 소금을 넣고 섞어 주세요.<br>3) 실온 상태의 계란을 4~5번 나눠 넣어 가면서 휘핑해 주세요.<br>4) 녹여서 식혀 둔 초콜릿을 넣고 잘 섞일 때 까지 가볍게 섞어 주세요.<br>5) 중력분, 코코아파우더, 베이킹파우더, 인스턴트 커피 파우더를 체 쳐서 넣고 섞어 주세요.<br>6) 실온의 우유를 넣고 섞어 주세요.<br>7) 반죽이 단단해질 때까지 냉동실에서 40분 정도 굳혀 주세요.<br>8) 한 개당 20g씩 분할해서 원 모양으로 굴리고, 슈가파우더를 두 번 묻혀 주세요.<br>9) 예열한 오븐에 170도(340°F)에서 12분 구워 주세요 (루미오븐, 상하단 열선+컨벡션).<br><br><b>보관:</b> 식혀서 밀봉한 상태에서 실온 3~4일, 냉동 3주 보관 가능합니다.',
       link: 'https://www.youtube.com/watch?v=hYJyj-z2ZUQ' },
     { key: 'figscone', type: 'simple', name: 'Fig Caramel Scone', yield: 6, yieldText: 'makes 6 scones',
-      rows: [['Cake Flour', 165], ['All Purpose Flour', 40], ['Unsalted Butter', 80], ['Sugar', 18], ['Salt', 1], ['Baking Powder', 6], ['Whole Milk', 37], ['Caramel Sauce', 45]],
+      rows: [['Cake Flour', 165], ['All Purpose Flour', 40], ['Unsalted Butter', 80], ['Sugar', 18], ['Salt', 1], ['Baking Powder', 6], ['Milk', 37], ['Caramel Sauce', 45]],
       soak: [['Dried Fig', 85], ['Gold Rum', 130]],
       notes: '<b>Rum-soaked figs:</b> remove the stems, halve each fig. Simmer figs and rum on low about 1 minute. Keep in the fridge a day or more. Drain completely, 100g of the soaked figs go in the dough.<br><br><b>Scones:</b><br>1) Pulse the dry ingredients and cold diced butter until the butter is bean-sized.<br>2) Add cold milk and caramel sauce, pulse.<br>3) When crumbly, add the figs, pulse a few more times, move to the counter.<br>4) Knead lightly into a lump, rest in the fridge 30 minutes to 1 hour.<br>5) Divide into 6, shape into rounds.<br>6) Brush tops with milk, bake at 180°C (356°F) 17 minutes (Lumi oven, top and bottom heat + convection).<br>7) Finish with dried figs and a caramel drizzle.<br><br><b>Shelf life:</b><br>Best the same day, crisp. Keep the lid slightly open (fully sealed makes the outside damp).<br>Freeze wrapped singly up to 3 weeks. Thaw slightly, reheat at 180°C (356°F) about 5 minutes to crisp.',
       link: 'https://www.youtube.com/watch?v=RL3U7p5H7go' },
@@ -5396,7 +5399,7 @@
         { title: 'Cake', rows: [['All-Purpose Flour', 210], ['Baking Powder', 8], ['Salt', 4.5], ['Softened Butter', 142], ['Sugar', 150], ['Light Brown Sugar', 55], ['Eggs', 100], ['Sour Cream', 160], ['Vanilla Extract', 10]] },
         { title: 'Cinnamon Filling', rows: [['Brown Sugar', 147], ['Flour', 30], ['Cinnamon', 5]] },
         { title: 'Streusel', rows: [['Flour', 90], ['Brown Sugar', 110], ['Cinnamon', 5], ['Salt', 1.5], ['Cold Butter, diced', 85]] },
-        { title: 'Vanilla Glaze (optional)', rows: [['Powdered Sugar', 120], ['Whole Milk', 30], ['Vanilla Extract', 2.5]], note: 'Counted in the totals.' } ],
+        { title: 'Vanilla Glaze (optional)', rows: [['Powdered Sugar', 120], ['Milk', 30], ['Vanilla Extract', 2.5]], note: 'Counted in the totals.' } ],
       rows: [['All-Purpose Flour', 330], ['Baking Powder', 8], ['Salt', 6], ['Unsalted Butter', 227], ['Sugar', 150], ['Brown Sugar', 312], ['Eggs', 100], ['Sour Cream', 160], ['Vanilla Extract', 12.5], ['Cinnamon', 10], ['Powdered Sugar', 120], ['Milk', 30]],
       notes: '1) Heat the oven to 175°C (350°F). Grease an 8×8 in pan, line with parchment.<br>2) Filling: whisk brown sugar, flour and cinnamon. Set aside.<br>3) Streusel: whisk flour, brown sugar, cinnamon and salt. Press in the diced cold butter with your fingers until like wet sand.<br><i>Tips:</i> Squeeze a handful for bigger crumbles.<br>4) Cake: whisk flour, baking powder and salt. Beat butter and both sugars on medium about 3 min until fluffy. Add eggs one at a time. Scrape down, add sour cream and vanilla, mix on low.<br>5) Add the dry mix, beat on low until just combined. Finish by hand with a spatula.<br>6) Spread half the batter in the pan, sprinkle on the filling, dollop and spread the rest on top (center out to the edges).<br>7) Sprinkle the streusel on top, starting at the edges.<br>8) Bake about 55 min, until a toothpick in the center is clean. Cool in the pan at least 30 min.<br>9) Glaze: whisk powdered sugar, milk and vanilla until smooth. Drizzle over the cake.<br><br><b>Shelf life:</b><br>Airtight at room temperature about 3 days.<br>Freeze wrapped slices (plastic, then foil) up to 3 months.<br><br><b>Other pans:</b> 9 in round, same recipe. 9×13 in, double it and bake about 1 hour (15 to 18 servings).' },
     { key: 'browniecookie', type: 'simple', name: 'Brownie Cookie', yield: 8, yieldText: 'makes about 8 cookies (5 cm scoop)',
@@ -5493,12 +5496,29 @@
   const recFlourRows = amt => recFlourParts(amt).map(([n, g]) => `<div class="proj-row rec-split"><span class="k">${n} <span class="rec-conv">(in the cake flour)</span></span><span>${rFmt(g)}g</span></div>`).join('');
   const recFlourGl = amt => recFlourParts(amt).map(([n, g]) => `<div class="gl rec-split"><span>${n} <span class="rec-conv">(in the cake flour)</span></span><span>${rFmt(g)}g</span></div>`).join('');
   const recFlourNote = rows => rows.some(r => r[0] === 'Cake Flour' && typeof r[1] === 'number') ? `<div class="rec-box"><b>Cake Flour</b>Make it: sift together 436 g all-purpose flour and 64 g cornstarch (87.2% / 12.8%) for every 500 g of cake flour. For example, 120 g cake flour = 104.6 g all-purpose + 15.4 g cornstarch (about 105 g + 15 g). The two lines under Cake Flour update when you change the amount or the batches.</div>` : '';
+  // Butter shows as "Unsalted Butter (KS)" (Kirkland Signature) or "(KG)" (Kerrygold). Brand in the name wins; otherwise madeleines use KG and everything else KS.
+  // Cocoa butter, buttercream and the like never match (the name has to start with the butter words). Labels keep plain "Unsalted Butter".
+  const BK_RE = /^((?:unsalted|softened|melted|cold|kerrygold|kirkland|costco|signature)\s+)*butter(?![a-z])\s*(?:\((.*?)\))?(?:\s*,\s*(.*))?$/i;
+  function bkName(name, mad) {
+    const s = String(name), m = s.match(BK_RE);
+    if (!m) return s;
+    if (/\((KS|KG)\)/i.test(s)) return s;
+    const pre = (s.match(/^((?:\w+\s+)*?)butter/i) || ['', ''])[1].toLowerCase();
+    const brand = /kerrygold/.test(pre) ? 'KG' : /kirkland|costco|signature/.test(pre) ? 'KS' : mad ? 'KG' : 'KS';
+    const state = (pre.match(/softened|melted|cold/) || [''])[0];
+    const extra = [state, m[2], m[3]].filter(Boolean).join(', ');
+    return `Unsalted Butter (${brand})` + (extra ? ', ' + extra : '');
+  }
+  // Waffle cones are counted, not weighed: their costing row is a piece count (62 per Cake Pop batch).
+  const isCone = n => /waffle cone/i.test(String(n));
   function recIngRows(rows, mult, ctx, addin) {
+    const mad = recState.sec === 'mad';
     return rows.map(r => {
-      const cls = addin ? ' rec-addin' : '';
-      if (typeof r[1] !== 'number') return `<div class="proj-row"><span class="k${cls}">${r[0]}</span><span><b>${r[1]}</b></span></div>`;
+      const cls = addin ? ' rec-addin' : '', nm = bkName(r[0], mad);
+      if (typeof r[1] !== 'number') return `<div class="proj-row"><span class="k${cls}">${nm}</span><span><b>${r[1]}</b></span></div>`;
+      if (isCone(r[0])) return `<div class="proj-row"><span class="k${cls}">${nm}</span><span><input class="rec-qty" type="number" inputmode="decimal" step="any" value="${rFmt(r[1] * (mult || 1))}" data-base="${r[1]}" data-ctx="${ctx || 'batches'}"> pcs</span></div>`;
       const split = r[0] === 'Cake Flour' ? recFlourRows(r[1] * (mult || 1)) : '';
-      return `<div class="proj-row"><span class="k${cls}">${r[0]}</span><span><input class="rec-qty" type="number" inputmode="decimal" step="any" value="${rFmt(r[1] * (mult || 1))}" data-base="${r[1]}" data-ctx="${ctx || 'batches'}">g</span></div>${split}`;
+      return `<div class="proj-row"><span class="k${cls}">${nm}</span><span><input class="rec-qty" type="number" inputmode="decimal" step="any" value="${rFmt(r[1] * (mult || 1))}" data-base="${r[1]}" data-ctx="${ctx || 'batches'}">g</span></div>${split}`;
     }).join('');
   }
   function recBatchRow() {
@@ -5548,14 +5568,14 @@
       'Lemon Poppy': [...base, ['Lemon Emulsion', 4], ['Poppy Seed', 6]],
       'Ube': [...swap(base, 'Cake Flour', 168), ['Ube Powder', 20], ['Ube Extract', 2.5]],
       'Earl Grey': [...drop(base, 'Milk'), ['Earl Grey Tea Leaves', 5], ['Heavy Cream', 24]],
-      'Maple Pecan': [...drop(swap(base, 'Cake Flour', 178), 'Sugar', 'Honey'), ['Brown Sugar', 103], ['Toasted Pecans (ground fine)', 30], ['Pure Maple Syrup (dark/robust)', 30]],
+      'Maple Pecan': [...drop(swap(base, 'Cake Flour', 178), 'Sugar', 'Honey'), ['Brown Sugar', 103], ['Toasted Pecans (ground fine)', 30], ['Maple Syrup', 30]],
     };
     for (const it of REC_MADS) {
       const rows = B[it.name]; if (!rows || it.name === 'Dot Cake') continue;   // Dot Cake: Classic's starred Original only (2026-10-13)
       const verB = { label: 'Ver B', rows, yield: 20, skipNote: true, bakeNote: 'Preheat the oven to 410°F (210°C), then bake at 356°F (180°C) for 10–12 minutes.' };
       if (it.name === 'Maple Pecan') {   // 2026-10-05: Ver B is the Brown Butter-matched recipe; the 20-piece melted-butter version moves to Ver C
         const bbVer = { label: 'Original', star: true, yield: 12, skipNote: true,
-          rows: [['Cake Flour', 115], ['Toasted Pecans (ground fine)', 10], ['Baking Powder', 5], ['Caramelized Milk Powder', 3], ['Salt', 0.5], ['Unsalted Butter', 100], ['Milk', 7], ['Eggs', 85], ['Brown Sugar', 80], ['Pure Maple Syrup (dark/robust)', 10]],
+          rows: [['Cake Flour', 115], ['Toasted Pecans (ground fine)', 10], ['Baking Powder', 5], ['Caramelized Milk Powder', 3], ['Salt', 0.5], ['Unsalted Butter', 100], ['Milk', 7], ['Eggs', 85], ['Brown Sugar', 80], ['Maple Syrup', 10]],
           topping: [['Toasted Pecans', '20g'], ['Maple Syrup', '10g']],
           notes: 'Based on the Brown Butter madeleine, with the same ratios: the ground pecans replace 10g of flour, brown sugar replaces the sugar and maple syrup replaces the honey, so the batter stays as moist and the hump the same. Brown the butter and make it exactly like the Brown Butter madeleine — no resting. The pecans and maple syrup in the topping carry the rest of the flavor.' };
         it.versions = [bbVer];   // 2026-10-13: the Brown Butter-matched recipe is now the Original; the old Original and Ver C are removed
@@ -5642,7 +5662,7 @@
         <h3>${recIc(item.name)} ${item.name}</h3>
         <div class="proj-sub">${item.yieldText || 'base recipe'}${b !== 1 ? ` · scaled ${rFmt(b)}×` : ''}</div>
         ${verChips}${recBatchRow()}
-        ${item.components ? item.components.map(c => { const st = /^Step \d+ · /.test(c.title); return `${st ? `<div class="rec-step">${esc(c.title)}${c.note ? `<small>${esc(c.note)}</small>` : ''}</div>` : ''}<div class="rec-box${st ? ' flat' : ''}">${st ? '' : `<b>${esc(c.title)}</b>`}${c.rows.map(g => `<div class="gl"><span>${esc(g[0])}</span><span>${typeof g[1] === 'number' ? (g[2] != null ? `<small class="was">was ${rFmt(g[2] * b)}${g[3] || 'g'}</small> ` : '') + (g[3] ? rFmt(g[1] * b) + g[3] : `<input class="rec-qty" type="number" inputmode="decimal" step="any" value="${rFmt(g[1] * b)}" data-base="${g[1]}" data-ctx="batches">g`) : esc(g[1])}</span></div>${g[0] === 'Cake Flour' && typeof g[1] === 'number' && !g[3] ? recFlourGl(g[1] * b) : ''}`).join('')}${c.note && !st ? `<p>${c.note}</p>` : ''}</div>`; }).join('') : recIngRows(item.rows, b) + recFlourNote(item.rows)}
+        ${item.components ? item.components.map(c => { const st = /^Step \d+ · /.test(c.title); return `${st ? `<div class="rec-step">${esc(c.title)}${c.note ? `<small>${esc(c.note)}</small>` : ''}</div>` : ''}<div class="rec-box${st ? ' flat' : ''}">${st ? '' : `<b>${esc(c.title)}</b>`}${c.rows.map(g => `<div class="gl"><span>${esc(bkName(g[0], recState.sec==='mad'))}</span><span>${typeof g[1] === 'number' ? (g[2] != null ? `<small class="was">was ${rFmt(g[2] * b)}${g[3] || 'g'}</small> ` : '') + (g[3] ? rFmt(g[1] * b) + g[3] : `<input class="rec-qty" type="number" inputmode="decimal" step="any" value="${rFmt(g[1] * b)}" data-base="${g[1]}" data-ctx="batches">g`) : esc(g[1])}</span></div>${g[0] === 'Cake Flour' && typeof g[1] === 'number' && !g[3] ? recFlourGl(g[1] * b) : ''}`).join('')}${c.note && !st ? `<p>${c.note}</p>` : ''}</div>`; }).join('') : recIngRows(item.rows, b) + recFlourNote(item.rows)}
         ${item.components ? recFlourNote(item.components.flatMap(c => c.rows)) : ''}
         ${item.velvet ? `<div class="rec-box"><b>Optional · velvet spray finish</b><p>${item.velvet}</p></div>` : ''}
         ${item.outer ? `<div class="rec-box"><b>Outer Layer · per outer batch</b>${item.outer.map(g => `<div class="gl"><span>${g[0]}</span><span>${rFmt(g[1] * b)}g</span></div>`).join('')}${item.outerNote ? `<p>${item.outerNote}</p>` : ''}</div>` : ''}
@@ -5845,6 +5865,7 @@
   const COST_SKIP = new Set(['Flavor Powder']);
   const titleCase = t => t.replace(/\b\w/g, c => c.toUpperCase());
   function costCanon(name) {
+    if (/butter/i.test(name) && /\(kg\)/i.test(name) && !/cocoa/i.test(name)) return 'Kerrygold Butter';
     const base = String(name).split(',')[0].replace(/\(.*?\)/g, '').replace(/\*/g, '').trim();
     const lc = base.toLowerCase();
     if (PRICE_ALIASES[lc]) return PRICE_ALIASES[lc];
@@ -6065,7 +6086,7 @@
     let batch = 0, missing = false;
     const lines = rows.map(r => {
       const c = costLine(r[0], r[1]), unit = 'g';
-      const label = `${esc(r[0])} <span class="rec-conv">(${rFmt(r[1])}${costCanon(r[0]) === 'Tea Bags' ? ' bags' : unit})</span>`;
+      const label = `${esc(r[0])} <span class="rec-conv">(${rFmt(r[1])}${costCanon(r[0]) === 'Tea Bags' ? ' bags' : isCone(r[0]) ? ' pcs' : unit})</span>`;
       if (c == null) { missing = true; return `<div class="proj-row"><span class="k">${label}</span><span class="cost-miss">add price</span></div>`; }
       batch += c; return `<div class="proj-row"><span class="k">${label}</span><span><b>${money(c)}</b></span></div>`;
     }).join('');
@@ -6896,11 +6917,28 @@
   }
   // Ingredient line as it's written on the sheet: "190 grams Whole eggs" (sentence case, brackets → comma).
   const bsLineName = n => {
-    let t = String(n).replace(/\*/g, '').replace(/\s*\((.*?)\)/g, ', $1').trim().toLowerCase();
+    let s = bkName(String(n).replace(/\*/g, ''), false), tag = '';
+    s = s.replace(/\s*\((KS|KG)\)/i, (m, k) => { tag = k.toUpperCase(); return ''; });   // keep the butter brand tag out of the bracket → comma rewrite
+    let t = s.replace(/\s*\((.*?)\)/g, ', $1').trim().toLowerCase();
     t = t.charAt(0).toUpperCase() + t.slice(1);
+    if (tag) { const i = t.indexOf(','); t = i < 0 ? `${t} (${tag})` : `${t.slice(0, i)} (${tag})${t.slice(i)}`; }
     return t.replace(/earl grey/i, 'Earl Grey').replace(/callebaut/i, 'Callebaut');
   };
-  const bsLine = (name, g) => `${rFmt(g)} ${g === 1 ? 'gram' : 'grams'} ${bsLineName(name)}`;
+  // Waffle cones are counted, not weighed: "62 pieces Mini waffle cones".
+  const bsLine = (name, g) => isCone(name) ? `${Math.ceil(g - 1e-9)} ${Math.ceil(g - 1e-9) === 1 ? 'piece' : 'pieces'} ${bsLineName(name)}` : `${rFmt(g)} ${g === 1 ? 'gram' : 'grams'} ${bsLineName(name)}`;
+  // Mixing steps for a recipe's rows, same assignment as the Recipes tab (first step whose regex matches, else the default step).
+  const bsStepsOf = (stepDefs, rows, mult) => {
+    let di = stepDefs.findIndex(s => s.dflt); if (di < 0) di = stepDefs.length - 1;
+    const bk = stepDefs.map(() => []);
+    rows.forEach(r => { const i = stepDefs.findIndex(s => s.re.test(String(r[0]))); bk[i < 0 ? di : i].push(r); });
+    let n = 0;
+    return stepDefs.map((s, i) => bk[i].length ? { title: `Step ${++n} · ${s.title}`, hint: s.hint || '', lines: bk[i].map(([nm, g]) => bsLine(nm, g * mult)) } : null).filter(Boolean);
+  };
+  // Recipes built from components (cookies, Pumpkin Bundt, Cake Pop…): each component is a step.
+  const bsCompSteps = (comps, mult) => comps.map(c => {
+    const lines = c.rows.filter(g => typeof g[1] === 'number').map(g => g[3] === ' pcs' ? `${Math.ceil(g[1] * mult - 1e-9)} pieces ${bsLineName(g[0])}` : bsLine(g[0], g[1] * mult));
+    return lines.length ? { title: c.title, hint: c.note || '', lines } : null;
+  }).filter(Boolean);
   // Recipes → blocks of grouped lines (wet / dry / fat, a blank gap between), plus combined totals.
   let bsEditing = null;   // id of the saved plan being edited (Save then updates it instead of adding a new one)
   let bsView = null;   // a saved sheet being viewed (null = the sheet being built)
@@ -6927,16 +6965,21 @@
       const groups = [[], [], []];
       rows.forEach(([n, g]) => { const r = recMadRank(String(n)); groups[r <= 2 ? 0 : r <= 13 ? 1 : 2].push(bsLine(n, g * b.b)); });
       const y = (f.it.vers && vl && vl.yield > 0 ? vl.yield : 0) || costDefaultYield(f.sec, f.it);
-      return { title: costItemName(f.sec, f.it) + (vl && bsVers(f.it).length > 1 ? ` (${vl.label})` : ''), bake: bsBakeText(f, vl), note: `${rFmt(b.b)} batch${b.b === 1 ? '' : 'es'}${y ? ` · ≈ ${rFmt(b.b * y)} pcs` : ''}`, groups: groups.filter(g => g.length), subs: subs.map(sb => ({ label: sb.label, lines: sb.rows.map(([n, g]) => bsLine(n, g * b.b)) })) };
+      // Steps like the Recipes tab: madeleines / stepped recipes by ingredient, component recipes by component.
+      const merged = f.it.vers && vl ? { ...f.it, ...vl } : f.it;
+      const steps = merged.components ? bsCompSteps(merged.components, b.b)
+        : (f.it.steps || REC_MADS.includes(f.it)) ? bsStepsOf(f.it.steps || REC_MAD_STEPS, rows, b.b) : null;
+      return { title: costItemName(f.sec, f.it) + (vl && bsVers(f.it).length > 1 ? ` (${vl.label})` : ''), bake: bsBakeText(f, vl), note: `${rFmt(b.b)} batch${b.b === 1 ? '' : 'es'}${y ? ` · ≈ ${rFmt(b.b * y)} pcs` : ''}`, groups: groups.filter(g => g.length), ...(steps && steps.length ? { steps } : {}), subs: subs.map(sb => ({ label: sb.label, lines: sb.rows.map(([n, g]) => bsLine(n, g * b.b)) })) };
     }).filter(Boolean);
     // Every ingredient, biggest amount first; the ones used by two or more of the planned recipes are flagged (c) and print bold italic.
     const tot = [...totals.entries()].sort((a, b) => b[1].g - a[1].g || a[0].localeCompare(b[0])).map(([n, t]) => ({ t: bsLine(n, t.g), c: t.uses.size > 1 }));
-    if (tot.length) blocks.push({ title: 'Total ingredients needed', note: 'bold italic = used in 2+ recipes', groups: [tot] });
+    // Two lists: the ones shared by 2+ recipes (bold italic) first, then the rest.
+    if (tot.length) blocks.push({ title: 'Total ingredients needed', note: 'bold italic = used in 2+ recipes', groups: [], subs: [{ label: 'Used in 2+ recipes', lines: tot.filter(l => l.c) }, { label: 'Other ingredients', lines: tot.filter(l => !l.c) }].filter(s => s.lines.length) });
     return blocks;
   }
   // A line is a plain string, or {t, c} where c = common to 2+ recipes (bold italic).
   const bsLineHtml = l => typeof l === 'string' ? `<div>${esc(l)}</div>` : `<div>${l.c ? `<b><i>${esc(l.t)}</i></b>` : esc(l.t)}</div>`;
-  const bsBlockHtml = bl => `<div class="bs2-block"><h4>${esc(bl.title)}<small>${esc(bl.note)}</small></h4>${bl.bake ? `<div class="bs2-bake">Bake: ${esc(bl.bake)}</div>` : ''}${bl.groups.map(g => `<div class="bs2-grp">${g.map(bsLineHtml).join('')}</div>`).join('')}${(bl.subs || []).map(sb => `<div class="bs2-grp bs2-sub"><div class="bs2-subh">${esc(sb.label)}</div>${sb.lines.map(bsLineHtml).join('')}</div>`).join('')}</div>`;
+  const bsBlockHtml = bl => `<div class="bs2-block"><h4>${esc(bl.title)}<small>${esc(bl.note)}</small></h4>${bl.bake ? `<div class="bs2-bake">Bake: ${esc(bl.bake)}</div>` : ''}${bl.steps ? bl.steps.map(s => `<div class="bs2-step">${esc(s.title)}${s.hint ? `<small>${esc(s.hint)}</small>` : ''}</div><div class="bs2-grp">${s.lines.map(bsLineHtml).join('')}</div>`).join('') : bl.groups.map(g => `<div class="bs2-grp">${g.map(bsLineHtml).join('')}</div>`).join('')}${(bl.subs || []).map(sb => `<div class="bs2-grp bs2-sub"><div class="bs2-subh">${esc(sb.label)}</div>${sb.lines.map(bsLineHtml).join('')}</div>`).join('')}</div>`;
   // Bake temperature + time for the sheet: an explicit `bake` on the recipe, else read from its bake note ("Bake at 374°F (190°C) for 11–12 minutes"), else just the oven minutes.
   function bsBakeText(f, vl) {
     const it = f.it;
@@ -7110,7 +7153,7 @@
       }
     }
     return [...need.entries()].map(([name, qty]) => {
-      const p = costPrices[name] || {}, unit = 'g';
+      const p = costPrices[name] || {}, unit = isCone(name) ? 'pcs' : 'g';
       const pk = p.amt > 0 && p.price > 0 ? Math.max(1, Math.ceil(qty / p.amt - 1e-9)) : null;
       return { name, qty, unit, pk, pkAmt: p.amt, cost: pk ? pk * p.price : null };
     }).sort((a, b) => a.name.localeCompare(b.name));
