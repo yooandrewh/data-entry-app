@@ -1803,9 +1803,7 @@
       <button type="button" data-hpage="forecast"><span class="hm-ic" data-ic="chart"></span><span class="hm-t">Forecast</span><span class="hm-go">›</span></button>
       <button type="button" data-hpage="plan"><span class="hm-ic" data-ic="book"></span><span class="hm-t">Baking Plan</span><span class="hm-go">›</span></button>
       <button type="button" data-hpage="invoice"><span class="hm-ic" data-ic="tag"></span><span class="hm-t">Invoice / Labels</span><span class="hm-go">›</span></button>
-      <button type="button" data-hpage="logs"><span class="hm-ic" data-ic="book"></span><span class="hm-t">Kairos Logs</span><span class="hm-go">›</span></button>
-      <a class="hm-link" href="https://app.thefoodcorridor.com/tfc_food_business_dashboard/69084-kairosbaking/bookings?locale=en" target="_blank" rel="noopener noreferrer">Book Commercial Kitchen ↗</a>
-    </div>
+</div>
     
 
     <div class="home-card" id="homePage" hidden>
@@ -1829,7 +1827,7 @@
     <!-- Baking plan -->
     <div id="homePlan" hidden>
     <div id="bakingPlan">
-      <div class="card">
+      <div class="card" style="display:none">
         <div class="row">
           <span class="lbl">Make it last until</span>
           <input type="date" id="planDate" />
@@ -1864,8 +1862,8 @@
           <div class="bakedate-chips" id="bakeDateChips"></div>
         </div>
       </div>
-      <div id="planSplitWrap"></div>
-      <div id="planList"></div>
+      <div id="planSplitWrap" style="display:none"></div>
+      <div id="planList" style="display:none"></div>
 
       <div class="card bs-card">
         <div class="bs-head"><b>Bake Plan</b><span>Pick recipes and batches, then print or download</span></div>
@@ -1876,7 +1874,7 @@
         <div class="bs-foot"><button type="button" class="btn-primary" id="bsOpen">Preview plan</button><div class="bs-foot2"><button type="button" class="btn-ghost" id="bsSave">Save this plan</button><button type="button" class="btn-ghost" id="bsHist">Saved plans</button></div></div>
       </div>
     </div>
-      <details class="kt"><summary>Kitchen Times</summary><div class="kt-grid" id="ktGrid"></div></details>
+      <details class="kt" style="display:none"><summary>Kitchen Times</summary><div class="kt-grid" id="ktGrid"></div></details>
     </div>
 
     <!-- Timers -->
@@ -2130,7 +2128,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.120.00 · Nov 10, 4:39 PM PST</div>
+<div class="ver-badge">v1.120.01 · Nov 10, 5:00 PM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -6820,7 +6818,7 @@
     for (const key of Object.keys(BS_PRODUCT)) {
       const proj = bsProjectedBatches(key), ex = bakeSheet.find(b => b.key === key);
       if (proj > 0) {
-        if (!ex) { if (!bsDismissed.has(key)) { bakeSheet.push({ key, b: proj, plan: true }); changed = true; } }
+        if (!ex) { /* the list is this season's recipes; other forecast products are not added */ }
         else if (!ex.manual && (ex.b !== proj || !ex.plan)) { ex.b = proj; ex.plan = true; changed = true; }
       } else if (ex && ex.plan && !ex.manual) { bakeSheet.splice(bakeSheet.indexOf(ex), 1); changed = true; }
     }

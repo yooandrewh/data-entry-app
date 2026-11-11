@@ -347,7 +347,7 @@ editable assumptions (*Kitchen Times*, saved in `kitchenTimes.v1`, defaults in `
 (12 bake + 5 cooling) where a round is 4 pans × 12 madeleines, + 15 s glazing per Lemon Poppy / Earl Grey
 madeleine, + 30 min cleaning; **total to book** = prep + baking. **Setup (15 min) is shown but not booked.**
 *Madeleines per pan = 12 is an assumption* (a batch is 18) — change it in Kitchen Times if your pans differ.
-Home has a **Book Commercial Kitchen** link (opens The Food Corridor's booking page in a new tab).
+The Book Commercial Kitchen link on Home was removed 2026-11-10.
 
 ## Photo palette, bright (2026-09-29, latest — replaces the plum/peach themes above)
 
@@ -504,3 +504,11 @@ Cake Pop coating (2026-10-28): 570 g vanilla almond bark + 20 g Cocoa Butter coa
 Brown Butter Chocolate Chip Cookie: dark brown sugar → light brown sugar, 257 g per batch (20% cut from the brown sugar), browned butter 191 g shown (227 g butter minus about 36 g water), 90 g dough each → 12 per batch (3% bowl loss assumed), about 400 cookies/month = 34 batches. Cake Pop: one batch = one quarter sheet pan (~62 pops), full sheet pan = 4 batches; coating 454 g bark + 20 g cocoa butter.
 **Earl Grey Mini** (pound cake) is gone from Entry, Forecast, Plan, bake sheet and this season; the recipe stays. It remains in `HIST_PRODUCTS`, `UNIT_PRICE`, the token maps, `NEWP` and the API maps so old deliveries still show in Data and bill on invoices.
 **Blueberry Muffin price:** `PRICE_FROM` holds dated price changes. Deliveries before 2026-11-10 invoice at $2.75, on or after at the invoice price field ($3.00; `invPriceBlueberry300` migration reset the saved value). `unitPriceOn(p, ymd)` does the same for Data-tab revenue (`salesAdj`). Add a product to `PRICE_FROM` for the next dated change.
+
+
+## Home trimmed (2026-11-10)
+
+Home's menu is Forecast / Baking Plan / Invoice / Labels only: the **Kairos Logs** button and the Book Commercial Kitchen link are gone. The Logs code
+(`logsOpen()`, `#homeLogs`, `api/logs.js`) and its sheet tabs are still in place, just unreachable. **Baking Plan** shows only the Bake Plan card: the date / delivery-day /
+bake-day card, the per-store plan cards and the Kitchen Times editor are hidden with `display:none` (their elements stay because `renderPlan()` still runs to feed `planBakeTotals`).
+The list starts with this season's recipes; `autoFillBakePlan()` only updates the batches of recipes already listed and no longer adds forecast products.
