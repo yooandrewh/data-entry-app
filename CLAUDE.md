@@ -501,7 +501,7 @@ Cake Pop coating (2026-10-28): 570 g vanilla almond bark + 20 g Cocoa Butter coa
 
 ## Cookie, Cake Pop, Earl Grey Mini out, Blueberry price change (2026-11-10)
 
-Brown Butter Chocolate Chip Cookie: dark brown sugar → light brown sugar, 257 g per batch (20% cut from the brown sugar), browned butter 191 g shown (227 g butter minus about 36 g water), 90 g dough each → 12 per batch (3% bowl loss assumed), about 400 cookies/month = 34 batches. Cake Pop: one batch = one quarter sheet pan (~62 pops), full sheet pan = 4 batches; coating 454 g bark + 20 g cocoa butter.
+Brown Butter Chocolate Chip Cookie: dark brown sugar → light brown sugar, 257 g per batch (20% cut from the brown sugar), browned butter 191 g shown (227 g butter minus about 36 g water), 90 g dough each → 12 per batch (3% bowl loss assumed), about 400 cookies/month = 34 batches. Bake 350°F (175°C), 15–20 min (`oven` lo/hi 15/20). Cake Pop: one batch = one quarter sheet pan (~62 pops), full sheet pan = 4 batches; coating 454 g bark + 20 g cocoa butter.
 **Earl Grey Mini** (pound cake) is gone from Entry, Forecast, Plan, bake sheet and this season; the recipe stays. It remains in `HIST_PRODUCTS`, `UNIT_PRICE`, the token maps, `NEWP` and the API maps so old deliveries still show in Data and bill on invoices.
 **Blueberry Muffin price:** `PRICE_FROM` holds dated price changes. Deliveries before 2026-11-10 invoice at $2.75, on or after at the invoice price field ($3.00; `invPriceBlueberry300` migration reset the saved value). `unitPriceOn(p, ymd)` does the same for Data-tab revenue (`salesAdj`). Add a product to `PRICE_FROM` for the next dated change.
 
