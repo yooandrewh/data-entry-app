@@ -2002,14 +2002,6 @@
           </div>
         </div>
         <div class="row">
-          <span class="lbl lbl-flavor"><span class="tok" data-tok="Earl Grey Mini"></span>Earl Grey Mini</span>
-          <div class="amt" data-product="Earl Grey Mini">
-            <button type="button" class="step minus">−</button>
-            <input class="val" type="number" inputmode="numeric" value="0" min="0" />
-            <button type="button" class="step plus">+</button>
-          </div>
-        </div>
-        <div class="row">
           <span class="lbl lbl-flavor"><span class="tok" data-tok="Cake Pop"></span>Cake Pop</span>
           <div class="amt" data-product="Cake Pop">
             <button type="button" class="step minus">−</button>
@@ -2138,7 +2130,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.119.05 · Nov 9, 4:20 PM PST</div>
+<div class="ver-badge">v1.120.00 · Nov 10, 4:39 PM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -2355,7 +2347,7 @@
   const ic = (name, px) => `<svg class="ic2" viewBox="0 0 24 24" aria-hidden="true"${px ? ` style="width:${px}px;height:${px}px"` : ''}>${(IC[name] || IC.book)()}</svg>`;
   document.querySelectorAll('[data-ic]').forEach(el => { el.innerHTML = ic(el.dataset.ic, Number(el.dataset.size) || 0); });
 
-  const PRODUCTS = ['Lemon Poppy', 'Sea Salt', 'Maple Pecan', 'Blueberry Muffin', 'Pumpkin Bundt', 'Earl Grey Mini', 'Cake Pop', 'Chookie'];   // actively logged/forecast (Ube/Dot/Dubai Ball retired — history kept in Data)
+  const PRODUCTS = ['Lemon Poppy', 'Sea Salt', 'Maple Pecan', 'Blueberry Muffin', 'Pumpkin Bundt', 'Cake Pop', 'Chookie'];   // actively logged/forecast (Ube/Dot/Dubai Ball retired — history kept in Data)
   // Dubai Ball is back, but only for Stanton: it is logged, invoiced and counted there (Entry, Invoice, Data, Sales, Goodwill) and
   // never appears for La Mirada or in the forecast / plan (it has no sales-rate source).
   const ENTRY_PRODUCTS = [...PRODUCTS, 'Dubai Ball'];
@@ -2372,10 +2364,13 @@
   // Flavors the app stocks (PRODUCTS) plus extra ones that show up in sales.
   const SALES_FLAVORS = ['Lemon Poppy', 'Sea Salt', 'Maple Pecan', 'Pumpkin Muffin', 'Blueberry Muffin', 'Ube', 'Dot', 'Earl Grey', 'Matcha', 'Chocolate', 'Dubai Ball', 'Pumpkin Bundt', 'Cake Pop', 'Unknown'];
   const PRICE_PER_UNIT = 2.50;   // $/madeleine (from Financial Dashboard: $192.50 / 77 units)
-  const UNIT_PRICE = { 'Pumpkin Muffin': 2.75, 'Blueberry Muffin': 2.75, 'Pumpkin Bundt': 3.35, 'Earl Grey Mini': 2.75, 'Cake Pop': 2.75, 'Chookie': 2.75, 'Dubai Ball': 3.50 };   // items that sell for something other than PRICE_PER_UNIT
+  const UNIT_PRICE = { 'Pumpkin Muffin': 2.75, 'Blueberry Muffin': 3, 'Pumpkin Bundt': 3.35, 'Earl Grey Mini': 2.75, 'Cake Pop': 2.75, 'Chookie': 2.75, 'Dubai Ball': 3.50 };   // items that sell for something other than PRICE_PER_UNIT
   const pdisp = p => p === 'Chookie' ? 'Cookie' : p;   // display name only; 'Chookie' stays the id and sheet column
   // Extra revenue over PRICE_PER_UNIT for sales rows (assumes those units are already counted in each row's total).
-  const salesAdj = rows => rows.reduce((a, s) => a + Object.entries(UNIT_PRICE).reduce((b, [p, pr]) => b + ((s.amounts && s.amounts[p]) || 0) * (pr - PRICE_PER_UNIT), 0), 0);
+  // A price that changed on a date: before it the item sold for `before`, from that day on for UNIT_PRICE (or the invoice price field).
+  const PRICE_FROM = { 'Blueberry Muffin': { date: '2026-11-10', before: 2.75 } };
+  const unitPriceOn = (p, ymd) => PRICE_FROM[p] && ymd && String(ymd).slice(0, 10) < PRICE_FROM[p].date ? PRICE_FROM[p].before : (UNIT_PRICE[p] ?? PRICE_PER_UNIT);
+  const salesAdj = rows => rows.reduce((a, s) => a + Object.keys(UNIT_PRICE).reduce((b, p) => b + ((s.amounts && s.amounts[p]) || 0) * (unitPriceOn(p, s.date) - PRICE_PER_UNIT), 0), 0);
   const usd = n => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(n);
   const state = { type: 'delivery', location: 'La Mirada', give: '' };   // give: who a goodwill entry went to ('' = customers)
   const esc = s => String(s).replace(/[&<>"']/g, c =>
@@ -3617,6 +3612,8 @@
     try { if (!localStorage.getItem('invPriceMuffin275')) { saved['Pumpkin Muffin'] = 2.75; localStorage.setItem(INV_PRICE_KEY, JSON.stringify(saved)); localStorage.setItem('invPriceMuffin275', '1'); } } catch {}
     // Blueberry Muffin sells at $2.75 (2026-10-12); replace a $2.50 default saved earlier on this device, once.
     try { if (!localStorage.getItem('invPriceBlueberry275')) { saved['Blueberry Muffin'] = 2.75; localStorage.setItem(INV_PRICE_KEY, JSON.stringify(saved)); localStorage.setItem('invPriceBlueberry275', '1'); } } catch {}
+    // Blueberry Muffin goes to $3.00 on 2026-11-10 (earlier deliveries stay $2.75 in buildInvoice); the saved field is the new price, so replace $2.75 once.
+    try { if (!localStorage.getItem('invPriceBlueberry300')) { saved['Blueberry Muffin'] = 3; localStorage.setItem(INV_PRICE_KEY, JSON.stringify(saved)); localStorage.setItem('invPriceBlueberry300', '1'); } } catch {}
     // Dubai Ball is $3.50 (2026-10-01); replace a $2.50 default saved earlier on this device, once.
     try { if (!localStorage.getItem('invPriceDubai350')) { saved['Dubai Ball'] = 3.5; localStorage.setItem(INV_PRICE_KEY, JSON.stringify(saved)); localStorage.setItem('invPriceDubai350', '1'); } } catch {}
     return Object.fromEntries(ENTRY_PRODUCTS.map(p => [p, Number.isFinite(saved[p]) ? saved[p] : (INV_DEFAULT_PRICE[p] ?? PRICE_PER_UNIT)]));
@@ -3631,7 +3628,7 @@
     if (!document.getElementById('invIssue').value) document.getElementById('invIssue').value = today;
     const pr = invPrices();
     document.getElementById('invPrices').innerHTML = ENTRY_PRODUCTS.map(p =>
-      `<div class="inv-field"${p === 'Dubai Ball' ? ' id="invDubaiRow"' : ''}><span>${tok(p)} ${esc(p === 'Dubai Ball' ? 'Dubai Chewy Ball' : pdisp(p))}</span><input class="price" type="number" inputmode="decimal" step="0.01" min="0" data-inv-price="${esc(p)}" value="${pr[p]}" /></div>`).join('');
+      `<div class="inv-field"${p === 'Dubai Ball' ? ' id="invDubaiRow"' : ''}><span>${tok(p)} ${esc(p === 'Dubai Ball' ? 'Dubai Chewy Ball' : pdisp(p))}${PRICE_FROM[p] ? ` <small>(from Nov 10; earlier ${usd(PRICE_FROM[p].before)})</small>` : ''}</span><input class="price" type="number" inputmode="decimal" step="0.01" min="0" data-inv-price="${esc(p)}" value="${pr[p]}" /></div>`).join('');
     syncInvDubai();
     const stSel = document.getElementById('invStore');
     const paintStore = () => document.querySelectorAll('#invStoreBtns button').forEach(b => b.classList.toggle('on', b.dataset.store === stSel.value));
@@ -3673,10 +3670,16 @@
     // Sum per product, per store; retired flavors still bill if they were actually delivered.
     const groups = stores.map(st => {
       const qty = Object.fromEntries(HIST_PRODUCTS.map(p => [p, 0]));
-      for (const e of all) if (e.location === st) for (const p of HIST_PRODUCTS) qty[p] += e.amounts[p] || 0;
-      const lines = HIST_PRODUCTS.filter(p => qty[p] > 0 && !(INV_SKIP[st] || []).includes(p)).map(p => {
-        const unit = prices[p] != null ? prices[p] : PRICE_PER_UNIT;
-        return { p, qty: qty[p], unit, amt: qty[p] * unit };
+      const qtyOld = Object.fromEntries(HIST_PRODUCTS.map(p => [p, 0]));   // deliveries before a dated price change (PRICE_FROM)
+      for (const e of all) if (e.location === st) for (const p of HIST_PRODUCTS) {
+        const n = e.amounts[p] || 0;
+        if (PRICE_FROM[p] && String(e.datetime).slice(0, 10) < PRICE_FROM[p].date) qtyOld[p] += n; else qty[p] += n;
+      }
+      const lines = HIST_PRODUCTS.filter(p => !(INV_SKIP[st] || []).includes(p)).flatMap(p => {
+        const unit = prices[p] != null ? prices[p] : PRICE_PER_UNIT, out = [];
+        if (qtyOld[p] > 0) { const u = PRICE_FROM[p].before; out.push({ p, qty: qtyOld[p], unit: u, amt: qtyOld[p] * u }); }
+        if (qty[p] > 0) out.push({ p, qty: qty[p], unit, amt: qty[p] * unit });
+        return out;
       });
       return { st, lines, total: lines.reduce((a, l) => a + l.amt, 0), units: lines.reduce((a, l) => a + l.qty, 0) };
     }).filter(g => g.lines.length);
@@ -5282,12 +5285,12 @@
     { key: 'flatchookie', labFlat: 0.4, wholesale: 2.75, retail: 4.5, star: true, name: 'Chocolate Chip Cookie', type: 'simple', yield: 13, oven: { lo: 10, hi: 12, cap: 32 }, prep: 20, yieldText: 'makes 13 cookies (70 g of dough each)',
       rows: [['All-Purpose Flour', 375], ['Baking Soda', 5], ['Kosher Salt', 4], ['Unsalted Butter', 227], ['Light Brown Sugar', 160], ['Granulated Sugar', 120], ['Eggs', 100], ['Pure Vanilla Extract', 10], ['Semisweet Chocolate Chips', 100], ['Flaked Sea Salt', 5]],
       notes: 'Bake at 350°F (175°C) for 10–11 minutes.' },
-    { key: 'brownbutterchip', labFlat: 0.4, wholesale: 2.75, retail: 4.5, star: true, name: 'Brown Butter Chocolate Chip Cookie', type: 'simple', yield: 13, oven: { lo: 10, hi: 12, cap: 32 }, prep: 20, yieldText: 'makes 13 cookies (90 g of dough each)',
+    { key: 'brownbutterchip', labFlat: 0.4, wholesale: 2.75, retail: 4.5, star: true, name: 'Brown Butter Chocolate Chip Cookie', type: 'simple', yield: 12, oven: { lo: 10, hi: 12, cap: 32 }, prep: 20, yieldText: 'makes 12 cookies (90 g of dough each, chocolate included)',
       components: [
-        { title: 'Brown Butter', rows: [['Unsalted Butter', 227], ['Water (added after browning)', 30]] },
-        { title: 'Dough', rows: [['Granulated Sugar', 100], ['Dark Brown Sugar', 320], ['Kosher Salt', 6], ['Baking Soda', 2.5], ['Eggs', 100], ['Vanilla Extract', 9], ['All-Purpose Flour', 310], ['Dark Chocolate (70% cacao minimum)', 85]], note: 'Dark brown sugar: if you only have light brown sugar, add about 10 g molasses to the 320 g (roughly 1½ tsp). Use up to 20 g for a stronger flavor.' } ],
-      rows: [['Unsalted Butter', 227], ['Water', 30], ['Granulated Sugar', 100], ['Dark Brown Sugar', 320], ['Kosher Salt', 6], ['Baking Soda', 2.5], ['Eggs', 100], ['Pure Vanilla Extract', 9], ['All-Purpose Flour', 310], ['Dark Chocolate 70%', 85]],
-      notes: 'Espresso powder (optional): 4 g, added to the dough with the salt.<br><br>The dough totals about 1,189.5 g, so 90 g per cookie makes 13.' },
+        { title: 'Brown Butter', rows: [['Unsalted Butter', 227], ['Browned butter (butter minus about 36 g water lost)', 191], ['Water (added after browning)', 30]] },
+        { title: 'Dough', rows: [['Granulated Sugar', 100], ['Light Brown Sugar', 257, 320], ['Kosher Salt', 6], ['Baking Soda', 2.5], ['Eggs', 100], ['Vanilla Extract', 9], ['All-Purpose Flour', 310], ['Dark Chocolate (70% cacao minimum)', 85]] } ],
+      rows: [['Unsalted Butter', 227], ['Water', 30], ['Granulated Sugar', 100], ['Light Brown Sugar', 257], ['Kosher Salt', 6], ['Baking Soda', 2.5], ['Eggs', 100], ['Pure Vanilla Extract', 9], ['All-Purpose Flour', 310], ['Dark Chocolate 70%', 85]],
+      notes: 'Eggs at room temperature.<br>Espresso powder (optional): 4 g, added to the dough with the salt.<br><br><b>Method</b><br>1. Brown the butter, then add the water. The browned butter weighs about 191 g (227 g butter minus about 36 g water lost, roughly 16%).<br>2. Warm the browned butter with both sugars and mix until well combined.<br>3. Add the eggs and vanilla.<br>4. Add all the dry ingredients.<br>5. Add the chocolate at the end.<br><br><b>Yield</b><br>Brown sugar is cut 20% (320 g to 257 g per batch, so 3 batches use 771 g instead of 960 g). The dough totals about 1,090 g after the butter loses water; allowing about 3% lost in the bowl, 90 g per cookie makes 12.<br><br><b>One month, both stores (La Mirada and Stanton)</b><br>About 400 cookies = 34 batches (34 x 12 = 408).' },
     { key: 'snickerdoodle', labFlat: 0.4, wholesale: 2.75, retail: 4.5, star: true, type: 'simple', name: 'Snickerdoodle Cookies', yield: 14, oven: { lo: 10, hi: 12, cap: 32 }, prep: 20, yieldText: 'makes 14 cookies (70 g of dough each; lilluna.com, amounts converted from cups and spoons)',
       rows: [['Unsalted Butter', 227], ['Sugar', 300], ['Eggs', 100], ['Vanilla Extract', 4], ['All Purpose Flour', 344], ['Cream of Tartar', 6], ['Baking Soda', 5], ['Salt', 3], ['Sugar (topping)', 39], ['Cinnamon (topping)', 9.3]],
       notes: 'Conversions: 2¾ cups flour = 344g, 1 cup butter = 227g, 1½ cups sugar = 300g. The dough totals about 989 g, so 70 g per cookie makes 14. The cinnamon sugar (39 g sugar, 9.3 g cinnamon) is scaled down from the original 24-cookie coating to fit 14.<br><br>1. Cream butter and sugar.<br>2. Beat in eggs and vanilla.<br>3. Mix in the dry ingredients. Chill if soft.<br>4. Roll into balls (70 g), roll twice in the cinnamon sugar.<br>5. Bake at 350°F (175°C) for 8 to 10 minutes.',
@@ -5306,13 +5309,13 @@
         { title: 'Earl Grey Glaze', rows: [['Heavy Whipping Cream', 50], ['Earl Grey Tea Leaves', 3], ['Powdered Sugar', 100]] } ],
       rows: [['Unsalted Butter', 100], ['Sugar', 102], ['Eggs', 100], ['Cake Flour', 100], ['Baking Powder', 2.5], ['Salt', 1], ['Earl Grey Tea Leaves', 15], ['Heavy Cream', 100], ['Water', 30], ['Powdered Sugar', 100]],
       notes: '<b>Bake:</b> 180°C (356°F), 23 min (to try). Method follows the video.' },
-    { key: 'cakepop', labFlat: 0.4, wholesale: 2.75, retail: 4.5, type: 'simple', name: 'Cake Pop', link: 'https://sallysbakingaddiction.com/homemade-cake-pops/', yield: 62, oven: { lo: 30, hi: 30, cap: 62 }, prep: 20, yieldText: 'makes about 62 cake pops from one full sheet pan (12 x 10 x 0.98 in; coated with vanilla almond bark and cocoa butter, one mini waffle cone each)',
+    { key: 'cakepop', labFlat: 0.4, wholesale: 2.75, retail: 4.5, type: 'simple', name: 'Cake Pop', link: 'https://sallysbakingaddiction.com/homemade-cake-pops/', yield: 62, oven: { lo: 30, hi: 30, cap: 62 }, prep: 20, yieldText: 'makes about 62 cake pops from one quarter sheet pan (a full sheet pan is 4 batches, about 248 pops; coated with vanilla almond bark and cocoa butter, one mini waffle cone each)',
       components: [
         { title: 'Cake', rows: [['Flour', 397], ['Baking Powder', 4.8], ['Baking Soda', 1.9], ['Salt', 5.7], ['Softened Butter', 215], ['Sugar', 266, 380], ['Egg', 95], ['Vanilla Extract', 15], ['Whole Milk', 466]] },
         { title: 'Frosting', rows: [['Softened Butter', 188], ['Powdered Sugar', 239.4, 399], ['Heavy Cream (or milk)', 23], ['Vanilla Extract', 7.6]] },
-        { title: 'Coating', rows: [['Vanilla Almond Bark', 1178], ['Cocoa Butter', 41], ['Mini Waffle Cones', 62, null, ' pcs']], note: 'One 570 g bar of vanilla almond bark melted with 20 g cocoa butter coats 30 cake pop cones; 62 cones take 1,178 g bark and 41 g cocoa butter. Sprinkles (no amount given). With real white chocolate, add 1/2 tsp vegetable oil to thin it.' } ],
-      rows: [['All Purpose Flour', 397], ['Baking Powder', 4.8], ['Baking Soda', 1.9], ['Salt', 5.7], ['Unsalted Butter', 215], ['Sugar', 266], ['Eggs', 95], ['Vanilla Extract', 15], ['Whole Milk', 466], ['Unsalted Butter (frosting)', 188], ['Powdered Sugar', 239.4], ['Heavy Cream', 23], ['Vanilla Extract (frosting)', 7.6], ['Vanilla Almond Bark', 1178], ['Cocoa Butter', 41], ['Mini Waffle Cones', 76]],
-      notes: '<b>Sugar is cut.</b> Cake sugar is 30% less: 266 g, from an original 380 g (the source recipe\'s 200 g for a 9-inch pan, scaled 1.9 times to the sheet pan). Frosting powdered sugar is 40% less: 239.4 g, from an original 399 g. Everything else is the original amount scaled 1.9 times.<br><br><b>1 batch</b> = one full sheet pan, 12 x 10 x 0.98 in, about 62 pops. Batter prep takes about 20 minutes and it bakes 30 minutes.<br><br><b>Method</b><br>1. Heat the oven to 350°F (177°C). Grease and line the pan.<br>2. Flour, baking powder, baking soda and salt.<br><br>3. Beat butter and sugar until creamed.<br>4. Egg and vanilla, beat on high.<br><br>5. Dry mix and milk, mix on low until combined. Spread in the pan, bake 30 minutes. Cool completely (best made the day before).<br><i>Tips:</i> Stir by hand to catch lumps. Tent with foil if the top browns too fast.<br><br><b>Frosting:</b><br>Beat the butter on medium about 2 minutes.<br>Add powdered sugar, cream and vanilla, mix on low.<br><br>6. Crumble the cooled cake into the frosting with no big lumps. Beat on low until combined.<br>7. Roll into balls (25g). Chill 2 hours or freeze 1 hour.<br><i>Tips:</i> Keep the tray cold and work a few at a time.<br>8. Melt the coating. Let it cool about 5 minutes so it does not crack the pops.<br><i>Tips:</i> The balls must stay very cold.<br>9. Dip a stick 1/2 inch in the coating, push halfway into a ball, dip the whole ball, tap off the excess, add sprinkles, stand upright.<br><br><b>Shelf life:</b><br>Keep in the fridge up to 1 week.<br>Undipped balls keep 2 days in the fridge or 6 weeks frozen; finished pops freeze 6 weeks.' },
+        { title: 'Coating', rows: [['Vanilla Almond Bark', 454], ['Cocoa Butter', 20], ['Mini Waffle Cones', 62, null, ' pcs']], note: '454 g of vanilla almond bark melted with 20 g cocoa butter per batch. Sprinkles (no amount given). With real white chocolate, add 1/2 tsp vegetable oil to thin it.' } ],
+      rows: [['All Purpose Flour', 397], ['Baking Powder', 4.8], ['Baking Soda', 1.9], ['Salt', 5.7], ['Unsalted Butter', 215], ['Sugar', 266], ['Eggs', 95], ['Vanilla Extract', 15], ['Whole Milk', 466], ['Unsalted Butter (frosting)', 188], ['Powdered Sugar', 239.4], ['Heavy Cream', 23], ['Vanilla Extract (frosting)', 7.6], ['Vanilla Almond Bark', 454], ['Cocoa Butter', 20], ['Mini Waffle Cones', 76]],
+      notes: '<b>Sugar is cut.</b> Cake sugar is 30% less: 266 g, from an original 380 g (the source recipe\'s 200 g for a 9-inch pan, scaled 1.9 times to the sheet pan). Frosting powdered sugar is 40% less: 239.4 g, from an original 399 g. Everything else is the original amount scaled 1.9 times.<br><br><b>1 batch</b> = one quarter sheet pan, about 62 pops. Batter prep takes about 20 minutes and it bakes 30 minutes.<br><br><b>Pan options</b><br>Quarter sheet pan: 1 batch (the amounts above).<br>Full sheet pan: 4 batches, about 248 pops. Set Batches to 4, or use: flour 1,588 g, baking powder 19.2 g, baking soda 7.6 g, salt 22.8 g, butter 860 g, sugar 1,064 g, eggs 380 g, vanilla 60 g, milk 1,864 g; frosting butter 752 g, powdered sugar 957.6 g, cream 92 g, vanilla 30.4 g; coating 1,816 g bark + 80 g cocoa butter; 248 cones.<br><br><b>Method</b><br>1. Heat the oven to 350°F (177°C). Grease and line the pan.<br>2. Flour, baking powder, baking soda and salt.<br><br>3. Beat butter and sugar until creamed.<br>4. Egg and vanilla, beat on high.<br><br>5. Dry mix and milk, mix on low until combined. Spread in the pan, bake 30 minutes. Cool completely (best made the day before).<br><i>Tips:</i> Stir by hand to catch lumps. Tent with foil if the top browns too fast.<br><br><b>Frosting:</b><br>Beat the butter on medium about 2 minutes.<br>Add powdered sugar, cream and vanilla, mix on low.<br><br>6. Crumble the cooled cake into the frosting with no big lumps. Beat on low until combined.<br>7. Roll into balls (25g). Chill 2 hours or freeze 1 hour.<br><i>Tips:</i> Keep the tray cold and work a few at a time.<br>8. Melt the coating. Let it cool about 5 minutes so it does not crack the pops.<br><i>Tips:</i> The balls must stay very cold.<br>9. Dip a stick 1/2 inch in the coating, push halfway into a ball, dip the whole ball, tap off the excess, add sprinkles, stand upright.<br><br><b>Shelf life:</b><br>Keep in the fridge up to 1 week.<br>Undipped balls keep 2 days in the fridge or 6 weeks frozen; finished pops freeze 6 weeks.' },
     { key: 'churrosfinancier', type: 'simple', name: 'Chocolate Churros Financier', yield: 12, yieldText: 'makes 12 financiers',
       rows: [['Unsalted Butter', 160], ['Egg White', 120], ['Brown Sugar', 115], ['Honey', 35], ['Almond Flour', 84], ['Cake Flour', 18], ['Cocoa Powder', 12], ['Cinnamon', 4], ['Baking Powder', 2]],
       notes: '<b>Coating (no amounts given):</b> sugar and cinnamon at 10 : 1 (sugar : cinnamon), plus coating chocolate. Milk chocolate is recommended over dark.<br><br>1. Brown the butter, cool to 50°C (122°F).<br>2. Whisk egg whites, brown sugar and honey until combined and slightly pale.<br>3. Mix in the cooled brown butter until smooth.<br><br>4. Sift in almond flour, cake flour, cocoa, cinnamon and baking powder, mix gently.<br>5. Pipe into a financier pan.<br><br>6. Preheat to 200°C (392°F). Bake at 190°C (374°F) 8 minutes, then 180°C (356°F) 6 minutes.<br>7. Cool completely on a wire rack.<br>8. Dip in melted chocolate, roll in the cinnamon sugar.' },
@@ -5442,7 +5445,7 @@
   const isSeasonal = (sec, it) => seasonRank(sec, it) < 99;
   // Active items (Andrew, 2026-10-13): Maple Pecan, Lemon Poppy, Sea Salt (the Classic recipe) and the Pumpkin + Blueberry muffins.
   // Everything else is "disabled": still viewable everywhere (Recipes, Costs), just listed below the active ones.
-  const ACTIVE_ITEMS = ['mad:Maple Pecan', 'mad:Lemon Poppy', 'mad:Classic', 'other:blueberrymuffin', 'other:pumpkinbundt', 'other:earlgreymini', 'other:cakepop', 'other:brownbutterchip'];   // Pumpkin Muffin disabled 2026-10-23 (replaced by the bundt cake)
+  const ACTIVE_ITEMS = ['mad:Maple Pecan', 'mad:Lemon Poppy', 'mad:Classic', 'other:blueberrymuffin', 'other:pumpkinbundt', 'other:cakepop', 'other:brownbutterchip'];   // Pumpkin Muffin disabled 2026-10-23 (replaced by the bundt cake)
   const isActive = (sec, it) => ACTIVE_ITEMS.includes(`${sec}:${it.key || it.name}`);
   const recNm = it => it.title || it.name;
   const byName = (a, b) => recNm(a).localeCompare(recNm(b));
@@ -6806,7 +6809,7 @@
   const bsSplitFlour = rows => { if (!rows.some(r => r[0] === 'Cake Flour' && typeof r[1] === 'number')) return rows; const parts = new Set(recFlourParts(500).map(p => bsCanon(p[0]))); const out = []; const add = (n, g) => { const e = parts.has(bsCanon(n)) && typeof g === 'number' ? out.find(r => bsCanon(r[0]) === bsCanon(n) && typeof r[1] === 'number') : null; if (e) e[1] += g; else out.push([n, g]); }; rows.forEach(([n, g]) => { if (n === 'Cake Flour' && typeof g === 'number') recFlourParts(g).forEach(([pn, pg]) => add(pn, pg)); else add(n, g); }); return out; };
   const bsFind = key => { const [sec, k] = key.split(/:(.*)/s); const it = (COST_SECTIONS.find(x => x[0] === sec) || [])[2]?.().find(x => (x.key || x.name) === k); return it ? { sec, it } : null; };
   // Which forecast product a recipe's batches come from (recipes with no product just start at 1 batch).
-  const BS_PRODUCT = { 'other:dubaiball': 'Dubai Ball', 'mad:Lemon Poppy': 'Lemon Poppy', 'mad:Maple Pecan': 'Maple Pecan', 'mad:Classic': 'Sea Salt', 'other:pumpkinmuffin': 'Pumpkin Muffin', 'other:blueberrymuffin': 'Blueberry Muffin', 'other:pumpkinbundt': 'Pumpkin Bundt', 'other:earlgreymini': 'Earl Grey Mini', 'other:cakepop': 'Cake Pop', 'other:brownbutterchip': 'Chookie' };
+  const BS_PRODUCT = { 'other:dubaiball': 'Dubai Ball', 'mad:Lemon Poppy': 'Lemon Poppy', 'mad:Maple Pecan': 'Maple Pecan', 'mad:Classic': 'Sea Salt', 'other:pumpkinmuffin': 'Pumpkin Muffin', 'other:blueberrymuffin': 'Blueberry Muffin', 'other:pumpkinbundt': 'Pumpkin Bundt', 'other:cakepop': 'Cake Pop', 'other:brownbutterchip': 'Chookie' };
   const bsProjectedBatches = key => { const p = BS_PRODUCT[key], n = p && planBakeTotals[p]; return n > 0 ? flavorBatches(n, p) : 0; };
   // The bake plan follows the forecast: recipes whose product the plan says to bake are added, and their batches track the
   // plan until you change them by hand (then they're yours). Removing one keeps it off until the page is reloaded.
