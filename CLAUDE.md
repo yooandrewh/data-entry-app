@@ -512,3 +512,15 @@ Home's menu is Forecast / Baking Plan / Invoice / Labels only: the **Kairos Logs
 (`logsOpen()`, `#homeLogs`, `api/logs.js`) and its sheet tabs are still in place, just unreachable. **Baking Plan** shows only the Bake Plan card: the date / delivery-day /
 bake-day card, the per-store plan cards and the Kitchen Times editor are hidden with `display:none` (their elements stay because `renderPlan()` still runs to feed `planBakeTotals`).
 The list starts with this season's recipes; `autoFillBakePlan()` only updates the batches of recipes already listed and no longer adds forecast products.
+
+
+## Steps, bake temp, all-ingredient totals, Bundt spices (2026-11-10, v1.121.00)
+
+- **Recipe cards group ingredients by mixing step.** Madeleines use `REC_MAD_STEPS` (eggs/sugar/milk/honey-or-syrup → dry → melted butter) through `recStepRender()`, which
+  assigns each row to the first step whose regex matches, else to the `dflt` step. Other recipes opt in with a `steps` key (Blueberry Muffin: butter+sugar, eggs+vanilla, dry, milk, blueberries last).
+  The Brown Butter Chocolate Chip Cookie has four step `components` instead (its `rows` are unchanged). Cards with no `steps` that aren't in `REC_MADS` keep the flat list. Madeleine steps are by
+  ingredient name, not per version. The bake sheet keeps its own wet/dry/fat groups and labels are unaffected.
+- **Bake Plan shows bake temp and time** under each recipe title (`bsBakeText()`, `.bs2-bake`): an explicit `bake` string on the recipe wins, else it is parsed from `bakeNote` / `notes`
+  (madeleines fall back to `REC_MAD_NOTES`), else the `oven` minutes. **Maple Pecan has no bake temperature on file**, so it shows minutes only or nothing. Don't invent one.
+- **Total ingredients needed lists every ingredient** (biggest first); ones used by 2+ planned recipes print **bold italic**. Block lines are strings or `{t, c}` (`bsLineHtml`).
+- **Pumpkin Bundt spices:** the cake takes 6 g ground cinnamon per batch (18 g per 3 batches); the glaze takes 9.33 g pumpkin pie spice per batch (28 g per 3). The old cardamom, allspice and black pepper are gone.

@@ -665,6 +665,8 @@
   }
   .rec-qty::-webkit-outer-spin-button, .rec-qty::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
   .rec-qty:focus { outline: none; border-bottom-style: solid; }
+  .rec-step { margin: 14px 0 2px; font-size: var(--fs-caption); font-weight: 600; color: var(--accent); }
+  .rec-step small { display: block; font-weight: 400; color: var(--muted); font-size: var(--fs-micro); }
   .rec-box { background: var(--field); border-radius: 10px; padding: 10px 12px; margin-top: 12px; font-size: var(--fs-caption); line-height: 1.5; }
   .rec-box b { display: block; font-size: var(--fs-micro); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin-bottom: 4px; }
   .rec-box .gl { display: flex; justify-content: space-between; gap: 10px; padding: 2px 0; }
@@ -1048,6 +1050,7 @@
   .bs2-block h4 { margin: 0 0 2px; font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: .2px; line-height: 1.5; }
   .bs2-block h4 small { display: block; font-weight: 400; text-transform: none; color: #666; font-size: 12px; letter-spacing: 0; }
   .bs2-grp { margin-bottom: 12px; }
+  .bs2-bake { font-size: 12px; font-weight: 700; margin: 0 0 8px; }
   @media print { body.printing-bake .bs2-doc { font-size: 11pt; } }
 
   /* ---- Home: booking link + kitchen times ---- */
@@ -1188,6 +1191,7 @@
   body:not(.printing-bake) #bsScrim .bs2-block { background: var(--card); border: 1px solid var(--sep); padding: 10px 12px 6px; margin: 0 0 8px; }
   body:not(.printing-bake) #bsScrim .bs2-block h4 { font-size: var(--fs-body); font-weight: 700; text-transform: none; letter-spacing: 0; color: var(--text); margin: 0 0 4px; }
   body:not(.printing-bake) #bsScrim .bs2-block h4 small { color: var(--muted); font-size: var(--fs-caption); font-weight: 500; }
+  body:not(.printing-bake) #bsScrim .bs2-bake { font-size: var(--fs-caption); color: var(--accent); margin: 2px 0 8px; }
   body:not(.printing-bake) #bsScrim .bs2-grp { margin: 0 0 6px; }
   body:not(.printing-bake) #bsScrim .bs2-grp > div { padding: 5px 0; border-bottom: 1px solid var(--sep); font-size: var(--fs-caption); }
   body:not(.printing-bake) #bsScrim .bs2-grp > div:last-child { border-bottom: none; }
@@ -2128,7 +2132,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.120.02 · Nov 10, 5:23 PM PST</div>
+<div class="ver-badge">v1.121.00 · Nov 10, 6:35 PM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -5254,7 +5258,14 @@
       lblExtra: { filling: ['pumpkin puree', 'pumpkin pie spice'] },
       notes: '1. Whisk flour, baking powder, salt and pumpkin pie spice.<br><br>2. Whisk eggs, granulated sugar and brown sugar 2–3 minutes, until pale and slightly thick.<br>3. Whisk in vanilla and pumpkin puree.<br><br>4. Fold in the dry mix just until no streaks.<br>5. Fold in melted butter, then oil and milk, until glossy.<br>6. Cover and chill at least 1 hour (overnight best).<br><i>Tips:</i> Drain the pumpkin puree in a fine sieve 10–15 minutes first, excess water is the main risk to texture. Chilling the batter is essential for the classic hump.<br><br>7. Preheat oven to 375°F (190°C). Butter and flour the madeleine pan.<br>8. Fill each mold about ¾ full with chilled batter.<br>9. Bake ~11 minutes, until edges are golden, hump formed, toothpick clean.<br>10. Unmold right away onto a wire rack.' },
     // Blueberry Muffin (2026-10-05): untested, built for a taller dome first, then moisture, and less sweet. Amounts are estimates from comparing three source recipes; the yield (about 12) is a guess.
-    { key: 'blueberrymuffin', type: 'muffin', name: 'Blueberry Muffin', title: 'Blueberry Muffin', yield: 36, oven: { lo: 30, hi: 30, cap: 36 }, prep: 20,
+    { key: 'blueberrymuffin', type: 'muffin', name: 'Blueberry Muffin', title: 'Blueberry Muffin', yield: 36, oven: { lo: 30, hi: 30, cap: 36 }, prep: 20, bake: 'preheat 375°F (190°C), then 350°F (175°C) · 30 min',
+      steps: [
+        { title: 'Butter and sugar', hint: 'Soften the butter and cream it with the sugar.', re: /butter|sugar/i },
+        { title: 'Eggs and vanilla', hint: 'Add the eggs and vanilla extract.', re: /egg|vanilla/i },
+        { title: 'Dry ingredients', hint: 'Add the dry ingredients.', re: /flour|\bsalt\b|baking/i },
+        { title: 'Milk', hint: 'Add the milk in splits.', re: /milk/i },
+        { title: 'Blueberries', hint: 'Fold in the blueberries last.', re: /blueberr/i, dflt: true },
+      ],
       custom: [['Unsalted Butter', 678], ['Sugar', 1200], ['Eggs', 600], ['Vanilla Extract', 30], ['All Purpose Flour', 1440], ['Salt', 18], ['Baking Powder', 54], ['Milk', 660], ['Blueberry', 1500]],
       versions: [
         { label: 'Ver 1', yield: 36, rows: [['Unsalted Butter', 678], ['Sugar', 1200], ['Eggs', 600], ['Vanilla Extract', 30], ['All Purpose Flour', 1440], ['Salt', 18], ['Baking Powder', 54], ['Milk', 660], ['Blueberry', 1500]],
@@ -5283,22 +5294,24 @@
     { key: 'flatchookie', labFlat: 0.4, wholesale: 2.75, retail: 4.5, star: true, name: 'Chocolate Chip Cookie', type: 'simple', yield: 13, oven: { lo: 10, hi: 12, cap: 32 }, prep: 20, yieldText: 'makes 13 cookies (70 g of dough each)',
       rows: [['All-Purpose Flour', 375], ['Baking Soda', 5], ['Kosher Salt', 4], ['Unsalted Butter', 227], ['Light Brown Sugar', 160], ['Granulated Sugar', 120], ['Eggs', 100], ['Pure Vanilla Extract', 10], ['Semisweet Chocolate Chips', 100], ['Flaked Sea Salt', 5]],
       notes: 'Bake at 350°F (175°C) for 10–11 minutes.' },
-    { key: 'brownbutterchip', labFlat: 0.4, wholesale: 2.75, retail: 4.5, star: true, name: 'Brown Butter Chocolate Chip Cookie', type: 'simple', yield: 12, oven: { lo: 15, hi: 20, cap: 32 }, prep: 20, yieldText: 'makes 12 cookies (90 g of dough each, chocolate included)',
+    { key: 'brownbutterchip', labFlat: 0.4, wholesale: 2.75, retail: 4.5, star: true, name: 'Brown Butter Chocolate Chip Cookie', type: 'simple', yield: 12, oven: { lo: 15, hi: 20, cap: 32 }, prep: 20, bake: '350°F (175°C) · 15–20 min', yieldText: 'makes 12 cookies (90 g of dough each, chocolate included)',
       components: [
-        { title: 'Brown Butter', rows: [['Unsalted Butter', 227], ['Browned butter (butter minus about 36 g water lost)', 191], ['Water (added after browning)', 30]] },
-        { title: 'Dough', rows: [['Granulated Sugar', 100], ['Light Brown Sugar', 257, 320], ['Kosher Salt', 6], ['Baking Soda', 2.5], ['Eggs', 100], ['Vanilla Extract', 9], ['All-Purpose Flour', 310], ['Dark Chocolate (70% cacao minimum)', 85]] } ],
+        { title: 'Step 1 · Browned butter, water, sugar', rows: [['Unsalted Butter', 227], ['Browned butter (butter minus about 36 g water lost)', 191], ['Water (added after browning)', 30], ['Granulated Sugar', 100], ['Light Brown Sugar', 257, 320]] },
+        { title: 'Step 2 · Eggs and vanilla', rows: [['Eggs', 100], ['Vanilla Extract', 9]], note: 'Warm the eggs to 30–35°C.' },
+        { title: 'Step 3 · Dry ingredients', rows: [['All-Purpose Flour', 310], ['Kosher Salt', 6], ['Baking Soda', 2.5]] },
+        { title: 'Step 4 · Chocolate chips', rows: [['Dark Chocolate (70% cacao minimum)', 85]] } ],
       rows: [['Unsalted Butter', 227], ['Water', 30], ['Granulated Sugar', 100], ['Light Brown Sugar', 257], ['Kosher Salt', 6], ['Baking Soda', 2.5], ['Eggs', 100], ['Pure Vanilla Extract', 9], ['All-Purpose Flour', 310], ['Dark Chocolate 70%', 85]],
-      notes: 'Eggs at room temperature.<br>Espresso powder (optional): 4 g, added to the dough with the salt.<br><br><b>Method</b><br>1. Brown the butter, then add the water. The browned butter weighs about 191 g (227 g butter minus about 36 g water lost, roughly 16%).<br>2. Warm the browned butter with both sugars and mix until well combined.<br>3. Add the eggs and vanilla.<br>4. Add all the dry ingredients.<br>5. Add the chocolate at the end.<br>6. Bake at 350°F (175°C) for 15–20 minutes.<br><br><b>Yield</b><br>Brown sugar is cut 20% (320 g to 257 g per batch, so 3 batches use 771 g instead of 960 g). The dough totals about 1,090 g after the butter loses water; allowing about 3% lost in the bowl, 90 g per cookie makes 12.<br><br><b>One month, both stores (La Mirada and Stanton)</b><br>About 400 cookies = 34 batches (34 x 12 = 408).' },
+      notes: 'Eggs at room temperature.<br>Espresso powder (optional): 4 g, added to the dough with the salt.<br><br><b>Method</b><br>1. Brown the butter, then add the water. The browned butter weighs about 191 g (227 g butter minus about 36 g water lost, roughly 16%).<br>2. Warm the browned butter with both sugars and mix until well combined.<br>3. Warm the eggs to 30–35°C, then add them with the vanilla.<br>4. Add all the dry ingredients.<br>5. Add the chocolate at the end.<br>6. Bake at 350°F (175°C) for 15–20 minutes.<br><br><b>Yield</b><br>Brown sugar is cut 20% (320 g to 257 g per batch, so 3 batches use 771 g instead of 960 g). The dough totals about 1,090 g after the butter loses water; allowing about 3% lost in the bowl, 90 g per cookie makes 12.<br><br><b>One month, both stores (La Mirada and Stanton)</b><br>About 400 cookies = 34 batches (34 x 12 = 408).' },
     { key: 'snickerdoodle', labFlat: 0.4, wholesale: 2.75, retail: 4.5, star: true, type: 'simple', name: 'Snickerdoodle Cookies', yield: 14, oven: { lo: 10, hi: 12, cap: 32 }, prep: 20, yieldText: 'makes 14 cookies (70 g of dough each; lilluna.com, amounts converted from cups and spoons)',
       rows: [['Unsalted Butter', 227], ['Sugar', 300], ['Eggs', 100], ['Vanilla Extract', 4], ['All Purpose Flour', 344], ['Cream of Tartar', 6], ['Baking Soda', 5], ['Salt', 3], ['Sugar (topping)', 39], ['Cinnamon (topping)', 9.3]],
       notes: 'Conversions: 2¾ cups flour = 344g, 1 cup butter = 227g, 1½ cups sugar = 300g. The dough totals about 989 g, so 70 g per cookie makes 14. The cinnamon sugar (39 g sugar, 9.3 g cinnamon) is scaled down from the original 24-cookie coating to fit 14.<br><br>1. Cream butter and sugar.<br>2. Beat in eggs and vanilla.<br>3. Mix in the dry ingredients. Chill if soft.<br>4. Roll into balls (70 g), roll twice in the cinnamon sugar.<br>5. Bake at 350°F (175°C) for 8 to 10 minutes.',
       link: 'https://lilluna.com/snickerdoodles/' },
-    { key: 'pumpkinbundt', labFlat: 0.4, wholesale: 3.35, retail: 6.5, type: 'simple', name: 'Pumpkin Bundt Cake', yield: 21, oven: { lo: 25, hi: 25, cap: 24 }, prep: 20, glazeFixed: 5, glazeSec: 5, yieldText: 'makes 21 bundt cakes (80 g of batter each)',
+    { key: 'pumpkinbundt', labFlat: 0.4, wholesale: 3.35, retail: 6.5, type: 'simple', name: 'Pumpkin Bundt Cake', yield: 21, oven: { lo: 25, hi: 25, cap: 24 }, prep: 20, bake: '350°F (175°C) · 25 min', glazeFixed: 5, glazeSec: 5, yieldText: 'makes 21 bundt cakes (80 g of batter each)',
       components: [
-        { title: 'Cake', rows: [['All-Purpose Flour', 384], ['Baking Powder', 8], ['Baking Soda', 5], ['Salt', 5], ['Ground Cinnamon', 5], ['Cardamom', 3], ['Allspice', 1], ['Black Pepper', 0.5], ['Light Brown Sugar', 440], ['Butter', 114], ['Avocado Oil', 108], ['Eggs', 100], ['Pumpkin Puree', 425], ['Sour Cream', 120]], note: 'The batter comes to about 1,718 g, which is 21 cakes at 80 g each.' },
-        { title: 'Glaze', rows: [['Powdered Sugar', 275], ['Pumpkin Pie Spice', 6.9], ['Milk', 60]], note: 'The source glaze (200 g powdered sugar, 5 g spice, 8 g milk) tops 8 cakes. Sugar and spice are scaled to 11; the milk is set to 60 g per batch.' } ],
-      rows: [['All-Purpose Flour', 384], ['Baking Powder', 8], ['Baking Soda', 5], ['Salt', 5], ['Ground Cinnamon', 5], ['Cardamom', 3], ['Allspice', 1], ['Black Pepper', 0.5], ['Brown Sugar', 440], ['Unsalted Butter', 114], ['Avocado Oil', 108], ['Eggs', 100], ['Pumpkin Puree', 425], ['Sour Cream', 120], ['Powdered Sugar', 275], ['Pumpkin Pie Spice', 6.9], ['Milk', 60]],
-      notes: '1) <b>Prep:</b> oven 350°F (175°C). Butter and flour the bundt pan. Batter prep about 20 minutes.<br>2) <b>Dry:</b> whisk flour, powder, soda, salt, spices.<br>3) <b>Cream:</b> paddle sugar, butter, oil, medium-high 3 min until fluffy.<br>4) <b>Eggs:</b> one at a time, 20 s each.<br>5) <b>Wet:</b> add pumpkin and sour cream, mix, scrape bowl.<br>6) <b>Fold:</b> dry into wet by hand, scrape bottom and sides.<br>7) <b>Pan:</b> pour, smooth top, tap on counter to release air.<br>8) <b>Bake:</b> 25 minutes, until golden and a skewer comes out clean. The oven takes 24 cakes at once for now (more with more pans).<br>9) <b>Glaze:</b> whisk about 5 minutes, glaze each cake about 5 seconds.' },
+        { title: 'Cake', rows: [['All-Purpose Flour', 384], ['Baking Powder', 8], ['Baking Soda', 5], ['Salt', 5], ['Ground Cinnamon', 6], ['Light Brown Sugar', 440], ['Butter', 114], ['Avocado Oil', 108], ['Eggs', 100], ['Pumpkin Puree', 425], ['Sour Cream', 120]], note: 'The batter comes to about 1,718 g, which is 21 cakes at 80 g each.' },
+        { title: 'Glaze', rows: [['Powdered Sugar', 275], ['Pumpkin Pie Spice', 9.33], ['Milk', 60]], note: 'The source glaze (200 g powdered sugar, 5 g spice, 8 g milk) tops 8 cakes. Sugar is scaled to 11; the spice is 28 g per 3 batches; the milk is set to 60 g per batch.' } ],
+      rows: [['All-Purpose Flour', 384], ['Baking Powder', 8], ['Baking Soda', 5], ['Salt', 5], ['Ground Cinnamon', 6], ['Brown Sugar', 440], ['Unsalted Butter', 114], ['Avocado Oil', 108], ['Eggs', 100], ['Pumpkin Puree', 425], ['Sour Cream', 120], ['Powdered Sugar', 275], ['Pumpkin Pie Spice', 9.33], ['Milk', 60]],
+      notes: '1) <b>Prep:</b> oven 350°F (175°C). Butter and flour the bundt pan. Batter prep about 20 minutes.<br>2) <b>Dry:</b> whisk flour, powder, soda, salt, cinnamon.<br>3) <b>Cream:</b> paddle sugar, butter, oil, medium-high 3 min until fluffy.<br>4) <b>Eggs:</b> one at a time, 20 s each.<br>5) <b>Wet:</b> add pumpkin and sour cream, mix, scrape bowl.<br>6) <b>Fold:</b> dry into wet by hand, scrape bottom and sides.<br>7) <b>Pan:</b> pour, smooth top, tap on counter to release air.<br>8) <b>Bake:</b> 25 minutes, until golden and a skewer comes out clean. The oven takes 24 cakes at once for now (more with more pans).<br>9) <b>Glaze:</b> whisk about 5 minutes, glaze each cake about 5 seconds.' },
     { key: 'earlgreymini', labFlat: 0.4, wholesale: 2.75, retail: 5.5, type: 'simple', name: 'Earl Grey Mini Pound Cake', link: 'https://www.youtube.com/watch?v=z4JNf2-Bw8A', yield: 7, oven: { lo: 25, hi: 25, cap: 8 }, prep: 20, yieldText: 'makes 7 mini cakes (60 g each)',
       components: [
         { title: 'Earl Grey Sauce', rows: [['Heavy Cream', 50], ['Earl Grey Tea Leaves', 6]] },
@@ -5307,7 +5320,7 @@
         { title: 'Earl Grey Glaze', rows: [['Heavy Whipping Cream', 50], ['Earl Grey Tea Leaves', 3], ['Powdered Sugar', 100]] } ],
       rows: [['Unsalted Butter', 100], ['Sugar', 102], ['Eggs', 100], ['Cake Flour', 100], ['Baking Powder', 2.5], ['Salt', 1], ['Earl Grey Tea Leaves', 15], ['Heavy Cream', 100], ['Water', 30], ['Powdered Sugar', 100]],
       notes: '<b>Bake:</b> 180°C (356°F), 23 min (to try). Method follows the video.' },
-    { key: 'cakepop', labFlat: 0.4, wholesale: 2.75, retail: 4.5, type: 'simple', name: 'Cake Pop', link: 'https://sallysbakingaddiction.com/homemade-cake-pops/', yield: 62, oven: { lo: 30, hi: 30, cap: 62 }, prep: 20, yieldText: 'makes about 62 cake pops from one quarter sheet pan (a full sheet pan is 4 batches, about 248 pops; coated with vanilla almond bark and cocoa butter, one mini waffle cone each)',
+    { key: 'cakepop', labFlat: 0.4, wholesale: 2.75, retail: 4.5, type: 'simple', name: 'Cake Pop', link: 'https://sallysbakingaddiction.com/homemade-cake-pops/', yield: 62, oven: { lo: 30, hi: 30, cap: 62 }, prep: 20, bake: '350°F (177°C) · 30 min', yieldText: 'makes about 62 cake pops from one quarter sheet pan (a full sheet pan is 4 batches, about 248 pops; coated with vanilla almond bark and cocoa butter, one mini waffle cone each)',
       components: [
         { title: 'Cake', rows: [['Flour', 397], ['Baking Powder', 4.8], ['Baking Soda', 1.9], ['Salt', 5.7], ['Softened Butter', 215], ['Sugar', 266, 380], ['Egg', 95], ['Vanilla Extract', 15], ['Whole Milk', 466]] },
         { title: 'Frosting', rows: [['Softened Butter', 188], ['Powdered Sugar', 239.4, 399], ['Heavy Cream (or milk)', 23], ['Vanilla Extract', 7.6]] },
@@ -5555,6 +5568,20 @@
     // Every version is numbered by age: Ver 1 is the oldest, the highest number is the newest.
     for (const it of [...REC_MADS, ...REC_OTHER]) if (it.versions) it.versions.forEach((v, i) => { v.label = 'Ver ' + (i + 1); });
   })();
+  // Ingredients grouped by mixing step (Andrew, 2026-11-10). A row goes to the first step whose `re` matches its name,
+  // otherwise to the step marked `dflt`. Madeleines share REC_MAD_STEPS; other cards set `steps` on the recipe.
+  const REC_MAD_STEPS = [
+    { title: 'Eggs, sugar, milk, honey or syrup', hint: 'Warm the eggs to 30°C, then mix with the sugar, milk and honey or syrup until well melted.', re: /^(?!.*(powder|flour|starch|butter|\boil\b|chocolate)).*(egg|sugar|honey|syrup|milk|cream|vanilla|extract|emulsion|puree|juice|water|zest)/i },
+    { title: 'Dry ingredients', hint: 'Add the dry ingredients to the egg mixture.', re: /powder|flour|starch|\bsalt\b|seed|pecan|leaves/i, dflt: true },
+    { title: 'Melted butter', hint: 'Melted butter at 40–45°C, mixed in well.', re: /butter|\boil\b|chocolate/i },
+  ];
+  function recStepRender(rows, steps, b) {
+    const dflt = Math.max(0, steps.findIndex(s => s.dflt) >= 0 ? steps.findIndex(s => s.dflt) : steps.length - 1);
+    const buckets = steps.map(() => []);
+    rows.forEach(r => { let i = steps.findIndex(s => s.re.test(r[0])); if (i < 0) i = dflt; buckets[i].push(r); });
+    let n = 0;
+    return steps.map((s, i) => buckets[i].length ? `<div class="rec-step">Step ${++n} · ${s.title}<small>${s.hint}</small></div>${recIngRows(buckets[i], b)}` : '').join('');
+  }
   function recMadCard(item) {
     let verChips = '', verLbl = '';
     if (item.versions) {
@@ -5568,7 +5595,7 @@
         <h3 class="rec-h">${recIc(item.name)} <span>${item.title || item.name + ' Madeleine'}</span>${verChips}</h3>
         <div class="proj-sub">1 batch ≈ ${(item.versions && item.versions[recState.madVer].yield) || item.yield || BATCH_YIELD} ${item.type === 'muffin' ? 'pieces' : 'madeleines'}${item.versions && item.versions[recState.madVer].sub ? ` (${item.versions[recState.madVer].sub})` : ''}${b !== 1 ? ` · scaled ${rFmt(b)}×` : ''}</div>
         ${recBatchRow()}
-        ${recIngRows(rows, b)}${recFlourNote(rows)}
+        ${(item.steps || REC_MADS.includes(item)) ? recStepRender(rows, item.steps || REC_MAD_STEPS, b) : recIngRows(rows, b)}${recFlourNote(rows)}
         ${item.note && !(item.versions && item.versions[recState.madVer].skipNote) ? `<div class="rec-box"><b>Flavoring</b>${rScaleNote(item.note, b)}</div>` : ''}
         ${item.finishFor ? `<div class="rec-box"><b>Syrup &amp; glaze yield</b>The syrup and glaze below are enough for ${item.finishFor} pieces (${rFmt(item.finishFor / (item.yield || BATCH_YIELD))} batches). Cost, the bake plan and the buy list use the share for one batch.</div>` : ''}
         ${item.syrup ? `<div class="rec-box"><b>Simple Syrup</b>${item.syrup.map(g => `<div class="gl"><span>${g[0]}</span><span>${rScaleStr(g[1], b)}</span></div>`).join('')}</div>` : ''}
@@ -6880,7 +6907,7 @@
       if (f.it.type === 'dubai') {   // filling, then the outer layer as its own section
         const fl = bsSplitFlour(f.it.rows.map(r => [r[0], r[1] * b.b])), ou = bsSplitFlour(f.it.outer.map(r => [r[0], r[1] * (f.it.outerTimes || 1) * b.b]));
         [...fl, ...ou].forEach(([n, g]) => { const c = bsCanon(n), t = totals.get(c) || { g: 0, uses: new Set() }; t.g += g; t.uses.add(b.key + '#' + (b.ver == null ? '' : b.ver)); totals.set(c, t); });
-        return { title: costItemName(f.sec, f.it), note: `${rFmt(b.b)} batch${b.b === 1 ? '' : 'es'} · ≈ ${rFmt(b.b * f.it.yield)} pcs`, groups: [fl.map(([n, g]) => bsLine(n, g))], subs: [{ label: 'Outer layer', lines: ou.map(([n, g]) => bsLine(n, g)) }] };
+        return { title: costItemName(f.sec, f.it), bake: bsBakeText(f, null), note: `${rFmt(b.b)} batch${b.b === 1 ? '' : 'es'} · ≈ ${rFmt(b.b * f.it.yield)} pcs`, groups: [fl.map(([n, g]) => bsLine(n, g))], subs: [{ label: 'Outer layer', lines: ou.map(([n, g]) => bsLine(n, g)) }] };
       }
       // Madeleines / muffins: the batter is its own list; syrup, glaze and topping go underneath as separate sections (not part of the batter).
       const split = f.sec === 'mad' || f.it.type === 'muffin' || f.it.type === 'mad';
@@ -6895,14 +6922,30 @@
       const groups = [[], [], []];
       rows.forEach(([n, g]) => { const r = recMadRank(String(n)); groups[r <= 2 ? 0 : r <= 13 ? 1 : 2].push(bsLine(n, g * b.b)); });
       const y = (f.it.vers && vl && vl.yield > 0 ? vl.yield : 0) || costDefaultYield(f.sec, f.it);
-      return { title: costItemName(f.sec, f.it) + (vl && bsVers(f.it).length > 1 ? ` (${vl.label})` : ''), note: `${rFmt(b.b)} batch${b.b === 1 ? '' : 'es'}${y ? ` · ≈ ${rFmt(b.b * y)} pcs` : ''}`, groups: groups.filter(g => g.length), subs: subs.map(sb => ({ label: sb.label, lines: sb.rows.map(([n, g]) => bsLine(n, g * b.b)) })) };
+      return { title: costItemName(f.sec, f.it) + (vl && bsVers(f.it).length > 1 ? ` (${vl.label})` : ''), bake: bsBakeText(f, vl), note: `${rFmt(b.b)} batch${b.b === 1 ? '' : 'es'}${y ? ` · ≈ ${rFmt(b.b * y)} pcs` : ''}`, groups: groups.filter(g => g.length), subs: subs.map(sb => ({ label: sb.label, lines: sb.rows.map(([n, g]) => bsLine(n, g * b.b)) })) };
     }).filter(Boolean);
-    // Common ingredients: anything used by two or more of the planned recipes, biggest amount first (needs two recipes to be "common").
-    const tot = [...totals.entries()].filter(([, t]) => t.uses.size > 1).sort((a, b) => b[1].g - a[1].g || a[0].localeCompare(b[0])).map(([n, t]) => bsLine(n, t.g));
-    if (tot.length) blocks.push({ title: 'Total ingredients needed', note: 'ingredients shared by 2+ recipes', groups: [tot] });
+    // Every ingredient, biggest amount first; the ones used by two or more of the planned recipes are flagged (c) and print bold italic.
+    const tot = [...totals.entries()].sort((a, b) => b[1].g - a[1].g || a[0].localeCompare(b[0])).map(([n, t]) => ({ t: bsLine(n, t.g), c: t.uses.size > 1 }));
+    if (tot.length) blocks.push({ title: 'Total ingredients needed', note: 'bold italic = used in 2+ recipes', groups: [tot] });
     return blocks;
   }
-  const bsBlockHtml = bl => `<div class="bs2-block"><h4>${esc(bl.title)}<small>${esc(bl.note)}</small></h4>${bl.groups.map(g => `<div class="bs2-grp">${g.map(l => `<div>${esc(l)}</div>`).join('')}</div>`).join('')}${(bl.subs || []).map(sb => `<div class="bs2-grp bs2-sub"><div class="bs2-subh">${esc(sb.label)}</div>${sb.lines.map(l => `<div>${esc(l)}</div>`).join('')}</div>`).join('')}</div>`;
+  // A line is a plain string, or {t, c} where c = common to 2+ recipes (bold italic).
+  const bsLineHtml = l => typeof l === 'string' ? `<div>${esc(l)}</div>` : `<div>${l.c ? `<b><i>${esc(l.t)}</i></b>` : esc(l.t)}</div>`;
+  const bsBlockHtml = bl => `<div class="bs2-block"><h4>${esc(bl.title)}<small>${esc(bl.note)}</small></h4>${bl.bake ? `<div class="bs2-bake">Bake: ${esc(bl.bake)}</div>` : ''}${bl.groups.map(g => `<div class="bs2-grp">${g.map(bsLineHtml).join('')}</div>`).join('')}${(bl.subs || []).map(sb => `<div class="bs2-grp bs2-sub"><div class="bs2-subh">${esc(sb.label)}</div>${sb.lines.map(bsLineHtml).join('')}</div>`).join('')}</div>`;
+  // Bake temperature + time for the sheet: an explicit `bake` on the recipe, else read from its bake note ("Bake at 374°F (190°C) for 11–12 minutes"), else just the oven minutes.
+  function bsBakeText(f, vl) {
+    const it = f.it;
+    if (typeof it.bake === 'string') return it.bake;
+    const mad = f.sec === 'mad' || it.type === 'mad' || it.type === 'muffin';
+    const raw = [vl && vl.bakeNote, (vl && vl.notes) || it.notes || (mad ? REC_MAD_NOTES : '')].filter(x => typeof x === 'string' && x).join(' ').replace(/<[^>]*>/g, ' ');
+    const m = raw.match(/bake(?:\s+\w+){0,3}?\s+at\s+(\d+\s*°\s*F\s*\(\d+\s*°\s*C\))\s+for\s+(\d+(?:\s*[–-]\s*\d+)?)\s*min/i);
+    if (m) {
+      const pre = raw.match(/preheat[^.]*?(\d+\s*°\s*F\s*\(\d+\s*°\s*C\))/i), tp = m[1].replace(/\s+/g, ''), pp = pre && pre[1].replace(/\s+/g, '');
+      return `${pp && pp !== tp ? `preheat ${pp}, then ` : ''}${tp} · ${m[2].replace(/\s+/g, '')} min`;
+    }
+    const o = it.oven; if (o && o.lo) return `${o.lo === o.hi ? o.lo : o.lo + '–' + o.hi} min`;
+    return '';
+  }
   const bsHeadHtml = () => { const [y, m, d] = (bsView ? bsView.day : nowPST().slice(0, 10)).split('-').map(Number); const eff = bsView ? bsView.eff : bsEffort(); const kt = eff ? `<div class="bs2-kt">Expected kitchen time: <b>${fmtDur(eff.min)}</b> · prep ${fmtDur(eff.prep)} · baking ${fmtDur(eff.baking)}</div>` : ''; return `<div class="bs2-title">Bake Plan</div><div class="bs2-date">${esc(new Date(y, m - 1, d).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }))} · amounts are for the base version of each recipe</div>${kt}`; };
   function paintBakeSheetDoc() {
     // Summary first: which recipes and how many batches, and the kitchen time they add up to.
