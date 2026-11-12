@@ -541,3 +541,7 @@ Home has an **Entry** button (opens the same popup as Data's + Entry); the *This
 ## Cookie sales column (2026-11-12, v1.123.00)
 
 The Sales tab has a **Chookie** column (brown butter chocolate chip cookie). `push_sales_to_sheet.py` adds the header on first `--write`; `api/sales.js` reads it; it is in `SALES_FLAVORS` and `EXTRA_SOLD` (so it never enters the madeleine mix or forecast). `scripts/reconcile.py` checks it against inventory counts. Cookies are not madeleines.
+
+## Print / PDF fit + font (2026-11-12, v1.123.01)
+
+Printed and PDF documents (labels, bake sheet, Preview Plan, invoice, Records print) use **Archivo**. The PDF renderer draws through an SVG image, which can't load web fonts, so `archivoEmbedCss()` fetches Archivo from Google Fonts once and embeds it as base64 in the SVG; offline it falls back to Arial. `elementsToPdf` clamps every block to one Letter page, `domToCanvas` adds 6px of height slack, and `@page { size: letter; margin: .5in }` governs `window.print()`. `bakeSheetPages` packs to `PAGE_H = 846`. Not tested on an iPhone.
