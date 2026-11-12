@@ -537,3 +537,7 @@ The list starts with this season's recipes; `autoFillBakePlan()` only updates th
 ## v1.121.01 (2026-11-10)
 
 Home has an **Entry** button (opens the same popup as Data's + Entry); the *This season* button is gone from Home. The Brown Butter Cookie's four steps use the same `.rec-step` style as the madeleine step cards.
+
+## Cookie sales column (2026-11-12, v1.123.00)
+
+The Sales tab has a **Chookie** column (brown butter chocolate chip cookie). `push_sales_to_sheet.py` adds the header on first `--write`; `api/sales.js` reads it; it is in `SALES_FLAVORS` and `EXTRA_SOLD` (so it never enters the madeleine mix or forecast). `scripts/reconcile.py` checks it against inventory counts. Cookies are not madeleines.

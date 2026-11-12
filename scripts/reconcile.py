@@ -3,7 +3,7 @@ U="https://data-entry-app-roan.vercel.app/api/"
 g=lambda p:json.load(urllib.request.urlopen(urllib.request.Request(U+p,headers={"User-Agent":"x"})))
 e=g("entries");e=e.get('entries') or e.get('rows')
 S=g("sales")["sales"]
-P=['Lemon Poppy','Sea Salt','Maple Pecan','Pumpkin Muffin','Blueberry Muffin','Pumpkin Bundt','Cake Pop']
+P=['Lemon Poppy','Sea Salt','Maple Pecan','Pumpkin Muffin','Blueberry Muffin','Pumpkin Bundt','Cake Pop','Chookie']
 e=[x for x in e if not x.get('taggedForDeletion')]
 BAD=[]   # variance > 5% of units sold = re-OCR that window (Andrew, 2026-11-09)
 for loc in ['La Mirada','Stanton']:
@@ -16,8 +16,8 @@ for loc in ['La Mirada','Stanton']:
     da,db=ta[:10],tb[:10]
     for p in P:
         dl=sum(x['amounts'].get(p,0) for x in mv)
-        full=sum(s['amounts'][p] for s in S if s['location']==loc and da<s['date']<db)
-        ends=sum(s['amounts'][p] for s in S if s['location']==loc and s['date'] in (da,db))
+        full=sum(s['amounts'].get(p,0) for s in S if s['location']==loc and da<s['date']<db)
+        ends=sum(s['amounts'].get(p,0) for s in S if s['location']==loc and s['date'] in (da,db))
         exp_hi=a['amounts'].get(p,0)+dl-full   # if none of the end days counted
         exp_lo=exp_hi-ends
         print(f"  {p:17} start {a['amounts'].get(p,0):3} +move {dl:3} -sales {full}(+ends {ends}) => expect {exp_lo}..{exp_hi}  counted {b['amounts'].get(p,0)}",end="")

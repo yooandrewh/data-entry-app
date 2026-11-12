@@ -2139,7 +2139,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.122.00 · Nov 10, 11:11 PM PST</div>
+<div class="ver-badge">v1.123.00 · Nov 12, 12:50 PM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -2371,7 +2371,7 @@
   document.querySelectorAll('[data-tok]').forEach(el => { el.outerHTML = tok(el.dataset.tok); });   // Entry's amount rows: logo left of the name
   const LOCATIONS = ['La Mirada', 'Stanton'];
   // Flavors the app stocks (PRODUCTS) plus extra ones that show up in sales.
-  const SALES_FLAVORS = ['Lemon Poppy', 'Sea Salt', 'Maple Pecan', 'Pumpkin Muffin', 'Blueberry Muffin', 'Ube', 'Dot', 'Earl Grey', 'Matcha', 'Chocolate', 'Dubai Ball', 'Pumpkin Bundt', 'Cake Pop', 'Unknown'];
+  const SALES_FLAVORS = ['Lemon Poppy', 'Sea Salt', 'Maple Pecan', 'Pumpkin Muffin', 'Blueberry Muffin', 'Ube', 'Dot', 'Earl Grey', 'Matcha', 'Chocolate', 'Dubai Ball', 'Pumpkin Bundt', 'Cake Pop', 'Chookie', 'Unknown'];
   const PRICE_PER_UNIT = 2.50;   // $/madeleine (from Financial Dashboard: $192.50 / 77 units)
   const UNIT_PRICE = { 'Pumpkin Muffin': 2.75, 'Blueberry Muffin': 3, 'Pumpkin Bundt': 3.35, 'Earl Grey Mini': 2.75, 'Cake Pop': 2.75, 'Chookie': 2.75, 'Dubai Ball': 3.50 };   // items that sell for something other than PRICE_PER_UNIT
   const pdisp = p => p === 'Chookie' ? 'Cookie' : p;   // display name only; 'Chookie' stays the id and sheet column
@@ -3969,7 +3969,7 @@
   // Pumpkin Bundt and Cake Pop: OCR sales on the sheet win. Where a date has none, sold is worked out from stock:
   // previous count + deliveries since (goodwill/transfers are signed) - new count, per store,
   // booked on the date of the newer count. Rows get `extra` (not added to `total`, so the madeleine forecast is untouched).
-  const EXTRA_SOLD = ['Pumpkin Bundt', 'Cake Pop'];
+  const EXTRA_SOLD = ['Pumpkin Bundt', 'Cake Pop', 'Chookie'];
   function addExtraSales(rows, entries) {
     const live = entries.filter(e => !e.taggedForDeletion && e.datetime);
     const by = new Map();
