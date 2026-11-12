@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Tenor+Sans&family=Cormorant+Garamond:wght@500;600;700&family=Pinyon+Script&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&family=Tenor+Sans&family=Cormorant+Garamond:wght@500;600;700&family=Pinyon+Script&display=swap" rel="stylesheet" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="default" />
 <meta name="color-scheme" content="light" />
@@ -347,7 +347,10 @@
   .inv-table td { text-align: right; padding: 9px 0; border-bottom: 1px solid var(--sep); }
   .inv-total { display: flex; justify-content: space-between; font-size: var(--fs-lg); font-weight: 700; padding: 12px 0 4px; }
   .inv-empty { text-align: center; color: var(--muted); padding: 22px 0; font-size: var(--fs-body); }
+  @page { size: letter; margin: .5in; }
   @media print {
+    body.printing-invoice .inv-pdf, body.printing-label .lbl-doc, body.printing-labels .lbl-doc, body.printing-bake .bs2-doc { width: 100% !important; max-width: 100% !important; box-sizing: border-box; overflow-wrap: anywhere; }
+    body.printing-invoice .inv-pdf { padding: 0; }
     body.printing-invoice > *:not(#invScrim) { display: none !important; }
     body.printing-invoice #invScrim { position: static; background: none; opacity: 1; display: block; }
     body.printing-invoice .inv-sheet { transform: none; max-width: none; max-height: none; overflow: visible; padding: 0; border-radius: 0; }
@@ -356,10 +359,10 @@
 
   /* ---- Ingredient label ---- */
   .rec-label-btn { width: 100%; margin-top: 14px; }
-  .lbl-doc { background: #fffdf8; color: #211d1a; border: 1.5px solid #211d1a; padding: 14px 16px; font-family: Arial, Helvetica, sans-serif; font-size: 13px; line-height: 1.4; }
+  .lbl-doc { background: #fffdf8; color: #211d1a; border: 1.5px solid #211d1a; padding: 14px 16px; font-family: Archivo, Arial, Helvetica, sans-serif; font-size: 13px; line-height: 1.4; }
   .lbl-doc p { margin: 0 0 8px; }
   .lbl-brand { color: #6f665c; font-weight: 700; font-size: 12px; }
-  .lbl-title { font-family: Georgia, "Times New Roman", serif; font-weight: 700; font-size: 22px; padding-bottom: 4px; margin-bottom: 8px; border-bottom: 2px solid #211d1a; }
+  .lbl-title { font-family: Archivo, Arial, Helvetica, sans-serif; font-weight: 700; font-size: 22px; padding-bottom: 4px; margin-bottom: 8px; border-bottom: 2px solid #211d1a; }
   .lbl-title small { font-size: 12px; font-weight: 700; }
   .lbl-doc .k { color: #6f665c; font-weight: 700; text-transform: uppercase; }
   .lbl-contains { color: #7b2a45; font-weight: 700; text-transform: uppercase; }
@@ -428,7 +431,7 @@
   .sea-row { display: flex; align-items: center; gap: 12px; padding: 9px 2px; border-bottom: 1px solid var(--sep); font-size: var(--fs-body); }
   .sea-row input { width: 20px; height: 20px; accent-color: var(--accent); }
   .bs-empty { padding: 10px 14px 4px; font-size: var(--fs-caption); color: var(--muted); border-top: 1px solid var(--sep); }
-  .bs-doc { background: #fff; color: #1a1a1a; font-family: Arial, Helvetica, sans-serif; font-size: 13px; line-height: 1.4; padding: 4px 2px; }
+  .bs-doc { background: #fff; color: #1a1a1a; font-family: Archivo, Arial, Helvetica, sans-serif; font-size: 13px; line-height: 1.4; padding: 4px 2px; }
   .bs-doc h3 { margin: 0 0 2px; font-size: 20px; }
   .bs-doc .d { color: #666; font-size: 12px; margin-bottom: 12px; }
   .bs-doc h4 { margin: 14px 0 4px; font-size: 14px; padding-bottom: 3px; border-bottom: 1.5px solid #1a1a1a; display: flex; justify-content: space-between; gap: 8px; }
@@ -1043,7 +1046,7 @@
   .hero-kicker { padding-right: 110px; }
 
   /* ---- Bake sheet (printed prep sheet: plain, two columns in the PDF) ---- */
-  .bs2-doc, .bs2-page { background: #fff; color: #111; font-family: Roboto, Arial, Helvetica, sans-serif; font-size: 14px; line-height: 1.7; }
+  .bs2-doc, .bs2-page { background: #fff; color: #111; font-family: Archivo, Arial, Helvetica, sans-serif; font-size: 14px; line-height: 1.7; }
   .bs2-doc { padding: 6px 4px; }
   .bs2-page { width: 640px; box-sizing: border-box; padding: 40px 36px; }
   .bs2-title, .bs2-page-head .bs2-title { font-size: 22px; font-weight: 700; line-height: 1.3; }
@@ -1359,7 +1362,7 @@
   .pop-x { position: sticky; top: 0; float: right; z-index: 5; width: 38px; height: 38px; padding: 0; margin: 0 0 0 8px; font-size: 20px; line-height: 1; background: #fbf9f5; border: 1px solid var(--text); color: var(--text); cursor: pointer; }
   .scrim .sheet, .scrim .alert-box { position: relative; }
   /* Invoice PDF page (fixed sizes — it is drawn outside the app's theme) */
-  .inv-pdf { width: 640px; box-sizing: border-box; padding: 52px 48px; background: #fff; color: #111; font-family: Arial, Helvetica, sans-serif; font-size: 14px; line-height: 1.45; }
+  .inv-pdf { width: 640px; box-sizing: border-box; padding: 52px 48px; background: #fff; color: #111; font-family: Archivo, Arial, Helvetica, sans-serif; font-size: 14px; line-height: 1.45; }
   .inv-pdf h3 { margin: 0 0 18px; font-size: 28px; letter-spacing: 3px; text-transform: uppercase; font-weight: 700; }
   .inv-pdf .inv-meta { display: flex; justify-content: space-between; gap: 24px; font-size: 12px; color: #555; margin: 0 0 18px; }
   .inv-pdf .inv-meta b { display: block; color: #111; font-size: 14px; }
@@ -2139,7 +2142,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.123.00 · Nov 12, 12:50 PM PST</div>
+<div class="ver-badge">v1.123.01 · Nov 12, 1:30 PM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -3439,7 +3442,7 @@
   }
   function lgPrint() {
     const w = window.open('', '_blank'); if (!w) { rcpToast('Allow pop-ups to print'); return; }
-    w.document.write(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Kairosbaking Records</title><style>body{font:13px/1.4 Arial,sans-serif;color:#111;margin:24px}h2{margin:0 0 2px}h4{margin:18px 0 6px;font-size:14px}table{border-collapse:collapse;width:100%;font-size:12px}tr{page-break-inside:avoid}th,td{border:1px solid #888;padding:4px 6px;text-align:left;vertical-align:top}th{background:#eee}td.dt{background:#f4f4f4;font-weight:700}.s{color:#555;font-size:12px}@media print{body{margin:0}}</style></head><body>${lgReportHtml()}</body></html>`);
+    w.document.write(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Kairosbaking Records</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700&display=swap"><style>@page{size:letter;margin:.5in}body{font:13px/1.4 Archivo,Arial,sans-serif;color:#111;margin:24px}h2{margin:0 0 2px}h4{margin:18px 0 6px;font-size:14px}table{border-collapse:collapse;width:100%;font-size:12px}tr{page-break-inside:avoid}th,td{border:1px solid #888;padding:4px 6px;text-align:left;vertical-align:top}th{background:#eee}td.dt{background:#f4f4f4;font-weight:700}.s{color:#555;font-size:12px}@media print{body{margin:0}}</style></head><body>${lgReportHtml()}</body></html>`);
     w.document.close(); w.focus(); setTimeout(() => w.print(), 300);
   }
   function lgPaint(force) {
@@ -7005,7 +7008,7 @@
   }
   // The PDF is laid out in two columns per page, like a printed prep sheet; blocks are measured and packed so none is split.
   async function bakeSheetPages() {
-    const blocks = bsModel(), COLW = 266, PAGE_H = 853, PAD = 40, GAP = 22;
+    const blocks = bsModel(), COLW = 266, PAGE_H = 846, PAD = 40, GAP = 22;
     const host = document.createElement('div'); host.style.cssText = `position:fixed;left:-99999px;top:0;width:${COLW}px;`; document.body.appendChild(host);
     const meas = html => { host.innerHTML = html; return host.firstElementChild.offsetHeight; };
     const headH = meas(`<div class="bs2-page-head" style="width:${COLW * 2 + 36}px">${bsHeadHtml()}</div>`) + 8;
@@ -7255,10 +7258,10 @@
     const cw = (CW - GAP * (cols - 1)) / cols;
     const pages = [[]]; let y = PH - M, rowsOnPage = 0;
     for (let i = 0; i < imgs.length; i += cols) {
-      const row = imgs.slice(i, i + cols), dhs = row.map(im => im.h * cw / im.w), rh = Math.max(...dhs);
+      const row = imgs.slice(i, i + cols), ws = row.map(im => Math.min(cw, im.w * (PH - 2 * M) / im.h)), dhs = row.map((im, j) => im.h * ws[j] / im.w), rh = Math.max(...dhs);   // an image taller than a page shrinks to fit it
       if ((y - rh < M || rowsOnPage >= rowsMax) && pages[pages.length - 1].length) { pages.push([]); y = PH - M; rowsOnPage = 0; }
       rowsOnPage++;
-      row.forEach((im, j) => pages[pages.length - 1].push({ idx: i + j, dh: dhs[j], y: y - dhs[j], x: M + j * (cw + GAP), w: cw }));
+      row.forEach((im, j) => pages[pages.length - 1].push({ idx: i + j, dh: dhs[j], y: y - dhs[j], x: M + j * (cw + GAP) + (cw - ws[j]) / 2, w: ws[j] }));
       y -= rh + GAP;
     }
     const parts = [], off = []; let pos = 0;
@@ -7484,18 +7487,40 @@
   document.getElementById('lblCloseBtn').addEventListener('click', () => document.getElementById('lblScrim').classList.remove('show'));
   document.getElementById('lblScrim').addEventListener('click', e => { if (e.target.id === 'lblScrim') e.target.classList.remove('show'); });
   // Render the label to a PNG: SVG <foreignObject> → canvas, so no library is needed.
+  // The SVG render can't reach web fonts, so Archivo is fetched once and embedded as base64 @font-face (latin + latin-ext, one variable file each).
+  let archivoCssP = null;
+  function archivoEmbedCss() {
+    return archivoCssP || (archivoCssP = (async () => {
+      try {
+        const css = await (await fetch('https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700&display=swap')).text();
+        const out = [];
+        for (const sub of ['latin-ext', 'latin']) {
+          const m = css.match(new RegExp('/\\* ' + sub + ' \\*/\\s*@font-face\\s*\\{([^}]*)\\}'));
+          const url = m && (m[1].match(/url\(([^)]+)\)/) || [])[1], range = m && (m[1].match(/unicode-range:\s*([^;]+);/) || [])[1];
+          if (!url) continue;
+          const buf = new Uint8Array(await (await fetch(url)).arrayBuffer()); let bin = '';
+          for (let i = 0; i < buf.length; i += 0x8000) bin += String.fromCharCode.apply(null, buf.subarray(i, i + 0x8000));
+          out.push(`@font-face{font-family:Archivo;font-weight:400 700;src:url(data:font/woff2;base64,${btoa(bin)}) format('woff2');${range ? 'unicode-range:' + range + ';' : ''}}`);
+        }
+        return out.join('');
+      } catch { return ''; }   // offline: the sheet falls back to Arial
+    })());
+  }
   async function domToCanvas(doc, classPrefix, scale, fixedWidth) {
+    try { await Promise.all(['400', '600', '700'].map(wt => document.fonts.load(wt + ' 14px Archivo'))); await document.fonts.ready; } catch {}
+    const fontCss = await archivoEmbedCss();
     let w = doc.offsetWidth, h = doc.offsetHeight;
     if (fixedWidth) {   // lay it out at a set width off-screen, so the saved image doesn't inherit the phone's narrow column
       const host = document.createElement('div'); host.style.cssText = `position:fixed;left:-99999px;top:0;width:${fixedWidth}px;`;
       const probe = doc.cloneNode(true); host.appendChild(probe); document.body.appendChild(host);
       w = fixedWidth; h = probe.offsetHeight; host.remove();
     }
+    h += 6;   // small pad: the render uses a filtered stylesheet, so a line can wrap a hair differently than the measure
     const css = [...document.styleSheets].flatMap(ss => { try { return [...ss.cssRules]; } catch { return []; } }).filter(r => r.selectorText && r.selectorText.includes(classPrefix)).map(r => r.cssText).join('');   // the Google Fonts sheet is cross-origin and unreadable
     const clone = doc.cloneNode(true);
     clone.removeAttribute('id'); clone.style.cssText = `box-sizing:border-box;width:${w}px;`;
     clone.querySelectorAll('[contenteditable]').forEach(e => e.removeAttribute('contenteditable'));
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><foreignObject width="100%" height="100%"><div xmlns="http://www.w3.org/1999/xhtml"><style>${css}
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><foreignObject width="100%" height="100%"><div xmlns="http://www.w3.org/1999/xhtml"><style>${fontCss}${css}
 </style>${new XMLSerializer().serializeToString(clone)}</div></foreignObject></svg>`;
     const img = new Image();
     img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
