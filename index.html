@@ -2133,6 +2133,103 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
 .buy-use .use-row small { display: block; color: var(--muted); font-size: var(--fs-caption); }
 .buy-use .use-row b { white-space: nowrap; }
 .buy-use .use-note { color: var(--muted); font-size: var(--fs-caption); margin: 8px 0 4px; }
+/* Desktop pass 3 (v1.160.x): use the whole window on wide screens. Phone layout untouched (all inside the media query). */
+@media (min-width: 900px) {
+  #view-db .wrap, #view-plan .wrap, #view-home.paged .wrap, #view-fin .wrap { max-width: 1600px; padding: 0 32px; }
+  #secNav.sec-nav { max-width: 1600px; }
+  /* forms and single-purpose pages stay a comfortable width */
+  #view-plan .wrap:has(#bakingRecipes:not([hidden])), #view-plan .wrap:has(#bakingCosts:not([hidden])), #view-home.paged .wrap:has(#homeInvoice:not([hidden])) { max-width: 1240px; }
+  #view-db .filter-bar, #view-db #dbFilter, #view-db #dbDates { max-width: 760px; }
+  #homeUpload { max-width: 720px; margin-left: auto; margin-right: auto; }
+  #homeReceipts .rx-sec:not(#rxReview) { max-width: 720px; }
+  #homePantry .pn-form, #homeBake .pn-form, #homeBake .bk-rc, #homeBake .bd-conf { max-width: 720px; }
+  #homePantry .buy-total, #homeBake .buy-total, #pwBuy .buy-total { max-width: 520px; }
+
+  /* Sales: This week | Best seller | Next bake on one row, Running out beside Overall, day cards in columns */
+  body[data-page="sales"] #view-db #dbList { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 16px 20px; align-items: start; }
+  body[data-page="sales"] #view-db #dbList > * { margin: 0; min-width: 0; }
+  body[data-page="sales"] #view-db #dbList > .sh-card:nth-child(1) { grid-column: 1 / 3; grid-row: 1; }
+  body[data-page="sales"] #view-db #dbList > .sh-two { display: contents; }
+  body[data-page="sales"] #view-db #dbList > .sh-two > .sh-tile { margin: 0; align-self: stretch; }
+  body[data-page="sales"] #view-db #dbList > .sh-two > .sh-tile:nth-child(1) { grid-column: 3 / 5; grid-row: 1; }
+  body[data-page="sales"] #view-db #dbList > .sh-two > .sh-tile:nth-child(2) { grid-column: 5 / 7; grid-row: 1; }
+  body[data-page="sales"] #view-db #dbList > .sh-card:nth-child(2) { grid-column: 1 / 4; grid-row: 2 / span 2; }
+  body[data-page="sales"] #view-db #dbList > .sh-overall { grid-column: 4 / 7; grid-row: 2; align-self: end; }
+  body[data-page="sales"] #view-db #dbList > .db-summary { grid-column: 4 / 7; grid-row: 3; }
+  body[data-page="sales"] #view-db #dbList > details.db-fold { grid-column: span 3; }
+
+  /* Ingredients, Bake Day, Plan step 2: shopping and on-hand lists in columns, headers span the row */
+  .pn-list, .buy-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(440px, 1fr)); gap: 0 40px; align-items: start; }
+  .pn-list > *, .buy-list > * { min-width: 0; }
+  .buy-list > .pn-note, .buy-list > .buy-vendor, .buy-list > .cold-h, .buy-list > .buy-cart, .buy-list > .amz-add, .pn-list > .cold-h { grid-column: 1 / -1; }
+  .buy-list > .buy-cart { max-width: 480px; }
+
+  /* Storage: three cards across */
+  #homeStorage .st-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: start; }
+  #homeStorage .pn-bar { max-width: 360px; }
+
+  /* Stock: store table on the left, misses / sales / analytics on the right */
+  #homeForecast { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 40px; align-items: start; }
+  #homeForecast > * { min-width: 0; }
+  #homeForecast > #homeUpdated, #homeForecast > .group-label, #homeForecast > #projSub { grid-column: 1 / -1; }
+  #homeForecast > .filter-bar { grid-column: 1 / -1; max-width: 360px; }
+  #homeForecast > #projList { display: contents; }
+  #projList > .fc-locs, #projList > .proj-sub, #projList > .proj-empty { grid-column: 1 / -1; grid-row: 5; }
+  #projList > .pg-card { grid-column: 1; grid-row: 6; }
+  #homeForecast > #homeContent { grid-column: 2; grid-row: 6; }
+  #homeForecast .pg-card { max-width: none !important; }
+
+  /* Trends: Share of sales beside By week, table full width */
+  #homeTrends:has(.tr-pie) { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 48px; align-items: start; }
+  #homeTrends:has(.tr-pie) > * { grid-column: 1 / -1; min-width: 0; }
+  #homeTrends:has(.tr-pie) > :nth-child(1) { max-width: 360px; }
+  #homeTrends:has(.tr-pie) > :nth-child(2) { grid-column: 1; grid-row: 2; }
+  #homeTrends:has(.tr-pie) > :nth-child(3) { grid-column: 1; grid-row: 3; }
+  #homeTrends:has(.tr-pie) > :nth-child(4) { grid-column: 1; grid-row: 4; }
+  #homeTrends:has(.tr-pie) > :nth-child(5) { grid-column: 2; grid-row: 2; }
+  #homeTrends:has(.tr-pie) > :nth-child(6) { grid-column: 2; grid-row: 3; }
+  #homeTrends:has(.tr-pie) > :nth-child(7) { grid-column: 2; grid-row: 4; }
+
+  /* Receipts: to-review cards in two columns */
+  #rxReview { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 40px; align-items: start; }
+  #rxReview > * { min-width: 0; grid-column: 1 / -1; }
+  #rxReview > .rv-rec { grid-column: auto; }
+
+  /* Timers: cards flow into two columns */
+  #homeTimers { column-count: 2; column-gap: 40px; }
+  #homeTimers > .bm-row { column-span: all; }
+  #homeTimers > .group-label { break-after: avoid; }
+  #homeTimers > .card, #homeTimers > details { break-inside: avoid; }
+
+  /* Finance: toolbar rows span the grid; Revenue | Costs | Profit side by side from 1400px */
+  #finBody > #finViewTog, #finBody > #finSheetBtn, #finBody > .db-filter { grid-column: 1 / -1; order: 0; }
+  #finBody > #finSheetBtn { justify-self: start; min-width: 260px; }
+  /* Recipes: the picker stays a normal width; Counts summary does not stretch across the screen */
+  #view-plan #bakingRecipes > .filter-bar { max-width: 520px; }
+  body[data-page="counts"] #dbList > .db-summary { max-width: 1000px; }
+
+  /* Plan: steps 1 and 2 use the full width; step 3 keeps the bake sheet beside the notes */
+  #planWiz { grid-column: 1 / -1; grid-row: 1; min-width: 0; }
+  #bakingPlan[data-step="3"] #planWiz { grid-column: 1; }
+  #bakingPlan[data-step="1"] #planWiz { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 56px; align-items: start; }
+  #bakingPlan[data-step="1"] #planWiz > * { grid-column: 1 / -1; min-width: 0; }
+  #bakingPlan[data-step="1"] #planWiz > .pw-row { grid-column: auto; }
+  #planWiz .pw-steps, #planWiz .pw-chips, #planWiz .pw-nav, #planWiz .pw-head { max-width: 760px; }
+  #bakingPlan[data-step="3"] > .bs-card { grid-row: 1 / span 2; }
+  #bakingPlan[data-step="3"] > #pwBoxes { grid-column: 1; grid-row: 2; margin-top: 0; }
+  #planAdv { grid-column: 1 / -1; grid-row: 2; max-width: 760px; }
+  #bakingPlan > #planSplitWrap { grid-row: 3; }
+  #bakingPlan > #planList { grid-row: 4; }
+}
+@media (min-width: 1400px) {
+  #finBody > .fin-rev { grid-column: 1; grid-row: auto; order: 1; }
+  #finBody > .fin-cost { grid-column: 2; order: 2; }
+  #finBody > .fin-prof { grid-column: 3; order: 3; }
+  #finBody > .fin-wic, #finBody > .fin-scen { grid-column: 1 / -1; }
+}
+@media (min-width: 1800px) {
+  body[data-page="sales"] #view-db #dbList > details.db-fold { grid-column: span 2; }
+}
 </style>
 </head>
 <body>
@@ -2512,7 +2609,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.160.00 · Nov 18, 9:10 PM PST</div>
+<div class="ver-badge">v1.161.00 · Nov 18, 2:53 PM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -5793,8 +5890,8 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
         { title: 'Step 1 · Browned butter, water, sugar', rows: [['Unsalted Butter', 227], ['Browned butter (butter minus about 36 g water lost)', 191], ['Water (added after browning)', 30], ['Granulated Sugar', 100], ['Light Brown Sugar', 257, 320]] },
         { title: 'Step 2 · Eggs and vanilla', rows: [['Eggs', 100], ['Vanilla Extract', 9]], note: 'Warm the eggs to 30–35°C.' },
         { title: 'Step 3 · Dry ingredients', rows: [['All-Purpose Flour', 310], ['Kosher Salt', 6], ['Baking Soda', 2.5]] },
-        { title: 'Step 4 · Chocolate chips', rows: [['Dark Chocolate (70% cacao minimum)', 85]] } ],
-      rows: [['Unsalted Butter', 227], ['Water', 30], ['Granulated Sugar', 100], ['Light Brown Sugar', 257], ['Kosher Salt', 6], ['Baking Soda', 2.5], ['Eggs', 100], ['Pure Vanilla Extract', 9], ['All-Purpose Flour', 310], ['Dark Chocolate 70%', 85]],
+        { title: 'Step 4 · Chocolate chips', rows: [['Dark Chocolate (Callebaut)', 85]] } ],
+      rows: [['Unsalted Butter', 227], ['Water', 30], ['Granulated Sugar', 100], ['Light Brown Sugar', 257], ['Kosher Salt', 6], ['Baking Soda', 2.5], ['Eggs', 100], ['Pure Vanilla Extract', 9], ['All-Purpose Flour', 310], ['Dark Chocolate (Callebaut)', 85]],
       notes: 'Eggs at room temperature.<br>Espresso powder (optional): 4 g, added to the dough with the salt.<br><br><b>Method</b><br>1. Brown the butter, then add the water. The browned butter weighs about 191 g (227 g butter minus about 36 g water lost, roughly 16%).<br>2. Warm the browned butter with both sugars and mix until well combined.<br>3. Warm the eggs to 30–35°C, then add them with the vanilla.<br>4. Add all the dry ingredients.<br>5. Add the chocolate at the end.<br>6. Bake at 350°F (175°C) for 15–20 minutes.<br><br><b>Yield</b><br>Brown sugar is cut 20% (320 g to 257 g per batch, so 3 batches use 771 g instead of 960 g). The dough totals about 1,090 g after the butter loses water; allowing about 3% lost in the bowl, 90 g per cookie makes 12.<br><br><b>One month, both stores (La Mirada and Stanton)</b><br>About 400 cookies = 34 batches (34 x 12 = 408).' },
     { key: 'snickerdoodle', labFlat: 0.4, wholesale: 2.75, retail: 4.5, star: true, type: 'simple', name: 'Snickerdoodle Cookies', yield: 14, oven: { lo: 10, hi: 12, cap: 32 }, prep: 20, yieldText: 'makes 14 cookies (70 g of dough each; lilluna.com, amounts converted from cups and spoons)',
       rows: [['Unsalted Butter', 227], ['Sugar', 300], ['Eggs', 100], ['Vanilla Extract', 4], ['All Purpose Flour', 344], ['Cream of Tartar', 6], ['Baking Soda', 5], ['Salt', 3], ['Sugar (topping)', 39], ['Cinnamon (topping)', 9.3]],
@@ -5861,7 +5958,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       notes: '1) 화이트초콜릿과 무염버터를 함께 녹인다.<br>2) 계란에 설탕, 소금을 넣고 핸드믹서 고속으로 휘핑한다.<br>3) 계란 쪽에 녹여 둔 초콜릿과 버터, 그리고 바닐라 익스트랙을 넣고 섞는다.<br>4) 중력분, 말차가루, 베이킹파우더를 체 쳐서 넣고 섞는다.<br>5) 유산지를 두른 팬에 반죽을 팬닝하고, 검은깨 페이스트로 표면에 무늬를 낸다.<br>6) 예열한 오븐에 160도(320°F) 25분 굽는다 (위즈웰 루미오븐 상하열선 모드, 컨벡션 x).<br><br><b>Pattern:</b> black sesame paste on top (no amount given).<br><b>보관:</b> (더운 여름 제외) 밀폐하거나 밀봉해서 실온 4일, 냉동 1달. 잘라서 비닐로 개별포장해서 보관해 주세요.',
       link: 'https://www.youtube.com/watch?v=JSwMpDiHD8U' },
     { key: 'snowcap', type: 'simple', name: 'Chocolate Espresso Snow Cap Cookies', yield: 19, yieldText: 'makes 19 cookies · 20g each',
-      rows: [['Unsalted Butter', 57], ['Brown Sugar', 70], ['Salt', 1], ['Eggs', 50], ['All Purpose Flour', 65], ['Cocoa Powder', 30], ['Baking Powder', 4], ['Espresso Powder', 7], ['Dark Chocolate Couverture', 113], ['Milk', 15]],
+      rows: [['Unsalted Butter', 57], ['Brown Sugar', 70], ['Salt', 1], ['Eggs', 50], ['All Purpose Flour', 65], ['Cocoa Powder', 30], ['Baking Powder', 4], ['Espresso Powder', 7], ['Dark Chocolate (Callebaut)', 113], ['Milk', 15]],
       notes: '<b>Rolling:</b> Powdered Sugar, as needed (roll twice).<br><br>1) 실온의 버터를 핸드믹서로 가볍게 풀어 주세요.<br>2) 황설탕, 소금을 넣고 섞어 주세요.<br>3) 실온 상태의 계란을 4~5번 나눠 넣어 가면서 휘핑해 주세요.<br>4) 녹여서 식혀 둔 초콜릿을 넣고 잘 섞일 때 까지 가볍게 섞어 주세요.<br>5) 중력분, 코코아파우더, 베이킹파우더, 인스턴트 커피 파우더를 체 쳐서 넣고 섞어 주세요.<br>6) 실온의 우유를 넣고 섞어 주세요.<br>7) 반죽이 단단해질 때까지 냉동실에서 40분 정도 굳혀 주세요.<br>8) 한 개당 20g씩 분할해서 원 모양으로 굴리고, 슈가파우더를 두 번 묻혀 주세요.<br>9) 예열한 오븐에 170도(340°F)에서 12분 구워 주세요 (루미오븐, 상하단 열선+컨벡션).<br><br><b>보관:</b> 식혀서 밀봉한 상태에서 실온 3~4일, 냉동 3주 보관 가능합니다.',
       link: 'https://www.youtube.com/watch?v=hYJyj-z2ZUQ' },
     { key: 'figscone', type: 'simple', name: 'Fig Caramel Scone', yield: 6, yieldText: 'makes 6 scones',
@@ -5889,7 +5986,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       rows: [['All-Purpose Flour', 330], ['Baking Powder', 8], ['Salt', 6], ['Unsalted Butter', 227], ['Sugar', 150], ['Brown Sugar', 312], ['Eggs', 100], ['Sour Cream', 160], ['Vanilla Extract', 12.5], ['Cinnamon', 10], ['Powdered Sugar', 120], ['Milk', 30]],
       notes: '1) Heat the oven to 175°C (350°F). Grease an 8×8 in pan, line with parchment.<br>2) Filling: whisk brown sugar, flour and cinnamon. Set aside.<br>3) Streusel: whisk flour, brown sugar, cinnamon and salt. Press in the diced cold butter with your fingers until like wet sand.<br><i>Tips:</i> Squeeze a handful for bigger crumbles.<br>4) Cake: whisk flour, baking powder and salt. Beat butter and both sugars on medium about 3 min until fluffy. Add eggs one at a time. Scrape down, add sour cream and vanilla, mix on low.<br>5) Add the dry mix, beat on low until just combined. Finish by hand with a spatula.<br>6) Spread half the batter in the pan, sprinkle on the filling, dollop and spread the rest on top (center out to the edges).<br>7) Sprinkle the streusel on top, starting at the edges.<br>8) Bake about 55 min, until a toothpick in the center is clean. Cool in the pan at least 30 min.<br>9) Glaze: whisk powdered sugar, milk and vanilla until smooth. Drizzle over the cake.<br><br><b>Shelf life:</b><br>Airtight at room temperature about 3 days.<br>Freeze wrapped slices (plastic, then foil) up to 3 months.<br><br><b>Other pans:</b> 9 in round, same recipe. 9×13 in, double it and bake about 1 hour (15 to 18 servings).' },
     { key: 'browniecookie', type: 'simple', name: 'Brownie Cookie', yield: 8, yieldText: 'makes about 8 cookies (5 cm scoop)',
-      rows: [['Eggs', 50], ['Brown Sugar', 60], ['Salt', 1], ['Dark Chocolate Couverture', 120], ['Unsalted Butter', 30], ['All-Purpose Flour', 40], ['Baking Soda', 2], ['Vanilla Extract', 2], ['Cacao Nibs', 30]],
+      rows: [['Eggs', 50], ['Brown Sugar', 60], ['Salt', 1], ['Dark Chocolate (Callebaut)', 120], ['Unsalted Butter', 30], ['All-Purpose Flour', 40], ['Baking Soda', 2], ['Vanilla Extract', 2], ['Cacao Nibs', 30]],
       notes: '<b>Melt:</b> chocolate and butter together, then cool a little.<br><b>Whip:</b> egg, brown sugar and salt until thick and pale.<br><b>Combine:</b> fold the melted chocolate into the egg mixture, add vanilla.<br><b>Dry:</b> fold in flour and baking soda just until no streaks.<br><b>Nibs + chill:</b> stir in cacao nibs, chill the dough until scoopable.<br><b>Scoop:</b> 5 cm scoop, spaced apart on a lined tray.<br><b>Bake:</b> 180°C (356°F), 9–10 min; cool on the tray before moving.' },
     { key: 'nycheesecake', type: 'simple', name: 'NY Cheesecake', yield: 8, yieldText: 'one 6 in (15 cm) cake pan (8 slices assumed)', link: 'https://www.youtube.com/watch?v=ByfCo-oBkys',
       components: [
@@ -5916,7 +6013,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       rows: [['Cream Cheese', 420], ['Heavy Cream', 200], ['Eggs', 155], ['Egg Yolk', 36], ['Sugar', 105], ['Lemon Juice', 10]],
       notes: 'Everything at room temperature.<br>1) Preheat oven to 450°F (220°C) 20+ min. Line the tin with parchment.<br>2) Loosen the cream cheese with a spatula, no lumps.<br>3) Add sugar, mix until dissolved.<br>4) Beat eggs and yolks. Add in 3 parts, mix smooth each time before the next.<br>5) Add lemon juice, mix.<br>6) Add cream, mix until combined.<br>7) Strain through a sieve into the tin.<br>8) Tap the tin on the counter 30+ times to release bubbles.<br>9) Bake at 410°F (210°C) 20–25 min, until deep brown. Darker top: 430–450°F.<br>10) Oven off, door open 10 min.<br>11) Cool completely in the tin, seal and chill 12+ hours.<br>12) Wrap a warm damp towel around the tin to loosen the edge, lift out, peel the parchment, cut with a heated knife.<br><br><b>Shelf life:</b><br>7 days in the fridge, 30 in the freezer.<br><br><b>Other sizes (cream cheese / cream / whole egg / yolk / sugar / lemon):</b><br>#1: 180 / 86 / 1 egg (50–55 g) / 1 / 45 / 4 g · 410°F 12–16 min<br>#2: 300 / 146 / 2 eggs (100–110 g) / 1 / 75 / 7 g · 15–20 min<br>#3 (this recipe): 420 / 200 / 3 eggs / 2 / 105 / 10 g · 20–25 min<br>#4: 588 / 280 / 4 eggs (200–210 g) / 3 / 147 / 14 g · 25–30 min<br>Tin to batch: 4 in round × 2 in tall = #1 ×0.9; 4 × 2.75 in = #1 ×1.2; 4.3 × 2 in = #1; 4.3 × 2.75 in = #2 ×0.9; 4.7 × 2.75 in = #2; 6 × 2 in = #2; 6 × 2.75 in = #3; 7 × 2 in = #3; 7 × 2.75 in = #4. Times are a guide, bake to colour.' },
     { key: 'chocobasque', type: 'simple', name: 'Choco Basque Cheesecake', yield: 8, yieldText: 'one cheesecake (8 slices assumed)', link: 'https://www.youtube.com/watch?v=t1bh9qL4ZLE',
-      rows: [['Cream Cheese', 350], ['Sugar', 90], ['Eggs', 100], ['Egg Yolk', 20], ['Cornstarch', 5], ['Cocoa Powder', 9], ['Heavy Cream', 180], ['Dark Chocolate Couverture', 100]],
+      rows: [['Cream Cheese', 350], ['Sugar', 90], ['Eggs', 100], ['Egg Yolk', 20], ['Cornstarch', 5], ['Cocoa Powder', 9], ['Heavy Cream', 180], ['Dark Chocolate (Callebaut)', 100]],
       notes: 'Made with a spatula and bowl. Dark chocolate is 55% cacao. Everything else at room temperature.<br>1) Press the cream cheese with a spatula, loosen well, no lumps.<br>2) Add sugar, mix with the spatula until dissolved.<br>3) Sift in cornstarch and cocoa, whisk smooth.<br>4) Mix whole eggs and yolks well, whisk in, no lumps.<br>5) Add melted dark chocolate, whisk until emulsified.<br>6) Add heavy cream, whisk.<br>7) Strain through a sieve into a mold lined with parchment.<br>8) Bake at 230°C (446°F) 23 minutes (Wizwell Lumi, top and bottom heat + convection).<br><i>Tips:</i> The centre may flow like liquid or overcook depending on time, so test a few bakes to find the right time and temperature for your oven.<br>9) Cool at room temperature until lukewarm, chill in the fridge at least 7 hours.<br><br><b>Shelf life:</b><br>3–4 days in the fridge in a food container, 2 weeks in the freezer.' },
     { key: 'matchabasque', type: 'simple', name: 'Matcha Basque Cheesecake', yield: 8, yieldText: 'one cheesecake (8 slices assumed)', link: 'https://www.youtube.com/watch?v=t1bh9qL4ZLE',
       rows: [['Cream Cheese', 400], ['Sugar', 100], ['Eggs', 100], ['Egg Yolk', 20], ['Cornstarch', 5], ['Matcha Powder', 13], ['Heavy Cream', 220], ['Vanilla Extract', 4]],
@@ -6258,7 +6355,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     'light brown sugar': 'Brown Sugar', 'egg': 'Eggs', 'whole eggs': 'Eggs', 'egg whites': 'Eggs', 'egg white': 'Eggs', 'egg yolk': 'Eggs',
     'earl grey': 'Earl Grey Tea Leaves', 'fresh cream': 'Heavy Cream', 'whole milk': 'Milk', 'vanilla bean paste': 'Vanilla Extract',
     'pure vanilla extract': 'Vanilla Extract', 'lemon poppy seed': 'Poppy Seed', 'lemon extract': 'Lemon Emulsion', 'kosher salt': 'Salt', 'flaked sea salt': 'Salt',
-    'semisweet chocolate chips': 'Chocolate Chips', 'toasted pecans': 'Pecans', 'pure maple syrup': 'Maple Syrup', 'avocado oil': 'Vegetable Oil', 'cream of tartar': 'Cream of Tartar', 'cinnamon': 'Ground Cinnamon',
+    'semisweet chocolate chips': 'Chocolate Chips', 'dark chocolate 70%': 'Dark Chocolate (Callebaut)', 'dark chocolate couverture': 'Dark Chocolate (Callebaut)', 'toasted pecans': 'Pecans', 'pure maple syrup': 'Maple Syrup', 'avocado oil': 'Vegetable Oil', 'cream of tartar': 'Cream of Tartar', 'cinnamon': 'Ground Cinnamon',
     // Butter: two items, never mixed. Kerrygold is for madeleines ONLY (costRows swaps it in for the 'mad' section); every other recipe is Kirkland.
     'unsalted butter': 'Kirkland Butter', 'costco unsalted butter': 'Kirkland Butter', 'butter': 'Kirkland Butter',
   };
@@ -7981,7 +8078,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
         `<div class="pn-note">Whole bake plan against your counts and approved purchases. Tick items as you shop. For one bake at a time, open Bake Day.</div><div class="pn-bar"><button type="button" class="btn-ghost" id="pnBake">Open Bake Day</button></div>`;
     } catch {}
     box.innerHTML = (pantryErr ? `<div class="pn-note">${esc(pantryErr)}</div>` : '') +
-      `<h3>On hand</h3>` + (rows || '<div class="pn-note">No counts yet. Count what is in the kitchen and save it in Count something, below. On hand then updates itself from approved purchases.</div>') +
+      `<h3>On hand</h3>` + (rows ? `<div class="pn-list">${rows}</div>` : '<div class="pn-note">No counts yet. Count what is in the kitchen and save it in Count something, below. On hand then updates itself from approved purchases.</div>') +
       `<div class="pn-note">On hand is your latest count plus approved ledger purchases after that date. A new count replaces it. ✕ removes the latest count, so the one before it shows again.</div>` +
       wtb +
       `<h3>Count something</h3>` +
@@ -8287,10 +8384,10 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     const flag = r.st === 'none' || (r.s && r.s.uncounted) ? 'not counted' : r.st === 'unit' ? 'counted in another unit' : '';
     const big = q.n ? `${q.n} ${q.n === 1 ? 'pack' : 'packs'}` : `Buy ${buyFmt(r.short, i.unit)}`;
     const sub = (q.n ? `${packFmt(i.pkAmt, i.unit)} each · ` : 'no price yet · ') + `need ${buyFmt(i.qty, i.unit)}${have}${flag ? ' · ' + flag : ''}`;
-    return `<label class="buy-row buy-big${buyChecked[nm] ? ' done' : ''}"><input type="checkbox" data-bkc="${esc(nm)}"${buyChecked[nm] ? ' checked' : ''}><span class="buy-main"><b><em>${big}</em> ${esc(nm)}</b><small>${sub}</small></span><span class="buy-r">${q.cost != null ? money2(q.cost) : ''}</span></label>${usesHtml(nm, i.unit)}`;
+    return `<div class="buy-item"><label class="buy-row buy-big${buyChecked[nm] ? ' done' : ''}"><input type="checkbox" data-bkc="${esc(nm)}"${buyChecked[nm] ? ' checked' : ''}><span class="buy-main"><b><em>${big}</em> ${esc(nm)}</b><small>${sub}</small></span><span class="buy-r">${q.cost != null ? money2(q.cost) : ''}</span></label>${usesHtml(nm, i.unit)}</div>`;
   };
   const bkVendor = r => { const v = (costPrices[r.i.name] || {}).vendor; return v && String(v).trim() ? String(v).trim() : (bkPart(r).n ? 'Other' : 'No price yet'); };
-  const bkHaveRow = r => `<div class="buy-row buy-big buy-have"><span class="buy-ok">✓</span><span class="buy-main"><em class="buy-tag">Have it</em><b><s>${esc(r.i.name)}</s></b><small>need ${buyFmt(r.i.qty, r.i.unit)} · have ${buyFmt(r.s.onHand, r.i.unit)}</small></span></div>${usesHtml(r.i.name, r.i.unit)}`;
+  const bkHaveRow = r => `<div class="buy-item"><div class="buy-row buy-big buy-have"><span class="buy-ok">✓</span><span class="buy-main"><em class="buy-tag">Have it</em><b><s>${esc(r.i.name)}</s></b><small>need ${buyFmt(r.i.qty, r.i.unit)} · have ${buyFmt(r.s.onHand, r.i.unit)}</small></span></div>${usesHtml(r.i.name, r.i.unit)}</div>`;
   // rows = still to buy; all = every ingredient the plan needs (the ones already on hand are shown greyed under the same store, marked Have it).
   // Amazon: the ledger keeps each Amazon item's product link. The ASIN in it lets one tap open Amazon's Add to Cart page with the packs filled in (you still tap Add and check out on Amazon yourself).
   const amzAsin = l => { const m = /(?:\/dp\/|\/gp\/product\/|\/product\/)([A-Z0-9]{10})(?:[\/?#]|$)/i.exec(String(l || '')); return m ? m[1].toUpperCase() : ''; };
@@ -8325,12 +8422,12 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     const by = new Map(), put = (r, k) => { const v = bkVendor(r); if (!by.has(v)) by.set(v, { buy: [], have: [] }); by.get(v)[k].push(r); };
     rows.forEach(r => put(r, 'buy')); have.forEach(r => put(r, 'have'));
     const order = [...by.keys()].sort((a, b) => (a === 'No price yet') - (b === 'No price yet') || (a === 'Other') - (b === 'Other') || a.localeCompare(b)), byName = (x, y) => x.i.name.localeCompare(y.i.name);
-    return `<div class="pn-note">Amounts include ${Math.round(BUY_WASTE * 100)}% extra for waste.${have.length ? ' Items marked Have it are already on hand.' : ''}</div>` + order.map(v => {
+    return `<div class="buy-list"><div class="pn-note">Amounts include ${Math.round(BUY_WASTE * 100)}% extra for waste.${have.length ? ' Items marked Have it are already on hand.' : ''}</div>` + order.map(v => {
       const g = by.get(v), sub = g.buy.reduce((n, r) => n + (bkPart(r).cost || 0), 0);
       return `<div class="buy-vendor"><span>${esc(v)}</span><small>${g.buy.length} to buy${g.have.length ? ` · ${g.have.length} on hand` : ''}${sub ? ' · ' + money2(sub) : ''}</small></div>` +
         (/amazon/i.test(v) ? amzCart(g.buy) : '') +
         coldSplit(g.buy.sort(byName).map(r => ({ cold: isCold(r.i.name), html: bkBuyRow(r) }))) + g.have.sort(byName).map(bkHaveRow).join('');
-    }).join('');
+    }).join('') + '</div>';
   }
   const bkTotal = buy => ({ total: buy.reduce((a, r) => a + (bkPart(r).cost || 0), 0), unpriced: buy.filter(r => bkPart(r).cost == null).length });
   const bkWireTicks = box => box.querySelectorAll('[data-bkc]').forEach(c => c.onchange = () => { if (c.checked) buyChecked[c.dataset.bkc] = 1; else delete buyChecked[c.dataset.bkc]; buySave(); c.closest('.buy-row').classList.toggle('done', c.checked); });
