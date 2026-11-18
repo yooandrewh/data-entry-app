@@ -2623,7 +2623,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.167.02 · Nov 18, 3:21 PM PST</div>
+<div class="ver-badge">v1.168.00 · Nov 18, 3:26 PM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -6108,7 +6108,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     return `Unsalted Butter (${brand})` + (extra ? ', ' + extra : '');
   }
   // Waffle cones are counted, not weighed: their costing row is a piece count (62 per Cake Pop batch).
-  const isCone = n => /waffle cone|pan liner|nitrile glove|dropper pipette/i.test(String(n));   // counted in pieces, not grams
+  const isCone = n => /waffle cone|pan liner|nitrile glove|dropper pipette|piping bag/i.test(String(n));   // counted in pieces, not grams
   function recIngRows(rows, mult, ctx, addin) {
     const mad = recState.sec === 'mad';
     return rows.map(r => {
@@ -7740,7 +7740,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   // Physical averages (about 1% to 3% off between brands). Items not listed are never converted.
   const DENSITY = { 'Milk': 1.03, 'Organic Whole Milk': 1.03, 'Coconut Milk': 0.97, 'Heavy Cream': 0.99, 'Lemon Juice': 1.03, 'Vegetable Oil': 0.92, 'Vanilla Extract': 0.88, 'Lemon Emulsion': 0.95, 'Ube Extract': 1.0, 'Wine': 0.99, 'Honey': 1.42, 'Maple Syrup': 1.33 };
   const toGrams = (name, amt, unit) => unit === 'ml' && DENSITY[name] ? { amt: amt * DENSITY[name], unit: 'g', conv: true } : { amt, unit };
-  const buyWaste = name => /pan liner|nitrile glove|dropper pipette/i.test(name) ? 0 : isCone(name) ? 0.1 : BUY_WASTE;   // waffle cones: 10% breakage (Andrew, 2026-11-18)
+  const buyWaste = name => /pan liner|nitrile glove|dropper pipette|piping bag/i.test(name) ? 0 : isCone(name) ? 0.1 : BUY_WASTE;   // waffle cones: 10% breakage (Andrew, 2026-11-18)
   const GLOVES_PER_SET = 12;   // gloves used per item per bake session (Andrew: 10-12)
   const BUY_WASTE = 0.2;   // shopping and pantry-use amounts include 20% extra for waste (Andrew, 2026-11-18); the printed bake sheet shows the plain recipe
   function buyItems(list = [...bakeSheet, ...buyRecipes]) {
@@ -7758,6 +7758,8 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       }
       // Pan liners (Dixie Lift-Off): one per oven tray, and a tray holds one batch of madeleines (12), so one liner per madeleine batch. Liners do not stack.
       if (f.sec === 'mad') add('Pan Liners', Math.ceil(b.b - 1e-9));
+      // Piping bags: one per madeleine batch and one per Pumpkin Muffin batch (single use).
+      if (f.sec === 'mad' || BS_PRODUCT[b.key] === 'Pumpkin Muffin') add('Piping Bags', Math.ceil(b.b - 1e-9));
       // Dropper pipettes: one per Lemon Poppy madeleine (filling injector).
       if (BS_PRODUCT[b.key] === 'Lemon Poppy') add('Dropper Pipettes', Math.ceil(b.b * (PRODUCT_YIELD['Lemon Poppy'] || BATCH_YIELD) - 1e-9));
     }
@@ -7789,6 +7791,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       }
       if (name === 'Pan Liners' && f.sec === 'mad') q += Math.ceil(b.b - 1e-9);
       if (name === 'Nitrile Gloves') q += GLOVES_PER_SET;
+      if (name === 'Piping Bags' && (f.sec === 'mad' || BS_PRODUCT[b.key] === 'Pumpkin Muffin')) q += Math.ceil(b.b - 1e-9);
       if (name === 'Dropper Pipettes' && BS_PRODUCT[b.key] === 'Lemon Poppy') q += Math.ceil(b.b * (PRODUCT_YIELD['Lemon Poppy'] || BATCH_YIELD) - 1e-9);
       if (q > 0) out.push({ label: f.it.name || b.key, batches: b.b, q });
     }
