@@ -1817,6 +1817,9 @@
 .pn-form .pn-bar input { flex: 1 1 0; width: auto; min-width: 0; } .pn-form .pn-bar select { flex: 0 0 96px; width: 96px; }
 .pn-r b { white-space: nowrap; }
 .pn-note { color: var(--muted); font-size: var(--fs-caption); margin: 10px 0; }
+.rc-text { width: 100%; box-sizing: border-box; min-height: 160px; font-family: inherit; font-size: var(--fs-body); }
+.rc-bad { color: var(--text); font-weight: 700; border-left: 3px solid var(--accent); padding: 2px 0 2px 8px; margin: 8px 0; font-size: var(--fs-body); }
+.rc-ok { color: var(--green); font-weight: 700; margin: 8px 0; }
 </style>
 </head>
 <body>
@@ -1840,6 +1843,7 @@
       <button type="button" data-hpage="invoice"><span class="hm-ic" data-ic="tag"></span><span class="hm-t">Invoice / Labels</span><span class="hm-go">›</span></button>
       <button type="button" data-hpage="bake"><span class="hm-ic" data-ic="calendar"></span><span class="hm-t">Bake Day</span><span class="hm-go">›</span></button>
       <button type="button" data-hpage="pantry"><span class="hm-ic" data-ic="box"></span><span class="hm-t">Pantry</span><span class="hm-go">›</span></button>
+      <button type="button" data-hpage="receipts"><span class="hm-ic" data-ic="receipt"></span><span class="hm-t">Receipts</span><span class="hm-go">›</span></button>
 </div>
     
 
@@ -1921,6 +1925,7 @@
 
     <div id="homePantry" hidden></div>
     <div id="homeBake" hidden></div>
+    <div id="homeReceipts" hidden></div>
 
     <!-- Invoice -->
     <div id="homeInvoice" hidden>
@@ -2168,7 +2173,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.126.01 · Nov 17, 8:33 PM PST</div>
+<div class="ver-badge">v1.127.00 · Nov 17, 8:51 PM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -2373,6 +2378,7 @@
     chart: () => `<rect x="4" y="12" width="3.500" height="8" fill="#e3a866"/><rect x="10.250" y="7" width="3.500" height="13" fill="#e3a866"/><rect x="16.500" y="4" width="3.500" height="16" fill="#e3a866"/><path d="M3 21h18"/>`,
     calendar: () => `<rect x="4" y="5.500" width="16" height="14.500" fill="#f3e6d0"/><path d="M4 10h16M8.500 3.500v4M15.500 3.500v4"/>`,
     box: () => `<path fill="#f3e6d0" d="M3.500 7.500h17V20h-17z"/><path d="M3.500 7.500 5 4.500h5l1.500 3M9 12.500h6"/>`,
+    receipt: () => `<path fill="#f3e6d0" d="M6 3.500h12V21l-2-1.500-2 1.500-2-1.500-2 1.500-2-1.500-2 1.500z"/><path d="M9 8h6M9 11.500h6M9 15h3.500"/>`,
     flame: () => `<path fill="#f59e0b" d="M12 3c1 3.500 5 5.500 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 .3 1.500 1 2 2 2.200C10.500 8.500 11 5.500 12 3z"/>`,
     snow: () => `<g stroke="#4a86c5"><path d="M12 3v18M4.500 7.500l15 9M19.500 7.500l-15 9"/><path d="M9.500 4.500 12 6.500l2.500-2M9.500 19.500 12 17.500l2.500 2"/></g>`,
     trash: () => `<path d="M5 7h14M9.500 7V4.500h5V7M7 7l.8 13h8.400L17 7M10 11v5M14 11v5"/>`,
@@ -3317,7 +3323,7 @@
 
   // ---- Home: a landing screen with three buttons; each opens its own page ----
   let homeTab = null;   // null = landing | 'forecast' | 'plan' | 'invoice'
-  const HOME_TITLES = { forecast: 'Forecast', plan: 'Baking Plan', invoice: 'Invoice / Labels', timers: 'Timers', logs: 'Kairos Logs', pantry: 'Pantry', bake: 'Bake Day' };
+  const HOME_TITLES = { forecast: 'Forecast', plan: 'Baking Plan', invoice: 'Invoice / Labels', timers: 'Timers', logs: 'Kairos Logs', pantry: 'Pantry', bake: 'Bake Day', receipts: 'Receipts' };
   // The version line lives over the photo on Home's landing; everywhere else it is the fixed strip.
   function syncVer() {
     const onHome = (document.querySelector('.tabbar button.on') || {}).dataset?.tab === 'home';
@@ -3336,12 +3342,14 @@
     document.getElementById('homeLogs').hidden = homeTab !== 'logs';
     document.getElementById('homePantry').hidden = homeTab !== 'pantry';
     document.getElementById('homeBake').hidden = homeTab !== 'bake';
+    document.getElementById('homeReceipts').hidden = homeTab !== 'receipts';
     document.getElementById('hpTitle').textContent = HOME_TITLES[homeTab] || '';
     if (homeTab === 'plan') { renderBakeSheet(); renderPlan(); }
     if (homeTab === 'invoice') initInvoiceForm();
     if (homeTab === 'logs') logsOpen();
     if (homeTab === 'pantry') { renderPantry(); renderPlan().then(() => { if (homeTab === 'pantry') renderPantry(); }).catch(() => {}); }   // the plan fills in what "plan needs" compares against
     if (homeTab === 'bake') bakeOpen();
+    if (homeTab === 'receipts') renderReceipts();
     if (homeTab === 'timers') renderTimers(); else stopTick();
     syncVer(); window.scrollTo(0, 0);
   }
@@ -7205,6 +7213,129 @@
     }).sort((a, b) => a.name.localeCompare(b.name));
   }
   const buyFmt = (n, u) => n >= 1000 ? `${(Math.round(n / 10) / 100).toLocaleString()} ${u === 'ml' ? 'L' : 'kg'}` : `${Math.round(n).toLocaleString()} ${u}`;
+
+  // ----- Receipts (Home → Receipts): paste the text of a receipt photo (iPhone Live Text → Copy All), read it, review, and post
+  // the lines to the Ledger as UNAPPROVED. No OCR in the app. Costco only. -----
+  // RECEIPTS-PARSER-START
+  // Mirrors scripts/receipts/costco_items.json: Costco item number -> ledger item; size = one package, in g (or ml).
+  const COSTCO_ITEMS = {
+    '1752247': { item: 'Cornstarch', size: 1360.8, unit: 'g' },
+    '1593426': { item: 'Salt', size: 1502.5, unit: 'g' },
+    '801465': { item: 'Brown Sugar', size: 11339.8, unit: 'g' },
+    '737675': { item: 'Powdered Sugar', size: 3175.2, unit: 'g' }
+  };
+  const COSTCO_PLACES = ['WESTMINSTER', 'FULLERTON', 'BUENA PARK', 'LA HABRA', 'ANAHEIM', 'TUSTIN', 'IRVINE', 'GARDEN GROVE', 'COSTA MESA'];
+  // Returns { ok:false, error } when the text is not a receipt we read, else { ok:true, receipt, date, place, vendor, entries, lines, tax, total,
+  // itemsSum, match, blocks:[why posting is blocked] }. Two layouts: one item per line, or item lines first and price lines later.
+  function parseReceipt(text) {
+    const raw = String(text || '');
+    if (!/costco/i.test(raw)) return { ok: false, error: 'Only Costco receipts are read so far' };
+    const rows = raw.split(/\r?\n/).map(l => l.replace(/\s+/g, ' ').trim()).filter(Boolean);
+    const blocks = [];
+    const dm = /(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(raw);
+    const date = dm ? `${dm[3]}-${dm[1].padStart(2, '0')}-${dm[2].padStart(2, '0')}` : '';
+    if (!date) blocks.push("Couldn't find the date");
+    const up = raw.toUpperCase();
+    const pl = COSTCO_PLACES.find(p => new RegExp('\\b' + p + '\\b').test(up));
+    const place = pl ? pl.toLowerCase().replace(/\b[a-z]/g, c => c.toUpperCase()) : '';
+    const receipt = 'Costco ' + (place ? place + ' ' : '') + date;
+    const PRICE = '(\\d{1,4}\\.\\d{2})';
+    const reTotalLbl = /^[*\s]*(SUBTOTAL|TAX|TOTAL)\b/i;
+    const reCoupon = /^\d{3,8}\s*\/\s*\d{3,8}\b|\d+\.\d{2}\s*-\s*[A-Za-z]?$/;
+    const reA = new RegExp('^(?:[A-Za-z] )?(\\d{4,8}) (.+?) ' + PRICE + '(?: ?[A-Za-z])?$');          // E 1752247 CORN STARCH 4.99 N
+    const reB = /^(?:([A-Za-z]) )?(\d{4,8}) ([A-Za-z].*)$/;                                            // E 1752247 CORN STARCH
+    const rePriceOnly = new RegExp('^' + PRICE + '(?: ?[A-Za-z])?$');                                   // 4.99 N
+    const moneyIn = s => { const m = /(\d{1,5}\.\d{2})\s*[A-Za-z]?$/.exec(s); return m ? parseFloat(m[1]) : null; };
+    const entries = [], pending = [], standalone = [];       // standalone: {i, price}
+    let firstLbl = -1, tax = null, total = null;
+    const coupons = [];
+    rows.forEach((l, i) => {
+      if (l === '#consumed') return;
+      if (reCoupon.test(l)) { coupons.push(l); return; }
+      const lm = reTotalLbl.exec(l);
+      if (lm) {
+        if (firstLbl < 0) firstLbl = i;
+        const kind = lm[1].toUpperCase();
+        let v = moneyIn(l);
+        if (v == null && rows[i + 1] && rePriceOnly.test(rows[i + 1])) { v = moneyIn(rows[i + 1]); rows[i + 1] = '#consumed'; }
+        if (kind === 'TOTAL' && /ITEMS|TOTAL\s+TAX/i.test(l)) return;
+        if (kind === 'TAX' && tax == null) tax = v;
+        else if (kind === 'TOTAL' && total == null) total = v;
+        return;
+      }
+      let m = reA.exec(l);
+      if (m) { entries.push({ num: m[1], label: m[2], price: parseFloat(m[3]) }); return; }
+      m = reB.exec(l);
+      if (m && (m[1] || COSTCO_ITEMS[m[2]])) { const e = { num: m[2], label: m[3], price: null }; entries.push(e); pending.push(e); return; }
+      if (rePriceOnly.test(l)) standalone.push({ i, price: moneyIn(l) });
+    });
+    coupons.forEach(c => blocks.push('Not handled (discount or coupon line): ' + c));
+    if (pending.length) {
+      const before = standalone.filter(p => firstLbl < 0 || p.i < firstLbl);
+      const use = before.length === pending.length ? before : standalone.length === pending.length ? standalone : null;
+      if (entries.some(e => e.price != null) || !use) blocks.push("Couldn't pair items with prices, paste one item per line");
+      else pending.forEach((e, k) => { e.price = use[k].price; });
+    }
+    if (!entries.length) blocks.push("Couldn't find any item lines");
+    const lines = [];
+    entries.forEach(e => {
+      const k = COSTCO_ITEMS[e.num];
+      if (!k) { blocks.push(`Unknown item #${e.num} (${e.label}), tell Claude to add it`); return; }
+      if (e.price == null) return;
+      lines.push({ receipt, date, vendor: 'Costco', kind: 'item', item: k.item, amt: k.size, unit: k.unit, price: e.price, note: `item #${e.num} ${e.label}` });
+    });
+    const itemsSum = Math.round(entries.reduce((t, e) => t + (e.price || 0), 0) * 100) / 100;
+    const taxV = tax || 0;
+    if (taxV > 0) lines.push({ receipt, date, vendor: 'Costco', kind: 'tax', price: taxV, note: 'tax' });
+    let match = '';
+    if (total == null) blocks.push("Couldn't find the total");
+    else if (Math.abs(itemsSum + taxV - total) <= 0.015) match = 'Total matches';
+    else { match = `Total does not match (items+tax ${(itemsSum + taxV).toFixed(2)} vs receipt ${total.toFixed(2)})`; blocks.push(match); }
+    if (lines.length > 80) blocks.push(`${lines.length} lines is more than the 80 the ledger takes in one go`);
+    return { ok: true, receipt, date, place, vendor: 'Costco', entries, lines, tax: taxV, total, itemsSum, match, blocks };
+  }
+  // RECEIPTS-PARSER-END
+  let rcParsed = null, rcBusy = false, rcDone = '';
+  function renderReceipts() {
+    const box = document.getElementById('homeReceipts'); if (!box) return;
+    if (!box.querySelector('#rcText')) {
+      box.innerHTML = `<div class="pn-note">On your iPhone: open the receipt photo, press and hold the text, tap Copy All, then paste it here.</div>` +
+        `<textarea id="rcText" class="rc-text" placeholder="Paste the receipt text" autocomplete="off"></textarea>` +
+        `<div class="pn-bar" style="margin-top:8px"><button class="primary" id="rcRead">Read</button></div><div id="rcOut"></div>`;
+      box.querySelector('#rcRead').onclick = () => { rcDone = ''; rcParsed = parseReceipt(box.querySelector('#rcText').value); paintReceipt(); };
+      box.querySelector('#rcOut').addEventListener('click', e => { if (e.target.closest('#rcPost')) rcPost(); });
+    }
+    paintReceipt();
+  }
+  function paintReceipt() {
+    const out = document.querySelector('#homeReceipts #rcOut'); if (!out) return;
+    const p = rcParsed;
+    if (rcDone) { out.innerHTML = `<div class="rc-ok">${esc(rcDone)}</div>`; return; }
+    if (!p) { out.innerHTML = ''; return; }
+    if (!p.ok) { out.innerHTML = `<div class="rc-bad">${esc(p.error)}</div>`; return; }
+    const groups = new Map();
+    p.lines.filter(l => l.kind === 'item').forEach(l => { const k = l.item + '|' + l.price; const g = groups.get(k) || { l, n: 0 }; g.n++; groups.set(k, g); });
+    const rows = [...groups.values()].map(g => `<div class="pn-row"><span class="pn-main"><b>${esc(g.l.item)}</b><small>${esc(buyFmt(g.l.amt, g.l.unit))} per package · $${g.l.price.toFixed(2)} each · ${g.n} ${g.n === 1 ? 'package' : 'packages'}</small></span><span class="pn-r"><b>$${(g.n * g.l.price).toFixed(2)}</b></span></div>`).join('');
+    const blocked = p.blocks.length > 0 || p.lines.length === 0 || rcBusy;
+    out.innerHTML = `<h3>${esc(p.receipt)}</h3>` + (rows || '<div class="pn-note">No items read.</div>') +
+      `<div class="pn-row"><span class="pn-main"><b>Items</b></span><span class="pn-r"><b>$${p.itemsSum.toFixed(2)}</b></span></div>` +
+      `<div class="pn-row"><span class="pn-main"><b>Tax</b></span><span class="pn-r"><b>$${p.tax.toFixed(2)}</b></span></div>` +
+      `<div class="pn-row"><span class="pn-main"><b>Receipt total</b></span><span class="pn-r"><b>${p.total == null ? 'not found' : '$' + p.total.toFixed(2)}</b></span></div>` +
+      (p.match && !p.blocks.includes(p.match) ? `<div class="rc-ok">${esc(p.match)}</div>` : '') +
+      p.blocks.map(b => `<div class="rc-bad">${esc(b)}</div>`).join('') +
+      `<div class="pn-bar" style="margin-top:12px"><button class="primary" id="rcPost"${blocked ? ' disabled' : ''}>Post ${p.lines.length} ${p.lines.length === 1 ? 'line' : 'lines'}</button></div>` +
+      `<div class="pn-note">Lines go to the Ledger unapproved. Approve them in Baking, Costs, Ingredient prices.</div>`;
+  }
+  async function rcPost() {
+    const p = rcParsed; if (!p || !p.ok || p.blocks.length || !p.lines.length || rcBusy) return;
+    rcBusy = true; paintReceipt();
+    try {
+      await fetchLedger();
+      if (ledgerErr) return rcpToast("Couldn't check the ledger, try again");
+      if ((LEDGER || []).some(l => l.receipt === p.receipt)) { rcpToast('This receipt is already in the ledger'); rcParsed = Object.assign({}, p, { blocks: p.blocks.concat('This receipt is already in the ledger') }); return; }
+      if (await ledgerPost({ action: 'add', lines: p.lines })) { rcDone = `Added ${p.lines.length} lines, approve them in Baking, Costs, Ingredient prices`; rcParsed = null; const t = document.querySelector('#homeReceipts #rcText'); if (t) t.value = ''; }
+    } finally { rcBusy = false; paintReceipt(); }
+  }
 
   // ----- Pantry: what's on hand. Each row in the Pantry tab is one physical count on a date. On hand now = the latest count
   // plus approved ledger purchases dated after it (same unit only). Counts are soft-deleted, never erased. -----
