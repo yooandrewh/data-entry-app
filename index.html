@@ -17,12 +17,12 @@
   :root {
     --bg: #f7f2f5;
     --card: #ffffff;
-    --text: #341f37;        /* Pantone 7449 C Deep Plum */
+    --text: #000;        /* Pantone 7449 C Deep Plum */
     --muted: #8c7a8e;
     --sep: #eadfe7;
-    --accent: #a067a2;      /* Pantone 7655 C Dusty Mauve — primary actions, links, active tab */
+    --accent: #000;      /* Pantone 7655 C Dusty Mauve — primary actions, links, active tab */
     --green: #34c759;
-    --orange: #f0a875;      /* Pantone 1485 C Apricot — warm highlight */
+    --orange: #4d4d4d;      /* Pantone 1485 C Apricot — warm highlight */
     --red: #ff3b30;
     --field: #f7f2f5;
     --shadow: 0 1px 3px rgba(0,0,0,0.06);
@@ -91,8 +91,8 @@
   .seg button:active { transform: scale(0.97); }
   .seg button.on[data-type="delivery"] { border-color: var(--accent); color: var(--accent); }
   .seg button.on[data-type="inventory"] { border-color: var(--orange); color: var(--orange); }
-  .seg button.on[data-type="goodwill"] { border-color: #16a34a; color: #16a34a; }
-  .seg button.on[data-type="transfer"] { border-color: #7c3aed; color: #7c3aed; }
+  .seg button.on[data-type="goodwill"] { border-color: #000; color: #000; }
+  .seg button.on[data-type="transfer"] { border-color: #000; color: #000; }
 
   .group-label { font-size: var(--fs-micro); color: var(--muted); font-weight: 600;
     text-transform: uppercase; letter-spacing: 0.4px; margin: 0 4px 8px; }
@@ -198,9 +198,9 @@
   .db-amts .proj-row { font-size: var(--fs-body); }
   .db-amts .proj-row .k { color: var(--text); font-weight: 500; }
   .db-amts .pr-total .k { font-weight: 700; }
-  .db-amts .pr-xfer .k, .db-amts .pr-xfer b { color: #7c3aed; }
-  .db-amts .pr-flight .k, .db-amts .pr-flight b { color: #4b48b3; }
-  .db-summary .ds-flights { margin-top: 10px; color: #4b48b3; font-weight: 600; font-size: var(--fs-caption); }
+  .db-amts .pr-xfer .k, .db-amts .pr-xfer b { color: #000; }
+  .db-amts .pr-flight .k, .db-amts .pr-flight b { color: #000; }
+  .db-summary .ds-flights { margin-top: 10px; color: #000; font-weight: 600; font-size: var(--fs-caption); }
   .db-summary .ds-flights .ds-note { color: var(--muted); font-weight: 400; font-size: var(--fs-caption); }
   .db-empty { text-align: center; color: var(--muted); padding: 60px 20px; }
   .db-empty .big { font-size: 44px; margin-bottom: 12px; }
@@ -306,17 +306,17 @@
   .growth-proj { font-size: var(--fs-caption); color: var(--muted); margin-top: 8px; }
   .growth-proj b { color: var(--accent); font-weight: 700; }
   .growth-range { font-size: var(--fs-caption); font-weight: 700; margin-top: 3px; }
-  .growth-range.up { color: #16a34a; }
+  .growth-range.up { color: #000; }
   .growth-range.down { color: var(--red); }
   .growth-range.flat { color: var(--muted); }
   .wow { font-size: var(--fs-caption); font-weight: 700; padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
-  .wow.up { color: #16a34a; background: rgba(22,163,74,0.12); }
+  .wow.up { color: #000; background: rgba(22,163,74,0.12); }
   .wow.down { color: var(--red); background: rgba(255,59,48,0.12); }
   .wow.flat { color: var(--muted); background: var(--field); }
   .wchart { display: flex; align-items: flex-end; gap: 5px; height: 72px; margin-top: 8px; }
   .wcol { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px; height: 100%; justify-content: flex-end; }
   .wcol .bar { width: 100%; background: var(--accent); border-radius: 4px 4px 0 0; min-height: 2px; opacity: 0.55; transition: height .2s; }
-  .wcol .bar.last { opacity: 1; background: #16a34a; }
+  .wcol .bar.last { opacity: 1; background: #000; }
   .wcol .lb { font-size: var(--fs-micro); color: var(--muted); }
   .cashrow { display: grid; grid-template-columns: 1fr auto; gap: 8px; font-size: var(--fs-caption); padding: 4px 0; border-top: 1px solid var(--sep); }
   .cashrow:first-child { border-top: none; }
@@ -359,14 +359,14 @@
 
   /* ---- Ingredient label ---- */
   .rec-label-btn { width: 100%; margin-top: 14px; }
-  .lbl-doc { background: #fffdf8; color: #211d1a; border: 1.5px solid #211d1a; padding: 14px 16px; font-family: Archivo, Arial, Helvetica, sans-serif; font-size: 13px; line-height: 1.4; }
+  .lbl-doc { background: #fffdf8; color: #000; border: 1.5px solid #000; padding: 14px 16px; font-family: Archivo, Arial, Helvetica, sans-serif; font-size: 13px; line-height: 1.4; }
   .lbl-doc p { margin: 0 0 8px; }
-  .lbl-brand { color: #6f665c; font-weight: 700; font-size: 12px; }
-  .lbl-title { font-family: Archivo, Arial, Helvetica, sans-serif; font-weight: 700; font-size: 22px; padding-bottom: 4px; margin-bottom: 8px; border-bottom: 2px solid #211d1a; }
+  .lbl-brand { color: #4d4d4d; font-weight: 700; font-size: 12px; }
+  .lbl-title { font-family: Archivo, Arial, Helvetica, sans-serif; font-weight: 700; font-size: 22px; padding-bottom: 4px; margin-bottom: 8px; border-bottom: 2px solid #000; }
   .lbl-title small { font-size: 12px; font-weight: 700; }
-  .lbl-doc .k { color: #6f665c; font-weight: 700; text-transform: uppercase; }
+  .lbl-doc .k { color: #4d4d4d; font-weight: 700; text-transform: uppercase; }
   .lbl-contains { color: #7b2a45; font-weight: 700; text-transform: uppercase; }
-  .lbl-note { font-size: 11px; font-style: italic; color: #6f665c; margin: 6px 0 0 !important; }
+  .lbl-note { font-size: 11px; font-style: italic; color: #4d4d4d; margin: 6px 0 0 !important; }
   .lbl-page { background: #fff; padding: 12px; display: flex; flex-direction: column; gap: 14px; }
   .lbl-doc [contenteditable]:focus { outline: 1px dashed var(--accent); }
   @media print {
@@ -650,7 +650,7 @@
     letter-spacing: 0.06em; padding: 3px 9px; border-radius: 999px;
   }
   .rec-beta-note {
-    background: rgba(255,149,0,0.12); color: #8a4b00; border-radius: 12px;
+    background: rgba(255,149,0,0.12); color: #000; border-radius: 12px;
     padding: 10px 13px; margin-bottom: 14px; font-size: var(--fs-caption); font-weight: 600; line-height: 1.45;
   }
   .rec-scale { display: flex; gap: 8px; margin: 2px 0 12px; flex-wrap: wrap; }
@@ -708,7 +708,7 @@
   .pr-fc .fc-v { text-align: right; }
   .pr-fc .fc-sub { display: block; font-size: var(--fs-caption); color: var(--muted); margin-top: 2px; }
   .proj-warn {
-    background: rgba(255,149,0,0.14); color: #8a4b00; font-size: var(--fs-caption); font-weight: 600;
+    background: rgba(255,149,0,0.14); color: #000; font-size: var(--fs-caption); font-weight: 600;
     padding: 8px 11px; border-radius: 10px; margin: 0 0 12px;
   }
   .home-updated { color: var(--muted); font-size: var(--fs-caption); margin: 0 2px 14px; line-height: 1.5; }
@@ -837,7 +837,7 @@
      Apricot hero with a big plum headline and the madeleine, one white card with underline tabs,
      a floating rounded nav. Also deepens the whole palette — the soft surfaces were washing out. */
   :root {
-    --apricot: #f0a875; --plum: #341f37; --mauve: #a067a2;
+    --apricot: #4d4d4d; --plum: #000; --mauve: #000;
     --bg: #f8e2d0; --card: #f8e2d0; --field: #efd3bd; --sep: #e6c8b0; --muted: #7d5f79;
     --neu-lo: rgba(150,96,84,0.30); --neu-hi: rgba(255,250,244,0.95);
     --grad: linear-gradient(180deg, #ad74af 0%, #8c5290 100%);
@@ -878,7 +878,7 @@
      Last block in the stylesheet, so it wins. Buttons are squared "keys": light brushed-metal keys
      normally, dark plum keys with a soft glow when selected or primary. Deep Plum is the default colour. */
   :root {
-    --accent: #341f37;
+    --accent: #000;
     --card: #fff6ee; --field: #f0d9c5; --sep: #eacfb9;
     --shadow: inset 0 1px 0 rgba(255,255,255,0.85), 0 8px 18px rgba(90,50,60,0.14);
     --key-light: linear-gradient(180deg, #fffaf4 0%, #ecdccb 100%);
@@ -947,7 +947,7 @@
      a plum→mauve gradient fill for anything selected or primary, a faint plum tint for the rest.
      Replaces the earlier neumorphic / elevator-key looks. */
   :root {
-    --grad: linear-gradient(135deg, #5b3461 0%, #a067a2 100%);
+    --grad: linear-gradient(135deg, #5b3461 0%, #000 100%);
     --tint: rgba(52,31,55,0.08);
     --r: 12px;
     --card: #fff6ee;
@@ -1002,7 +1002,7 @@
   .home-hero { background: none; min-height: 500px; }
   /* ================= Home landing: transparent buttons over the photo; sharp; no gradation (final block) ================= */
   *, *::before, *::after { border-radius: 0 !important; box-shadow: none !important; text-shadow: none !important; }
-  :root { --grad: linear-gradient(#341f37, #341f37); }   /* one flat plum, kept as an image layer so chevrons can sit on it */
+  :root { --grad: linear-gradient(#000, #000); }   /* one flat plum, kept as an image layer so chevrons can sit on it */
   .home-bg { background: linear-gradient(rgba(22,12,26,0.30), rgba(22,12,26,0.30)), url("hero.jpg") 50% 42% / cover no-repeat; }
   #view-home.paged .home-bg { display: none; }
   .home-hero { min-height: 380px; }
@@ -1030,17 +1030,17 @@
   .sheet h2 { font-size: 26px; }
   #hpTitle { font-size: 26px; }
   .home-season { top: calc(var(--safe-top) + 10px); right: 12px; z-index: 5; min-width: 128px; height: 46px; padding: 0 20px; font-size: var(--fs-body); font-weight: 700;
-    background: #f8e2d0; color: #341f37; border: none; }
+    background: #f8e2d0; color: #000; border: none; }
   .hero-kicker { padding-right: 150px; }
   .home-hero { padding-top: calc(var(--safe-top) + 64px); }
   .hero-kicker { position: absolute; top: calc(var(--safe-top) + 24px); left: 20px; }
 
   /* ================= Bottom nav: one solid bar, flush to the screen edges (not a floating pill) ================= */
   :root { --tabbar-h: 62px; }
-  .tabbar, body.home-landing .tabbar { padding: 0; height: calc(var(--tabbar-h) + var(--safe-bottom)); background: #f0a875; border-top: none; }
+  .tabbar, body.home-landing .tabbar { padding: 0; height: calc(var(--tabbar-h) + var(--safe-bottom)); background: #4d4d4d; border-top: none; }
   .tab-pill { max-width: none; width: 100%; height: var(--tabbar-h); margin: 0; padding: 0; gap: 0; background: transparent; }
   .tabbar button { border-radius: 0; }
-  .tabbar button.on { background: rgba(52,31,55,0.16); color: #341f37; }
+  .tabbar button.on { background: rgba(52,31,55,0.16); color: #000; }
   .tabbar button:focus, .tabbar button:focus-visible, .tabbar button:active { outline: none; }
   .home-season { min-width: 0; height: 36px; padding: 0 14px; font-size: var(--fs-caption); top: calc(var(--safe-top) + 12px); right: 14px; }
   .hero-kicker { padding-right: 110px; }
@@ -1072,15 +1072,15 @@
   .kt-grid input { font-size: var(--fs-body); padding: 8px 10px; width: 100%; border: none; background: var(--tint); color: var(--text); }
 
   /* ================= Photo palette, bright (final block — wins over everything above) =================
-     Colours sampled from the Home photo: caramel crust #35465c, cream plate #d6cbb9, light backdrop #e0dede,
-     shadow navy #232a33. Light ground, navy ink, caramel for selected / primary / links. The Home landing
+     Colours sampled from the Home photo: caramel crust #000, cream plate #d6cbb9, light backdrop #e0dede,
+     shadow navy #000. Light ground, navy ink, caramel for selected / primary / links. The Home landing
      itself stays on the photo. */
   :root {
     color-scheme: light;
     --bg: #f2eee7; --card: #fbf9f5; --field: #e8e2d6; --sep: #ddd5c6;
-    --text: #232a33; --muted: #6d6660; --plum: #232a33;
-    --accent: #35465c; --tint: rgba(35,42,51,0.07);
-    --grad: linear-gradient(#35465c, #35465c);
+    --text: #000; --muted: #6d6660; --plum: #000;
+    --accent: #000; --tint: rgba(35,42,51,0.07);
+    --grad: linear-gradient(#000, #000);
   }
   input, select, textarea { color: var(--text); }
   .home-card { background: var(--card); }
@@ -1096,11 +1096,11 @@
   .filter-bar select, .home-card .filter-bar select { background-color: var(--tint); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23232a33' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); color: var(--text); }
   .db-filter select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23232a33' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
   .db-filter select.on { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23ffffff' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"), var(--grad); }
-  .rec-beta-note { color: #8a4b00; background: rgba(255,149,0,0.12); }
+  .rec-beta-note { color: #000; background: rgba(255,149,0,0.12); }
   .hp-head, .hp-back { color: var(--text); }
   .db-day { background: var(--bg); }
   .ver-badge { background: var(--bg); color: var(--muted); }
-  .home-season { background: #fbf9f5; color: #232a33; }
+  .home-season { background: #fbf9f5; color: #000; }
 
   /* ---- Home landing: the buttons sit in the middle of the screen, the version at the bottom ---- */
   #view-home:not(.paged) .wrap { display: flex; flex-direction: column;
@@ -1416,14 +1416,14 @@
   .home-menu a.hm-link { margin-top: 30px; font-size: var(--fs-caption); letter-spacing: 0.28em; opacity: .8; }
 
   /* ================= Photo outline, bright (final block) =================
-     The Home photo's palette on a bright ground: warm white page #f8f5ef, cream cards, shadow-navy ink #232a33,
-     crust caramel #35465c for selected / primary, and a thin outline with rounded corners on cards and controls.
+     The Home photo's palette on a bright ground: warm white page #f8f5ef, cream cards, shadow-navy ink #000,
+     crust caramel #000 for selected / primary, and a thin outline with rounded corners on cards and controls.
      Paper documents keep their own colours. */
   :root {
     color-scheme: light;
     --bg: #fcfbf9; --card: #ffffff; --field: #f1efeb; --sep: rgba(35,42,51,0.12);
-    --text: #232a33; --muted: #6d6660; --plum: #232a33; --accent: #35465c; --tint: rgba(35,42,51,0.06);
-    --grad: linear-gradient(#35465c, #35465c);
+    --text: #000; --muted: #6d6660; --plum: #000; --accent: #000; --tint: rgba(35,42,51,0.06);
+    --grad: linear-gradient(#000, #000);
     --line: rgba(35,42,51,0.30);
   }
   html, body { background: var(--bg); color: var(--text); }
@@ -1442,12 +1442,12 @@
   }
   .db-filter select.on { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%2335465c' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
   .seg button.on .ic svg { stroke: var(--accent); }
-  .btn-primary, .submit, .db-new { background: #35465c; color: #fff; border: 1px solid #35465c; border-radius: 8px !important; }
+  .btn-primary, .submit, .db-new { background: #000; color: #fff; border: 1px solid #000; border-radius: 8px !important; }
   .tabbar, body.home-landing .tabbar { background: #ffffff; border-top: 1px solid var(--sep); }
   body.home-landing .tabbar { background: rgba(255,246,238,0.12); border-top-color: rgba(255,246,238,0.5); }
   .tabbar button { color: var(--muted); }
   .tabbar button.on { background: rgba(53,70,92,0.12); color: var(--accent); }
-  .home-season { background: #ffffff; color: #232a33; }
+  .home-season { background: #ffffff; color: #000; }
   .db-day, .ver-badge { background: none; color: var(--muted); }
   .sp-pop { background: #ffffff; border: 1px solid var(--line); color: var(--text); border-radius: 8px !important; overflow-x: hidden; }
   .sp-pop { padding: 2px 0; }
@@ -1467,11 +1467,11 @@
 
   /* ================= Retail-app style for Data and Baking (final block) =================
      Taken from ~/kairosbaking/retail-app (fonts stay as on Home: calligraphy titles, Cormorant Garamond): flat sharp corners, hairline rows, a cool
-     stone ground #e8e6e2 with #f4f2ee cards, slate ink #242c35, solid caramel #35465c for selected / primary,
+     stone ground #e8e6e2 with #f4f2ee cards, slate ink #000, solid caramel #000 for selected / primary,
      and a solid light-caramel nav bar. Scoped to the Data and Baking tabs; Home keeps the photo look. */
   #view-db, #view-plan, #view-fin {
-    --bg: #fcfbf9; --card: #ffffff; --field: #efede9; --sep: #e2dfda; --text: #242c35; --muted: #6d737b;
-    --accent: #35465c; --plum: #242c35; --tint: rgba(36,44,53,0.06); --line: #dcd8d2;
+    --bg: #fcfbf9; --card: #ffffff; --field: #efede9; --sep: #e2dfda; --text: #000; --muted: #6d737b;
+    --accent: #000; --plum: #000; --tint: rgba(36,44,53,0.06); --line: #dcd8d2;
     color: var(--text);
   }
   body[data-tab="db"], body[data-tab="plan"], body[data-tab="fin"] { background: #fcfbf9; }
@@ -1512,7 +1512,7 @@
   .fc-locs { display: flex; gap: 6px; margin: 0 0 10px; }
   .fc-locs button { padding: 5px 12px; font: inherit; font-size: var(--fs-caption); cursor: pointer; background: rgba(255,255,255,.55); border: 1px solid var(--line, rgba(35,42,51,.3)); color: var(--text); border-radius: 8px; }
   .fc-locs button.on { color: var(--accent); border-color: var(--accent); background: rgba(53,70,92,.14); font-weight: 700; }
-  .pg-stale { font-size: var(--fs-caption); color: #8a4b00; background: rgba(255,149,0,.12); padding: 7px 10px; margin-top: 8px; }
+  .pg-stale { font-size: var(--fs-caption); color: #000; background: rgba(255,149,0,.12); padding: 7px 10px; margin-top: 8px; }
   .pg-stale > div { display: inline; background: none; padding: 0; margin: 0; }
   .pg-card .pg-c > span { white-space: nowrap; }
   /* Home landing: the text list and the kitchen booking link sit together mid-screen (a fixed gap, not pinned to the bottom,
@@ -1579,8 +1579,8 @@
   @media (max-width: 400px) { #recSection button [data-ic], #recSection button .ic2 { display: none; } }
   /* nav: solid light caramel, flush, only while Data / Baking is open */
   body[data-tab="db"] .tabbar, body[data-tab="plan"] .tabbar, body[data-tab="fin"] .tabbar { background: #f3f1ed; border-top: 1px solid #e2dfda; }
-  body[data-tab="db"] .tabbar button, body[data-tab="plan"] .tabbar button, body[data-tab="fin"] .tabbar button { color: #242c35; opacity: .75; }
-  body[data-tab="db"] .tabbar button.on, body[data-tab="plan"] .tabbar button.on, body[data-tab="fin"] .tabbar button.on { background: rgba(36,44,53,.16); color: #242c35; opacity: 1; font-weight: 700; }
+  body[data-tab="db"] .tabbar button, body[data-tab="plan"] .tabbar button, body[data-tab="fin"] .tabbar button { color: #000; opacity: .75; }
+  body[data-tab="db"] .tabbar button.on, body[data-tab="plan"] .tabbar button.on, body[data-tab="fin"] .tabbar button.on { background: rgba(36,44,53,.16); color: #000; opacity: 1; font-weight: 700; }
   /* Desktop pass 2: non-Finance */
   @media (min-width: 900px) {
     /* wider page for every screen but Finance */
@@ -1858,6 +1858,32 @@
 #view-home:not(.paged) .home-menu button .hm-t { flex: 1; text-align: left; }
 #view-home:not(.paged) .home-menu button .hm-go { display: block; font-size: var(--fs-title); line-height: 1; opacity: .65; }
 #view-home:not(.paged) .home-menu button:active { background: rgba(255,255,255,0.12) !important; }
+/* BLACK AND WHITE (2026-11-18, temporary): delete this block to bring the colors back. */
+:root { color-scheme: light; --bg: #fff; --card: #fff; --field: #f1f1f1; --sep: #d9d9d9; --text: #000; --muted: #4d4d4d; --plum: #000; --accent: #000; --tint: rgba(0,0,0,0.06); --grad: linear-gradient(#000, #000); --line: rgba(0,0,0,0.35); --green: #1a1a1a; --orange: #4d4d4d; }
+html, body, body[data-tab="db"], body[data-tab="plan"], body[data-tab="fin"] { background: #fff; color: #000; }
+.scrim { background: rgba(0,0,0,0.5); }
+body[data-tab="db"] .tabbar, body[data-tab="plan"] .tabbar, body[data-tab="fin"] .tabbar, .tabbar { background: #fff; border-top: 1px solid #000; }
+body[data-tab="db"] .tabbar button, body[data-tab="plan"] .tabbar button, body[data-tab="fin"] .tabbar button { color: #000; opacity: .7; }
+body[data-tab="db"] .tabbar button.on, body[data-tab="plan"] .tabbar button.on, body[data-tab="fin"] .tabbar button.on { background: #000; color: #fff; opacity: 1; }
+body:not(.home-landing) .tabbar button.on svg * { stroke: #fff; }
+body[data-tab="home"]:not(.home-landing) .tabbar button { color: #000; }
+body[data-tab="home"]:not(.home-landing) .tabbar button.on { background: #000; color: #fff; }
+.home-bg { filter: grayscale(1) contrast(1.05); }
+.tok, .ic svg, .hm-ic svg, .tic svg, [data-ic] svg, .rec-ic svg { filter: grayscale(1); }
+.tok { background: #f1f1f1 !important; }
+.card, .proj-card, .db-entry, .db-summary, .split-card, .rec-box, .ds-card { border-color: #000; box-shadow: none; }
+.seg button.on, .pill.on, .chip-row button.on, .rec-scale button.on, .bakedays button.on, .btn-primary, .submit, .db-new, .db-filter button.on, .db-filter select.on, .tr-seg button.on { background: #000 !important; color: #fff !important; border-color: #000 !important; }
+.seg button.on .ic svg { stroke: #fff; }
+.tr-chart .trc-LP { fill: #111; } .tr-chart .trc-SS { fill: #737373; } .tr-chart .trc-MP { fill: #b8b8b8; } .tr-chart .trc-X { fill: #e2e2e2; }
+.tr-chart rect[class^="trc-"] { stroke: #fff; stroke-width: 1; }
+.tr-leg i.trc-LP { background: #111 !important; } .tr-leg i.trc-SS { background: #737373 !important; } .tr-leg i.trc-MP { background: #b8b8b8 !important; } .tr-leg i.trc-X { background: #e2e2e2 !important; }
+.tr-up, .tr-dn { color: #000; }
+#view-db .db-filter button.on, #view-plan .db-filter button.on, #view-db .db-filter select.on, #view-plan .db-filter select.on, #view-plan .chip-row button.on, #view-plan .rec-scale button.on, #view-plan .bakedays button.on, #view-db .pill.on, #view-plan .pill.on { background: #000 !important; color: #fff !important; border-color: #000 !important; box-shadow: none !important; }
+body[data-tab="home"] .tabbar button.on, body:not(.home-landing) .tabbar button.on { background: #000 !important; color: #fff !important; opacity: 1 !important; }
+/* One plain, readable font everywhere (the iPhone system font); printed documents keep Archivo. */
+html, body, button, input, select, textarea { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif !important; }
+h1, h2, h3, h4, .hero-title, .sheet h2, #hpTitle, .proj-card h3, .card h3, #bsScrim .bs2-title, .hp-head span { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif !important; font-weight: 700 !important; text-transform: none !important; letter-spacing: 0 !important; }
+.hero-title { font-size: 34px; }
 </style>
 </head>
 <body>
@@ -2216,7 +2242,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.132.00 · Nov 18, 10:11 AM PST</div>
+<div class="ver-badge">v1.133.00 · Nov 18, 10:21 AM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -7655,7 +7681,7 @@
       for (const [p, v] of [...mad, ['Unknown', rest]]) {
         if (!v) continue;
         const y1 = y(acc + v), h = y(acc) - y1;
-        g += `<rect x="${x}" y="${y1}" width="${bw}" height="${h}" fill="${PRODUCT_COLOR[p]}"${part ? ' fill-opacity=".45"' : ''}/>`;
+        g += `<rect class="trc-${PRODUCT_TOKEN[p].replace('?', 'X')}" x="${x}" y="${y1}" width="${bw}" height="${h}" fill="${PRODUCT_COLOR[p]}"${part ? ' fill-opacity=".45"' : ''}/>`;
         acc += v;
       }
       if (part) g += `<rect x="${x}" y="${y(w.total)}" width="${bw}" height="${y(0) - y(w.total)}" fill="url(#trHatch)" stroke="var(--muted, #6d6660)" stroke-dasharray="3 2" stroke-width="1"/>`;
@@ -7687,7 +7713,7 @@
       const cell = (w, p) => (firstSeen[p] && w.start >= firstSeen[p]) ? (w.amounts[p] || 0) + (w.est.has(p) ? '~' : '') : '—';
       const rowsHtml = (cols, mk) => tbl.map(w => { const prev = weeks.slice(0, weeks.indexOf(w)).reverse().find(x => x.days >= 7); return `<tr${w.days < 7 ? ' class="tr-part"' : ''}><td>${esc(trFmtDay(w.start))}${w.days < 7 ? `<span class="tr-d">${w.days} of 7 days</span>` : ''}</td>${mk(w, prev)}</tr>`; }).join('');
       body = trChartSvg(shown) +
-        `<div class="tr-leg">${TR_MAD.map(p => `<span><i style="background:${PRODUCT_COLOR[p]}"></i>${esc(p)}</span>`).join('')}<span><i style="background:${PRODUCT_COLOR.Unknown}"></i>Other</span></div>` +
+        `<div class="tr-leg">${TR_MAD.map(p => `<span><i class="trc-${PRODUCT_TOKEN[p]}" style="background:${PRODUCT_COLOR[p]}"></i>${esc(p)}</span>`).join('')}<span><i class="trc-X" style="background:${PRODUCT_COLOR.Unknown}"></i>Other</span></div>` +
         `<h3>Madeleines by week</h3><table class="tr-tbl"><tr><th>Week of</th><th>Total</th><th>LP</th><th>SS</th><th>MP</th></tr>` +
         rowsHtml(0, (w, prev) => `<td><b>${w.total}</b>${trDelta(w, prev)}</td>${TR_MAD.map(p => `<td>${w.amounts[p] || 0}</td>`).join('')}`) + `</table>` +
         `<h3>Other items</h3><table class="tr-tbl"><tr><th>Week of</th><th>BM</th><th>CP</th><th>PB</th><th>CK</th></tr>` +
