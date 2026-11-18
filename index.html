@@ -1907,6 +1907,35 @@ body[data-page="counts"] #dbFilter [data-filter="sales"] { display: none; }
 body[data-page="counts"] .db-head-row .sub { display: none; }
 .tabbar button { color: #000 !important; opacity: .7; }
 .tabbar button.on { opacity: 1 !important; }
+/* Spacing pass (2026-11-18): phone layout follows Apple's guidance: 16px side margins, 44px tap targets, 8px gaps, 12-16px between groups. Greys only. */
+#secNav.sec-nav { gap: 8px !important; padding: 30px 16px 14px !important; margin-bottom: 4px; scroll-padding: 0 16px; -webkit-overflow-scrolling: touch; scrollbar-width: none; border: 0; border-radius: 0; }
+.sec-nav::-webkit-scrollbar { display: none; }
+#secNav.sec-nav button { min-height: 44px !important; height: 44px !important; padding: 0 18px !important; border-radius: 22px !important; font-size: var(--fs-body); border: 1px solid #c9c9c9; background: #fff; color: #000; box-shadow: none; }
+#secNav.sec-nav button.on { background: #000; color: #fff; border-color: #000; }
+.wrap { padding-left: 16px; padding-right: 16px; }
+#view-db .db-head-row, #view-home .wrap > h1, #view-plan .wrap > h1 { margin-top: 8px; margin-bottom: 14px; }
+#view-db h1 { margin-bottom: 4px; }
+#view-db .db-filter:not(.sec-nav), #view-plan .db-filter:not(.sec-nav), #view-home .db-filter:not(.sec-nav) { gap: 8px !important; margin-bottom: 16px !important; }
+#view-db .db-filter:not(.sec-nav) button, #view-db .db-filter:not(.sec-nav) select, #view-plan .db-filter:not(.sec-nav) button, #view-plan .db-filter:not(.sec-nav) select { min-height: 44px !important; padding: 0 12px !important; }
+.hc-body { padding: 0; }
+.filter-bar { gap: 8px; margin-bottom: 16px; }
+.filter-bar select, .filter-bar button { min-height: 44px !important; }
+.db-summary { padding: 18px 16px; margin-bottom: 16px; }
+.db-summary .ds-break { margin-top: 12px; }
+.db-summary .ds-rows { margin-top: 12px; }
+.db-summary .ds-rows .proj-row, .db-amts .proj-row { padding: 8px 0; }
+.db-summary .ds-loc { margin-top: 12px; }
+.db-day { margin-bottom: 14px; }
+.db-entry { padding: 14px 16px; margin-bottom: 10px; }
+.proj-card { padding: 18px 16px; margin-bottom: 16px; }
+.card { margin-bottom: 24px; }
+.row { padding: 14px 16px; min-height: 52px; }
+.group-label { margin: 0 4px 10px; }
+.buy-row { padding: 14px 4px; gap: 14px; min-height: 56px; }
+.buy-row input { width: 24px; height: 24px; }
+.wrap { padding-bottom: calc(var(--tabbar-h) + var(--safe-bottom) + 28px); }
+.tabbar button { gap: 4px; }
+
 </style>
 </head>
 <body>
@@ -2256,7 +2285,7 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
   </div>
 </div>
 
-<div class="ver-badge">v1.138.00 · Nov 18, 11:03 AM PST</div>
+<div class="ver-badge">v1.138.01 · Nov 18, 11:07 AM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
