@@ -63,4 +63,4 @@ def main():
             for i in range(0, len(lines), 80): http("/api/ledger", {"action": "add", "lines": lines[i:i+80]})
             existing.add(lines[0]["receipt"])
         http("/api/receipt-inbox", {"action": "result", "id": p["id"], "status": status, "result": text[:300]})
-main()
+if __name__ == "__main__": main()
