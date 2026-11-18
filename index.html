@@ -2038,6 +2038,10 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
   .buy-big .buy-main small { display: block; margin-top: 2px; }
   .buy-big .buy-r { font-size: var(--fs-body); font-weight: 600; }
 
+  .buy-have { opacity: .6; cursor: default; }
+  .buy-have .buy-ok { width: 24px; height: 24px; flex: none; display: flex; align-items: center; justify-content: center; border-radius: 6px; background: #000; color: #fff; font-size: 15px; font-weight: 700; }
+  .buy-have .buy-main b em { font-weight: 700; }
+
 </style>
 </head>
 <body>
@@ -2395,7 +2399,7 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
   </div>
 </div>
 
-<div class="ver-badge">v1.144.00 · Nov 18, 12:33 PM PST</div>
+<div class="ver-badge">v1.144.01 · Nov 18, 12:35 PM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -5560,7 +5564,7 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
         if (PANTRY !== null && LEDGER !== null) {
           const wr = bakeRows(), wbuy = wr.filter(r => r.st !== 'ok'), wt = bkTotal(wbuy);
           body = !wr.length ? '<div class="pn-note">Nothing on the bake plan yet. Go back and pick a span for at least one item.</div>'
-            : `<h3>To buy${wbuy.length ? ` (${wbuy.length})` : ''}</h3>` + (wbuy.length ? bkBuyList(wbuy) + `<div class="buy-total"><span>Estimated total${wt.unpriced ? `<small>${wt.unpriced} item${wt.unpriced === 1 ? '' : 's'} with no price</small>` : ''}</span><b>$${wt.total.toFixed(2)}</b></div>` : '<div class="pn-note">You have enough of everything.</div>');
+            : `<h3>To buy${wbuy.length ? ` (${wbuy.length})` : ''}</h3>` + (wbuy.length ? bkBuyList(wbuy, wr) + `<div class="buy-total"><span>Estimated total${wt.unpriced ? `<small>${wt.unpriced} item${wt.unpriced === 1 ? '' : 's'} with no price</small>` : ''}</span><b>$${wt.total.toFixed(2)}</b></div>` : '<div class="pn-note">You have enough of everything.</div>');
         }
       } catch {}
       h += `<div class="pw-head"><b>What you need</b><span>The whole plan against your pantry counts and approved purchases.</span></div><div id="pwBuy">${body}</div>`
@@ -8077,7 +8081,7 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
     try {
       const wr = bakeRows(), wbuy = wr.filter(r => r.st !== 'ok'), wt = bkTotal(wbuy);
       wtb = `<h3>What to buy${wbuy.length ? ` (${wbuy.length})` : ''}</h3>` + (!wr.length ? '<div class="pn-note">Nothing in the bake plan yet.</div>'
-        : wbuy.length ? bkBuyList(wbuy) + `<div class="buy-total"><span>Estimated total${wt.unpriced ? `<small>${wt.unpriced} item${wt.unpriced === 1 ? '' : 's'} without a price</small>` : ''}</span><b>${money2(wt.total)}</b></div>` : '<div class="pn-note">Everything the plan needs is on hand.</div>') +
+        : wbuy.length ? bkBuyList(wbuy, wr) + `<div class="buy-total"><span>Estimated total${wt.unpriced ? `<small>${wt.unpriced} item${wt.unpriced === 1 ? '' : 's'} without a price</small>` : ''}</span><b>${money2(wt.total)}</b></div>` : '<div class="pn-note">Everything the plan needs is on hand.</div>') +
         `<div class="pn-note">Whole bake plan against your counts and approved purchases. Tick items as you shop. For one bake at a time, open Bake Day.</div><div class="pn-bar"><button type="button" class="btn-ghost" id="pnBake">Open Bake Day</button></div>`;
     } catch {}
     box.innerHTML = (pantryErr ? `<div class="pn-note">${esc(pantryErr)}</div>` : '') +
@@ -8283,13 +8287,19 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
     return `<label class="buy-row buy-big${buyChecked[nm] ? ' done' : ''}"><input type="checkbox" data-bkc="${esc(nm)}"${buyChecked[nm] ? ' checked' : ''}><span class="buy-main"><b><em>${big}</em> ${esc(nm)}</b><small>${sub}</small></span><span class="buy-r">${q.cost != null ? money2(q.cost) : ''}</span></label>`;
   };
   const bkVendor = r => { const v = (costPrices[r.i.name] || {}).vendor; return v && String(v).trim() ? String(v).trim() : (bkPart(r).n ? 'Other' : 'No price yet'); };
-  function bkBuyList(rows) {
-    if (!rows.length) return '';
-    const by = new Map();
-    for (const r of rows) { const v = bkVendor(r); (by.get(v) || by.set(v, []).get(v)).push(r); }
-    const order = [...by.keys()].sort((a, b) => (a === 'No price yet') - (b === 'No price yet') || (a === 'Other') - (b === 'Other') || a.localeCompare(b));
-    return `<div class="pn-note">Amounts include ${Math.round(BUY_WASTE * 100)}% extra for waste.</div>` + order.map(v => { const rs = by.get(v).sort((a, b) => a.i.name.localeCompare(b.i.name)), sub = rs.reduce((n, r) => n + (bkPart(r).cost || 0), 0);
-      return `<div class="buy-vendor"><span>${esc(v)}</span><small>${rs.length} item${rs.length === 1 ? '' : 's'}${sub ? ' · ' + money2(sub) : ''}</small></div>` + rs.map(bkBuyRow).join(''); }).join('');
+  const bkHaveRow = r => `<div class="buy-row buy-big buy-have"><span class="buy-ok">✓</span><span class="buy-main"><b><em>Have it</em> ${esc(r.i.name)}</b><small>need ${buyFmt(r.i.qty, r.i.unit)} · have ${buyFmt(r.s.onHand, r.i.unit)}</small></span></div>`;
+  // rows = still to buy; all = every ingredient the plan needs (the ones already on hand are shown greyed under the same store, marked Have it).
+  function bkBuyList(rows, all) {
+    const have = (all || []).filter(r => r.st === 'ok');
+    if (!rows.length && !have.length) return '';
+    const by = new Map(), put = (r, k) => { const v = bkVendor(r); if (!by.has(v)) by.set(v, { buy: [], have: [] }); by.get(v)[k].push(r); };
+    rows.forEach(r => put(r, 'buy')); have.forEach(r => put(r, 'have'));
+    const order = [...by.keys()].sort((a, b) => (a === 'No price yet') - (b === 'No price yet') || (a === 'Other') - (b === 'Other') || a.localeCompare(b)), byName = (x, y) => x.i.name.localeCompare(y.i.name);
+    return `<div class="pn-note">Amounts include ${Math.round(BUY_WASTE * 100)}% extra for waste.${have.length ? ' Items marked Have it are already on hand.' : ''}</div>` + order.map(v => {
+      const g = by.get(v), sub = g.buy.reduce((n, r) => n + (bkPart(r).cost || 0), 0);
+      return `<div class="buy-vendor"><span>${esc(v)}</span><small>${g.buy.length} to buy${g.have.length ? ` · ${g.have.length} on hand` : ''}${sub ? ' · ' + money2(sub) : ''}</small></div>` +
+        g.buy.sort(byName).map(bkBuyRow).join('') + g.have.sort(byName).map(bkHaveRow).join('');
+    }).join('');
   }
   const bkTotal = buy => ({ total: buy.reduce((a, r) => a + (bkPart(r).cost || 0), 0), unpriced: buy.filter(r => bkPart(r).cost == null).length });
   const bkWireTicks = box => box.querySelectorAll('[data-bkc]').forEach(c => c.onchange = () => { if (c.checked) buyChecked[c.dataset.bkc] = 1; else delete buyChecked[c.dataset.bkc]; buySave(); c.closest('.buy-row').classList.toggle('done', c.checked); });
@@ -8323,9 +8333,9 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
     const pick = onlyDates.length ? `<div class="pn-bar"><select data-native id="bkThru" aria-label="Which bakes to shop for"><option value="">Whole plan (${thruDates.length} bake${thruDates.length === 1 ? '' : 's'})</option>${thruDates.length > 1 ? `<optgroup label="Through a date">${thruDates.map(d => opt('t:' + d, 'Through ' + dl(d))).join('')}</optgroup>` : ''}<optgroup label="One bake only">${onlyDates.map(d => opt('o:' + d, 'Only ' + dl(d) + ((BAKES || []).some(b => b.date === d) ? ' (done)' : ''))).join('')}</optgroup></select></div>` : '';
     box.innerHTML = pick + `<div class="bk-sum">${bakeView ? (single ? `Only the ${esc(pantryDate(vDate))} bake` : `Bakes from today through ${esc(pantryDate(vDate))}`) + ' (forecast recipes only; hand-added recipes are left out)' : `Whole bake plan${next ? ` · next bake ${esc(pantryDate(next))}` : ''}`}. Need is the plan's ingredients; have is your latest count plus approved purchases since.</div>` +
       `<h3>To buy${buy.length ? ` (${buy.length})` : ''}</h3>` +
-      (buy.length ? bkBuyList(buy) + `<div class="buy-total"><span>Estimated total${unpriced ? `<small>${unpriced} item${unpriced === 1 ? '' : 's'} without a price</small>` : ''}</span><b>${money2(total)}</b></div>` : '<div class="pn-note">Everything the plan needs is on hand.</div>') +
+      (buy.length ? bkBuyList(buy, rows) + `<div class="buy-total"><span>Estimated total${unpriced ? `<small>${unpriced} item${unpriced === 1 ? '' : 's'} without a price</small>` : ''}</span><b>${money2(total)}</b></div>` : '<div class="pn-note">Everything the plan needs is on hand.</div>') +
       `<div class="pn-bar" style="margin-top:10px"><button type="button" class="btn-ghost" id="bkCopy">Copy list</button><button type="button" class="btn-ghost" id="bkClear">Clear ticks</button></div>` +
-      (ok.length ? `<h3>Have enough (${ok.length})</h3>` + ok.map(okRow).join('') : '') +
+
       bakeDoneHtml +
       `<details class="bk-rc"${bakeRcOpen ? ' open' : ''}><summary>After the bake: recount what is left</summary><div class="pn-note">Baking does not take anything off the pantry by itself. Weigh what is left and save it; blank rows are skipped. Today's date is used.</div>${rc}<div class="pn-bar" style="margin-top:12px"><button class="primary" type="button" id="bkSave">Save counts</button></div></details>`;
     const thru = box.querySelector('#bkThru'); if (thru) thru.onchange = () => { bakeView = thru.value; bakeFormFresh = true; bdPending = null; bakePaint(); };
