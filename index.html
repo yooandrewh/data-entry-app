@@ -2645,7 +2645,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.169.03 · Nov 18, 3:36 PM PST</div>
+<div class="ver-badge">v1.169.04 · Nov 18, 3:38 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -5642,6 +5642,10 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   const BOX_LOCS = ['BP Storage', 'Fullerton Storage', 'La Mirada Storage', 'Stanton Storage'];
   let boxCfg = { size: {}, hold: { bp: {}, fu: {} } };
   try { const c = JSON.parse(localStorage.getItem('boxCfg.v1') || 'null'); if (c && c.size && c.hold) boxCfg = c; } catch {}
+  // Pans on hand (Andrew, 2026-11-18: 4 + 23 full 4", 6 half 4", 8 half 2.5"). Editable under Pan sizes (saved on this device). Only full 4" pans are compared with the plan: the per-pan sizes are for the full pan.
+  const PAN_HAVE = { full4: 27, half4: 6, half25: 8 };
+  const panHave = k => (boxCfg.have && boxCfg.have[k] != null) ? Math.max(0, Math.floor(Number(boxCfg.have[k]) || 0)) : PAN_HAVE[k];
+  const panLine = total => { const h = panHave('full4'), left = h - total; return `You have <b>${h}</b> full-size 4" pans (plus ${panHave('half4')} half 4" and ${panHave('half25')} half 2.5", not counted). ` + (left >= 0 ? `Enough, ${left} spare.` : `<b>${-left}</b> more needed.`); };
   const boxSave = () => { try { localStorage.setItem('boxCfg.v1', JSON.stringify(boxCfg)); } catch {} };
   // Pieces that fit in one full-size Cambro pan (Andrew, 2026-11-18). Madeleines can double to 72 and cake pops to 100 once frozen (stacked): not used yet, kept in mind.
   const BOX_FIT = { 'Lemon Poppy': 36, 'Sea Salt': 36, 'Maple Pecan': 36, 'Pumpkin Muffin': 18, 'Blueberry Muffin': 18, 'Pumpkin Bundt': 22, 'Cookie': 40, 'Chookie': 40, 'Cake Pop': 50 };
@@ -5660,17 +5664,19 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     const bx = boxPlan(), any = PRODUCTS.some(p => (planBakeTotals[p] || 0) > 0);
     let h = `<h3>Boxes</h3>`;
     if (!any) { el.innerHTML = h + '<div class="bx-none">Nothing to box yet. Pick a span for at least one item in step 1.</div>'; return; }
-    h += `<div class="bx-total"><b>${bx.total}</b> pan${bx.total === 1 ? '' : 's'} in all (a pan is one Cambro full-size 4" deep food pan, 14PP190). Only for the pieces you bake, not the stock already on hand. One item per pan, rounded up per item; not split by location.</div>`;
+    h += `<div class="bx-total"><b>${bx.total}</b> pan${bx.total === 1 ? '' : 's'} in all (a pan is one Cambro full-size 4" deep food pan, 14PP190). Only for the pieces you bake, not the stock already on hand. One item per pan, rounded up per item; not split by location.<br>${panLine(bx.total)}</div>`;
     h += bx.items.map(x => `<div class="bx-row"><span>${esc(pdisp(x.p))}<small>${x.pcs} pieces · ${boxSize(x.p)} per pan</small></span><b>${x.boxes} pan${x.boxes === 1 ? '' : 's'}</b></div>`).join('');
     h += `<details><summary>Pan sizes</summary><div class="bx-set hd"><span>Item</span><span>Per pan</span></div>`
       + PRODUCTS.map(p => `<div class="bx-set"><span>${esc(pdisp(p))}</span><input type="number" inputmode="numeric" min="1" data-bx="size" data-p="${esc(p)}" value="${boxSize(p)}"></div>`).join('')
+      + `<div class="bx-set hd"><span>Pans on hand</span><span>Count</span></div>`
+      + [['full4', 'Full 4" deep'], ['half4', 'Half 4" deep'], ['half25', 'Half 2.5" deep']].map(([k, l]) => `<div class="bx-set"><span>${l}</span><input type="number" inputmode="numeric" min="0" data-bx="have" data-k="${k}" value="${panHave(k)}"></div>`).join('')
       + `</details>`;
     el.innerHTML = h;
     el.querySelector('details').open = !!boxOpen;
     el.querySelector('details').ontoggle = e => { boxOpen = e.target.open; };
     el.querySelectorAll('input[data-bx]').forEach(i => i.onchange = () => {
       const v = Math.max(0, Math.floor(Number(i.value) || 0)), k = i.dataset.bx, p = i.dataset.p;
-      boxCfg.size[p] = Math.max(1, v);
+      if (k === 'have') { boxCfg.have = boxCfg.have || {}; boxCfg.have[i.dataset.k] = v; } else boxCfg.size[p] = Math.max(1, v);
       boxSave(); boxOpen = true; boxPaint();
     });
   }
@@ -5697,7 +5703,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     }).join('');
     let pans = '';
     if (bx && bx.total > 0) {
-      pans = `<div class="pw-pans"><b>${bx.total}</b> Cambro pan${bx.total === 1 ? '' : 's'} needed<small>Only for the pieces you bake, not the stock already on hand. Full-size, 4" deep. One item per pan, not split by location.</small></div>`;
+      pans = `<div class="pw-pans"><b>${bx.total}</b> Cambro pan${bx.total === 1 ? '' : 's'} needed<small>${panLine(bx.total)}<br>Only for the pieces you bake, not the stock already on hand. Full-size, 4" deep. One item per pan, not split by location.</small></div>`;
     }
     const top = `<div class="pw-head"><b>What do you want to bake?</b><span>Drag the slider or pick how long each item should last. Each store's goal is ${STOCK_TARGET}x its expected sales for that time. You bake the gap between the goal and what it has now.</span></div>`
       + `<div class="pw-label">Make everything last</div><div class="pw-slide"><div class="pw-slide-val" id="pwAllVal">${dayLbl(all)}</div><input type="range" id="pwAll" min="1" max="90" step="1" value="${all}" aria-label="Days everything should last"><div class="pw-slide-ticks"><span>1 day</span><span>1 month</span><span>2 months</span><span>3 months</span></div></div>`
