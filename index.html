@@ -2177,7 +2177,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.128.01 · Nov 18, 8:39 AM PST</div>
+<div class="ver-badge">v1.129.00 · Nov 18, 8:40 AM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -7313,7 +7313,7 @@
   // RECEIPTS-PARSER-END
   let rcParsed = null, rcBusy = false, rcDone = '';
   // ----- Receipt photos: phone -> ReceiptInbox sheet tab (api/receipt-inbox.js) -> the Mac reads it and reports back a status -----
-  let rxFile = null, rxBusy = false, rxRows = null, rxErr = '';
+  let rxFiles = [], rxBusy = false, rxRows = null, rxErr = '';
   const RX_STATUS = { pending: 'Waiting for the Mac', done: 'Done', held: 'Held', failed: 'Failed' };
   const rxBlobB64 = blob => new Promise((ok, no) => { const fr = new FileReader(); fr.onload = () => ok(String(fr.result).split(',')[1] || ''); fr.onerror = () => no(fr.error); fr.readAsDataURL(blob); });
   async function rxEncode(file) {
@@ -7356,32 +7356,38 @@
   }
   function rxPaintSend(msg) {
     const f = document.querySelector('#homeReceipts #rxFileName'), b = document.querySelector('#homeReceipts #rxSend'), m = document.querySelector('#homeReceipts #rxMsg');
-    if (f) f.textContent = rxFile ? rxFile.name || 'photo' : 'No photo chosen';
-    if (b) b.disabled = !rxFile || rxBusy;
+    if (f) f.textContent = rxFiles.length > 1 ? rxFiles.length + ' photos chosen' : rxFiles.length ? rxFiles[0].name || 'photo' : 'No photo chosen';
+    if (b) b.disabled = !rxFiles.length || rxBusy;
     if (m && msg != null) m.textContent = msg;
   }
   async function rxSend() {
-    if (!rxFile || rxBusy) return;
-    rxBusy = true; rxPaintSend('Sending...');
+    if (!rxFiles.length || rxBusy) return;
+    rxBusy = true;
+    const total = rxFiles.length; let sent = 0;
     try {
-      const data = await rxEncode(rxFile);
-      if (!data) { rxPaintSend("That photo is too big to send. Try a closer shot."); return; }
-      const r = await fetch('/api/receipt-inbox', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'add', name: rxFile.name || 'photo', data }) });
-      const j = await r.json().catch(() => ({}));
-      if (!r.ok) { rxPaintSend(j.error || 'Could not send'); return; }
-      rxFile = null; const inp = document.querySelector('#homeReceipts #rxInput'); if (inp) inp.value = '';
-      rxPaintSend('Sent. The Mac reads it within about 5 minutes if it is awake; lines land unapproved in the ledger.');
+      while (rxFiles.length) {
+        const f = rxFiles[0];
+        rxPaintSend(total > 1 ? `Sending ${sent + 1} of ${total}...` : 'Sending...');
+        const data = await rxEncode(f);
+        if (!data) { rxPaintSend(`${f.name || 'A photo'} is too big to send. Try a closer shot.` + (sent ? ` Sent ${sent} of ${total}.` : '')); return; }
+        const r = await fetch('/api/receipt-inbox', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'add', name: f.name || 'photo', data }) });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok) { rxPaintSend((j.error || 'Could not send') + (sent ? `. Sent ${sent} of ${total}.` : '')); return; }
+        rxFiles.shift(); sent++;
+      }
+      const inp = document.querySelector('#homeReceipts #rxInput'); if (inp) inp.value = '';
+      rxPaintSend((total > 1 ? `Sent ${total} photos.` : 'Sent.') + ' The Mac reads them within about 5 minutes if it is awake; lines land unapproved in the ledger.');
       rxFetch();
-    } catch { rxPaintSend("Couldn't read that photo or reach the server."); }
+    } catch { rxPaintSend("Couldn't read that photo or reach the server." + (sent ? ` Sent ${sent} of ${total}.` : '')); if (sent) rxFetch(); }
     finally { rxBusy = false; rxPaintSend(); }
   }
   function renderReceipts() {
     const box = document.getElementById('homeReceipts'); if (!box) return;
     if (!box.querySelector('#rcText')) {
       box.innerHTML = `<div class="rx-sec"><h3>Send a photo to the Mac</h3>` +
-        `<div class="pn-note">Take a photo of the receipt or pick one from your library.</div>` +
-        `<input type="file" id="rxInput" accept="image/*" hidden>` +
-        `<div class="pn-bar"><button id="rxPick">Choose photo</button><button class="primary" id="rxSend" disabled>Send</button><span class="rx-file" id="rxFileName">No photo chosen</span></div>` +
+        `<div class="pn-note">One photo per receipt. Take one, or pick several from your library (up to 10 at a time).</div>` +
+        `<input type="file" id="rxInput" accept="image/*" multiple hidden>` +
+        `<div class="pn-bar"><button id="rxPick">Choose photos</button><button class="primary" id="rxSend" disabled>Send</button><span class="rx-file" id="rxFileName">No photo chosen</span></div>` +
         `<div class="pn-note" id="rxMsg"></div>` +
         `<div class="pn-bar"><button id="rxRefresh">Refresh</button></div><div id="rxList"></div></div>` +
         `<details class="rc-paste"><summary>Paste text instead</summary>` +
@@ -7391,7 +7397,7 @@
       box.querySelector('#rcRead').onclick = () => { rcDone = ''; rcParsed = parseReceipt(box.querySelector('#rcText').value); paintReceipt(); };
       box.querySelector('#rcOut').addEventListener('click', e => { if (e.target.closest('#rcPost')) rcPost(); });
       box.querySelector('#rxPick').onclick = () => box.querySelector('#rxInput').click();
-      box.querySelector('#rxInput').onchange = e => { rxFile = (e.target.files && e.target.files[0]) || null; rxPaintSend(''); };
+      box.querySelector('#rxInput').onchange = e => { rxFiles = Array.from((e.target.files) || []).slice(0, 10); rxPaintSend(''); };
       box.querySelector('#rxSend').onclick = rxSend;
       box.querySelector('#rxRefresh').onclick = rxFetch;
     }
