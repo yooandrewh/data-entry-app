@@ -2242,6 +2242,8 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
 .pn-r .pn-none { color: var(--muted); font-weight: 400; }
 
 .buy-open { display: inline-block; margin: 0 0 6px 49px; min-height: 32px; line-height: 32px; font-size: var(--fs-caption); font-weight: 600; color: var(--text); text-decoration: underline; }
+
+.buy-spare { font-weight: 600; }
 </style>
 </head>
 <body>
@@ -2621,7 +2623,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.166.00 · Nov 18, 3:17 PM PST</div>
+<div class="ver-badge">v1.167.00 · Nov 18, 3:20 PM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -8399,14 +8401,17 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     for (const d of Object.keys(planDatesCache)) if (m[1] === 'o' ? d === m[2] : (d >= today && d <= m[2])) for (const p of PRODUCTS) tot[p] += planDatesCache[d][p] || 0;
     return bakeSheet.filter(x => x.plan && BS_PRODUCT[x.key]).map(x => ({ ...x, b: flavorBatches(tot[BS_PRODUCT[x.key]] || 0, BS_PRODUCT[x.key]) })).filter(x => x.b > 0);
   }
+  // Spare stock: every shelf (not fridge / freezer) item with a known pack size is kept at one spare pack after the plan's use (Andrew, 2026-11-18),
+  // so the whole-plan list buys need + 1 pack minus what is on hand. `rsv` is the pack size added; the per-date Bake Day views (a list is passed) get no spare.
+  const SPARE_PACKS = 1;
   function bakeRows(list) {
     const stock = new Map(pantryStock().map(s => [s.name, s]));
     return (list ? buyItems(list) : buyItems()).map(i => {
-      const s = stock.get(i.name);
-      if (!s) return { i, s, st: 'none', short: i.qty };
-      if (s.unit !== i.unit) return { i, s, st: 'unit', short: i.qty };
-      const short = Math.max(0, i.qty - s.onHand);
-      return { i, s, st: short > 1e-9 ? 'short' : 'ok', short };
+      const s = stock.get(i.name), rsv = !list && !isCold(i.name) && i.pkAmt > 0 ? SPARE_PACKS * i.pkAmt : 0;
+      if (!s) return { i, s, st: 'none', short: i.qty + rsv, rsv };
+      if (s.unit !== i.unit) return { i, s, st: 'unit', short: i.qty + rsv, rsv };
+      const short = Math.max(0, i.qty + rsv - s.onHand);
+      return { i, s, st: short > 1e-9 ? 'short' : 'ok', short, rsv, spareOnly: i.qty - s.onHand <= 1e-9 };
     });
   }
   // Shopping rows shared by Bake Day and the Pantry page's "What to buy".
@@ -8432,7 +8437,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     const have = r.st === 'short' ? ` · have ${buyFmt(r.s.onHand, i.unit)}` : '';
     const flag = r.st === 'none' || (r.s && r.s.uncounted) ? 'not counted' : r.st === 'unit' ? 'counted in another unit' : '';
     const big = q.n ? `${q.n} ${q.n === 1 ? 'pack' : 'packs'}` : `Buy ${buyFmt(r.short, i.unit)}`;
-    const sub = (q.n ? `${packFmt(i.pkAmt, i.unit)} each · ` : 'no price yet · ') + `need ${buyFmt(i.qty, i.unit)}${have}${flag ? ' · ' + flag : ''}`;
+    const sub = (q.n ? `${packFmt(i.pkAmt, i.unit)} each · ` : 'no price yet · ') + `need ${buyFmt(i.qty, i.unit)}${have}${flag ? ' · ' + flag : ''}${r.rsv ? (r.spareOnly ? ' · <b class="buy-spare">spare pack only</b>' : ' · incl. 1 spare pack') : ''}`;
     return `<div class="buy-item"><label class="buy-row buy-big${buyChecked[nm] ? ' done' : ''}"><input type="checkbox" data-bkc="${esc(nm)}"${buyChecked[nm] ? ' checked' : ''}><span class="buy-main"><b><em>${big}</em> ${esc(nm)}</b><small>${sub}</small></span><span class="buy-r">${q.cost != null ? money2(q.cost) : ''}</span></label>${shopUrl(nm) ? `<a class="buy-open" href="${esc(shopUrl(nm))}" target="_blank" rel="noopener">Open store page</a>` : ''}${usesHtml(nm, i.unit)}</div>`;
   };
   const bkVendor = r => { const v = (costPrices[r.i.name] || {}).vendor; return v && String(v).trim() ? String(v).trim() : (bkPart(r).n ? 'Other' : 'No price yet'); };
@@ -8471,7 +8476,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     const by = new Map(), put = (r, k) => { const v = bkVendor(r); if (!by.has(v)) by.set(v, { buy: [], have: [] }); by.get(v)[k].push(r); };
     rows.forEach(r => put(r, 'buy')); have.forEach(r => put(r, 'have'));
     const order = [...by.keys()].sort((a, b) => (a === 'No price yet') - (b === 'No price yet') || (a === 'Other') - (b === 'Other') || a.localeCompare(b)), byName = (x, y) => x.i.name.localeCompare(y.i.name);
-    return `<div class="buy-list"><div class="pn-note">Amounts include ${Math.round(BUY_WASTE * 100)}% extra for waste (10% for waffle cones).${have.length ? ' Items marked Have it are already on hand.' : ''}</div>` + order.map(v => {
+    return `<div class="buy-list"><div class="pn-note">Amounts include ${Math.round(BUY_WASTE * 100)}% extra for waste (10% for waffle cones). Shelf items also keep 1 spare pack on hand after the plan.${have.length ? ' Items marked Have it are already on hand.' : ''}</div>` + order.map(v => {
       const g = by.get(v), sub = g.buy.reduce((n, r) => n + (bkPart(r).cost || 0), 0);
       return `<div class="buy-vendor"><span>${esc(v)}</span><small>${g.buy.length} to buy${g.have.length ? ` · ${g.have.length} on hand` : ''}${sub ? ' · ' + money2(sub) : ''}</small></div>` +
         (/amazon/i.test(v) ? amzCart(g.buy) : '') +
