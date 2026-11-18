@@ -4,6 +4,7 @@ Last updated: 2026-11-18
 After a `/compact` or in a new chat: read this file first, then CLAUDE.md. Stable rules live in CLAUDE.md; only status lives here.
 
 ## Now
+- **v1.140.00 LIVE:** Sales page starts with This week ($, vs last week), Running out (forecast), Best seller, Next bake, then Overall. Plan step 1 redesigned (span chips, compact rows, pinned Next). Same_sale OCR fix applied to 26 historical Sales rows. Not tried on a phone.
 - **v1.139.00 LIVE:** Plan page is now three steps (Bake: pick a span per item; Ingredients vs pantry; Bake sheet). **v1.138.03:** bottom tab bar restyled (grey tabs, black selected, no filled block). Not tried on a phone.
 - **v1.138.02 LIVE:** Pantry page now shows On hand first, then What to buy, then the count form (On hand is empty until Andrew's first count).
 - **v1.138.01 LIVE:** phone spacing pass (44px chips/filters, 16px margins, roomier cards). Andrew also asked (mid-turn): a Pantry view of what we have, and a Plan flow where step 1 is what to bake and how much, by horizon (1 day, 1 month, 1.5 months) per item. Not started; design question open.

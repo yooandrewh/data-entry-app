@@ -72,6 +72,10 @@ Tab **Pantry** (`Id, Item, Amount, Unit, Date, Note, Deleted`); each row is one 
 **On hand = latest count + approved ledger item lines dated after it, in the same unit** (`pantryStock()`); lines in another unit set `mixed`. Compared with `buyItems()` for a "Low" flag. Units g, kg, oz, lb, ml, L, fl oz (converted to base on save) and pcs.
 Status: live API tested (add/remove round trip); browser-tested 2026-11-17 on desktop Chrome (10 checks pass); **not yet tested on a phone**.
 
+## Sales dashboard (v1.140.00, 2026-11-18)
+
+`salesHomeHtml()` (next to `renderSalesView`) puts four things above the Sales summary, which is now labelled **Overall**: **This week** (about $, Monday to the last sales day, vs the same days last week; same math as the summary: count x `PRICE_PER_UNIT` + `salesAdj`), **Running out** (`runoutBand().days`, expected scenario, every store with a count, within 14 days, soonest 5), **Best seller** this week, **Next bake** (`planBakeDates`). It ignores the Sales filters. Plan step 1 also got big span chips (1 day, 1 week, 1 month, 1.5 months), text-style per-item span pickers and a pinned Next button.
+
 ## Plan steps (v1.139.00, 2026-11-18)
 
 Plan page opens as three steps (`#planWiz`, `wizPaint()` after `paintPlan`): **1 Bake** (a span per item: Not now, 1 day, 3 days, 1 week, 2 weeks, 1 month, 1.5 months, 2 months, or Same for every item; `wizSpan` in `localStorage.planSpans.v1`), **2 Ingredients** (`bakeRows()` shortfall against the pantry), **3 Bake sheet** (the existing Bake Plan card). `wizCompute()`: weekday/weekend rates over the span, trend counted for at most 4 weeks, the forecast's CV buffer, minus stock, summed over stores with counts. A span replaces the date-driven total for that item (`planTotals[p]` in `paintPlan`); items with no span keep the old behavior. The old Make it last until / Bake days card sits under a collapsed "Bake dates" in step 1 (Bake Day's per-date views still use it). Screenshot-checked at 390px; not on a phone.
@@ -123,7 +127,7 @@ Costco receipts print a quantity line (`3 @ 4.99`) above an item whose price is 
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.139.00**; the next feature is v1.140.00, a fix v1.139.01. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.140.00**; the next feature is v1.141.00, a fix v1.140.01. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 
