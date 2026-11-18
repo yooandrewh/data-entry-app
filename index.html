@@ -2177,7 +2177,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.129.00 · Nov 18, 8:40 AM PST</div>
+<div class="ver-badge">v1.130.00 · Nov 18, 8:44 AM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -7381,6 +7381,38 @@
     } catch { rxPaintSend("Couldn't read that photo or reach the server." + (sent ? ` Sent ${sent} of ${total}.` : '')); if (sent) rxFetch(); }
     finally { rxBusy = false; rxPaintSend(); }
   }
+  // Share-to-iCloud: a web page cannot write to iCloud Drive, so this opens the iPhone Share sheet (Save to Files) with the chosen files.
+  // Sales videos are renamed "<Store> yyyy-MM-dd HHmm.<ext>" because the Mac watcher reads the store and time from the name.
+  let shFiles = [];
+  function shStamp(ms) { const d = new Date(ms || Date.now()), p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}${p(d.getMinutes())}`; }
+  function shNames(files, kind) {
+    if (kind === 'R') return files.map(f => f.name || 'receipt.jpg');
+    const store = kind === 'STN' ? 'Stanton' : 'La Mirada', used = {};
+    return files.map(f => {
+      const ext = ((/\.([A-Za-z0-9]+)$/.exec(f.name || '') || [])[1] || (/video/.test(f.type) ? 'mov' : 'jpg')).toLowerCase();
+      const base = `${store} ${shStamp(f.lastModified)}`; used[base] = (used[base] || 0) + 1;
+      return `${base}${used[base] > 1 ? ' ' + used[base] : ''}.${ext}`;
+    });
+  }
+  function shPaint(msg) {
+    const n = document.querySelector('#homeReceipts #shName'), b = document.querySelector('#homeReceipts #shGo'), m = document.querySelector('#homeReceipts #shMsg');
+    if (n) n.textContent = shFiles.length > 1 ? shFiles.length + ' files chosen' : shFiles.length ? shFiles[0].name : 'No files chosen';
+    if (b) b.disabled = !shFiles.length;
+    if (m && msg != null) m.textContent = msg;
+  }
+  async function shGo() {
+    const kind = (document.querySelector('#homeReceipts #shKind') || {}).value || 'LM';
+    if (!shFiles.length) return;
+    const names = shNames(shFiles, kind);
+    const files = shFiles.map((f, i) => new File([f], names[i], { type: f.type, lastModified: f.lastModified }));
+    const folder = kind === 'R' ? 'Kairos receipts' : 'Kairos inbox';
+    if (!navigator.share || !navigator.canShare || !navigator.canShare({ files })) { shPaint("This browser can't share files. Open the app in Safari on your iPhone."); return; }
+    try {
+      await navigator.share({ files });
+      shFiles = []; const inp = document.querySelector('#homeReceipts #shInput'); if (inp) inp.value = '';
+      shPaint(`Shared. If you chose Save to Files, the folder was ${folder}. The Mac reads them when it next runs.`); shPaint();
+    } catch (e) { shPaint(e && e.name === 'AbortError' ? 'Cancelled. Nothing was saved.' : "Couldn't share those files."); }
+  }
   function renderReceipts() {
     const box = document.getElementById('homeReceipts'); if (!box) return;
     if (!box.querySelector('#rcText')) {
@@ -7390,6 +7422,12 @@
         `<div class="pn-bar"><button id="rxPick">Choose photos</button><button class="primary" id="rxSend" disabled>Send</button><span class="rx-file" id="rxFileName">No photo chosen</span></div>` +
         `<div class="pn-note" id="rxMsg"></div>` +
         `<div class="pn-bar"><button id="rxRefresh">Refresh</button></div><div id="rxList"></div></div>` +
+        `<div class="rx-sec"><h3>Share to iCloud</h3>` +
+        `<div class="pn-note">For sales videos or any photos. Opens the Share sheet: tap Save to Files, then the folder shown after you share (Kairos inbox for sales videos, Kairos receipts for receipts). The Mac reads them from there.</div>` +
+        `<div class="pn-bar"><select id="shKind"><option value="LM">Sales video, La Mirada</option><option value="STN">Sales video, Stanton</option><option value="R">Receipt photos</option></select></div>` +
+        `<input type="file" id="shInput" accept="image/*,video/*" multiple hidden>` +
+        `<div class="pn-bar"><button id="shPick">Choose files</button><button class="primary" id="shGo" disabled>Share</button><span class="rx-file" id="shName">No files chosen</span></div>` +
+        `<div class="pn-note" id="shMsg"></div></div>` +
         `<details class="rc-paste"><summary>Paste text instead</summary>` +
         `<div class="pn-note">On your iPhone: open the receipt photo, press and hold the text, tap Copy All, then paste it here.</div>` +
         `<textarea id="rcText" class="rc-text" placeholder="Paste the receipt text" autocomplete="off"></textarea>` +
@@ -7397,6 +7435,10 @@
       box.querySelector('#rcRead').onclick = () => { rcDone = ''; rcParsed = parseReceipt(box.querySelector('#rcText').value); paintReceipt(); };
       box.querySelector('#rcOut').addEventListener('click', e => { if (e.target.closest('#rcPost')) rcPost(); });
       box.querySelector('#rxPick').onclick = () => box.querySelector('#rxInput').click();
+      box.querySelector('#shPick').onclick = () => box.querySelector('#shInput').click();
+      box.querySelector('#shInput').onchange = e => { shFiles = Array.from(e.target.files || []).slice(0, 20); shPaint(''); };
+      box.querySelector('#shGo').onclick = shGo;
+      box.querySelector('#shKind').onchange = () => shPaint('');
       box.querySelector('#rxInput').onchange = e => { rxFiles = Array.from((e.target.files) || []).slice(0, 10); rxPaintSend(''); };
       box.querySelector('#rxSend').onclick = rxSend;
       box.querySelector('#rxRefresh').onclick = rxFetch;
