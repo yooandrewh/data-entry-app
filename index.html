@@ -1814,6 +1814,8 @@
 .pn-x { background: none; border: 0; color: var(--muted); font-size: var(--fs-body); padding: 4px; }
 .pn-form label { display: block; margin: 10px 0 4px; }
 .pn-form input, .pn-form select { width: 100%; box-sizing: border-box; }
+.pn-form .pn-bar input { flex: 1 1 0; width: auto; min-width: 0; } .pn-form .pn-bar select { flex: 0 0 96px; width: 96px; }
+.pn-r b { white-space: nowrap; }
 .pn-note { color: var(--muted); font-size: var(--fs-caption); margin: 10px 0; }
 </style>
 </head>
@@ -2166,7 +2168,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.125.01 · Nov 17, 8:19 PM PST</div>
+<div class="ver-badge">v1.125.02 · Nov 17, 8:24 PM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -3338,7 +3340,7 @@
     if (homeTab === 'plan') { renderBakeSheet(); renderPlan(); }
     if (homeTab === 'invoice') initInvoiceForm();
     if (homeTab === 'logs') logsOpen();
-    if (homeTab === 'pantry') renderPantry();
+    if (homeTab === 'pantry') { renderPantry(); renderPlan().then(() => { if (homeTab === 'pantry') renderPantry(); }).catch(() => {}); }   // the plan fills in what "plan needs" compares against
     if (homeTab === 'bake') bakeOpen();
     if (homeTab === 'timers') renderTimers(); else stopTick();
     syncVer(); window.scrollTo(0, 0);
@@ -7320,7 +7322,7 @@
       return `need ${buyFmt(i.qty, i.unit)} · have ${buyFmt(r.s.onHand, i.unit)} · buy ${buyFmt(r.short, i.unit)}${pk}`;
     };
     const tag = r => r.st === 'none' ? '<i class="pn-flag">Not counted</i> ' : r.st === 'unit' ? '<i class="pn-flag">Unit</i> ' : '';
-    const buyRow = r => { const q = part(r); return `<label class="buy-row${buyChecked[r.i.name] ? ' done' : ''}"><input type="checkbox" data-bkc="${esc(r.i.name)}"${buyChecked[r.i.name] ? ' checked' : ''}><span class="buy-main"><b>${esc(r.i.name)}</b><small>${sub(r)}</small></span><span class="buy-r">${tag(r)}${q.cost != null ? money2(q.cost) : ''}</span></label>`; };
+    const buyRow = r => { const q = part(r); return `<label class="buy-row${buyChecked[r.i.name] ? ' done' : ''}"><input type="checkbox" data-bkc="${esc(r.i.name)}"${buyChecked[r.i.name] ? ' checked' : ''}><span class="buy-main"><b>${esc(r.i.name)} ${tag(r)}</b><small>${sub(r)}</small></span><span class="buy-r">${q.cost != null ? money2(q.cost) : ''}</span></label>`; };
     const okRow = r => `<div class="pn-row"><span class="pn-main"><b>${esc(r.i.name)}</b><small>need ${buyFmt(r.i.qty, r.i.unit)}${r.s.mixed ? ' · some purchases use another unit and are not added' : ''}</small></span><span class="pn-r">${buyFmt(r.s.onHand, r.i.unit)}</span></div>`;
     const rc = allRows.map(r => { const u = r.s ? r.s.unit : r.i.unit; return `<div class="bk-rc-row"><span>${esc(r.i.name)}</span><input type="number" inputmode="decimal" min="0" step="any" data-bk="${esc(r.i.name)}|${u}" value="${esc(keep[r.i.name + '|' + u] || '')}" aria-label="Left of ${esc(r.i.name)}"><em>${u}</em></div>`; }).join('');
     const pick = dates.length > 1 ? `<div class="pn-bar"><select data-native id="bkThru" aria-label="Which bakes to shop for"><option value="">Whole plan (${dates.length} bakes)</option>${dates.map(d => `<option value="${d}"${d === bakeThrough ? ' selected' : ''}>Through ${esc(wkShort(d))} ${esc(pantryDate(d))}</option>`).join('')}</select></div>` : '';
@@ -7336,7 +7338,10 @@
     box.querySelector('#bkClear').onclick = () => { buyChecked = {}; buySave(); bakePaint(); };
     box.querySelector('#bkCopy').onclick = async e => {
       const lines = buy.filter(r => !buyChecked[r.i.name]).map(r => { const q = part(r); return `☐ ${r.i.name} — ${buyFmt(r.short, r.i.unit)}${q.n ? ` (${q.n} × ${buyFmt(r.i.pkAmt, r.i.unit)})` : ''}${r.st === 'none' ? ' [not counted]' : ''}`; });
-      try { await navigator.clipboard.writeText('Bake day buy list\n' + lines.join('\n')); e.target.textContent = 'Copied ✓'; } catch { e.target.textContent = 'Couldn’t copy'; }
+      const text = 'Bake day buy list\n' + lines.join('\n');
+      const viaClipboard = () => Promise.race([navigator.clipboard.writeText(text), new Promise((_, no) => setTimeout(no, 1500))]);
+      const viaSelect = () => { const t = document.createElement('textarea'); t.value = text; t.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(t); t.select(); const ok = document.execCommand('copy'); t.remove(); if (!ok) throw 0; };
+      try { try { await viaClipboard(); } catch { viaSelect(); } e.target.textContent = 'Copied ✓'; } catch { e.target.textContent = 'Couldn’t copy'; }
       setTimeout(() => { e.target.textContent = 'Copy list'; }, 1600);
     };
     box.querySelector('#bkSave').onclick = async () => {
