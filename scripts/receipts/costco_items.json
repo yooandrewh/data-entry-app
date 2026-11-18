@@ -1,0 +1,7 @@
+{
+  "_note": "Costco item number -> ledger item. size is one package in grams (or ml when unit is ml). Add a row for every new item number the summary flags as UNKNOWN. Source: Costco item pages, see docs in CLAUDE.md.",
+  "1752247": {"item": "Cornstarch", "size": 1360.8, "unit": "g", "what": "Clabber Girl Corn Starch, 3 lb"},
+  "1593426": {"item": "Salt", "size": 1502.5, "unit": "g", "what": "Morton Coarse Kosher Salt, 53 oz"},
+  "801465": {"item": "Brown Sugar", "size": 11339.8, "unit": "g", "what": "C&H Light Brown Sugar, 25 lb"},
+  "737675": {"item": "Powdered Sugar", "size": 3175.2, "unit": "g", "what": "C&H Powdered Sugar, 7 lb"}
+}
