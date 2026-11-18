@@ -1849,6 +1849,15 @@
 .tr-day .tr-ch { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 4px; font-size: var(--fs-caption); }
 .tr-day .tr-ch span { color: var(--muted); } .tr-day .tr-ch b { color: var(--text); }
 .tr-day mark { background: none; color: var(--accent); font-size: var(--fs-micro); text-transform: uppercase; border: 1px solid var(--accent); padding: 0 4px; margin-left: 6px; }
+/* Home menu: calm panel, plain readable text, big tap rows, grouped (2026-11-18) */
+#view-home:not(.paged) .home-menu { width: 100%; max-width: 440px; margin: auto 0 12px !important; padding: 6px 18px 10px; box-sizing: border-box; border-radius: 22px; background: rgba(20,24,30,0.50); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); border: 1px solid rgba(255,246,238,0.22); }
+#view-home:not(.paged) .home-menu .hm-grp { align-self: stretch; width: auto; margin: 14px 0 0; padding: 0 0 6px; font-size: var(--fs-caption); font-weight: 600; letter-spacing: 0.04em; text-transform: none; color: rgba(255,246,238,0.78); border-bottom: 1px solid rgba(255,246,238,0.22); text-shadow: none; }
+#view-home:not(.paged) .home-menu .hm-grp:first-child { margin-top: 8px; }
+#view-home:not(.paged) .home-menu button { width: 100%; min-height: 48px; padding: 0 !important; display: flex; align-items: center; justify-content: space-between; text-transform: none; letter-spacing: 0.01em; font-size: var(--fs-lg); font-weight: 500; color: #fff; text-shadow: none !important; border-bottom: 1px solid rgba(255,246,238,0.12) !important; }
+#view-home:not(.paged) .home-menu button:last-of-type { border-bottom: 0 !important; }
+#view-home:not(.paged) .home-menu button .hm-t { flex: 1; text-align: left; }
+#view-home:not(.paged) .home-menu button .hm-go { display: block; font-size: var(--fs-title); line-height: 1; opacity: .65; }
+#view-home:not(.paged) .home-menu button:active { background: rgba(255,255,255,0.12) !important; }
 </style>
 </head>
 <body>
@@ -1866,12 +1875,15 @@
     </div>
 
     <div class="home-menu" id="homeMenu">
+      <div class="hm-grp">Sell</div>
       <button type="button" data-hentry><span class="hm-ic" data-ic="pencil"></span><span class="hm-t">Entry</span><span class="hm-go">›</span></button>
       <button type="button" data-hpage="forecast"><span class="hm-ic" data-ic="chart"></span><span class="hm-t">Forecast</span><span class="hm-go">›</span></button>
       <button type="button" data-hpage="trends"><span class="hm-ic" data-ic="trend"></span><span class="hm-t">Trends</span><span class="hm-go">›</span></button>
-      <button type="button" data-hpage="plan"><span class="hm-ic" data-ic="book"></span><span class="hm-t">Baking Plan</span><span class="hm-go">›</span></button>
       <button type="button" data-hpage="invoice"><span class="hm-ic" data-ic="tag"></span><span class="hm-t">Invoice / Labels</span><span class="hm-go">›</span></button>
+      <div class="hm-grp">Bake</div>
+      <button type="button" data-hpage="plan"><span class="hm-ic" data-ic="book"></span><span class="hm-t">Baking Plan</span><span class="hm-go">›</span></button>
       <button type="button" data-hpage="bake"><span class="hm-ic" data-ic="calendar"></span><span class="hm-t">Bake Day</span><span class="hm-go">›</span></button>
+      <div class="hm-grp">Buy</div>
       <button type="button" data-hpage="pantry"><span class="hm-ic" data-ic="box"></span><span class="hm-t">Pantry</span><span class="hm-go">›</span></button>
       <button type="button" data-hpage="receipts"><span class="hm-ic" data-ic="receipt"></span><span class="hm-t">Receipts</span><span class="hm-go">›</span></button>
 </div>
@@ -2204,7 +2216,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.131.00 · Nov 18, 10:00 AM PST</div>
+<div class="ver-badge">v1.132.00 · Nov 18, 10:11 AM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
