@@ -7,7 +7,7 @@
 //
 // GET  -> { rows: [...] }  (rows not removed)
 // POST { action: 'add', lines: [...] } | { action: 'remove', ids: [...] } | { action: 'approve', ids: [...], approved?: false }
-//      | { action: 'setlink', ids: [...], link: '<Amazon product link>' }  (saved as https://www.amazon.com/dp/<ASIN>)
+//      | { action: 'setlink', ids: [...], link: '<product link>' }  (Amazon saved as https://www.amazon.com/dp/<ASIN>; Costco / Target / WebstaurantStore / Pastry Depot saved without the query string)
 // Costs use only lines with Approved = TRUE; new lines start unapproved unless the add sets approved: true.
 //
 // Auth: reads are open (the seed prices were already public in the app source). Writes need the
@@ -43,6 +43,15 @@ async function amazonLink(input) {
     try { u = new URL(loc, u); } catch { return ''; }
   }
   return '';
+}
+
+// Other retailer links (Costco, Target, WebstaurantStore, Pastry Depot): https only, host on this list, saved without the query string.
+const SHOP_HOST = /^(www\.|sameday\.)?(costco\.com|costcobusinessdelivery\.com|target\.com|webstaurantstore\.com|pastrydepot\.com)$/i;
+async function shopLink(input) {
+  const a = await amazonLink(input); if (a) return a;
+  let raw = String(input || '').trim(); if (/^(www\.)[a-z0-9.-]+\//i.test(raw)) raw = 'https://' + raw;
+  let u; try { u = new URL(raw); } catch { return ''; }
+  return u.protocol === 'https:' && SHOP_HOST.test(u.hostname) ? (u.origin + u.pathname).slice(0, 400) : '';
 }
 
 export default async function handler(req, res) {
@@ -117,10 +126,10 @@ export default async function handler(req, res) {
       for (const r of rows) if (ids.has(String(r.Id)) && !isTrue(r.Deleted)) { await updateCell(TAB, header, r._row, 'Approved', val); n++; }
       return res.status(200).json({ approved: val ? n : 0, cleared: val ? 0 : n });
     }
-    // Attach an Amazon product link to ledger lines (the shopping list's Add to cart button reads it).
+    // Attach a product link to ledger lines (the shopping list's Amazon Add to cart button reads Amazon ones).
     if (body.action === 'setlink') {
-      const link = await amazonLink(body.link);
-      if (!link) return res.status(400).json({ error: 'That is not an Amazon product link' });
+      const link = await shopLink(body.link);
+      if (!link) return res.status(400).json({ error: 'That is not a link from a store the app knows (Amazon, Costco, Target, WebstaurantStore, Pastry Depot)' });
       const ids = new Set((Array.isArray(body.ids) ? body.ids : []).slice(0, MAX_LINES).map(String));
       const { header, rows } = await getRows(TAB);
       let n = 0;
