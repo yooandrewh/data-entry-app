@@ -41,7 +41,7 @@ Notion is dead: nothing writes to it, and the `NOTION_*` Vercel env vars can be 
 
 ## Tabs and Home
 
-Nav: **Home · Data · Baking**. Home opens on the photo with a dark glass panel of buttons grouped **Sell** (Entry, Forecast, Trends, Invoice / Labels), **Bake** (Baking Plan, Bake Day), **Buy** (Pantry, Receipts) (`#homeMenu`, `.hm-grp` headings, `homeTab`; plain-case 17px text, 48px rows, last CSS block); each opens its own page (`#homePage`) with a ‹ Back header. There is no Forecast tab and no `view-proj`: `renderProj()` fills `#projScenario` / `#projSub` / `#projList` inside Home's Forecast page.
+Nav: **Home · Data · Baking**. Home opens on the photo with a dark glass panel of buttons grouped and ordered by use: **Bake** (Baking Plan, Bake Day), **Sell** (Invoice / Labels, Entry, Forecast, Trends), **Buy** (Pantry, Receipts) (`#homeMenu`, `.hm-grp` headings, `homeTab`; plain-case 17px text, 48px rows, last CSS block); each opens its own page (`#homePage`) with a ‹ Back header. There is no Forecast tab and no `view-proj`: `renderProj()` fills `#projScenario` / `#projSub` / `#projList` inside Home's Forecast page.
 **Baking** is **Recipes | Costs** only. Recipes has one dropdown grouped by category (`REC_GROUPS`, values `sec|index`); the old row of category buttons is gone. Baking Plan on Home shows only the Bake Plan card (the other plan cards are `display:none` but `renderPlan()` still runs to feed `planBakeTotals`).
 **Stanton** is selling again but is out of Home / Forecast / Baking (no location toggle, defaults to La Mirada). Its history shows in the Data tab (`dataLoc` filter). The Kairos Logs button and Book Commercial Kitchen link are removed; the Logs code is unreachable but kept.
 
@@ -116,7 +116,7 @@ Costco receipts print a quantity line (`3 @ 4.99`) above an item whose price is 
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.136.00**; the next feature is v1.137.00, a fix v1.136.01. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.137.00**; the next feature is v1.138.00, a fix v1.137.01. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 
