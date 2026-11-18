@@ -2225,16 +2225,6 @@ h1, h2, h3, h4, .hero-title, .sheet h2, #hpTitle, .proj-card h3, .card h3, #bsSc
 
     <!-- Recipes mode -->
     <div id="bakingRecipes" hidden>
-      <div class="db-filter" id="recSection">
-        <button class="on" data-sec="mad"><span data-ic="madeleine"></span> Mads</button>
-        <button data-sec="season"><span data-ic="leaf"></span> Season</button>
-        <button data-sec="muffin"><span data-ic="cupcake"></span> Muffins</button>
-        <button data-sec="sweet"><span data-ic="cookie"></span> Sweets</button>
-        <button data-sec="cake"><span data-ic="cake"></span> Cake/Bread</button>
-        <button data-sec="scone"><span data-ic="scone"></span> Scones</button>
-        <button data-sec="fill"><span data-ic="jar_lemon"></span> Fillings</button>
-        <button data-sec="test"><span data-ic="flask"></span> Test</button>
-      </div>
       <div class="filter-bar"><select id="recPick" aria-label="Recipe"></select></div>
       <div id="recCard"></div>
     </div>
@@ -2254,7 +2244,7 @@ h1, h2, h3, h4, .hero-title, .sheet h2, #hpTitle, .proj-card h3, .card h3, #bsSc
   </div>
 </div>
 
-<div class="ver-badge">v1.135.00 · Nov 18, 10:40 AM PST</div>
+<div class="ver-badge">v1.136.00 · Nov 18, 10:55 AM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -5609,8 +5599,7 @@ h1, h2, h3, h4, .hero-title, .sheet h2, #hpTitle, .proj-card h3, .card h3, #bsSc
   const recCatOf = it => it.cat || REC_CATMAP[it.key] || 'sweet';
   const recRealSec = it => Object.keys(REC_ARR).find(s => REC_ARR[s].includes(it)) || 'other';
   const recAct = it => isActive(recRealSec(it), it);
-  function recList() {
-    const v = recState.sec;
+  function recList(v = recState.sec) {
     if (v === 'mad') return activeFirst('mad', REC_MADS);
     const all = v === 'season' ? Object.keys(REC_ARR).flatMap(s => REC_ARR[s].filter(it => isSeasonal(s, it)))
       : v === 'fill' ? REC_FILLINGS : v === 'test' ? REC_TEST
@@ -5841,18 +5830,15 @@ h1, h2, h3, h4, .hero-title, .sheet h2, #hpTitle, .proj-card h3, .card h3, #bsSc
         ${recLink(item.link)}
       </div>`;
   }
+  const REC_GROUPS = [['mad', 'Madeleines'], ['muffin', 'Muffins'], ['sweet', 'Sweets'], ['cake', 'Cake and bread'], ['scone', 'Scones'], ['fill', 'Fillings'], ['test', 'Test']];
   function renderRecipes() {
-    document.querySelectorAll('#recSection button').forEach(x => x.classList.toggle('on', x.dataset.sec === recState.sec));
     const list = recList();
     if (recState.idx >= list.length) recState.idx = 0;
     const pick = document.getElementById('recPick');
-    const opt = (it, i) => `<option value="${i}" data-icon="${recKey(it.name)}">${it.name}</option>`;
-    if (recState.sec === 'mad') {
-      pick.innerHTML = list.map((it, i) => `<option value="${i}" data-icon="${recKey(it.name)}">${it.name}${seasonRank('mad', it) < 99 ? ' (season)' : ''}</option>`).join('');
-    } else {
-      pick.innerHTML = list.map((it, i) => `<option value="${i}" data-icon="${recKey(it.name)}">${it.name}${it.key === 'pumpkinmuffin' ? ' (disabled)' : ''}</option>`).join('');
-    }
-    pick.value = recState.idx;
+    // One dropdown, grouped by category (replaces the row of category buttons). Values are "<section>|<index>".
+    const rlabel = (it, sec) => it.name + (it.key === 'pumpkinmuffin' ? ' (disabled)' : (sec === 'mad' ? seasonRank('mad', it) < 99 : isSeasonal(recRealSec(it), it)) ? ' (season)' : '');
+    pick.innerHTML = REC_GROUPS.map(([sec, label]) => { const l = recList(sec); return l.length ? `<optgroup label="${label}">${l.map((it, i) => `<option value="${sec}|${i}" data-icon="${recKey(it.name)}">${esc(rlabel(it, sec))}</option>`).join('')}</optgroup>` : ''; }).join('');
+    pick.value = recState.sec + '|' + recState.idx;
     const item = list[recState.idx];
     let html;
     const rsec = recRealSec(item);
@@ -5897,7 +5883,7 @@ h1, h2, h3, h4, .hero-title, .sheet h2, #hpTitle, .proj-card h3, .card h3, #bsSc
     renderRecipes();
   });
   document.getElementById('recPick').addEventListener('change', e => {
-    recState.idx = Number(e.target.value); recResetVariants(); renderRecipes();
+    const [sec, i] = String(e.target.value).split('|'); recState.sec = sec; recState.idx = Number(i) || 0; recResetVariants(); renderRecipes();
   });
   // ===== Costs: ingredient prices → cost per item =====
   // Ported from the old kairos.html Costing section. Prices live in localStorage (this device only);
