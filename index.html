@@ -2623,7 +2623,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.167.01 · Nov 18, 3:21 PM PST</div>
+<div class="ver-badge">v1.167.02 · Nov 18, 3:21 PM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -8441,8 +8441,8 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     return `<div class="buy-item"><label class="buy-row buy-big${buyChecked[nm] ? ' done' : ''}"><input type="checkbox" data-bkc="${esc(nm)}"${buyChecked[nm] ? ' checked' : ''}><span class="buy-main"><b><em>${big}</em> ${esc(nm)}</b><small>${sub}</small></span><span class="buy-r">${q.cost != null ? money2(q.cost) : ''}</span></label>${shopUrl(nm) ? `<a class="buy-open" href="${esc(shopUrl(nm))}" target="_blank" rel="noopener">Open store page</a>` : ''}${usesHtml(nm, i.unit)}</div>`;
   };
   // Costco warehouse and Costco Business Center are different stores: a Costco line is Business Center when its link is costcobusinessdelivery.com or its note says Business Delivery / Business Center.
-  const vendorOf = p => { const v = String((p && p.vendor) || '').trim(); return /^costco$/i.test(v) && (/costcobusinessdelivery\.com/i.test(p.link || '') || /business (delivery|center)/i.test(p.note || '')) ? 'Costco Business Center' : v; };
-  const bkVendor = r => { const v = vendorOf(costPrices[r.i.name] || {}); return v ? v : (bkPart(r).n ? 'Other' : 'No price yet'); };
+  const storeOf = p => { const v = String((p && p.vendor) || '').trim(); return /^costco$/i.test(v) && (/costcobusinessdelivery\.com/i.test(p.link || '') || /business (delivery|center)/i.test(p.note || '')) ? 'Costco Business Center' : v; };
+  const bkVendor = r => { const v = storeOf(costPrices[r.i.name] || {}); return v ? v : (bkPart(r).n ? 'Other' : 'No price yet'); };
   const bkHaveRow = r => `<div class="buy-item"><div class="buy-row buy-big buy-have"><span class="buy-ok">✓</span><span class="buy-main"><em class="buy-tag">Have it</em><b><s>${esc(r.i.name)}</s></b><small>need ${buyFmt(r.i.qty, r.i.unit)} · have ${buyFmt(r.s.onHand, r.i.unit)}</small></span></div>${usesHtml(r.i.name, r.i.unit)}</div>`;
   // rows = still to buy; all = every ingredient the plan needs (the ones already on hand are shown greyed under the same store, marked Have it).
   // Amazon: the ledger keeps each Amazon item's product link. The ASIN in it lets one tap open Amazon's Add to Cart page with the packs filled in (you still tap Add and check out on Amazon yourself).
