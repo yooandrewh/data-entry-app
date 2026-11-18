@@ -1892,7 +1892,8 @@ h1, h2, h3, h4, .hero-title, .sheet h2, #hpTitle, .proj-card h3, .card h3, #bsSc
 .rv-rec { border-top: 1px solid var(--sep); padding: 10px 0; margin-top: 6px; }
 .rv-h { display: flex; justify-content: space-between; gap: 4px 12px; flex-wrap: wrap; align-items: baseline; }
 .rv-h span { color: var(--muted); font-size: var(--fs-caption); }
-.ver-badge, body.home-landing .ver-badge { background: #fff !important; padding: 2px 6px !important; border-radius: 6px; }
+.ver-badge { background: #fff !important; padding: 2px 6px !important; border-radius: 6px; }
+body.home-landing .ver-badge { background: none !important; padding: 0 !important; }
 .ds-earlier { grid-column: 1 / -1; margin-top: 6px; border-top: 1px solid var(--sep); }
 .ds-erows { display: grid; grid-template-columns: 1fr 1fr; column-gap: 18px; }
 .ds-earlier summary { cursor: pointer; padding: 8px 0; color: var(--muted); font-size: var(--fs-caption); }
@@ -1913,14 +1914,14 @@ h1, h2, h3, h4, .hero-title, .sheet h2, #hpTitle, .proj-card h3, .card h3, #bsSc
     </div>
 
     <div class="home-menu" id="homeMenu">
-      <div class="hm-grp">Sell</div>
-      <button type="button" data-hentry><span class="hm-ic" data-ic="pencil"></span><span class="hm-t">Entry</span><span class="hm-go">›</span></button>
-      <button type="button" data-hpage="forecast"><span class="hm-ic" data-ic="chart"></span><span class="hm-t">Forecast</span><span class="hm-go">›</span></button>
-      <button type="button" data-hpage="trends"><span class="hm-ic" data-ic="trend"></span><span class="hm-t">Trends</span><span class="hm-go">›</span></button>
-      <button type="button" data-hpage="invoice"><span class="hm-ic" data-ic="tag"></span><span class="hm-t">Invoice / Labels</span><span class="hm-go">›</span></button>
       <div class="hm-grp">Bake</div>
       <button type="button" data-hpage="plan"><span class="hm-ic" data-ic="book"></span><span class="hm-t">Baking Plan</span><span class="hm-go">›</span></button>
       <button type="button" data-hpage="bake"><span class="hm-ic" data-ic="calendar"></span><span class="hm-t">Bake Day</span><span class="hm-go">›</span></button>
+      <div class="hm-grp">Sell</div>
+      <button type="button" data-hpage="invoice"><span class="hm-ic" data-ic="tag"></span><span class="hm-t">Invoice / Labels</span><span class="hm-go">›</span></button>
+      <button type="button" data-hentry><span class="hm-ic" data-ic="pencil"></span><span class="hm-t">Entry</span><span class="hm-go">›</span></button>
+      <button type="button" data-hpage="forecast"><span class="hm-ic" data-ic="chart"></span><span class="hm-t">Forecast</span><span class="hm-go">›</span></button>
+      <button type="button" data-hpage="trends"><span class="hm-ic" data-ic="trend"></span><span class="hm-t">Trends</span><span class="hm-go">›</span></button>
       <div class="hm-grp">Buy</div>
       <button type="button" data-hpage="pantry"><span class="hm-ic" data-ic="box"></span><span class="hm-t">Pantry</span><span class="hm-go">›</span></button>
       <button type="button" data-hpage="receipts"><span class="hm-ic" data-ic="receipt"></span><span class="hm-t">Receipts</span><span class="hm-go">›</span></button>
@@ -2244,7 +2245,7 @@ h1, h2, h3, h4, .hero-title, .sheet h2, #hpTitle, .proj-card h3, .card h3, #bsSc
   </div>
 </div>
 
-<div class="ver-badge">v1.136.00 · Nov 18, 10:55 AM PST</div>
+<div class="ver-badge">v1.137.00 · Nov 18, 10:45 AM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
