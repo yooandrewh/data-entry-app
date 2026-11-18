@@ -1622,11 +1622,16 @@
     #bakingPlan > #planSplitWrap { grid-column: 1 / -1; grid-row: 2; }
     #bakingPlan > #planList { grid-column: 1 / -1; grid-row: 3; }
     #homeInvoice:not([hidden]) { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 24px; align-items: start; }
-    #homeInvoice > .card:nth-child(1) { grid-column: 1; grid-row: 1 / span 3; }
-    #homeInvoice > .group-label { grid-column: 2; grid-row: 1; margin-top: 0; }
-    #homeInvoice > .card:nth-child(3) { grid-column: 2; grid-row: 2; }
-    #homeInvoice > .inv-actions { grid-column: 2; grid-row: 3; }
-    #homeInvoice > .inv-forgot { grid-column: 1 / -1; }
+    #invSched { grid-column: 1 / -1; grid-row: 1; }
+    #invSched + .card { grid-column: 1; grid-row: 2 / span 2; }
+    #invSched .sum { display: grid; grid-template-columns: 1fr 1fr; column-gap: 24px; }
+    #invSched .sum > .inv-field:first-child { order: 1; } #invSched .sum > .inv-field:last-child { order: 2; } #invSched .sum > .inv-field:not(:first-child):not(:last-child) { order: 3; }
+    #invPriceLbl { grid-column: 2; grid-row: 2; margin-top: 0; }
+    #invPriceCard { grid-column: 2; grid-row: 3 / span 2; }
+    #homeInvoice > .inv-actions { grid-column: 1; grid-row: 4; align-self: start; }
+    #invHistLbl { grid-column: 1 / -1; grid-row: 5; }
+    #invHistCard { grid-column: 1 / -1; grid-row: 6; }
+    #homeInvoice > .inv-forgot { grid-column: 1 / -1; grid-row: 7; }
 
     /* Data: one table row per entry (type, store, date | flavor counts across) */
     #view-db #dbList { display: block; }
@@ -2258,14 +2263,14 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
         <div class="inv-field"><span>Issue date</span><input type="date" id="invIssue" /></div>
         <div class="inv-field"><span>Due date</span><input type="date" id="invDue" /></div>
       </div></div>
-      <div class="group-label">Price per unit</div>
-      <div class="card"><div class="sum" style="margin:0 12px" id="invPrices"></div></div>
+      <div class="group-label" id="invPriceLbl">Price per unit</div>
+      <div class="card" id="invPriceCard"><div class="sum" style="margin:0 12px" id="invPrices"></div></div>
       <div class="inv-actions">
         <button class="btn-primary" id="invGenBtn">Generate invoice</button>
         <button type="button" class="btn-ghost" data-gen-labels>Generate Labels</button>
       </div>
-      <div class="group-label">Invoice History</div>
-      <div class="card"><div class="sum" style="margin:0 12px" id="invHistory"></div></div>
+      <div class="group-label" id="invHistLbl">Invoice History</div>
+      <div class="card" id="invHistCard"><div class="sum" style="margin:0 12px" id="invHistory"></div></div>
       <button type="button" class="inv-forgot" id="invForgot">Forgot an entry?</button>
     </div>
     </div>
