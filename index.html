@@ -2285,7 +2285,7 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
   </div>
 </div>
 
-<div class="ver-badge">v1.138.01 · Nov 18, 11:07 AM PST</div>
+<div class="ver-badge">v1.138.02 · Nov 18, 11:08 AM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -7739,15 +7739,16 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
         : wbuy.length ? wbuy.map(bkBuyRow).join('') + `<div class="buy-total"><span>Estimated total${wt.unpriced ? `<small>${wt.unpriced} item${wt.unpriced === 1 ? '' : 's'} without a price</small>` : ''}</span><b>${money2(wt.total)}</b></div>` : '<div class="pn-note">Everything the plan needs is on hand.</div>') +
         `<div class="pn-note">Whole bake plan against your counts and approved purchases. Tick items as you shop. For one bake at a time, open Bake Day.</div><div class="pn-bar"><button type="button" class="btn-ghost" id="pnBake">Open Bake Day</button></div>`;
     } catch {}
-    box.innerHTML = (pantryErr ? `<div class="pn-note">${esc(pantryErr)}</div>` : '') + wtb +
+    box.innerHTML = (pantryErr ? `<div class="pn-note">${esc(pantryErr)}</div>` : '') +
+      `<h3>On hand</h3>` + (rows || '<div class="pn-note">No counts yet. Count what is in the kitchen and save it in Count something, below. On hand then updates itself from approved purchases.</div>') +
+      `<div class="pn-note">On hand is your latest count plus approved ledger purchases after that date. A new count replaces it. ✕ removes the latest count, so the one before it shows again.</div>` +
+      wtb +
       `<h3>Count something</h3>` +
       `<div class="pn-form"><label>Item</label><input data-pn="item" list="pnItems" autocomplete="off" value="${esc(keep.item || '')}" placeholder="Start typing an ingredient"><datalist id="pnItems">${names.map(n => `<option value="${esc(n)}">`).join('')}</datalist>` +
       `<label>Amount counted</label><div class="pn-bar"><input data-pn="amt" type="number" inputmode="decimal" min="0" step="any" value="${esc(keep.amt || '')}"><select data-pn="unit" data-native>${units.map(u => `<option${(keep.unit || 'g') === u ? ' selected' : ''}>${u}</option>`).join('')}</select></div>` +
       `<label>Date</label><input data-pn="date" type="date" value="${esc(keep.date || todayISO())}">` +
       `<label>Note (optional)</label><input data-pn="note" maxlength="200" value="${esc(keep.note || '')}">` +
-      `<div class="pn-bar" style="margin-top:12px"><button class="primary" id="pnAdd">Save count</button></div></div>` +
-      `<h3>On hand</h3>` + (rows || '<div class="pn-note">No counts yet. Count what is in the kitchen and save it above. On hand then updates itself from approved purchases.</div>') +
-      `<div class="pn-note">On hand is your latest count plus approved ledger purchases after that date. A new count replaces it. ✕ removes the latest count, so the one before it shows again.</div>`;
+      `<div class="pn-bar" style="margin-top:12px"><button class="primary" id="pnAdd">Save count</button></div></div>`;
     bkWireTicks(box);
     const goBake = box.querySelector('#pnBake'); if (goBake) goBake.onclick = () => go('bake', 'plan');
     const val = k => box.querySelector(`[data-pn="${k}"]`).value;
