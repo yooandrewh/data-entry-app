@@ -1801,13 +1801,12 @@
 .pn-bar button { flex: 1 1 0; }
 .pn-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 2px; border-bottom: 1px solid var(--sep); }
 .pn-main { display: flex; flex-direction: column; min-width: 0; }
-.pn-main small { color: var(--muted); font-size: var(--fs-caption); }
+.pn-main small { color: var(--muted); font-size: var(--fs-caption); overflow-wrap: anywhere; }
 .pn-r { display: flex; align-items: center; gap: 8px; text-align: right; font-size: var(--fs-body); }
 .pn-flag { font-style: normal; font-size: var(--fs-micro); text-transform: uppercase; color: var(--accent); border: 1px solid var(--accent); padding: 1px 5px; }
 .pn-x { background: none; border: 0; color: var(--muted); font-size: var(--fs-body); padding: 4px; }
 .pn-form label { display: block; margin: 10px 0 4px; }
 .pn-form input, .pn-form select { width: 100%; box-sizing: border-box; }
-.pn-b { width: 64px; text-align: center; }
 .pn-note { color: var(--muted); font-size: var(--fs-caption); margin: 10px 0; }
 </style>
 </head>
@@ -2158,7 +2157,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.124.00 · Nov 17, 8:07 PM PST</div>
+<div class="ver-badge">v1.124.01 · Nov 17, 8:13 PM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -7193,7 +7192,7 @@
     if (homeTab === 'pantry') renderPantry();
   }
   async function pantryPost(body) {
-    const code = ledgerCode(); if (!code) return false;
+    const code = ledgerCode(); if (!code) { rcpToast('Enter the access code to save'); return false; }
     try {
       const r = await fetch('/api/pantry', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-ledger-code': code }, body: JSON.stringify(body) });
       const j = await r.json().catch(() => ({}));
