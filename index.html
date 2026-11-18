@@ -2070,7 +2070,7 @@ button { color: var(--text, #000); }
 .bx-none { color: var(--muted); font-size: var(--fs-caption); padding: 10px 2px; }
 #pwBoxes details { margin-top: 14px; }
 #pwBoxes summary { min-height: 44px; display: flex; align-items: center; font-weight: 700; font-size: var(--fs-body); }
-.bx-set { display: grid; grid-template-columns: 1fr 72px 72px 72px; gap: 8px; align-items: center; padding: 6px 0; font-size: var(--fs-caption); }
+.bx-set { display: grid; grid-template-columns: 1fr 96px; gap: 8px; align-items: center; padding: 6px 0; font-size: var(--fs-caption); }
 .bx-set.hd { color: var(--muted); font-weight: 700; }
 .bx-set input { width: 100%; min-height: 44px; font-size: var(--fs-body); text-align: center; border: 1px solid #000; border-radius: 0; background: #fff; color: #000; }
 
@@ -2645,7 +2645,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.169.00 · Nov 18, 3:30 PM PST</div>
+<div class="ver-badge">v1.169.01 · Nov 18, 3:34 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -5641,44 +5641,31 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   // Pieces that fit in one full-size Cambro pan, one layer (Andrew, 2026-11-18). Madeleines can double to 72 and cake pops to 100 once frozen (stacked): not used yet, kept in mind.
   const BOX_FIT = { 'Lemon Poppy': 36, 'Sea Salt': 36, 'Maple Pecan': 36, 'Pumpkin Muffin': 18, 'Blueberry Muffin': 18, 'Pumpkin Bundt': 22, 'Cookie': 40, 'Chookie': 40, 'Cake Pop': 50 };
   const boxSize = p => Math.max(1, Math.floor(Number(boxCfg.size[p]) || BOX_FIT[p] || BATCH_YIELD));
+  // Pans are pooled across stores: one item per pan, one layer, rounded up per item. Where the pans end up is not planned here.
   function boxPlan() {
-    const out = BOX_LOCS.map(name => ({ name, items: [] })), tot = ZERO();
-    const rate = {};
-    for (const loc of ['La Mirada', 'Stanton']) {
-      let d = null; try { d = lastPlanSales ? dowRates(lastPlanSales, loc, 28) : null; } catch {}
-      for (const p of PRODUCTS) (rate[p] = rate[p] || {})[loc] = d && d.rate && d.rate[p] ? (d.rate[p].wd * 5 + d.rate[p].we * 2) / 7 : 0;
-    }
+    const items = [], byItem = ZERO();
     for (const p of PRODUCTS) {
       const n = Math.round(planBakeTotals[p] || 0); if (n <= 0) continue;
-      const bp = Math.min(n, Math.max(0, Math.floor(Number(boxCfg.hold.bp[p]) || 0)));
-      const fu = Math.min(n - bp, Math.max(0, Math.floor(Number(boxCfg.hold.fu[p]) || 0)));
-      const rest = n - bp - fu, a = rate[p]['La Mirada'], b = rate[p]['Stanton'];
-      const wl = wizLast && wizLast[p] && wizLast[p].days > 0 ? wizLast[p].loc : null, wa = wl && wl['La Mirada'] ? wl['La Mirada'].bake : 0, wb = wl && wl['Stanton'] ? wl['Stanton'].bake : 0;   // per-store shortfall from step 1 when there is one
-      const lm = wa + wb > 0 ? Math.round(rest * wa / (wa + wb)) : a + b > 0 ? Math.round(rest * a / (a + b)) : rest, st = rest - lm;
-      [bp, fu, lm, st].forEach((q, i) => { if (q > 0) { out[i].items.push({ p, pcs: q, boxes: Math.ceil(q / boxSize(p)) }); tot[p] += Math.ceil(q / boxSize(p)); } });
+      const boxes = Math.ceil(n / boxSize(p)); byItem[p] = boxes; items.push({ p, pcs: n, boxes });
     }
-    return { locs: out, byItem: tot, total: Object.values(tot).reduce((x, y) => x + y, 0) };
+    return { items, byItem, total: items.reduce((a, x) => a + x.boxes, 0) };
   }
   function boxPaint() {
     const el = document.getElementById('pwBoxes'); if (!el) return;
     const bx = boxPlan(), any = PRODUCTS.some(p => (planBakeTotals[p] || 0) > 0);
     let h = `<h3>Boxes</h3>`;
     if (!any) { el.innerHTML = h + '<div class="bx-none">Nothing to box yet. Pick a span for at least one item in step 1.</div>'; return; }
-    h += `<div class="bx-total"><b>${bx.total}</b> box${bx.total === 1 ? '' : 'es'} in all (a box is one Cambro full-size 4" deep food pan, 14PP190). La Mirada and Stanton split by recent sales; BP and Fullerton get what you set aside below.</div>`;
-    for (const l of bx.locs) {
-      const n = l.items.reduce((a, x) => a + x.boxes, 0);
-      h += `<div class="bx-loc">${esc(l.name)}<span>${n} box${n === 1 ? '' : 'es'}</span></div>`;
-      h += l.items.length ? l.items.map(x => `<div class="bx-row"><span>${esc(pdisp(x.p))}<small>${x.pcs} pieces · ${boxSize(x.p)} per box</small></span><b>${x.boxes} box${x.boxes === 1 ? '' : 'es'}</b></div>`).join('') : '<div class="bx-none">Nothing goes here.</div>';
-    }
-    h += `<details><summary>Box sizes and storage</summary><div class="bx-set hd"><span>Item</span><span>Per box</span><span>To BP</span><span>To Fullerton</span></div>`
-      + PRODUCTS.map(p => `<div class="bx-set"><span>${esc(pdisp(p))}</span><input type="number" inputmode="numeric" min="1" data-bx="size" data-p="${esc(p)}" value="${boxSize(p)}"><input type="number" inputmode="numeric" min="0" data-bx="bp" data-p="${esc(p)}" value="${boxCfg.hold.bp[p] || 0}"><input type="number" inputmode="numeric" min="0" data-bx="fu" data-p="${esc(p)}" value="${boxCfg.hold.fu[p] || 0}"></div>`).join('')
-      + `<div class="bx-none">To BP and To Fullerton are pieces set aside in those storages. Everything else goes to the two stores.</div></details>`;
+    h += `<div class="bx-total"><b>${bx.total}</b> pan${bx.total === 1 ? '' : 's'} in all (a pan is one Cambro full-size 4" deep food pan, 14PP190). One item per pan, rounded up per item; the pans are not split by location.</div>`;
+    h += bx.items.map(x => `<div class="bx-row"><span>${esc(pdisp(x.p))}<small>${x.pcs} pieces · ${boxSize(x.p)} per pan</small></span><b>${x.boxes} pan${x.boxes === 1 ? '' : 's'}</b></div>`).join('');
+    h += `<details><summary>Pan sizes</summary><div class="bx-set hd"><span>Item</span><span>Per pan</span></div>`
+      + PRODUCTS.map(p => `<div class="bx-set"><span>${esc(pdisp(p))}</span><input type="number" inputmode="numeric" min="1" data-bx="size" data-p="${esc(p)}" value="${boxSize(p)}"></div>`).join('')
+      + `</details>`;
     el.innerHTML = h;
     el.querySelector('details').open = !!boxOpen;
     el.querySelector('details').ontoggle = e => { boxOpen = e.target.open; };
     el.querySelectorAll('input[data-bx]').forEach(i => i.onchange = () => {
       const v = Math.max(0, Math.floor(Number(i.value) || 0)), k = i.dataset.bx, p = i.dataset.p;
-      if (k === 'size') boxCfg.size[p] = Math.max(1, v); else boxCfg.hold[k][p] = v;
+      boxCfg.size[p] = Math.max(1, v);
       boxSave(); boxOpen = true; boxPaint();
     });
   }
@@ -5705,8 +5692,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     }).join('');
     let pans = '';
     if (bx && bx.total > 0) {
-      const parts = bx.locs.map(l => [l.name, l.items.reduce((a, x) => a + x.boxes, 0)]).filter(x => x[1] > 0);
-      pans = `<div class="pw-pans"><b>${bx.total}</b> Cambro pan${bx.total === 1 ? '' : 's'} needed<small>${parts.map(([n, c]) => `${esc(n.replace(' Storage', ''))} ${c}`).join(' · ')} · full-size, 4" deep. One item per pan, one layer.</small></div>`;
+      pans = `<div class="pw-pans"><b>${bx.total}</b> Cambro pan${bx.total === 1 ? '' : 's'} needed<small>Full-size, 4" deep. One item per pan, one layer, not split by location.</small></div>`;
     }
     const top = `<div class="pw-head"><b>What do you want to bake?</b><span>Drag the slider or pick how long each item should last. Each store's goal is ${STOCK_TARGET}x its expected sales for that time. You bake the gap between the goal and what it has now.</span></div>`
       + `<div class="pw-label">Make everything last</div><div class="pw-slide"><div class="pw-slide-val" id="pwAllVal">${dayLbl(all)}</div><input type="range" id="pwAll" min="1" max="90" step="1" value="${all}" aria-label="Days everything should last"><div class="pw-slide-ticks"><span>1 day</span><span>1 month</span><span>2 months</span><span>3 months</span></div></div>`
