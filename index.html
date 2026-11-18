@@ -1884,6 +1884,15 @@ body[data-tab="home"] .tabbar button.on, body:not(.home-landing) .tabbar button.
 html, body, button, input, select, textarea { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif !important; }
 h1, h2, h3, h4, .hero-title, .sheet h2, #hpTitle, .proj-card h3, .card h3, #bsScrim .bs2-title, .hp-head span { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", Arial, sans-serif !important; font-weight: 700 !important; text-transform: none !important; letter-spacing: 0 !important; }
 .hero-title { font-size: 34px; }
+/* Bake protocol: yield step, in-page confirm, receipt review (2026-11-18). Black, white and greys only. */
+.pn-flag { font-size: var(--fs-nav); }
+.pn-form .bk-rc-row input { width: 96px; flex: none; }
+.bk-rc-row span small { display: block; color: var(--muted); font-size: var(--fs-caption); }
+.bd-conf { border: 1px solid var(--sep); padding: 12px; margin-top: 12px; display: grid; gap: 6px; font-size: var(--fs-body); }
+.rv-rec { border-top: 1px solid var(--sep); padding: 10px 0; margin-top: 6px; }
+.rv-h { display: flex; justify-content: space-between; gap: 4px 12px; flex-wrap: wrap; align-items: baseline; }
+.rv-h span { color: var(--muted); font-size: var(--fs-caption); }
+.ver-badge, body.home-landing .ver-badge { background: #fff !important; padding: 2px 6px !important; border-radius: 6px; }
 </style>
 </head>
 <body>
@@ -1936,12 +1945,12 @@ h1, h2, h3, h4, .hero-title, .sheet h2, #hpTitle, .proj-card h3, .card h3, #bsSc
     <!-- Baking plan -->
     <div id="homePlan" hidden>
     <div id="bakingPlan">
-      <div class="card" style="display:none">
+      <div class="card">
         <div class="row">
           <span class="lbl">Make it last until</span>
           <input type="date" id="planDate" />
         </div>
-        <div class="row row-stack">
+        <div class="row row-stack" style="display:none">
           <span class="lbl">Stanton delivers</span>
           <div class="bakedays" id="delivDays">
             <button type="button" data-ddow="1">M</button>
@@ -2242,7 +2251,7 @@ h1, h2, h3, h4, .hero-title, .sheet h2, #hpTitle, .proj-card h3, .card h3, #bsSc
   </div>
 </div>
 
-<div class="ver-badge">v1.133.00 · Nov 18, 10:21 AM PST</div>
+<div class="ver-badge">v1.134.00 · Nov 18, 10:35 AM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -6035,6 +6044,7 @@ h1, h2, h3, h4, .hero-title, .sheet h2, #hpTitle, .proj-card h3, .card h3, #bsSc
     if (document.getElementById('view-fin').classList.contains('active')) renderFin();
     if (homeTab === 'pantry') renderPantry();
     if (homeTab === 'bake') bakePaint();
+    if (homeTab === 'receipts') rvPaint();
   }
   const saveCosts = () => { try { localStorage.setItem('costYields.v1', JSON.stringify(costYields)); } catch {} };
 
@@ -7484,7 +7494,7 @@ h1, h2, h3, h4, .hero-title, .sheet h2, #hpTitle, .proj-card h3, .card h3, #bsSc
   function renderReceipts() {
     const box = document.getElementById('homeReceipts'); if (!box) return;
     if (!box.querySelector('#rcText')) {
-      box.innerHTML = `<div class="rx-sec"><h3>Send a photo to the Mac</h3>` +
+      box.innerHTML = `<div class="rx-sec" id="rxReview"></div><div class="rx-sec"><h3>Send a photo to the Mac</h3>` +
         `<div class="pn-note">One photo per receipt. Take one, or pick several from your library (up to 10 at a time).</div>` +
         `<input type="file" id="rxInput" accept="image/*" multiple hidden>` +
         `<div class="pn-bar"><button id="rxPick">Choose photos</button><button class="primary" id="rxSend" disabled>Send</button><span class="rx-file" id="rxFileName">No photo chosen</span></div>` +
@@ -7513,6 +7523,37 @@ h1, h2, h3, h4, .hero-title, .sheet h2, #hpTitle, .proj-card h3, .card h3, #bsSc
     }
     rxPaintSend(); rxPaintList(); rxFetch();
     paintReceipt();
+    if (LEDGER === null && !ledgerBusy) loadCosts();
+    rvPaint();
+  }
+  // Receipts to review: every ledger item line still unapproved, grouped by receipt. Nothing is approved automatically; approved lines feed Costs and the Pantry.
+  let rvBusy = false, rvArm = '';
+  const rvChunks = ids => { const o = []; for (let i = 0; i < ids.length; i += 80) o.push(ids.slice(i, i + 80)); return o; };
+  async function rvRun(action, ids) {
+    if (rvBusy || !ids.length) return; rvBusy = true; rvPaint();
+    try { for (const c of rvChunks(ids)) if (!(await ledgerPost({ action, ids: c }))) return; rcpToast(action === 'approve' ? `${ids.length} line${ids.length === 1 ? '' : 's'} approved` : 'Removed'); }
+    finally { rvBusy = false; rvArm = ''; rvPaint(); }
+  }
+  function rvPaint() {
+    const box = document.getElementById('rxReview'); if (!box) return;
+    if (LEDGER === null) { box.innerHTML = '<h3>To review</h3><div class="pn-note">Loading…</div>'; return; }
+    const recs = ledgerReceipts().filter(r => r.items.some(l => !l.approved)).sort((a, b) => isoD(b.date).localeCompare(isoD(a.date)));
+    const nLines = recs.reduce((t, r) => t + r.items.filter(l => !l.approved).length, 0);
+    const dis = rvBusy ? ' disabled' : '';
+    box.innerHTML = `<h3>To review${recs.length ? ` (${nLines} line${nLines === 1 ? '' : 's'})` : ''}</h3>` + (ledgerErr ? `<div class="pn-note">${esc(ledgerErr)}</div>` : '') +
+      (recs.length ? `<div class="pn-note">Read from receipts and waiting for you. Check the item, size and price, then approve. Approved lines set the cost prices and add to the pantry.</div>` +
+        recs.map(r => {
+          const un = r.items.filter(l => !l.approved), sum = un.reduce((t, l) => t + (l.price || 0), 0), tf = r.tax.concat(r.fees).reduce((t, l) => t + (l.price || 0), 0);
+          const rows = un.map(l => `<div class="pn-row"><span class="pn-main"><b>${esc(l.item)}</b><small>${esc(buyFmt(l.amt || 0, l.unit))} per package${l.note ? ' · ' + esc(l.note) : ''}</small></span><span class="pn-r"><b>${money2(l.price || 0)}</b><button class="pn-x" data-rvl="${esc(l.id)}" aria-label="Remove this line"${dis}>✕</button></span></div>`).join('');
+          return `<div class="rv-rec"><div class="rv-h"><b>${esc(r.vendor || 'Unassigned')}</b><span>${esc(pantryDate(r.date))} · ${money2(sum)}${tf ? ` + ${money2(tf)} tax and fees` : ''}</span></div>${rows}` +
+            `<div class="pn-bar" style="margin-top:8px"><button class="primary" type="button" data-rva="${esc(r.id)}"${dis}>Approve ${un.length} line${un.length === 1 ? '' : 's'}</button><button type="button" data-rvr="${esc(r.id)}"${dis}>${rvArm === r.id ? 'Tap again to remove' : 'Remove receipt'}</button></div></div>`;
+        }).join('') + (recs.length > 1 ? `<div class="pn-bar" style="margin-top:12px"><button type="button" id="rvAll"${dis}>Approve all ${nLines} lines</button></div>` : '')
+        : '<div class="pn-note">Nothing waiting. New receipts from the Mac or pasted text show up here.</div>');
+    const recOf = id => recs.find(r => r.id === id);
+    box.querySelectorAll('[data-rva]').forEach(b => b.onclick = () => { const r = recOf(b.dataset.rva); if (r) rvRun('approve', r.items.filter(l => !l.approved).map(l => l.id)); });
+    box.querySelectorAll('[data-rvr]').forEach(b => b.onclick = () => { const r = recOf(b.dataset.rvr); if (!r) return; if (rvArm !== r.id) { rvArm = r.id; rvPaint(); return; } rvRun('remove', [...r.items, ...r.tax, ...r.fees].map(l => l.id)); });
+    box.querySelectorAll('[data-rvl]').forEach(b => b.onclick = () => { const r = recs.find(x => x.items.some(l => l.id === b.dataset.rvl)); if (!r) return; const last = r.items.length === 1; rvRun('remove', last ? [...r.items, ...r.tax, ...r.fees].map(l => l.id) : [b.dataset.rvl]); });
+    const all = box.querySelector('#rvAll'); if (all) all.onclick = () => rvRun('approve', recs.flatMap(r => r.items.filter(l => !l.approved).map(l => l.id)));
   }
   function paintReceipt() {
     const out = document.querySelector('#homeReceipts #rcOut'); if (!out) return;
@@ -7531,7 +7572,7 @@ h1, h2, h3, h4, .hero-title, .sheet h2, #hpTitle, .proj-card h3, .card h3, #bsSc
       (p.match && !p.blocks.includes(p.match) ? `<div class="rc-ok">${esc(p.match)}</div>` : '') +
       p.blocks.map(b => `<div class="rc-bad">${esc(b)}</div>`).join('') +
       `<div class="pn-bar" style="margin-top:12px"><button class="primary" id="rcPost"${blocked ? ' disabled' : ''}>Post ${p.lines.length} ${p.lines.length === 1 ? 'line' : 'lines'}</button></div>` +
-      `<div class="pn-note">Lines go to the Ledger unapproved. Approve them in Baking, Costs, Ingredient prices.</div>`;
+      `<div class="pn-note">Lines go to the Ledger unapproved. Approve them under To review, at the top of this page.</div>`;
   }
   async function rcPost() {
     const p = rcParsed; if (!p || !p.ok || p.blocks.length || !p.lines.length || rcBusy) return;
@@ -7540,7 +7581,7 @@ h1, h2, h3, h4, .hero-title, .sheet h2, #hpTitle, .proj-card h3, .card h3, #bsSc
       await fetchLedger();
       if (ledgerErr) return rcpToast("Couldn't check the ledger, try again");
       if ((LEDGER || []).some(l => l.receipt === p.receipt)) { rcpToast('This receipt is already in the ledger'); rcParsed = Object.assign({}, p, { blocks: p.blocks.concat('This receipt is already in the ledger') }); return; }
-      if (await ledgerPost({ action: 'add', lines: p.lines })) { rcDone = `Added ${p.lines.length} lines, approve them in Baking, Costs, Ingredient prices`; rcParsed = null; const t = document.querySelector('#homeReceipts #rcText'); if (t) t.value = ''; }
+      if (await ledgerPost({ action: 'add', lines: p.lines })) { rcDone = `Added ${p.lines.length} lines. Approve them under To review, at the top of this page.`; rcParsed = null; const t = document.querySelector('#homeReceipts #rcText'); if (t) t.value = ''; }
     } finally { rcBusy = false; paintReceipt(); }
   }
 
@@ -7617,7 +7658,16 @@ h1, h2, h3, h4, .hero-title, .sheet h2, #hpTitle, .proj-card h3, .card h3, #bsSc
     }).join('');
     const names = (typeof costAllNames === 'function' ? costAllNames() : []).sort((a, b) => a.localeCompare(b));
     const units = ['g', 'kg', 'oz', 'lb', 'ml', 'L', 'fl oz', 'pcs'];
-    box.innerHTML = (pantryErr ? `<div class="pn-note">${esc(pantryErr)}</div>` : '') +
+    // What to buy: the whole bake plan against what is on hand, so the list is here without opening Bake Day.
+    let wtb = '';
+    try {
+      const wr = bakeRows(), wbuy = wr.filter(r => r.st !== 'ok'), wt = bkTotal(wbuy);
+      wtb = `<h3>What to buy${wbuy.length ? ` (${wbuy.length})` : ''}</h3>` + (!wr.length ? '<div class="pn-note">Nothing in the bake plan yet.</div>'
+        : wbuy.length ? wbuy.map(bkBuyRow).join('') + `<div class="buy-total"><span>Estimated total${wt.unpriced ? `<small>${wt.unpriced} item${wt.unpriced === 1 ? '' : 's'} without a price</small>` : ''}</span><b>${money2(wt.total)}</b></div>` : '<div class="pn-note">Everything the plan needs is on hand.</div>') +
+        `<div class="pn-note">Whole bake plan against your counts and approved purchases. Tick items as you shop. For one bake at a time, open Bake Day.</div><div class="pn-bar"><button type="button" class="btn-ghost" id="pnBake">Open Bake Day</button></div>`;
+    } catch {}
+    box.innerHTML = (pantryErr ? `<div class="pn-note">${esc(pantryErr)}</div>` : '') + wtb +
+      `<h3>Count something</h3>` +
       `<div class="pn-form"><label>Item</label><input data-pn="item" list="pnItems" autocomplete="off" value="${esc(keep.item || '')}" placeholder="Start typing an ingredient"><datalist id="pnItems">${names.map(n => `<option value="${esc(n)}">`).join('')}</datalist>` +
       `<label>Amount counted</label><div class="pn-bar"><input data-pn="amt" type="number" inputmode="decimal" min="0" step="any" value="${esc(keep.amt || '')}"><select data-pn="unit" data-native>${units.map(u => `<option${(keep.unit || 'g') === u ? ' selected' : ''}>${u}</option>`).join('')}</select></div>` +
       `<label>Date</label><input data-pn="date" type="date" value="${esc(keep.date || todayISO())}">` +
@@ -7625,6 +7675,8 @@ h1, h2, h3, h4, .hero-title, .sheet h2, #hpTitle, .proj-card h3, .card h3, #bsSc
       `<div class="pn-bar" style="margin-top:12px"><button class="primary" id="pnAdd">Save count</button></div></div>` +
       `<h3>On hand</h3>` + (rows || '<div class="pn-note">No counts yet. Count what is in the kitchen and save it above. On hand then updates itself from approved purchases.</div>') +
       `<div class="pn-note">On hand is your latest count plus approved ledger purchases after that date. A new count replaces it. ✕ removes the latest count, so the one before it shows again.</div>`;
+    bkWireTicks(box);
+    const goBake = box.querySelector('#pnBake'); if (goBake) goBake.onclick = () => { homeTab = 'bake'; track('home_tab', { tab: homeTab }); renderHomeTab(); };
     const val = k => box.querySelector(`[data-pn="${k}"]`).value;
     box.querySelector('#pnAdd').onclick = async () => {
       const item = val('item').trim(), n = parseFloat(val('amt')), u = val('unit'), date = val('date');
@@ -7633,7 +7685,7 @@ h1, h2, h3, h4, .hero-title, .sheet h2, #hpTitle, .proj-card h3, .card h3, #bsSc
       if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return rcpToast('Pick a date');
       const b = u === 'pcs' ? { amt: n, unit: 'pcs' } : toBase(n, u);
       const ok = await pantryPost({ action: 'add', lines: [{ item, amt: b.amt, unit: b.unit, date, note: val('note').trim() }] });
-      if (ok) { rcpToast('Count saved'); renderPantry(); }
+      if (ok) { rcpToast('Count saved'); renderPantry(); const b2 = document.getElementById('homePantry'); ['item', 'amt', 'note'].forEach(k => { const e = b2 && b2.querySelector(`[data-pn="${k}"]`); if (e) e.value = ''; }); }
     };
     box.querySelectorAll('[data-pnx]').forEach(btn => btn.onclick = async () => {
       if (!confirm('Remove this count?')) return;
@@ -7769,11 +7821,24 @@ h1, h2, h3, h4, .hero-title, .sheet h2, #hpTitle, .proj-card h3, .card h3, #bsSc
       return { i, s, st: short > 1e-9 ? 'short' : 'ok', short };
     });
   }
+  // Shopping rows shared by Bake Day and the Pantry page's "What to buy".
+  const bkPart = r => { const i = r.i, n = i.pkAmt > 0 ? Math.max(1, Math.ceil(r.short / i.pkAmt - 1e-9)) : null, per = i.pk ? i.cost / i.pk : null; return { n, cost: n && per != null ? n * per : null }; };
+  const bkSub = r => {
+    const i = r.i, q = bkPart(r), pk = q.n ? ` · ${q.n} × ${buyFmt(i.pkAmt, i.unit)} pack${q.n === 1 ? '' : 's'}` : ' · no price yet';
+    if (r.st === 'none') return `need ${buyFmt(i.qty, i.unit)} · not counted, so the full amount is listed${pk}`;
+    if (r.st === 'unit') return `need ${buyFmt(i.qty, i.unit)} · counted in ${esc(r.s.unit)}, can't compare, so the full amount is listed${pk}`;
+    return `need ${buyFmt(i.qty, i.unit)} · have ${buyFmt(r.s.onHand, i.unit)}${r.s.uncounted ? ' (purchases only, not counted)' : ''} · buy ${buyFmt(r.short, i.unit)}${pk}`;
+  };
+  const bkTag = r => (r.st === 'none' || (r.s && r.s.uncounted)) ? '<i class="pn-flag">Not counted</i> ' : r.st === 'unit' ? '<i class="pn-flag">Unit</i> ' : '';
+  const bkBuyRow = r => { const q = bkPart(r); return `<label class="buy-row${buyChecked[r.i.name] ? ' done' : ''}"><input type="checkbox" data-bkc="${esc(r.i.name)}"${buyChecked[r.i.name] ? ' checked' : ''}><span class="buy-main"><b>${esc(r.i.name)} ${bkTag(r)}</b><small>${bkSub(r)}</small></span><span class="buy-r">${q.cost != null ? money2(q.cost) : ''}</span></label>`; };
+  const bkTotal = buy => ({ total: buy.reduce((a, r) => a + (bkPart(r).cost || 0), 0), unpriced: buy.filter(r => bkPart(r).cost == null).length });
+  const bkWireTicks = box => box.querySelectorAll('[data-bkc]').forEach(c => c.onchange = () => { if (c.checked) buyChecked[c.dataset.bkc] = 1; else delete buyChecked[c.dataset.bkc]; buySave(); c.closest('.buy-row').classList.toggle('done', c.checked); });
+  let bdPending = null, bdBusy = false;   // the Bake done confirmation shown in the page (not a native dialog)
   function bakePaint() {
     const box = document.getElementById('homeBake'); if (!box) return;
     if (PANTRY === null || LEDGER === null) { box.innerHTML = '<div class="pn-note">Loading…</div>'; return; }
     const keep = {}; box.querySelectorAll('[data-bk]').forEach(e => { keep[e.dataset.bk] = e.value; });
-    if (bakeFormFresh) { delete keep['bd:min']; delete keep['bd:note']; bakeFormFresh = false; }
+    if (bakeFormFresh) { Object.keys(keep).forEach(k => { if (k.startsWith('bd:')) delete keep[k]; }); bakeFormFresh = false; }
     const today = todayISO(), cacheDates = Object.keys(planDatesCache).sort();
     const thruDates = cacheDates.filter(d => d >= today), onlyDates = cacheDates.filter(d => d >= addDays(today, -3));
     if (bakeView && !(/^o:/.test(bakeView) ? onlyDates : thruDates).includes(bakeView.slice(2))) bakeView = '';
@@ -7781,22 +7846,18 @@ h1, h2, h3, h4, .hero-title, .sheet h2, #hpTitle, .proj-card h3, .card h3, #bsSc
     const rows = bakeRows(bakeList()), allRows = bakeRows();
     if (!allRows.length) { box.innerHTML = '<div class="tm-empty">Nothing in the bake plan yet. Add bake dates in Baking Plan and the ingredients show up here.</div>'; return; }
     const buy = rows.filter(r => r.st !== 'ok'), ok = rows.filter(r => r.st === 'ok');
-    const part = r => { const i = r.i, n = i.pkAmt > 0 ? Math.max(1, Math.ceil(r.short / i.pkAmt - 1e-9)) : null, per = i.pk ? i.cost / i.pk : null; return { n, cost: n && per != null ? n * per : null }; };
+    const part = bkPart, buyRow = bkBuyRow;
     const total = buy.reduce((a, r) => a + (part(r).cost || 0), 0), unpriced = buy.filter(r => part(r).cost == null).length;
     const next = [...planBakeDates].sort().find(d => d >= todayISO());
-    const sub = r => {
-      const i = r.i, q = part(r), pk = q.n ? ` · ${q.n} × ${buyFmt(i.pkAmt, i.unit)} pack${q.n === 1 ? '' : 's'}` : ' · no price yet';
-      if (r.st === 'none') return `need ${buyFmt(i.qty, i.unit)} · not counted, so the full amount is listed${pk}`;
-      if (r.st === 'unit') return `need ${buyFmt(i.qty, i.unit)} · counted in ${esc(r.s.unit)}, can't compare, so the full amount is listed${pk}`;
-      return `need ${buyFmt(i.qty, i.unit)} · have ${buyFmt(r.s.onHand, i.unit)}${r.s.uncounted ? ' (purchases only, not counted)' : ''} · buy ${buyFmt(r.short, i.unit)}${pk}`;
-    };
-    const tag = r => (r.st === 'none' || (r.s && r.s.uncounted)) ? '<i class="pn-flag">Not counted</i> ' : r.st === 'unit' ? '<i class="pn-flag">Unit</i> ' : '';
-    const buyRow = r => { const q = part(r); return `<label class="buy-row${buyChecked[r.i.name] ? ' done' : ''}"><input type="checkbox" data-bkc="${esc(r.i.name)}"${buyChecked[r.i.name] ? ' checked' : ''}><span class="buy-main"><b>${esc(r.i.name)} ${tag(r)}</b><small>${sub(r)}</small></span><span class="buy-r">${q.cost != null ? money2(q.cost) : ''}</span></label>`; };
-    const okRow = r => `<div class="pn-row"><span class="pn-main"><b>${esc(r.i.name)}</b><small>need ${buyFmt(r.i.qty, r.i.unit)}${r.s.mixed ? ' · some purchases use another unit and are not added' : ''}</small></span><span class="pn-r">${buyFmt(r.s.onHand, r.i.unit)}</span></div>`;
+    const okRow = r => `<div class="pn-row"><span class="pn-main"><b>${esc(r.i.name)}</b><small>need ${buyFmt(r.i.qty, r.i.unit)}${r.s.mixed ? ' · some purchases use another unit and are not added' : ''}</small></span><span class="pn-r">have ${buyFmt(r.s.onHand, r.i.unit)}</span></div>`;
     const tm = (() => { try { const ms = (TM.log || []).filter(l => l.end && new Date(l.start).toLocaleDateString('en-CA') === vDate).reduce((a, l) => a + (l.end - l.start), 0); return ms > 0 ? Math.round(ms / 60000) : ''; } catch { return ''; } })();
+    // Yield: one row per recipe in this bake. Planned pieces = batches x pieces per batch; the ingredients used scale by made / planned.
+    const bdRec = (single && !done ? (bakeList() || []) : []).map(x => { const f = bsFind(x.key), prod = BS_PRODUCT[x.key], plan = Math.round(x.b * (PRODUCT_YIELD[prod] || BATCH_YIELD)); return { x, plan, name: f ? costItemName(f.sec, f.it) : x.key }; });
+    const bdMadeHtml = bdRec.length ? `<label>Pieces made (what you actually got)</label>` + bdRec.map((d, k) => `<div class="bk-rc-row"><span>${esc(d.name)}<small>planned ${d.plan}</small></span><input type="number" inputmode="numeric" min="0" step="1" data-bk="bd:made:${k}" value="${esc(keep['bd:made:' + k] != null ? keep['bd:made:' + k] : d.plan)}" aria-label="Pieces made of ${esc(d.name)}"><em>pcs</em></div>`).join('') : '';
+    const bdConfHtml = bdPending && bdPending.vDate === vDate ? `<div class="bd-conf"><b>Check before saving</b><div>${bdPending.made.map(m => esc(m)).join('<br>')}</div><div>${bdPending.lines.length} pantry count${bdPending.lines.length === 1 ? '' : 's'} will be lowered by what this bake used${bdPending.skipped ? ` (${bdPending.skipped} skipped: not counted or another unit)` : ''}.</div>${bdPending.short.length ? `<div>Less on hand than this bake used, so set to 0: ${esc(bdPending.short.join(', '))}.</div>` : ''}${bdPending.mins > 0 ? `<div>Time: ${bdPending.mins} min.</div>` : ''}<div>Recount afterward to correct the estimates.</div><div class="pn-bar" style="margin-top:10px"><button class="primary" type="button" id="bdYes"${bdBusy ? ' disabled' : ''}>Save bake</button><button type="button" id="bdNo">Back</button></div></div>` : '';
     const bakeDoneHtml = !single ? '<div class="pn-note">To record a bake and lower the pantry, pick "Only &lt;date&gt;" above.</div>'
-      : done ? `<h3>Bake done</h3><div class="pn-note">Recorded${done.minutes != null ? `: ${esc(String(done.minutes))} min` : ''}${done.recipes ? ` · ${esc(done.recipes)}` : ''}${done.note ? ` · ${esc(done.note)}` : ''}</div>`
-      : `<h3>Bake done</h3><div class="pn-note">Records this bake and its time, and lowers each counted ingredient by what this bake used, as an estimate. Items not counted, or counted in another unit, are skipped. Recount afterward to correct it.</div><div class="pn-form"><label>Minutes (from Timers when you used them that day)</label><input data-bk="bd:min" type="number" inputmode="decimal" min="0" step="any" value="${esc(keep['bd:min'] != null ? keep['bd:min'] : tm)}"><label>Note (optional)</label><input data-bk="bd:note" maxlength="200" value="${esc(keep['bd:note'] || '')}"><div class="pn-bar" style="margin-top:12px"><button class="primary" type="button" id="bdSave">Mark bake done</button></div></div>`;
+      : done ? `<h3>Bake done</h3><div class="pn-note">Recorded${done.minutes != null && done.minutes !== '' ? `: ${esc(String(done.minutes))} min` : ''}${done.recipes ? ` · ${esc(done.recipes)}` : ''}${done.note ? ` · ${esc(done.note)}` : ''}</div>`
+      : `<h3>Bake done</h3><div class="pn-note">Records this bake and its time, and lowers each counted ingredient by what this bake used, as an estimate. Enter the pieces you actually made: the ingredients used scale by made ÷ planned. Items not counted, or counted in another unit, are skipped. Recount afterward to correct it.</div><div class="pn-form">${bdMadeHtml}<label>Minutes (from Timers when you used them that day)</label><input data-bk="bd:min" type="number" inputmode="decimal" min="0" step="any" value="${esc(keep['bd:min'] != null ? keep['bd:min'] : tm)}"><label>Note (optional)</label><input data-bk="bd:note" maxlength="200" value="${esc(keep['bd:note'] || '')}"><div class="pn-bar" style="margin-top:12px"><button class="primary" type="button" id="bdSave">Review and save</button></div>${bdConfHtml}</div>`;
     const rc = allRows.map(r => { const u = r.s ? r.s.unit : r.i.unit; return `<div class="bk-rc-row"><span>${esc(r.i.name)}</span><input type="number" inputmode="decimal" min="0" step="any" data-bk="${esc(r.i.name)}|${u}" value="${esc(keep[r.i.name + '|' + u] || '')}" aria-label="Left of ${esc(r.i.name)}"><em>${u}</em></div>`; }).join('');
     const opt = (v, t) => `<option value="${v}"${v === bakeView ? ' selected' : ''}>${t}</option>`, dl = d => `${esc(wkShort(d))} ${esc(pantryDate(d))}`;
     const pick = onlyDates.length ? `<div class="pn-bar"><select data-native id="bkThru" aria-label="Which bakes to shop for"><option value="">Whole plan (${thruDates.length} bake${thruDates.length === 1 ? '' : 's'})</option>${thruDates.length > 1 ? `<optgroup label="Through a date">${thruDates.map(d => opt('t:' + d, 'Through ' + dl(d))).join('')}</optgroup>` : ''}<optgroup label="One bake only">${onlyDates.map(d => opt('o:' + d, 'Only ' + dl(d) + ((BAKES || []).some(b => b.date === d) ? ' (done)' : ''))).join('')}</optgroup></select></div>` : '';
@@ -7807,9 +7868,9 @@ h1, h2, h3, h4, .hero-title, .sheet h2, #hpTitle, .proj-card h3, .card h3, #bsSc
       (ok.length ? `<h3>Have enough (${ok.length})</h3>` + ok.map(okRow).join('') : '') +
       bakeDoneHtml +
       `<details class="bk-rc"${bakeRcOpen ? ' open' : ''}><summary>After the bake: recount what is left</summary><div class="pn-note">Baking does not take anything off the pantry by itself. Weigh what is left and save it; blank rows are skipped. Today's date is used.</div>${rc}<div class="pn-bar" style="margin-top:12px"><button class="primary" type="button" id="bkSave">Save counts</button></div></details>`;
-    const thru = box.querySelector('#bkThru'); if (thru) thru.onchange = () => { bakeView = thru.value; bakeFormFresh = true; bakePaint(); };
+    const thru = box.querySelector('#bkThru'); if (thru) thru.onchange = () => { bakeView = thru.value; bakeFormFresh = true; bdPending = null; bakePaint(); };
     box.querySelector('.bk-rc').addEventListener('toggle', e => { bakeRcOpen = e.target.open; });
-    box.querySelectorAll('[data-bkc]').forEach(c => c.onchange = () => { if (c.checked) buyChecked[c.dataset.bkc] = 1; else delete buyChecked[c.dataset.bkc]; buySave(); c.closest('.buy-row').classList.toggle('done', c.checked); });
+    bkWireTicks(box);
     box.querySelector('#bkClear').onclick = () => { buyChecked = {}; buySave(); bakePaint(); };
     box.querySelector('#bkCopy').onclick = async e => {
       const lines = buy.filter(r => !buyChecked[r.i.name]).map(r => { const q = part(r); return `☐ ${r.i.name} — ${buyFmt(r.short, r.i.unit)}${q.n ? ` (${q.n} × ${buyFmt(r.i.pkAmt, r.i.unit)})` : ''}${r.st === 'none' ? ' [not counted]' : ''}`; });
@@ -7820,16 +7881,33 @@ h1, h2, h3, h4, .hero-title, .sheet h2, #hpTitle, .proj-card h3, .card h3, #bsSc
       setTimeout(() => { e.target.textContent = 'Copy list'; }, 1600);
     };
     const bd = box.querySelector('#bdSave');
-    if (bd) bd.onclick = async () => {
-      const list = bakeList(); if (!list || !list.length) return rcpToast('No forecast recipes for that bake');
-      const mins = parseFloat(box.querySelector('[data-bk="bd:min"]').value), note = box.querySelector('[data-bk="bd:note"]').value.trim();
-      const used = rows.filter(r => r.s && r.st !== 'unit'), skipped = rows.length - used.length;
-      const lines = used.map(r => ({ item: r.i.name, amt: Math.max(0, Math.round(r.s.onHand - r.i.qty)), unit: r.s.unit, date: todayISO(), note: `Estimate after ${vDate} bake` })).slice(0, 80);
-      if (!confirm(`Mark the ${pantryDate(vDate)} bake done?\n\n${lines.length} pantry count${lines.length === 1 ? '' : 's'} will be lowered by this bake's ingredients` + (skipped ? ` (${skipped} item${skipped === 1 ? '' : 's'} skipped: not counted or another unit)` : '') + '.' + (mins > 0 ? `\nTime: ${mins} min.` : '') + '\n\nRecount afterward to correct the estimates.')) return;
-      const recipes = list.map(x => { const f = bsFind(x.key); return f ? `${costItemName(f.sec, f.it)} × ${rFmt(x.b)}` : null; }).filter(Boolean).join('; ');
-      if (!(await pantryPost({ action: 'add', rows: [{ date: vDate, minutes: mins > 0 ? mins : '', recipes, note }] }, '/api/bakes'))) return;
-      if (lines.length && !(await pantryPost({ action: 'add', lines }))) return rcpToast('Bake recorded, but the pantry counts were not saved');
-      rcpToast('Bake recorded' + (lines.length ? ' and pantry lowered' : '')); bakePaint();
+    if (bd) {
+      box.querySelectorAll('[data-bk^="bd:"]').forEach(i => i.addEventListener('input', () => { bdPending = null; const c = box.querySelector('.bd-conf'); if (c) c.remove(); }));
+      bd.onclick = () => {
+        const list = bakeList(); if (!list || !list.length) return rcpToast('No forecast recipes for that bake');
+        const mins = parseFloat(box.querySelector('[data-bk="bd:min"]').value), note = box.querySelector('[data-bk="bd:note"]').value.trim();
+        const ratio = bdRec.map((d, k) => { const v = parseFloat(box.querySelector(`[data-bk="bd:made:${k}"]`).value); return d.plan > 0 ? Math.max(0, Number.isFinite(v) ? v : d.plan) / d.plan : 1; });
+        const made = bdRec.map((d, k) => { const n = Math.round(ratio[k] * d.plan); return `${d.name}: made ${n} of ${d.plan} planned`; });
+        const use = new Map();
+        bdRec.forEach((d, k) => buyItems([d.x]).forEach(i => use.set(i.name, (use.get(i.name) || 0) + i.qty * ratio[k])));
+        const counted = rows.filter(r => r.s && r.st !== 'unit'), skipped = rows.length - counted.length, short = [];
+        const lines = counted.map(r => { const u = use.get(r.i.name) || 0; if (u > r.s.onHand + 0.5) short.push(r.i.name); return { u, line: { item: r.i.name, amt: Math.max(0, Math.round(r.s.onHand - u)), unit: r.s.unit, date: todayISO(), note: `Estimate after ${vDate} bake` } }; }).filter(x => x.u > 0.5).map(x => x.line).slice(0, 80);
+        const recipes = list.map((x, k) => { const f = bsFind(x.key); return f ? `${costItemName(f.sec, f.it)} × ${rFmt(x.b)} (made ${Math.round(ratio[k] * bdRec[k].plan)} of ${bdRec[k].plan})` : null; }).filter(Boolean).join('; ');
+        bdPending = { vDate, mins: mins > 0 ? mins : '', note, lines, skipped, short, made, recipes };
+        bakePaint(); const c = document.querySelector('#homeBake .bd-conf'); if (c) c.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      };
+    }
+    const bdNo = box.querySelector('#bdNo'); if (bdNo) bdNo.onclick = () => { bdPending = null; bakePaint(); };
+    const bdYes = box.querySelector('#bdYes');
+    if (bdYes) bdYes.onclick = async () => {
+      const pd = bdPending; if (!pd || bdBusy) return;
+      bdBusy = true; bdYes.disabled = true;
+      try {
+        if (!(await pantryPost({ action: 'add', rows: [{ date: pd.vDate, minutes: pd.mins, recipes: pd.recipes, note: pd.note }] }, '/api/bakes'))) return;
+        bdPending = null;
+        if (pd.lines.length && !(await pantryPost({ action: 'add', lines: pd.lines }))) return rcpToast('Bake recorded, but the pantry counts were not saved');
+        rcpToast('Bake recorded' + (pd.lines.length ? ' and pantry lowered' : ''));
+      } finally { bdBusy = false; bakePaint(); }
     };
     box.querySelector('#bkSave').onclick = async () => {
       const lines = [];
