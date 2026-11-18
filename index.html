@@ -2510,7 +2510,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.158.00 · Nov 18, 7:50 PM PST</div>
+<div class="ver-badge">v1.159.00 · Nov 18, 8:20 PM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -3880,16 +3880,17 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     box.innerHTML = `<div class="group-label">Next invoices</div><div class="card"><div class="sum" style="margin:0 12px">` +
       `<div class="inv-field"><span>Due ${day(a.due)}<small style="display:block;color:var(--muted)">Covers ${day(a.from)} to ${day(a.to)} · ${when}</small></span></div>` +
       `<div class="inv-field" id="invSchedBtns"><div class="inv-store"><button type="button" data-ist="La Mirada">Prepare La Mirada</button><button type="button" data-ist="Stanton">Prepare Stanton</button></div></div>` +
+      `<div class="inv-field"><div class="inv-store"><button type="button" data-ist="La Mirada" data-prev="1">Preview La Mirada</button><button type="button" data-ist="Stanton" data-prev="1">Preview Stanton</button></div></div>` +
       (b ? `<div class="inv-field"><span style="color:var(--muted)">Then ${day(b.due)}<small style="display:block">Covers ${day(b.from)} to ${day(b.to)}</small></span></div>` : '') +
       `</div></div>`;
-    box.querySelector('#invSchedBtns').onclick = e => {
+    box.onclick = e => {
       const btn = e.target.closest('button[data-ist]'); if (!btn) return;
       document.getElementById('invStore').value = btn.dataset.ist;
       document.getElementById('invFrom').value = a.from; document.getElementById('invTo').value = a.to;
       document.getElementById('invDue').value = a.due; document.getElementById('invIssue').value = today > fri ? today : fri;
       document.querySelectorAll('#invStoreBtns button').forEach(x => x.classList.toggle('on', x.dataset.store === btn.dataset.ist));
       try { syncInvDubai(); } catch {}
-      document.getElementById('invGenBtn').scrollIntoView({ block: 'center' });
+      if (btn.dataset.prev) buildInvoice(true); else document.getElementById('invGenBtn').scrollIntoView({ block: 'center' });
     };
   }
   function initInvoiceForm() {
@@ -3918,7 +3919,8 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     'La Mirada': { name: 'Here&There Coffee', addr: ['12740 La Mirada Blvd.', 'La Mirada, CA 90638'] },
     'Stanton':   { name: 'Here&There Coffee', addr: ['12885 Beach Blvd Ste 26', 'Stanton, CA 90680'] },
   };
-  async function buildInvoice() {
+  async function buildInvoice(preview) {
+    preview = preview === true;
     const store = document.getElementById('invStore').value;
     let from = document.getElementById('invFrom').value, to = document.getElementById('invTo').value;
     if (!from && !to) { from = to = nowPST().slice(0, 10); }
@@ -3985,7 +3987,8 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     invNum = num; invMeta = { num, store: both ? 'Both Stores' : store, total: usd(total), text: invText };
     document.getElementById('invPrintBtn').hidden = document.getElementById('invCopyBtn').hidden = document.getElementById('invSaveBtn').hidden = !lines.length;
     // Saved to the shared history right away (so it is "prepared"), unless a saved copy of this invoice already exists: it may hold edits, so Save changes replaces it on purpose.
-    if (lines.length) {
+    if (preview && lines.length) document.getElementById('invDoc').insertAdjacentHTML('beforeend', '<div class="inv-empty inv-noprint">Preview only, not saved. It counts deliveries logged so far; the period ends ' + esc(period) + '. Save changes keeps it.</div>');
+    else if (lines.length) {
       if (invHistory().some(x => x.num === num)) document.getElementById('invDoc').insertAdjacentHTML('beforeend', '<div class="inv-empty inv-noprint">A saved copy of this invoice already exists. Save changes replaces it with this one.</div>');
       else invSaveHistory({ ...invMeta, html: document.getElementById('invDoc').innerHTML, printed: nowPST().slice(0, 10) });
     }
@@ -4023,7 +4026,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     invSaveHistory({ ...invMeta, html: document.getElementById('invDoc').innerHTML, printed: nowPST().slice(0, 10) });
     rcpToast('Invoice saved');
   });
-  document.getElementById('invGenBtn').addEventListener('click', buildInvoice);
+  document.getElementById('invGenBtn').addEventListener('click', () => buildInvoice());
   document.getElementById('invBackBtn').addEventListener('click', () => invScrim.classList.remove('show'));
   invScrim.addEventListener('click', e => { if (e.target === invScrim) invScrim.classList.remove('show'); });
   // A real PDF page (same renderer as the labels and bake plan), not the browser's print preview of the whole screen.

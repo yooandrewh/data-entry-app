@@ -179,7 +179,7 @@ Every row in the shopping lists (What to buy, Plan step 2, Bake Day) has a **Wha
 
 Andrew: each store is invoiced on the **2nd and 4th Sunday** of every month (4 invoices a month: La Mirada and Stanton, twice). Each covers the previous due Sunday through the **Saturday before** this one (back to back, nothing missed or doubled), and is prepared the Friday or Saturday before. `invNextDues()` / `invSchedPaint()` (top of the Invoice page, `#invSched`): shows the next due date, its range and when to prepare, with **Prepare La Mirada / Stanton** buttons that fill Store, From, To, Issue (Friday, or today if later) and Due. The range comes from the calendar, not from the last saved invoice, so a late entry lands in the next invoice. Christmas Friday: prepare Saturday. No push reminder yet.
 
-**v1.158.00: invoices save on Generate and are editable.** Generating saves the invoice to the shared history (Sheet tab Invoice History) at once, unless a saved copy with that number exists (then a notice says Save changes will replace it, so edits are never overwritten silently). In the preview, Qty, Price, Issued and Due date are editable (`.inv-edit`, `invRecalc()` redoes amounts, subtotals, total and the copy-as-text); **Save changes** (`#invSaveBtn`) stores the edited copy, Download PDF saves it too, and History > Open reopens it editable. Nothing is sent to the store; Andrew still downloads and sends it himself.
+**v1.158.00: invoices save on Generate and are editable.** Generating saves the invoice to the shared history (Sheet tab Invoice History) at once, unless a saved copy with that number exists (then a notice says Save changes will replace it, so edits are never overwritten silently). In the preview, Qty, Price, Issued and Due date are editable (`.inv-edit`, `invRecalc()` redoes amounts, subtotals, total and the copy-as-text); **Save changes** (`#invSaveBtn`) stores the edited copy, Download PDF saves it too, and History > Open reopens it editable. **v1.159.00:** the Next invoices card also has **Preview La Mirada / Stanton**: fills the form for the next due date and opens the invoice with deliveries logged so far, not saved (`buildInvoice(true)`; Save changes keeps it). Nothing is sent to the store; Andrew still downloads and sends it himself.
 
 ## Design pass (v1.149.00)
 
@@ -201,7 +201,7 @@ The headless check at 390px misses what iOS does. Apply these to every new or ch
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.158.00**; the next feature is v1.159.00, a fix v1.158.01. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.159.00**; the next feature is v1.160.00, a fix v1.159.01. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 
