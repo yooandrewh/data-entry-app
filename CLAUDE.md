@@ -151,7 +151,7 @@ Costco receipts print a quantity line (`3 @ 4.99`) above an item whose price is 
 
 ## Boxes (Plan step 3, v1.147.00)
 
-`#pwBoxes` (`boxPlan()` / `boxPaint()`, shown only on step 3, under the Bake Plan card): boxes needed per storage. Four storages: **BP Storage, Fullerton Storage, La Mirada Storage, Stanton Storage**. **A box is a Cambro full-size 4" deep translucent polypropylene food pan (item # 21414PP, MFR # 14PP190), per Andrew 2026-11-18.** Pieces per item = `planBakeTotals`; pieces per pan still defaults to **12 (a guess: Andrew has not given real box sizes)**, set per item under "Box sizes and storage" (`localStorage.boxCfg.v1`). BP and Fullerton get the pieces Andrew types in for them (default 0, also a guess: what those two hold is not recorded anywhere); the rest splits between La Mirada and Stanton by each store's 28-day sales rate. Boxes are rounded up per storage per item, so one box never mixes items or storages. Ask Andrew for the real box sizes and what BP / Fullerton Storage are for.
+`#pwBoxes` (`boxPlan()` / `boxPaint()`, shown only on step 3, under the Bake Plan card): boxes needed per storage. Four storages: **BP Storage, Fullerton Storage, La Mirada Storage, Stanton Storage**. **A box is a Cambro full-size 4" deep translucent polypropylene food pan (item # 21414PP, MFR # 14PP190), per Andrew 2026-11-18.** Pieces per item = `planBakeTotals`; pieces per pan: **real sizes from Andrew 2026-11-18 (`BOX_FIT`): madeleines 36, muffins 18, bundt 22, cookies 40, cake pops 50**, one layer each; madeleines can double to 72 and cake pops to 100 once frozen/stacked (not modelled yet, keep in mind). Others default to 12, set per item under "Box sizes and storage" (`localStorage.boxCfg.v1`). BP and Fullerton get the pieces Andrew types in for them (default 0, also a guess: what those two hold is not recorded anywhere); the rest splits between La Mirada and Stanton by each store's 28-day sales rate. Boxes are rounded up per storage per item, so one box never mixes items or storages. Ask Andrew what BP / Fullerton Storage are for.
 
 ## Storage (v1.148.00)
 
@@ -191,7 +191,7 @@ Ingredients: **Dark Chocolate 70% and Dark Chocolate Couverture are retired into
 
 **v1.163.00:** waffle cones get **10% breakage** instead of the 20% waste (`buyWaste()`, Andrew 2026-11-18). Non-Amazon items with a ledger product link (Costco, Target, WebstaurantStore, Pastry Depot, Gelato Supply) show an **Open store page** link under the row (`shopUrl()`); only Amazon can fill a cart from a link. `setlink` also accepts gelatosupply.com. Mini Waffle Cones link set to Gelato Supply's mini sugar cone page.
 
-**v1.164.00: Pan Liners** (Dixie Lift-Off, 1000 ct, $61.99, Costco, kept in the ledger as 1000 "g" and counted in pieces like cones via `isCone`; no waste added). `buyItems()` adds **1 liner per madeleine batch** (one oven tray = one batch of 12, no stacking) **plus 1 per storage pan** (`boxPlan().total`, whole plan only; a Cambro pan is one layer and never mixes items). The storage part inherits the unverified pieces-per-pan default of 12. No product page link saved (the pasted Costco link was a search page).
+**v1.164.00: Pan Liners** (Dixie Lift-Off, 1000 ct, $61.99, Costco, kept in the ledger as 1000 "g" and counted in pieces like cones via `isCone`; no waste added). `buyItems()` adds **1 liner per madeleine batch** (one oven tray = one batch of 12, no stacking) **plus 1 per storage pan** (`boxPlan().total`, whole plan only; a Cambro pan is one layer and never mixes items). Storage liners follow the box count (36 madeleines per pan). No product page link saved (the pasted Costco link was a search page).
 
 ## Design pass (v1.149.00)
 
@@ -213,7 +213,7 @@ The headless check at 390px misses what iOS does. Apply these to every new or ch
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.164.00**; the next feature is v1.165.00, a fix v1.164.01. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.164.01**; the next feature is v1.165.00, a fix v1.164.02. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 

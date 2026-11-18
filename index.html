@@ -2621,7 +2621,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.164.00 · Nov 18, 3:10 PM PST</div>
+<div class="ver-badge">v1.164.01 · Nov 18, 3:12 PM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -5610,7 +5610,9 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   let boxCfg = { size: {}, hold: { bp: {}, fu: {} } };
   try { const c = JSON.parse(localStorage.getItem('boxCfg.v1') || 'null'); if (c && c.size && c.hold) boxCfg = c; } catch {}
   const boxSave = () => { try { localStorage.setItem('boxCfg.v1', JSON.stringify(boxCfg)); } catch {} };
-  const boxSize = p => Math.max(1, Math.floor(Number(boxCfg.size[p]) || BATCH_YIELD));
+  // Pieces that fit in one full-size Cambro pan, one layer (Andrew, 2026-11-18). Madeleines can double to 72 and cake pops to 100 once frozen (stacked): not used yet, kept in mind.
+  const BOX_FIT = { 'Lemon Poppy': 36, 'Sea Salt': 36, 'Maple Pecan': 36, 'Pumpkin Muffin': 18, 'Blueberry Muffin': 18, 'Pumpkin Bundt': 22, 'Cookie': 40, 'Chookie': 40, 'Cake Pop': 50 };
+  const boxSize = p => Math.max(1, Math.floor(Number(boxCfg.size[p]) || BOX_FIT[p] || BATCH_YIELD));
   function boxPlan() {
     const out = BOX_LOCS.map(name => ({ name, items: [] })), tot = ZERO();
     const rate = {};
