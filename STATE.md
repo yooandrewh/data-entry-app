@@ -4,6 +4,7 @@ Last updated: 2026-11-18
 After a `/compact` or in a new chat: read this file first, then CLAUDE.md. Stable rules live in CLAUDE.md; only status lives here.
 
 ## Now
+- **v1.139.00 LIVE:** Plan page is now three steps (Bake: pick a span per item; Ingredients vs pantry; Bake sheet). **v1.138.03:** bottom tab bar restyled (grey tabs, black selected, no filled block). Not tried on a phone.
 - **v1.138.02 LIVE:** Pantry page now shows On hand first, then What to buy, then the count form (On hand is empty until Andrew's first count).
 - **v1.138.01 LIVE:** phone spacing pass (44px chips/filters, 16px margins, roomier cards). Andrew also asked (mid-turn): a Pantry view of what we have, and a Plan flow where step 1 is what to bake and how much, by horizon (1 day, 1 month, 1.5 months) per item. Not started; design question open.
 - **v1.138.00 LIVE:** new navigation: Sales, Inventory, Entry (popup), Plan, Other; each section has a row of pages (Other holds Finance, Costs, Labels, Timers). Home photo page removed. Screenshot-checked at 390px (headless), not on a phone. **Also today (OCR, not the app):** Hyebin's hand count for LM Nov 12-17 matches the OCR on all 42 cells after fixing two phantom madeleines (receipts yYUG, 4nyS) and pushing those rows; known `same_sale` bug and unread `exclude_extra.txt` left for Andrew's review (see `~/Downloads/kairos_videos_raw/CLAUDE.md`).

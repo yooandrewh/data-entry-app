@@ -1945,6 +1945,32 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
 .tabbar button.on svg *, body:not(.home-landing) .tabbar button.on svg * { stroke: #000 !important; stroke-width: 2 !important; }
 .tabbar button:active { background: #f0f0f0 !important; }
 .wrap { padding-bottom: calc(60px + var(--safe-bottom) + 28px); }
+/* Plan steps (2026-11-18): black, white and greys. */
+.pw-steps { display: flex; gap: 8px; margin: 8px 0 20px; }
+.pw-steps button { flex: 1; min-height: 44px; display: flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid #c9c9c9; background: #fff; color: #6b6b6b; border-radius: 22px; font-size: var(--fs-caption); font-weight: 600; font-family: inherit; padding: 0 6px; }
+.pw-steps button i { font-style: normal; width: 20px; height: 20px; border-radius: 10px; background: #e6e6e6; color: #000; display: inline-flex; align-items: center; justify-content: center; font-size: var(--fs-micro); }
+.pw-steps button.on { background: #000; color: #fff; border-color: #000; }
+.pw-steps button.on i { background: #fff; }
+.pw-head { margin: 0 0 12px; display: flex; flex-direction: column; gap: 4px; }
+.pw-head b { font-size: var(--fs-title); }
+.pw-head span, .pw-note { font-size: var(--fs-caption); color: #6b6b6b; }
+.pw-note { margin: 12px 0 4px; }
+.pw-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--sep); min-height: 64px; }
+.pw-nm { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.pw-nm > span { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.pw-nm b { font-size: var(--fs-body); }
+.pw-nm small { font-size: var(--fs-caption); color: #6b6b6b; line-height: 1.35; }
+.pw-nm small b { color: #000; font-size: var(--fs-caption); }
+.pw-row select { flex: none; min-width: 124px; min-height: 44px; }
+.pw-all { background: #f5f5f5; margin: 0 -8px 4px; padding-left: 8px; padding-right: 8px; border-radius: 10px; border-bottom: 0; }
+.pw-nav { display: flex; justify-content: space-between; gap: 12px; margin: 20px 0 24px; }
+.pw-nav button { min-height: 48px; padding: 0 20px; flex: 1; }
+.pw-nav-top { margin: 0 0 12px; }
+.pw-nav-top button { flex: 0 0 auto; min-width: 120px; }
+.pw-adv { margin: 8px 0 16px; }
+.pw-adv summary { min-height: 44px; display: flex; align-items: center; font-size: var(--fs-caption); color: #6b6b6b; cursor: pointer; }
+#bakingPlan[data-step="2"] .bs-card, #bakingPlan[data-step="1"] .bs-card { display: none; }
+#bakingPlan:not([data-step="1"]) .pw-adv { display: none; }
 
 </style>
 </head>
@@ -1998,7 +2024,9 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
 
     <!-- Baking plan -->
     <div id="homePlan" hidden>
-    <div id="bakingPlan">
+    <div id="bakingPlan" data-step="1">
+      <div id="planWiz"></div>
+      <details class="pw-adv" id="planAdv"><summary>Bake dates (optional, for Bake Day)</summary>
       <div class="card">
         <div class="row">
           <span class="lbl">Make it last until</span>
@@ -2034,6 +2062,7 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
           <div class="bakedate-chips" id="bakeDateChips"></div>
         </div>
       </div>
+      </details>
       <div id="planSplitWrap" style="display:none"></div>
       <div id="planList" style="display:none"></div>
 
@@ -2295,7 +2324,7 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
   </div>
 </div>
 
-<div class="ver-badge">v1.138.03 · Nov 18, 11:14 AM PST</div>
+<div class="ver-badge">v1.139.00 · Nov 18, 11:16 AM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -5304,6 +5333,8 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
       html += `<div class="proj-card"><h3>${c.loc}</h3><div class="proj-sub">${c.st.hasInv ? 'No recent sales to forecast from.' : 'Add an inventory count to include this store.'}</div></div>`;
     if (!html) html = `<div class="db-empty"><div class="big">${ic('calendar')}</div>Nothing to plan.</div>`;
     document.getElementById('planList').innerHTML = html;
+    const wiz = wizCompute(usable, todayYmd);
+    for (const p of PRODUCTS) if (wiz[p].days > 0) planTotals[p] = wiz[p].bake;   // a span picked in step 1 replaces the date-driven total for that item
     planBakeTotals = planTotals; planDateTotals = dateTotals;
     try { const cut = addDays(todayYmd, -7), m = {}; for (const d of Object.keys(planDatesCache)) if (d >= cut && d <= todayYmd) m[d] = planDatesCache[d]; Object.assign(m, dateTotals); planDatesCache = m; localStorage.setItem(PD_KEY, JSON.stringify(m)); } catch {}
     autoFillBakePlan();
@@ -5327,7 +5358,86 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
     } else {
       wrap.innerHTML = '';
     }
+    wizLast = wiz; wizPaint();
   }
+  // ----- Plan steps (Plan page): 1 What to bake (a span per item), 2 Ingredients against the pantry, 3 Bake sheet. -----
+  const WIZ_SPANS = [[0, 'Not now'], [1, '1 day'], [3, '3 days'], [7, '1 week'], [14, '2 weeks'], [30, '1 month'], [45, '1.5 months'], [60, '2 months']];
+  let wizSpan = {}, wizStep = 1, wizLast = null;
+  try { const v = JSON.parse(localStorage.getItem('planSpans.v1')); if (v && typeof v === 'object') wizSpan = v; } catch {}
+  const wizSave = () => { try { localStorage.setItem('planSpans.v1', JSON.stringify(wizSpan)); } catch {} };
+  // Pieces to bake per item so it lasts `days` days: expected sales (weekday/weekend rates, trend counted for up to 4 weeks) plus the same
+  // variability buffer the forecast uses, minus what is on hand, summed over the stores that have counts.
+  function wizCompute(usable, today) {
+    const out = {};
+    for (const p of PRODUCTS) {
+      const days = wizSpan[p] || 0, r = { days, need: 0, have: 0, bake: 0, rate: 0 };
+      if (days > 0) for (const c of usable) {
+        let need = 0;
+        for (let i = 1; i <= days; i++) {
+          const dt = parseEntryDate(addDays(today, i)), we = [0, 6].includes(dt.getDay());
+          need += (we ? c.dowr.rate[p].we : c.dowr.rate[p].wd) * Math.pow(c.st.growth || 1, Math.min(i - 1, 28) / 7);
+        }
+        const m = Math.min(0.6, FCAST_Z * (c.st.dailyCV || 0) / Math.sqrt(days)), n = need * (1 + m);
+        r.rate += need / days; r.need += n; r.have += c.st.stock[p] || 0; r.bake += Math.max(0, Math.ceil(n - (c.st.stock[p] || 0)));
+      }
+      out[p] = r;
+    }
+    return out;
+  }
+  function wizPaint() {
+    const box = document.getElementById('planWiz'), root = document.getElementById('bakingPlan');
+    if (!box || !root) return;
+    root.dataset.step = String(wizStep);
+    const steps = [['1', 'Bake'], ['2', 'Ingredients'], ['3', 'Bake sheet']];
+    let h = `<div class="pw-steps">${steps.map(([n, l]) => `<button type="button" data-wstep="${n}" class="${Number(n) === wizStep ? 'on' : ''}"><i>${n}</i>${l}</button>`).join('')}</div>`;
+    if (wizStep === 1) {
+      const opts = sel => WIZ_SPANS.map(([d, l]) => `<option value="${d}"${d === sel ? ' selected' : ''}>${l}</option>`).join('');
+      const rows = PRODUCTS.map(p => {
+        const r = (wizLast && wizLast[p]) || { days: 0 };
+        let sub = 'Not planned';
+        if (r.days > 0) sub = !(r.rate > 0) ? 'No recent sales to forecast from'
+          : r.bake > 0 ? `Bake <b>${r.bake}</b> pieces · ${flavorBatches(r.bake, p)} batch${flavorBatches(r.bake, p) === 1 ? '' : 'es'}<br>need about ${Math.round(r.need)}, have ${Math.round(r.have)}`
+          : `Enough on hand (need about ${Math.round(r.need)}, have ${Math.round(r.have)})`;
+        return `<div class="pw-row"><span class="pw-nm">${tok(p)}<span><b>${esc(p)}</b><small>${sub}</small></span></span><select data-wsp="${esc(p)}" aria-label="${esc(p)} should last">${opts(r.days)}</select></div>`;
+      }).join('');
+      h += `<div class="pw-head"><b>What do you want to bake?</b><span>Pick how long each item should last. The amount comes from recent sales and what is on hand.</span></div>`
+        + `<div class="pw-row pw-all"><span class="pw-nm"><span><b>Same for every item</b></span></span><select data-wall aria-label="Same span for every item"><option value="" selected disabled>Set all…</option>${WIZ_SPANS.map(([d, l]) => `<option value="${d}">${l}</option>`).join('')}</select></div>`
+        + rows + `<div class="pw-note">Sales trend is counted for up to 4 weeks, so a long span is a steady-rate estimate.</div>`
+        + `<div class="pw-nav"><span></span><button type="button" class="btn-primary" data-wgo="2">Next: ingredients</button></div>`;
+    } else if (wizStep === 2) {
+      let body = '<div class="pn-note">Loading…</div>';
+      try {
+        if (PANTRY === null && !pantryBusy) fetchPantry();
+        if (LEDGER === null && !ledgerBusy) loadCosts();
+        if (PANTRY !== null && LEDGER !== null) {
+          const wr = bakeRows(), wbuy = wr.filter(r => r.st !== 'ok'), wt = bkTotal(wbuy);
+          body = !wr.length ? '<div class="pn-note">Nothing on the bake plan yet. Go back and pick a span for at least one item.</div>'
+            : `<h3>To buy${wbuy.length ? ` (${wbuy.length})` : ''}</h3>` + (wbuy.length ? wbuy.map(bkBuyRow).join('') + `<div class="buy-total"><span>Estimated total${wt.unpriced ? `<small>${wt.unpriced} item${wt.unpriced === 1 ? '' : 's'} with no price</small>` : ''}</span><b>$${wt.total.toFixed(2)}</b></div>` : '<div class="pn-note">You have enough of everything.</div>');
+        }
+      } catch {}
+      h += `<div class="pw-head"><b>What you need</b><span>The whole plan against your pantry counts and approved purchases.</span></div><div id="pwBuy">${body}</div>`
+        + `<div class="pw-nav"><button type="button" class="btn-ghost" data-wgo="1">Back</button><button type="button" class="btn-primary" data-wgo="3">Next: bake sheet</button></div>`;
+    } else {
+      h += `<div class="pw-head"><b>Bake sheet</b><span>Batches from step 1. Change a number or add a recipe, then preview or print.</span></div>`
+        + `<div class="pw-nav pw-nav-top"><button type="button" class="btn-ghost" data-wgo="2">Back</button><span></span></div>`;
+    }
+    box.innerHTML = h;
+    if (wizStep === 2) {
+      const b = document.getElementById('pwBuy'); if (b) { try { bkWireTicks(b); } catch {} }
+      if (PANTRY === null || LEDGER === null) setTimeout(() => { if (wizStep === 2) wizPaint(); }, 1200);   // repaint once the pantry and ledger have loaded
+    }
+  }
+  document.getElementById('planWiz').addEventListener('click', e => {
+    const g = e.target.closest('[data-wgo],[data-wstep]'); if (!g) return;
+    wizStep = Number(g.dataset.wgo || g.dataset.wstep); wizPaint(); window.scrollTo(0, 0);
+  });
+  document.getElementById('planWiz').addEventListener('change', e => {
+    const sp = e.target.closest('[data-wsp]'), all = e.target.closest('[data-wall]');
+    if (sp) wizSpan[sp.dataset.wsp] = Number(sp.value);
+    else if (all) { for (const p of PRODUCTS) wizSpan[p] = Number(all.value); }
+    else return;
+    wizSave(); if (lastPlanSales) paintPlan(false);
+  });
   // Sync the bake-day controls to state: weekday chips light up when every matching
   // date in the current window is selected; render removable date chips.
   function syncBakeUI() {
