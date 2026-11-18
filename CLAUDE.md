@@ -71,7 +71,7 @@ Status: live API tested (add/remove round trip); **not yet tested in a browser o
 
 ## Bake Day (Home → Bake Day, built 2026-11-17)
 
-`bakeOpen()` / `bakePaint()` / `bakeRows()` next to `buyPaint()`. Takes `buyItems()` (whole bake plan, same as the Buy list) and compares each with `pantryStock()`: **To buy** (short, "Not counted" if no count, "Unit" if counted in a different unit; both list the full need, never treat as zero), **Have enough**, and a collapsed **After the bake: recount** form that saves counts through `pantryPost` (date today, note "After bake"). Baking never subtracts from the pantry by itself; recount is the rule (decided with Andrew). Packs and cost are recomputed on the shortfall. Ticks share `buyChecked` with the Buy list. Logic unit-tested in node; **UI untested in a browser**.
+`bakeOpen()` / `bakePaint()` / `bakeRows()` next to `buyPaint()`. Takes `buyItems()` (whole bake plan, same as the Buy list) and compares each with `pantryStock()`: **To buy** (short, "Not counted" if no count, "Unit" if counted in a different unit; both list the full need, never treat as zero), **Have enough**, and a collapsed **After the bake: recount** form that saves counts through `pantryPost` (date today, note "After bake"). Baking never subtracts from the pantry by itself; recount is the rule (decided with Andrew). Packs and cost are recomputed on the shortfall. Ticks share `buyChecked` with the Buy list. A dropdown (shown with 2+ bake dates) switches to **Through <date>**: cumulative needs of all bakes up to that date, from `planDateTotals` (pieces per date, filled by `paintPlan`) turned into batches by `bakeList()`; only forecast-driven recipes, hand-added ones are left out. The Pantry page's Low flag only compares when the count and plan use the same unit. Logic unit-tested in node; **UI untested in a browser**.
 
 ## Labels, bake sheet, recipes (details in docs/HISTORY.md)
 
@@ -94,7 +94,7 @@ Status: live API tested (add/remove round trip); **not yet tested in a browser o
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.125.00** (Bake Day); the next feature is v1.126.00, a fix v1.125.01. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.125.01**; the next feature is v1.126.00, a fix v1.125.02. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 

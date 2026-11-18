@@ -4,7 +4,8 @@ Last updated: 2026-11-17 (evening)
 After a `/compact` or in a new chat: read this file first, then CLAUDE.md. Stable rules live in CLAUDE.md; only status lives here.
 
 ## Now
-- **v1.125.00 live: Bake Day** (Home → Bake Day): shopping list from plan vs on hand, 'Not counted' / 'Unit' flags, recount-after-bake form. Syntax + shortfall logic tested in node only; UI untested (Chrome still not connected).
+- **v1.125.01 live:** Bake Day has a 'Through <date>' view (cumulative bakes up to a date); Pantry 'Low' flag now compares only same-unit counts. Node-tested only. Chrome extension still not connected (list_connected_browsers returned empty), so the browser test has failed to start three times.
+- **v1.125.00: Bake Day** (Home → Bake Day): shopping list from plan vs on hand, 'Not counted' / 'Unit' flags, recount-after-bake form. Syntax + shortfall logic tested in node only; UI untested (Chrome still not connected).
 - **v1.124.01 (78ed71f) live:** the three Pantry nits are fixed. Browser UI test tried again, Chrome still not connected (open Chrome, click the Claude icon, sign in), so it is still untested in a browser.
 - **Done in v1.125.00 (was Andrew's idea):** Bake Day page. Pick a bake date, show plan needs vs on hand, list what to buy. Gaps: stock never goes down after a bake (leaning: recount after the bake, not auto-subtract), uncounted items must read 'not counted', not zero.
 - **Pantry (Home → Pantry):** merged to `main` and LIVE as **v1.124.00** (2026-11-17, commit 1308a44). Live API tested: GET open, POST rejects missing/wrong code (401), add + remove round trip worked (one soft-deleted "ZZ TEST (delete)" row remains in the Pantry tab). The browser UI test could NOT run (Claude in Chrome was not connected), so Pantry has only API + code-review checks; NOT yet tested on a phone.

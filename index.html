@@ -2166,7 +2166,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.125.00 · Nov 17, 8:17 PM PST</div>
+<div class="ver-badge">v1.125.01 · Nov 17, 8:19 PM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -5029,6 +5029,7 @@
   }
 
   let planBakeTotals = {};
+  let planDateTotals = {};   // 'YYYY-MM-DD' -> pieces to bake per product on that bake date (all stores); feeds Bake Day's "through <date>" view
   async function renderPlan() {
     const sub = document.getElementById('planSub');
     const list = document.getElementById('planList');
@@ -5081,6 +5082,7 @@
     // Slider only makes sense for exactly two bake dates.
     const splitOn = bakeDateSet.size && activeDates.length === 2;
     let agg1 = 0, agg2 = 0;
+    const dateTotals = {};
     const planTotals = ZERO();   // pieces to bake per product across the whole plan — feeds the bake sheet's batch defaults
     const tally = evs => { for (const ev of evs) { for (const p of PRODUCTS) planTotals[p] += (ev.bake && ev.bake[p]) || 0; if (ev.ymd === activeDates[0]) agg1 += ev.total; else if (ev.ymd === activeDates[1]) agg2 += ev.total; } };
 
@@ -5098,7 +5100,7 @@
       if (dates.length) {
         let evs = bakeSchedule(c.st, c.dowr, addDays(todayYmd, 1), target, new Set(dates), c.st.growth);
         if (useGlobal) evs = applySplit(evs, planSplit);
-        for (const ev of evs) { for (const p of PRODUCTS) planTotals[p] += (ev.bake && ev.bake[p]) || 0; if (useGlobal) { if (ev.ymd === activeDates[0]) agg1 += ev.total; else if (ev.ymd === activeDates[1]) agg2 += ev.total; } }
+        for (const ev of evs) { const dt = dateTotals[ev.ymd] || (dateTotals[ev.ymd] = ZERO()); for (const p of PRODUCTS) { planTotals[p] += (ev.bake && ev.bake[p]) || 0; dt[p] += (ev.bake && ev.bake[p]) || 0; } if (useGlobal) { if (ev.ymd === activeDates[0]) agg1 += ev.total; else if (ev.ymd === activeDates[1]) agg2 += ev.total; } }
         const bake = ZERO(); for (const ev of evs) for (const q of PRODUCTS) bake[q] += ev.bake[q] || 0;
         const eff = sumEff(evs.map(ev => bakeEffort(ev.bake)));
         const dayWord = useGlobal ? `${dates.length} bake day${dates.length === 1 ? '' : 's'} to ${fmtWhen(target)}` : `${dates.length} delivery day${dates.length === 1 ? '' : 's'} (${(storeDelivery[c.loc] || []).map(d => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][d]).join(', ')}) to ${fmtWhen(target)}`;
@@ -5121,7 +5123,7 @@
       html += `<div class="proj-card"><h3>${c.loc}</h3><div class="proj-sub">${c.st.hasInv ? 'No recent sales to forecast from.' : 'Add an inventory count to include this store.'}</div></div>`;
     if (!html) html = `<div class="db-empty"><div class="big">${ic('calendar')}</div>Nothing to plan.</div>`;
     document.getElementById('planList').innerHTML = html;
-    planBakeTotals = planTotals;
+    planBakeTotals = planTotals; planDateTotals = dateTotals;
     autoFillBakePlan();
 
     // Split slider (two dates only).
@@ -7242,10 +7244,10 @@
     // keep what's being typed if the list repaints (ledger or pantry just finished loading)
     const keep = {}; box.querySelectorAll('[data-pn]').forEach(e => { keep[e.dataset.pn] = e.value; });
     const stock = pantryStock();
-    let need = {}; try { buyItems().forEach(i => { need[i.name] = i.qty; }); } catch {}
+    let need = {}; try { buyItems().forEach(i => { need[i.name] = { qty: i.qty, unit: i.unit }; }); } catch {}
     const rows = stock.map(s => {
-      const nd = need[s.name], low = nd != null && s.onHand + 1e-9 < nd;
-      const sub = `Counted ${buyFmt(s.count, s.unit)} on ${esc(pantryDate(s.date))}` + (s.bought ? ` · +${esc(buyFmt(s.bought, s.unit))} bought since` : '') + (s.mixed ? ' · some purchases use another unit and are not added' : '') + (nd != null ? ` · plan needs ${esc(buyFmt(nd, s.unit))}` : '') + (s.note ? ` · ${esc(s.note)}` : '');
+      const pl = need[s.name], same = pl && pl.unit === s.unit, nd = pl ? pl.qty : null, low = same && s.onHand + 1e-9 < nd;
+      const sub = `Counted ${buyFmt(s.count, s.unit)} on ${esc(pantryDate(s.date))}` + (s.bought ? ` · +${esc(buyFmt(s.bought, s.unit))} bought since` : '') + (s.mixed ? ' · some purchases use another unit and are not added' : '') + (pl ? ` · plan needs ${esc(buyFmt(nd, pl.unit))}${same ? '' : ` (counted in ${esc(s.unit)}, not compared)`}` : '') + (s.note ? ` · ${esc(s.note)}` : '');
       return `<div class="pn-row"><span class="pn-main"><b>${esc(s.name)}</b><small>${sub}</small></span><span class="pn-r">${low ? '<i class="pn-flag">Low</i>' : ''}<b>${esc(buyFmt(s.onHand, s.unit))}</b><button class="pn-x" data-pnx="${esc(s.id)}" aria-label="Remove this count">✕</button></span></div>`;
     }).join('');
     const names = (typeof costAllNames === 'function' ? costAllNames() : []).sort((a, b) => a.localeCompare(b));
@@ -7274,7 +7276,7 @@
     });
   }
   // ----- Bake Day: the bake plan's ingredients against what's on hand (Pantry). Shows what to buy, then lets you recount after the bake. -----
-  let bakeRcOpen = false;
+  let bakeRcOpen = false, bakeThrough = '';   // bakeThrough: '' = whole plan, else a bake date: only the bakes up to and including it
   async function bakeOpen() {
     if (PANTRY === null && !pantryBusy) fetchPantry();
     if (LEDGER === null && !ledgerBusy) loadCosts();
@@ -7283,9 +7285,15 @@
     if (homeTab === 'bake') bakePaint();
   }
   // Rows for the shopping list. st: 'short' (counted, not enough) | 'ok' | 'none' (never counted) | 'unit' (counted in a different unit).
-  function bakeRows() {
+  // Recipes for the buy list: the whole plan, or (bakeThrough set) the forecast-driven recipes for the bakes up to that date.
+  function bakeList() {
+    if (!bakeThrough || !planDateTotals[bakeThrough]) return undefined;
+    const tot = ZERO(); for (const d of Object.keys(planDateTotals)) if (d <= bakeThrough) for (const p of PRODUCTS) tot[p] += planDateTotals[d][p] || 0;
+    return bakeSheet.filter(x => x.plan && BS_PRODUCT[x.key]).map(x => ({ ...x, b: flavorBatches(tot[BS_PRODUCT[x.key]] || 0, BS_PRODUCT[x.key]) })).filter(x => x.b > 0);
+  }
+  function bakeRows(list) {
     const stock = new Map(pantryStock().map(s => [s.name, s]));
-    return buyItems().map(i => {
+    return (list ? buyItems(list) : buyItems()).map(i => {
       const s = stock.get(i.name);
       if (!s) return { i, s, st: 'none', short: i.qty };
       if (s.unit !== i.unit) return { i, s, st: 'unit', short: i.qty };
@@ -7297,8 +7305,10 @@
     const box = document.getElementById('homeBake'); if (!box) return;
     if (PANTRY === null || LEDGER === null) { box.innerHTML = '<div class="pn-note">Loading…</div>'; return; }
     const keep = {}; box.querySelectorAll('[data-bk]').forEach(e => { keep[e.dataset.bk] = e.value; });
-    const rows = bakeRows();
-    if (!rows.length) { box.innerHTML = '<div class="tm-empty">Nothing in the bake plan yet. Add bake dates in Baking Plan and the ingredients show up here.</div>'; return; }
+    const dates = Object.keys(planDateTotals).filter(d => d >= todayISO()).sort();
+    if (bakeThrough && !dates.includes(bakeThrough)) bakeThrough = '';
+    const rows = bakeRows(bakeList()), allRows = bakeRows();
+    if (!allRows.length) { box.innerHTML = '<div class="tm-empty">Nothing in the bake plan yet. Add bake dates in Baking Plan and the ingredients show up here.</div>'; return; }
     const buy = rows.filter(r => r.st !== 'ok'), ok = rows.filter(r => r.st === 'ok');
     const part = r => { const i = r.i, n = i.pkAmt > 0 ? Math.max(1, Math.ceil(r.short / i.pkAmt - 1e-9)) : null, per = i.pk ? i.cost / i.pk : null; return { n, cost: n && per != null ? n * per : null }; };
     const total = buy.reduce((a, r) => a + (part(r).cost || 0), 0), unpriced = buy.filter(r => part(r).cost == null).length;
@@ -7312,13 +7322,15 @@
     const tag = r => r.st === 'none' ? '<i class="pn-flag">Not counted</i> ' : r.st === 'unit' ? '<i class="pn-flag">Unit</i> ' : '';
     const buyRow = r => { const q = part(r); return `<label class="buy-row${buyChecked[r.i.name] ? ' done' : ''}"><input type="checkbox" data-bkc="${esc(r.i.name)}"${buyChecked[r.i.name] ? ' checked' : ''}><span class="buy-main"><b>${esc(r.i.name)}</b><small>${sub(r)}</small></span><span class="buy-r">${tag(r)}${q.cost != null ? money2(q.cost) : ''}</span></label>`; };
     const okRow = r => `<div class="pn-row"><span class="pn-main"><b>${esc(r.i.name)}</b><small>need ${buyFmt(r.i.qty, r.i.unit)}${r.s.mixed ? ' · some purchases use another unit and are not added' : ''}</small></span><span class="pn-r">${buyFmt(r.s.onHand, r.i.unit)}</span></div>`;
-    const rc = rows.map(r => { const u = r.s ? r.s.unit : r.i.unit; return `<div class="bk-rc-row"><span>${esc(r.i.name)}</span><input type="number" inputmode="decimal" min="0" step="any" data-bk="${esc(r.i.name)}|${u}" value="${esc(keep[r.i.name + '|' + u] || '')}" aria-label="Left of ${esc(r.i.name)}"><em>${u}</em></div>`; }).join('');
-    box.innerHTML = `<div class="bk-sum">Whole bake plan${next ? ` · next bake ${esc(pantryDate(next))}` : ''}. Need is the plan's ingredients; have is your latest count plus approved purchases since.</div>` +
+    const rc = allRows.map(r => { const u = r.s ? r.s.unit : r.i.unit; return `<div class="bk-rc-row"><span>${esc(r.i.name)}</span><input type="number" inputmode="decimal" min="0" step="any" data-bk="${esc(r.i.name)}|${u}" value="${esc(keep[r.i.name + '|' + u] || '')}" aria-label="Left of ${esc(r.i.name)}"><em>${u}</em></div>`; }).join('');
+    const pick = dates.length > 1 ? `<div class="pn-bar"><select data-native id="bkThru" aria-label="Which bakes to shop for"><option value="">Whole plan (${dates.length} bakes)</option>${dates.map(d => `<option value="${d}"${d === bakeThrough ? ' selected' : ''}>Through ${esc(wkShort(d))} ${esc(pantryDate(d))}</option>`).join('')}</select></div>` : '';
+    box.innerHTML = pick + `<div class="bk-sum">${bakeThrough ? `Bakes up to ${esc(pantryDate(bakeThrough))} (forecast recipes only; hand-added recipes are left out)` : `Whole bake plan${next ? ` · next bake ${esc(pantryDate(next))}` : ''}`}. Need is the plan's ingredients; have is your latest count plus approved purchases since.</div>` +
       `<h3>To buy${buy.length ? ` (${buy.length})` : ''}</h3>` +
       (buy.length ? buy.map(buyRow).join('') + `<div class="buy-total"><span>Estimated total${unpriced ? `<small>${unpriced} item${unpriced === 1 ? '' : 's'} without a price</small>` : ''}</span><b>${money2(total)}</b></div>` : '<div class="pn-note">Everything the plan needs is on hand.</div>') +
       `<div class="pn-bar" style="margin-top:10px"><button type="button" class="btn-ghost" id="bkCopy">Copy list</button><button type="button" class="btn-ghost" id="bkClear">Clear ticks</button></div>` +
       (ok.length ? `<h3>Have enough (${ok.length})</h3>` + ok.map(okRow).join('') : '') +
       `<details class="bk-rc"${bakeRcOpen ? ' open' : ''}><summary>After the bake: recount what is left</summary><div class="pn-note">Baking does not take anything off the pantry by itself. Weigh what is left and save it; blank rows are skipped. Today's date is used.</div>${rc}<div class="pn-bar" style="margin-top:12px"><button class="primary" type="button" id="bkSave">Save counts</button></div></details>`;
+    const thru = box.querySelector('#bkThru'); if (thru) thru.onchange = () => { bakeThrough = thru.value; bakePaint(); };
     box.querySelector('.bk-rc').addEventListener('toggle', e => { bakeRcOpen = e.target.open; });
     box.querySelectorAll('[data-bkc]').forEach(c => c.onchange = () => { if (c.checked) buyChecked[c.dataset.bkc] = 1; else delete buyChecked[c.dataset.bkc]; buySave(); c.closest('.buy-row').classList.toggle('done', c.checked); });
     box.querySelector('#bkClear').onclick = () => { buyChecked = {}; buySave(); bakePaint(); };
