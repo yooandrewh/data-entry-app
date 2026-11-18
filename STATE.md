@@ -1,9 +1,10 @@
 # STATE — where we are (update after each finished piece)
 
-Last updated: 2026-11-17 (night)
+Last updated: 2026-11-18
 After a `/compact` or in a new chat: read this file first, then CLAUDE.md. Stable rules live in CLAUDE.md; only status lives here.
 
 ## Now
+- **v1.131.00 LIVE (8a2ae61):** Home → Trends (weekly stacked chart + tables + Raw data view). Headless-tested at 390px with live data; not on a phone. v1.129 (multi-photo receipts) and v1.130 (Share to iCloud) are live too; the Share sheet with large videos and a real phone receipt upload are still untested.
 - **v1.128.00:** receipt photo upload. Phone Send -> Sheet inbox -> Mac poller (LaunchAgent, 5 min, Apple Vision) -> unapproved ledger lines + status back in the app. Real 2026-11-12 receipt parses to 7 correct lines (quantity lines fixed in v1.127.01). Live round trip, iPhone camera/HEIC and 390px layout still to verify.
 - **v1.127.00 (built, not committed or deployed):** Home → Receipts: paste the receipt text (iPhone Live Text), Read, review, Post as unapproved Ledger lines. Costco only; blocks on unknown item, coupon, total mismatch or duplicate receipt. Parser tested in node (`parseReceipt`); not tried on a phone with real Live Text, never posted to the live API.
 - **Receipt upload (Mac side built, not deployed, no app change):** `scripts/receipts/` (watcher, Costco parser, ledger push, README). Same iCloud-inbox + Apple Vision flow as the sales videos. End-to-end tested on a rendered fake receipt; real phone photo, an iOS Shortcut and a schedule (LaunchAgent) are still to do.
