@@ -74,6 +74,8 @@ Status: live API tested (add/remove round trip); browser-tested 2026-11-17 on de
 
 ## Upload page (v1.141.02, 2026-11-18)
 
+**v1.141.04:** Upload is also a fifth type in the Entry popup (`data-up` seg button, `#form.up-mode` hides the entry cards, shared `renderUploadBox(box)`; ids became classes `.upKind/.upGo/...` under `.up-box`), controls are big (60px buttons). The Entry popup now stops above the bottom nav (`inset` bottom = tab bar height) and tapping another tab closes it.
+
 Other -> Upload. Hyebin (iPhone) picks Sales video La Mirada / Stanton or Receipt photos and sends them **straight to Vercel Blob** using a signed upload link. `api/upload.js` hands out the link (`issueSignedToken` + `presignUrl`, Vercel OIDC via `BLOB_STORE_ID`; the new store has **no** `BLOB_READ_WRITE_TOKEN`, so `handleUpload` can't be used). **Open by Andrew's choice, no code** (like receipt-inbox add); the cap is server-side before any link: 200 MB per file, 40 files / 1.5 GB waiting, video/* or image/* only, one pathname under `inbox/`, 15-minute link. Blobs are public-URL with a random suffix (unlisted, not private), so the Mac must collect them fast. `api/uploads.js` (GET list, POST remove) needs `x-ledger-code`. **Mac collector** `scripts/uploads/upload_poll.py` (LaunchAgent `com.kairos.upload-poll`, installed, every 5 min; README there): downloads to `~/.kairos-uploads/archive/<kind>/`, checks the byte count, only then deletes from Blob; videos are also linked into `~/.kairos-uploads/videos/`, then the collector starts the sales OCR in the background (`~/kairos-ocr/kairos_inbox_watch.py`, no push, no dry run; Andrew reviews `inbox_summary.md` and runs the push scripts); receipts go through `receipt_poll.process()` into unapproved ledger lines; archived files are rsynced to `andrews-macbook-air:~/kairos-uploads`. Store `kairosuplaods` (public) is connected. `UPLOAD_CODE` env var is now unused and can be deleted.
 
 ## Sales dashboard (v1.140.00, 2026-11-18)
@@ -131,7 +133,7 @@ Costco receipts print a quantity line (`3 @ 4.99`) above an item whose price is 
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.141.03**; the next feature is v1.142.00, a fix v1.141.04. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.141.04**; the next feature is v1.142.00, a fix v1.141.05. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 
