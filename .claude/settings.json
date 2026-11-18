@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "f=\"${CLAUDE_PROJECT_DIR:-.}/STATE.md\"; [ -f \"$f\" ] && { echo 'STATE.md (re-read after compact; it overrides the summary if they disagree):'; cat \"$f\"; } || true"
+          }
+        ]
+      }
+    ]
+  }
+}
