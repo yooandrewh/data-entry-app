@@ -2017,16 +2017,16 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
   .tr-chips button { min-height: 40px; padding: 0 14px; border-radius: 999px; font-size: var(--fs-caption); }
   .tr-chips button.on { background: #000 !important; color: #fff !important; border-color: #000 !important; }
   .tr-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -2px; }
-  .tr-pie { display: flex; align-items: center; gap: 14px; margin: 4px 0 14px; }
-  .tr-pie svg { width: 160px; height: 160px; flex: none; }
+  .tr-pie { display: flex; align-items: center; gap: 10px; margin: 4px 0 14px; }
+  .tr-pie svg { width: 128px; height: 128px; flex: none; }
   .tr-pie-n { font-size: 26px; font-weight: 700; fill: var(--text); font-family: inherit; }
   .tr-pie-s { font-size: 11px; fill: var(--muted); font-family: inherit; }
   .tr-pie-list { flex: 1 1 auto; min-width: 0; }
-  .tr-pie-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; font-size: var(--fs-caption); border-bottom: 1px solid var(--sep); }
+  .tr-pie-row { display: flex; align-items: center; gap: 6px; padding: 5px 0; font-size: var(--fs-caption); border-bottom: 1px solid var(--sep); }
   .tr-pie-row i { width: 12px; height: 12px; border-radius: 3px; flex: none; border: 1px solid rgba(0,0,0,.15); }
   .tr-pie-row span { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .tr-pie-row b { font-weight: 700; }
-  .tr-pie-row em { font-style: normal; color: var(--muted); min-width: 34px; text-align: right; }
+  .tr-pie-row em { font-style: normal; color: var(--muted); min-width: 30px; text-align: right; }
 
   /* ---- Shopping list: by vendor, pack count first ---- */
   .buy-vendor { display: flex; justify-content: space-between; align-items: baseline; margin: 18px 0 2px; padding: 8px 10px; background: #000; color: #fff; border-radius: 10px; font-size: var(--fs-lg); font-weight: 700; }
@@ -2400,7 +2400,7 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
   </div>
 </div>
 
-<div class="ver-badge">v1.145.00 · Nov 18, 12:50 PM PST</div>
+<div class="ver-badge">v1.146.00 · Nov 18, 12:55 PM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -8118,7 +8118,7 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
     });
   }
   // ----- Trends (Home → Trends): weekly sales as a stacked chart plus a table, and a raw day-by-day list. Reads the same /api/sales rows as the Data tab. -----
-  let trLoc = 'La Mirada', trView = 'chart', trItem = 'All', trSpan = 4;
+  let trLoc = 'La Mirada', trView = 'chart', trItem = 'All', trSpan = 4, trMetric = 'usd';   // trMetric: share of sales by 'usd' or 'qty'
   const TR_MAD = ['Lemon Poppy', 'Sea Salt', 'Maple Pecan'];
   const TR_OTHER = ['Blueberry Muffin', 'Cake Pop', 'Pumpkin Bundt', 'Chookie'];
   const TR_MAD_ALL = [...TR_MAD, 'Ube', 'Dot', 'Earl Grey', 'Matcha', 'Chocolate', 'Unknown'];   // every madeleine flavor, retired and unread ones included (the sheet's total also counts muffins, cookies and the rest)
@@ -8138,9 +8138,9 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
     const weeks = new Map();
     for (const d of days.values()) {
       const w = weekStart(d.date);
-      const rec = weeks.get(w) || { start: w, days: 0, total: 0, amounts: {}, est: new Set() };
+      const rec = weeks.get(w) || { start: w, days: 0, total: 0, amounts: {}, rev: {}, est: new Set() };
       rec.days++; rec.total += d.total; d.est.forEach(p => rec.est.add(p));
-      for (const [k, v] of Object.entries(d.amounts)) rec.amounts[k] = (rec.amounts[k] || 0) + v;
+      for (const [k, v] of Object.entries(d.amounts)) { rec.amounts[k] = (rec.amounts[k] || 0) + v; rec.rev[k] = (rec.rev[k] || 0) + v * unitPriceOn(k, d.date); }
       weeks.set(w, rec);
     }
     return { days: [...days.values()].sort((a, b) => b.date.localeCompare(a.date)), weeks: [...weeks.values()].sort((a, b) => a.start.localeCompare(b.start)) };
@@ -8165,8 +8165,8 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
   }
   // Share of sales: donut + list, largest first, darkest first. Items under 3% fold into "Smaller items".
   function trPie(weeks, items) {
-    const sum = {}; let tot = 0;
-    for (const w of weeks) for (const [k, v] of Object.entries(w.amounts)) { if (!v) continue; sum[k] = (sum[k] || 0) + v; tot += v; }
+    const sum = {}; let tot = 0, qty = 0; const dollars = trMetric === 'usd';
+    for (const w of weeks) for (const [k, n] of Object.entries(w.amounts)) { if (!n) continue; const v = dollars ? (w.rev[k] || 0) : n; sum[k] = (sum[k] || 0) + v; tot += v; qty += n; }
     if (!tot) return '<div class="pn-note">No sales in this period.</div>';
     let parts = Object.entries(sum).map(([k, v]) => ({ k, v })).sort((a, b) => b.v - a.v);
     const small = parts.filter(x => x.v / tot < 0.03), big = parts.filter(x => x.v / tot >= 0.03);
@@ -8182,8 +8182,8 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
       }
       a0 = a1;
     });
-    const list = parts.map((x, i) => `<div class="tr-pie-row"><i style="background:${TR_RAMP[Math.min(i, TR_RAMP.length - 1)]}"></i><span>${esc(nm(x.k))}</span><b>${x.v}</b><em>${Math.round(x.v / tot * 100)}%</em></div>`).join('');
-    return `<div class="tr-pie"><svg viewBox="0 0 160 160" role="img" aria-label="Share of sales by item">${paths}<text x="${C}" y="${C - 2}" text-anchor="middle" class="tr-pie-n">${tot}</text><text x="${C}" y="${C + 14}" text-anchor="middle" class="tr-pie-s">sold</text></svg><div class="tr-pie-list">${list}</div></div>`;
+    const list = parts.map((x, i) => `<div class="tr-pie-row"><i style="background:${TR_RAMP[Math.min(i, TR_RAMP.length - 1)]}"></i><span>${esc(nm(x.k))}</span><b>${dollars ? usd(Math.round(x.v)).replace('.00', '') : x.v}</b><em>${Math.round(x.v / tot * 100)}%</em></div>`).join('');
+    return `<div class="tr-pie"><svg viewBox="0 0 160 160" role="img" aria-label="Share of sales by item">${paths}<text x="${C}" y="${C - 2}" text-anchor="middle" class="tr-pie-n">${dollars ? usd(Math.round(tot)).replace('.00', '') : tot}</text><text x="${C}" y="${C + 14}" text-anchor="middle" class="tr-pie-s">${dollars ? qty + ' sold' : 'sold'}</text></svg><div class="tr-pie-list">${list}</div></div>`;
   }
   function trDelta(cur, prev, val) {
     val = val || (w => w.total);
@@ -8214,7 +8214,8 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
       const span = n => `<button type="button" data-trs="${n}" class="${trSpan === n ? 'on' : ''}">${n === 1 ? 'Last week' : n + ' weeks'}</button>`;
       const rowsHtml = mk => tbl.map(w => { const prev = weeks.slice(0, weeks.indexOf(w)).reverse().find(x => x.days >= 7); return `<tr${w.days < 7 ? ' class="tr-part"' : ''}><td>${esc(trFmtDay(w.start))}${w.days < 7 ? `<span class="tr-d">${w.days} of 7 days</span>` : ''}</td>${mk(w, prev)}</tr>`; }).join('');
       const pieWeeks = trSpan === 1 ? shown.slice(-1) : shown.slice(-trSpan);
-      body = `<h3>Share of sales</h3><div class="tr-chips tr-spans">${span(1)}${span(4)}${span(8)}</div>` + trPie(pieWeeks, cols) +
+      const met = (m, t) => `<button type="button" data-trm="${m}" class="${trMetric === m ? 'on' : ''}">${t}</button>`;
+      body = `<h3>Share of sales</h3><div class="tr-chips tr-spans">${met('usd', 'By dollars')}${met('qty', 'By pieces')}</div><div class="tr-chips tr-spans">${span(1)}${span(4)}${span(8)}</div>` + trPie(pieWeeks, cols) +
         `<h3>${trItem === 'All' ? 'All items' : esc(trItem)} by week</h3>` +
         `<div class="tr-chips">${chip('All', 'All items')}${cols.map(p => chip(p, p)).join('')}</div>` +
         trChartSvg(shown, val, trItem === 'All' ? 'All items' : trItem) +
@@ -8233,6 +8234,7 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
     box.innerHTML = head + body;
     box.querySelector('#trLoc').onchange = e => { trLoc = e.target.value; renderTrends(); };
     box.querySelectorAll('[data-tri]').forEach(b => b.onclick = () => { trItem = b.dataset.tri; renderTrends(); });
+    box.querySelectorAll('[data-trm]').forEach(b => b.onclick = () => { trMetric = b.dataset.trm; renderTrends(); });
     box.querySelectorAll('[data-trs]').forEach(b => b.onclick = () => { trSpan = +b.dataset.trs; renderTrends(); });
     box.querySelectorAll('[data-trv]').forEach(b => b.onclick = () => { trView = b.dataset.trv; track('trends_view', { view: trView }); renderTrends(); });
   }

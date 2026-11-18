@@ -118,7 +118,7 @@ Plan page opens as three steps (`#planWiz`, `wizPaint()` after `paintPlan`): **1
 
 ## Trends (Home → Trends, built 2026-11-18)
 
-**v1.143.00: Trends covers every item, not just madeleines.** Top: a *Share of sales* donut (`trPie`, last week / 4 / 8 weeks, items under 3% fold into Smaller items), then a weekly bar chart with item chips (All items or one item), then one table with a column per item (`trTotal` = `trAll`, every item). The text below describes the older madeleine-only layout; `trMad()` still exists but the totals use `trAll()`.
+**v1.143.00: Trends covers every item, not just madeleines.** Top: a *Share of sales* donut (`trPie`, **By dollars | By pieces** toggle `trMetric`, dollars = count x `unitPriceOn()` per day, last week / 4 / 8 weeks, items under 3% fold into Smaller items), then a weekly bar chart with item chips (All items or one item), then one table with a column per item (`trTotal` = `trAll`, every item). The text below describes the older madeleine-only layout; `trMad()` still exists but the totals use `trAll()`.
 
 `renderTrends()` next to Pantry; reads `getSales()` (same rows as Data), no new API. Store select (La Mirada / Stanton / Both) and a **Chart | Raw data** toggle (`trLoc`, `trView`). Chart: last 8 Mon–Sun weeks, stacked Lemon Poppy / Sea Salt / Maple Pecan / Other, plus a madeleine table and an Other-items table (BM, CP, PB, CK). **Madeleine total = `trMad()` (madeleine flavors only); the sheet row `total` also counts muffins and cookies, so never use it here.** Weeks under 7 days are hatched and get no change arrow; arrows compare to the last full week. A dash = not tracked yet; `~` = estimated from stock counts (`row.derived`). Raw view: one row per day. Browser-tested headless at 390px; not on a phone.
 
@@ -151,7 +151,7 @@ Costco receipts print a quantity line (`3 @ 4.99`) above an item whose price is 
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.145.00**; the next feature is v1.146.00, a fix v1.145.01. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.146.00**; the next feature is v1.147.00, a fix v1.146.01. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 
