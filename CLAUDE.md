@@ -118,7 +118,7 @@ Plan page opens as three steps (`#planWiz`, `wizPaint()` after `paintPlan`): **1
 
 ## Trends (Home → Trends, built 2026-11-18)
 
-**v1.143.00: Trends covers every item, not just madeleines.** Top: a *Share of sales* donut (`trPie`, **By dollars | By pieces** toggle `trMetric`, dollars = count x `unitPriceOn()` per day, last week / 4 / 8 weeks, items under 3% fold into Smaller items), then a weekly bar chart with item chips (All items or one item), then one table with a column per item (`trTotal` = `trAll`, every item). The text below describes the older madeleine-only layout; `trMad()` still exists but the totals use `trAll()`.
+**v1.143.00: Trends covers every item, not just madeleines.** Top: a *Share of sales* donut (`trPie`, lists every item, no folding; period / **By dollars | By pieces** dropdowns `trSpan` / `trMetric`; the Chart | Raw data toggle was removed, dollars = count x `unitPriceOn()` per day, last week / 4 / 8 weeks, items under 3% fold into Smaller items), then a weekly bar chart with item chips (All items or one item), then one table with a column per item (`trTotal` = `trAll`, every item). The text below describes the older madeleine-only layout; `trMad()` still exists but the totals use `trAll()`.
 
 `renderTrends()` next to Pantry; reads `getSales()` (same rows as Data), no new API. Store select (La Mirada / Stanton / Both) and a **Chart | Raw data** toggle (`trLoc`, `trView`). Chart: last 8 Mon–Sun weeks, stacked Lemon Poppy / Sea Salt / Maple Pecan / Other, plus a madeleine table and an Other-items table (BM, CP, PB, CK). **Madeleine total = `trMad()` (madeleine flavors only); the sheet row `total` also counts muffins and cookies, so never use it here.** Weeks under 7 days are hatched and get no change arrow; arrows compare to the last full week. A dash = not tracked yet; `~` = estimated from stock counts (`row.derived`). Raw view: one row per day. Browser-tested headless at 390px; not on a phone.
 
@@ -149,9 +149,19 @@ Costco receipts print a quantity line (`3 @ 4.99`) above an item whose price is 
 - Every `<select>` opens the app's own list (`openSelectPopup()`, `.sp-pop`); `data-native` opts out. Needs the touchend `preventDefault` on iPhone, so verify on device.
 - Bottom nav is a full-width bar flush to the bottom; on the Home landing it is see-through and outlined.
 
+## Sizing rules (from Andrew's phone screenshots, v1.146.01)
+
+The headless check at 390px misses what iOS does. Apply these to every new or changed control, and look at the phone screenshot before calling it done.
+1. **Text must fit its box.** Never let a number or label clip, overflow or truncate with "...". SVG text is sized from its string length (`trPie` centre: `fit = min(26, 64 / (chars * 0.62))` for an 84-unit hole). Test with the longest realistic value ($1,303, "Blueberry Muffin"), not a short one.
+2. **Every button and select gets an explicit text colour.** An unset one renders iOS link blue on the phone (headless shows black). A global `button { color: var(--text) }` sits in the last CSS block; keep it.
+3. **Selected and unselected look the same size.** Same height, padding and border width in every state (use a transparent border, not none). Only fill and colour change.
+4. **Tap targets are at least 44px tall; side margin is 16px; gaps are 8px.** Stacked controls share the same left and right edges.
+5. **Few controls, grouped.** Prefer one dropdown per choice over a row of chips. More than 3 chips in a row becomes a dropdown. Group controls under the heading they change (period and dollars/pieces under Share of sales, item under By week).
+6. **No new colours or raw px font sizes** (existing rules); use the `--fs-*` scale.
+
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.146.00**; the next feature is v1.147.00, a fix v1.146.01. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.146.01**; the next feature is v1.147.00, a fix v1.146.02. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 
