@@ -2177,7 +2177,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.128.00 · Nov 18, 8:33 AM PST</div>
+<div class="ver-badge">v1.128.01 · Nov 18, 8:39 AM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -7362,15 +7362,12 @@
   }
   async function rxSend() {
     if (!rxFile || rxBusy) return;
-    const code = ledgerCode(); if (!code) { rcpToast('Enter the access code to send'); return; }
     rxBusy = true; rxPaintSend('Sending...');
     try {
       const data = await rxEncode(rxFile);
       if (!data) { rxPaintSend("That photo is too big to send. Try a closer shot."); return; }
-      const r = await fetch('/api/receipt-inbox', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-ledger-code': code }, body: JSON.stringify({ action: 'add', name: rxFile.name || 'photo', data }) });
+      const r = await fetch('/api/receipt-inbox', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'add', name: rxFile.name || 'photo', data }) });
       const j = await r.json().catch(() => ({}));
-      if (r.status === 401) { try { localStorage.removeItem('ledgerCode'); } catch {} rxPaintSend(''); rcpToast('Wrong ledger code'); return; }
-      if (r.status === 503) { rxPaintSend(''); rcpToast('Sending is off: set LEDGER_CODE in Vercel'); return; }
       if (!r.ok) { rxPaintSend(j.error || 'Could not send'); return; }
       rxFile = null; const inp = document.querySelector('#homeReceipts #rxInput'); if (inp) inp.value = '';
       rxPaintSend('Sent. The Mac reads it within about 5 minutes if it is awake; lines land unapproved in the ledger.');

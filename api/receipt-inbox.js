@@ -12,7 +12,7 @@
 // POST { action: 'result', id, status, result }   status done|held|failed, result clipped to 300 chars; blanks the photo cells. -> { updated: true }
 // POST { action: 'remove', ids: [...] }           soft delete (Deleted = TRUE), max 20.
 //
-// Auth: plain GET is open. Pending GET and every POST need the x-ledger-code header to match env LEDGER_CODE
+// Auth: plain GET and POST `add` (the phone upload) are open. Pending GET and the other POST actions need the x-ledger-code header to match env LEDGER_CODE
 // (503 when LEDGER_CODE is unset, 401 when wrong). Cost cap: no paid API is called; photo size and the pending count are capped.
 //
 // Required env vars: GOOGLE_SA_JSON, SHEET_ID, LEDGER_CODE   (optional: APP_KEY)
@@ -48,8 +48,11 @@ export default async function handler(req, res) {
   try {
     const wantsPending = req.method === 'GET' && String((req.query && req.query.pending) || '') === '1';
 
-    // Writes and the pending read (which carries photos): deny by default.
-    if (req.method === 'POST' || wantsPending) {
+    // The pending read (which carries photos) and every POST except `add` (the phone's upload) need the code.
+    // `add` is open on purpose (internal tool, no login on the phone); it is capped by size and by the pending count,
+    // and nothing it stores reaches the ledger unless the Mac parses it as a valid receipt, and lines land unapproved.
+    const openAdd = req.method === 'POST' && req.body && (typeof req.body === 'string' ? /"action"\s*:\s*"add"/.test(req.body) : req.body.action === 'add');
+    if ((req.method === 'POST' && !openAdd) || wantsPending) {
       const code = process.env.LEDGER_CODE;
       if (!code) return res.status(503).json({ error: 'Set LEDGER_CODE in Vercel to enable the receipt inbox' });
       if (req.headers['x-ledger-code'] !== code) return res.status(401).json({ error: 'Wrong code' });
