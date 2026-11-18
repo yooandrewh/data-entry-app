@@ -2168,7 +2168,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.126.01 · Nov 17, 8:32 PM PST</div>
+<div class="ver-badge">v1.126.01 · Nov 17, 8:33 PM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -7311,6 +7311,7 @@
     bakesBusy = false;
     if (homeTab === 'bake') bakePaint();
   }
+  let bakeFormFresh = false;   // set when the view changes so the Bake done minutes/note start over for the new date
   let bakeRcOpen = false, bakeView = '';   // '' = whole plan | 't:YYYY-MM-DD' = bakes from today through that date | 'o:YYYY-MM-DD' = that bake only
   async function bakeOpen() {
     if (PANTRY === null && !pantryBusy) fetchPantry();
@@ -7342,6 +7343,7 @@
     const box = document.getElementById('homeBake'); if (!box) return;
     if (PANTRY === null || LEDGER === null) { box.innerHTML = '<div class="pn-note">Loading…</div>'; return; }
     const keep = {}; box.querySelectorAll('[data-bk]').forEach(e => { keep[e.dataset.bk] = e.value; });
+    if (bakeFormFresh) { delete keep['bd:min']; delete keep['bd:note']; bakeFormFresh = false; }
     const today = todayISO(), cacheDates = Object.keys(planDatesCache).sort();
     const thruDates = cacheDates.filter(d => d >= today), onlyDates = cacheDates.filter(d => d >= addDays(today, -3));
     if (bakeView && !(/^o:/.test(bakeView) ? onlyDates : thruDates).includes(bakeView.slice(2))) bakeView = '';
@@ -7375,7 +7377,7 @@
       (ok.length ? `<h3>Have enough (${ok.length})</h3>` + ok.map(okRow).join('') : '') +
       bakeDoneHtml +
       `<details class="bk-rc"${bakeRcOpen ? ' open' : ''}><summary>After the bake: recount what is left</summary><div class="pn-note">Baking does not take anything off the pantry by itself. Weigh what is left and save it; blank rows are skipped. Today's date is used.</div>${rc}<div class="pn-bar" style="margin-top:12px"><button class="primary" type="button" id="bkSave">Save counts</button></div></details>`;
-    const thru = box.querySelector('#bkThru'); if (thru) thru.onchange = () => { bakeView = thru.value; bakePaint(); };
+    const thru = box.querySelector('#bkThru'); if (thru) thru.onchange = () => { bakeView = thru.value; bakeFormFresh = true; bakePaint(); };
     box.querySelector('.bk-rc').addEventListener('toggle', e => { bakeRcOpen = e.target.open; });
     box.querySelectorAll('[data-bkc]').forEach(c => c.onchange = () => { if (c.checked) buyChecked[c.dataset.bkc] = 1; else delete buyChecked[c.dataset.bkc]; buySave(); c.closest('.buy-row').classList.toggle('done', c.checked); });
     box.querySelector('#bkClear').onclick = () => { buyChecked = {}; buySave(); bakePaint(); };
