@@ -1995,7 +1995,7 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
 #bakingPlan:not([data-step="1"]) .pw-adv { display: none; }
 
 /* Upload page */
-#homeUpload select, #homeUpload input[type=password] { width: 100% !important; min-height: 44px; font-size: var(--fs-body); box-sizing: border-box; }
+#homeUpload select { width: 100% !important; min-height: 44px; font-size: var(--fs-body); box-sizing: border-box; }
 #homeUpload .pn-bar { gap: 8px; }
 
 </style>
@@ -2351,7 +2351,7 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
   </div>
 </div>
 
-<div class="ver-badge">v1.141.01 · Nov 18, 11:35 AM PST</div>
+<div class="ver-badge">v1.141.02 · Nov 18, 11:54 AM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -7752,8 +7752,7 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
   }
   // Upload page: sends receipt photos and sales videos straight from the phone to Vercel Blob (a short waiting room).
   // The Mac job (scripts/uploads/upload_poll.py) downloads each file into a permanent folder, checks the size, then deletes it from Blob.
-  let upFiles = [], upBusy = false, upLib = null;
-  const upCode = () => { try { return localStorage.getItem('uploadCode') || ''; } catch { return ''; } };
+  let upFiles = [], upBusy = false;
   function upPaint(msg) {
     const box = document.getElementById('homeUpload'); if (!box) return;
     const n = box.querySelector('#upName'), b = box.querySelector('#upGo'), m = box.querySelector('#upMsg');
@@ -7761,24 +7760,37 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
     if (b) { b.disabled = !upFiles.length || upBusy; b.textContent = upBusy ? 'Sending…' : 'Send'; }
     if (m && msg != null) m.textContent = msg;
   }
+  function upType(f, isVideo) {
+    if (f.type) return f.type;
+    const ext = ((/\.([A-Za-z0-9]+)$/.exec(f.name || '') || [])[1] || '').toLowerCase();
+    return ({ mov: 'video/quicktime', mp4: 'video/mp4', m4v: 'video/x-m4v', heic: 'image/heic', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png' })[ext] || (isVideo ? 'video/quicktime' : 'image/jpeg');
+  }
+  // One signed link per file from /api/upload, then the browser PUTs the file straight to Vercel Blob.
+  function upPut(url, file, type, onPct) {
+    return new Promise((resolve, reject) => {
+      const x = new XMLHttpRequest();
+      x.open('PUT', url);
+      x.setRequestHeader('content-type', type);
+      x.upload.onprogress = e => { if (e.lengthComputable) onPct(Math.round(e.loaded / e.total * 100)); };
+      x.onload = () => (x.status >= 200 && x.status < 300 ? resolve() : reject(new Error('Storage said ' + x.status)));
+      x.onerror = () => reject(new Error('Network error'));
+      x.send(file);
+    });
+  }
   async function upGo() {
     const box = document.getElementById('homeUpload'); if (!box || upBusy || !upFiles.length) return;
-    const code = (box.querySelector('#upCode').value || '').trim();
-    if (!code) { upPaint('Enter the upload code first.'); return; }
-    try { localStorage.setItem('uploadCode', code); } catch {}
-    const kind = box.querySelector('#upKind').value, dir = kind === 'R' ? 'receipt' : 'video';
+    const kind = box.querySelector('#upKind').value, isVideo = kind !== 'R';
     const names = shNames(upFiles, kind).map(n => n.replace(/[\\/]/g, '-'));
     upBusy = true; upPaint('Starting…');
     let sent = 0; const total = upFiles.length;
     try {
-      if (!upLib) upLib = await import('https://esm.sh/@vercel/blob@2.9.0/client');
       while (upFiles.length) {
-        const f = upFiles[0], name = names[sent];
-        upPaint(`Sending ${sent + 1} of ${total}: ${name} (0%)`);
-        await upLib.upload(`inbox/${dir}/${name}`, f, {
-          access: 'public', handleUploadUrl: '/api/upload', clientPayload: code, multipart: f.size > 20e6,
-          onUploadProgress: p => upPaint(`Sending ${sent + 1} of ${total}: ${name} (${Math.round(p.percentage)}%)`),
-        });
+        const f = upFiles[0], name = names[sent], type = upType(f, isVideo);
+        upPaint(`Sending ${sent + 1} of ${total}: ${name}`);
+        const r = await fetch('/api/upload', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: isVideo ? 'video' : 'receipt', name, size: f.size, type }) });
+        const j = await r.json().catch(() => ({}));
+        if (!r.ok || !j.url) throw new Error(j.error || 'Could not start the upload');
+        await upPut(j.url, f, j.type || type, p => upPaint(`Sending ${sent + 1} of ${total}: ${name} (${p}%)`));
         upFiles.shift(); sent++;
       }
       const inp = box.querySelector('#upInput'); if (inp) inp.value = '';
@@ -7786,7 +7798,7 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
     } catch (e) {
       upBusy = false;
       const t = String((e && e.message) || e);
-      upPaint((/wrong code/i.test(t) ? 'Wrong upload code.' : /UPLOAD_CODE|Blob store/i.test(t) ? 'Uploads are not switched on yet.' : /too many/i.test(t) ? t : "Couldn't send that. Check your connection and try again.") + (sent ? ` Sent ${sent} of ${total}.` : ''));
+      upPaint((/Connect a Blob store/i.test(t) ? 'Uploads are not switched on yet.' : /too many|too big|Choose a/i.test(t) ? t : "Couldn't send that. Check your connection and try again.") + (sent ? ` Sent ${sent} of ${total}.` : ''));
     }
   }
   function renderUpload() {
@@ -7797,8 +7809,7 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
         `<div class="pn-bar"><select id="upKind"><option value="LM">Sales video, La Mirada</option><option value="STN">Sales video, Stanton</option><option value="R">Receipt photos</option></select></div>` +
         `<input type="file" id="upInput" accept="image/*,video/*" multiple hidden>` +
         `<div class="pn-bar"><button id="upPick">Choose files</button><button class="primary" id="upGo" disabled>Send</button><span class="rx-file" id="upName">Nothing chosen</span></div>` +
-        `<div class="pn-note" id="upMsg"></div>` +
-        `<div class="pn-bar"><input type="password" id="upCode" placeholder="Upload code" autocomplete="off" value="${esc(upCode())}"></div></div>`;
+        `<div class="pn-note" id="upMsg"></div></div>`;
       box.addEventListener('click', e => {
         if (e.target.closest('#upPick')) box.querySelector('#upInput').click();
         else if (e.target.closest('#upGo')) upGo();

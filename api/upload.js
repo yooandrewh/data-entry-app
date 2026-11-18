@@ -1,25 +1,30 @@
-// Upload token for the Upload page (receipt photos and sales videos).
+// Permission slip for the Upload page (receipt photos and sales videos).
 //
-// The phone sends the file straight to Vercel Blob (a video is too big for a function body); this
-// endpoint only decides whether the phone may do that, and under what limits. The Mac job picks the
-// file up, saves it to a permanent folder, checks the size, then deletes it from Blob (see api/uploads.js).
+// The phone sends the file straight to Vercel Blob (a video is too big for a function body). This endpoint only
+// hands back a short-lived signed link good for ONE pathname, one content type and a size limit. The Mac job
+// picks the file up, saves it to a permanent folder, checks the size, then deletes it from Blob (see api/uploads.js).
 //
-// POST (used by @vercel/blob/client `upload()`): { type: 'blob.generate-client-token', payload: {...} }
+// POST { kind: 'video'|'receipt', name, size, type } -> { url, pathname, type }   (url = signed PUT link)
 //
-// Auth: the client payload (the upload code typed on the Upload page) must match env UPLOAD_CODE (a separate code for the person who uploads, never
-// LEDGER_CODE). With no UPLOAD_CODE set, uploads are refused (503).
-// Cost cap: the token is refused when too many files are waiting or the waiting files are too big,
-// and every token carries a per-file size limit, an allowed content type, and a pathname that must start with inbox/.
+// Auth: open by Andrew's choice (internal tool, the URL is only shared with the people who upload; same as
+// receipt-inbox "add"). The spending cap is enforced here, before any link is issued: at most MAX_PENDING_FILES
+// files / MAX_PENDING_BYTES waiting at once, MAX_FILE_BYTES per file, one content type per link, 15-minute expiry,
+// pathname forced under inbox/. Reading and deleting waiting files needs LEDGER_CODE (api/uploads.js).
 //
-// Required env vars: BLOB_READ_WRITE_TOKEN or BLOB_STORE_ID (either is set by connecting a Blob store), UPLOAD_CODE
+// Required env vars: BLOB_STORE_ID (set by connecting a Blob store; Vercel OIDC auth) or BLOB_READ_WRITE_TOKEN
 
-import { handleUpload } from '@vercel/blob/client';
-import { list } from '@vercel/blob';
+import { issueSignedToken, presignUrl, list } from '@vercel/blob';
+import { randomBytes } from 'node:crypto';
 
 const MAX_FILE_BYTES = 200 * 1024 * 1024; // one video
 const MAX_PENDING_FILES = 40;
 const MAX_PENDING_BYTES = 1.5 * 1024 * 1024 * 1024;
-const PREFIXES = ['inbox/video/', 'inbox/receipt/'];
+const LINK_MS = 15 * 60 * 1000;
+
+function safeName(name) {
+  const s = String(name || '').replace(/[\\/]/g, '-').replace(/[\x00-\x1f\x7f]/g, '').replace(/^\.+/, '').trim().slice(0, 120);
+  return s || 'file';
+}
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -28,39 +33,40 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  const code = process.env.UPLOAD_CODE;
-  if (!code) return res.status(503).json({ error: 'Set UPLOAD_CODE in Vercel to enable uploads' });
   if (!(process.env.BLOB_READ_WRITE_TOKEN || process.env.BLOB_STORE_ID)) return res.status(503).json({ error: 'Connect a Blob store in Vercel first' });
 
   try {
-    let body = req.body;
-    if (typeof body === 'string') body = JSON.parse(body || '{}');
-    body = body && typeof body === 'object' ? body : {};
+    let b = req.body;
+    if (typeof b === 'string') b = JSON.parse(b || '{}');
+    b = b && typeof b === 'object' ? b : {};
 
-    const result = await handleUpload({
-      body,
-      request: req,
-      onBeforeGenerateToken: async (pathname, clientPayload) => {
-        // The upload code travels as the client payload; Vercel's own completion callback carries none, so check it here.
-        if (clientPayload !== code) throw new Error('Wrong code');
-        if (!PREFIXES.some((p) => pathname.startsWith(p)) || pathname.includes('..')) {
-          throw new Error('Bad file path');
-        }
-        // Cap what can sit in the waiting room.
-        const { blobs } = await list({ prefix: 'inbox/', limit: 1000 });
-        const bytes = blobs.reduce((s, b) => s + (b.size || 0), 0);
-        if (blobs.length >= MAX_PENDING_FILES || bytes >= MAX_PENDING_BYTES) {
-          throw new Error('Too many files are waiting. Try again once the Mac has collected them.');
-        }
-        return {
-          allowedContentTypes: ['video/*', 'image/*'],
-          maximumSizeInBytes: MAX_FILE_BYTES,
-          addRandomSuffix: true,
-        };
-      },
-      onUploadCompleted: async () => {},
+    const kind = b.kind === 'receipt' ? 'receipt' : b.kind === 'video' ? 'video' : '';
+    if (!kind) return res.status(400).json({ error: 'Bad kind' });
+    const size = Number(b.size);
+    if (!Number.isFinite(size) || size <= 0 || size > MAX_FILE_BYTES) return res.status(400).json({ error: 'That file is too big (200 MB max)' });
+    const type = String(b.type || '').toLowerCase();
+    const okType = kind === 'video' ? /^video\/[a-z0-9.+-]+$/.test(type) : /^image\/[a-z0-9.+-]+$/.test(type);
+    if (!okType) return res.status(400).json({ error: kind === 'video' ? 'Choose a video file' : 'Choose a photo' });
+
+    // Cap what can sit in the waiting room.
+    const { blobs } = await list({ prefix: 'inbox/', limit: 1000 });
+    const bytes = blobs.reduce((s, x) => s + (x.size || 0), 0);
+    if (blobs.length >= MAX_PENDING_FILES || bytes + size > MAX_PENDING_BYTES) {
+      return res.status(429).json({ error: 'Too many files are waiting. Try again once the Mac has collected them.' });
+    }
+
+    // Random suffix before the extension so the link can't be guessed.
+    const name = safeName(b.name), dot = name.lastIndexOf('.');
+    const stem = dot > 0 ? name.slice(0, dot) : name, ext = dot > 0 ? name.slice(dot) : '';
+    const pathname = `inbox/${kind}/${stem}-${randomBytes(5).toString('hex')}${ext}`;
+
+    const validUntil = Date.now() + LINK_MS;
+    const tok = await issueSignedToken({ pathname, operations: ['put'], validUntil, allowedContentTypes: [type], maximumSizeInBytes: size });
+    const { presignedUrl } = await presignUrl(tok, {
+      operation: 'put', pathname, validUntil, allowedContentTypes: [type], maximumSizeInBytes: size,
+      addRandomSuffix: false, allowOverwrite: false, access: 'public',
     });
-    return res.status(200).json(result);
+    return res.status(200).json({ url: presignedUrl, pathname, type });
   } catch (e) {
     return res.status(400).json({ error: String((e && e.message) || e) });
   }
