@@ -41,6 +41,8 @@ Notion is dead: nothing writes to it, and the `NOTION_*` Vercel env vars can be 
 
 ## Tabs and Home
 
+**v1.144.04:** the pull-to-refresh bar `#ptr` is `visibility:hidden` unless pulling and resets on `touchcancel` (it had got stuck as a black strip over the status bar). Upload uses the same card + big buttons as the other Entry types (`renderUploadBox(box, bare)`).
+
 **v1.144.03:** a refresh keeps the current page (and scroll for pull-to-refresh) via `sessionStorage` `lastPage.v1` / `lastScroll.v1`; a fresh launch of the app still opens Sales.
 
 **v1.144.02:** the top page row `#secNav` is a solid white sticky bar (an old `.db-filter { background: transparent !important }` rule had made it see-through, so content scrolled behind the chips).
@@ -149,7 +151,7 @@ Costco receipts print a quantity line (`3 @ 4.99`) above an item whose price is 
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.144.03**; the next feature is v1.145.00, a fix v1.144.04. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.144.04**; the next feature is v1.145.00, a fix v1.144.05. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 
