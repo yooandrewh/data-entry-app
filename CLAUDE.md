@@ -1,4 +1,4 @@
-# Kairos — bakery data entry & forecasting
+# Kairos Baking — bakery data entry & forecasting
 
 iPhone-optimized web app for Kairos baking: log deliveries, inventory, goodwill and transfers by location, then forecast and plan bakes.
 Single static `index.html` + Vercel serverless functions in `api/`. No build step.
@@ -165,7 +165,7 @@ The headless check at 390px misses what iOS does. Apply these to every new or ch
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.147.01**; the next feature is v1.148.00, a fix v1.147.02. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.147.02**; the next feature is v1.148.00, a fix v1.147.03. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 
