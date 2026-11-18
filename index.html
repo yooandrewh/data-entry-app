@@ -2645,7 +2645,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.169.05 · Nov 18, 3:39 PM PST</div>
+<div class="ver-badge">v1.169.06 · Nov 18, 3:44 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -4625,7 +4625,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   const storeSells = (loc, p, date) => !(STORE_SKIP[loc] || []).includes(p) && !(date && STORE_FROM[loc] && STORE_FROM[loc][p] && date < STORE_FROM[loc][p]);
   // MANUAL OVERRIDE (Andrew, 2026-11-18): Stanton will sell as much Lemon Poppy as it sold Sea Salt, so its Lemon Poppy rate is its Sea Salt sales.
   const STORE_PROXY = { 'Stanton': { 'Lemon Poppy': 'Sea Salt' } };
-  const storeSale = (loc, p, s) => { const px = STORE_PROXY[loc] && STORE_PROXY[loc][p]; return px ? (s.amounts[px] || 0) : storeSells(loc, p, s.date) ? (s.amounts[p] || 0) : 0; };
+  const storeSale = (loc, p, s) => { const px = STORE_PROXY[loc] && STORE_PROXY[loc][p]; return px ? (s.amounts[px] || 0) + (storeSells(loc, p, s.date) ? (s.amounts[p] || 0) : 0) : storeSells(loc, p, s.date) ? (s.amounts[p] || 0) : 0; };
   const ASSUMED_RATE = { 'Blueberry Muffin': { wd: 2, we: 3 } };   // per day, products with no sales feed
   function locStats(loc, sales, entries) {
     const locSales = sales.filter(s => s.location === loc);
@@ -5103,7 +5103,10 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   // (glaze happens during the bake, so it's free). Batches are counted per flavor
   // (you can't mix flavors in a batch). Sequential single-oven estimate.
   const BATCH_YIELD = 12;   // hardcoded for now (Andrew, 2026-10-13): a madeleine batch is 12
-  const PRODUCT_YIELD = { 'Pumpkin Muffin': 10, 'Maple Pecan': 11, 'Blueberry Muffin': 36, 'Chookie': 13, 'Pumpkin Bundt': 21, 'Cake Pop': 62, 'Lemon Poppy': 19 };   // keep in step with the recipe yields (Lemon Poppy 19 per Andrew 2026-11-07, set near REC_MADS)   // pieces per batch for products that aren't madeleines
+  // Andrew, 2026-11-18: Stanton's Lemon Poppy has no filling, so it needs no dropper pipette. Share of the Lemon Poppy bake that goes to stores that use them (from the step 1 per-store shortfall).
+  const NO_PIPETTE = { 'Stanton': ['Lemon Poppy'] };
+  const pipetteShare = () => { try { const r = wizLast && wizLast['Lemon Poppy']; if (!r || !(r.days > 0)) return 1; let all = 0, use = 0; for (const l of Object.keys(r.loc)) { all += r.loc[l].bake; if (!(NO_PIPETTE[l] || []).includes('Lemon Poppy')) use += r.loc[l].bake; } return all > 0 ? use / all : 1; } catch { return 1; } };
+  const PRODUCT_YIELD = { 'Pumpkin Muffin': 10, 'Maple Pecan': 11, 'Blueberry Muffin': 36, 'Chookie': 12, 'Pumpkin Bundt': 21, 'Cake Pop': 62, 'Lemon Poppy': 19 };   // keep in step with the recipe yields (Lemon Poppy 19 per Andrew 2026-11-07, set near REC_MADS)   // pieces per batch for products that aren't madeleines
   const flavorBatches = (n, p) => Math.ceil(Math.max(0, n) / (PRODUCT_YIELD[p] || BATCH_YIELD));
   // ---- Kitchen time model (commercial kitchen). Every number is editable under "Kitchen times". ----
   //  Batch prep happens before the batter rests: `prepGroup` batches at a time, ~`prepMin` minutes per go.
@@ -5578,7 +5581,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     if (!html) html = `<div class="db-empty"><div class="big">${ic('calendar')}</div>Nothing to plan.</div>`;
     document.getElementById('planList').innerHTML = html;
     const wiz = wizCompute(usable, todayYmd); wizLast = wiz;
-    for (const p of PRODUCTS) if (wiz[p].days > 0) planTotals[p] = wiz[p].bake;   // a span picked in step 1 replaces the date-driven total for that item
+    for (const p of PRODUCTS) { if (wiz[p].days > 0) planTotals[p] = wiz[p].bake; else if (wizSpan[p] === 0) planTotals[p] = 0; }   // "Not now" means nothing to bake; an item with no span picked yet keeps the date-driven total   // a span picked in step 1 replaces the date-driven total for that item
     planBakeTotals = planTotals; planDateTotals = dateTotals;
     try { boxPaint(); } catch (e) { console.error(e); }
     try { const cut = addDays(todayYmd, -7), m = {}; for (const d of Object.keys(planDatesCache)) if (d >= cut && d <= todayYmd) m[d] = planDatesCache[d]; Object.assign(m, dateTotals); planDatesCache = m; localStorage.setItem(PD_KEY, JSON.stringify(m)); } catch {}
@@ -6631,7 +6634,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   }
   function costDefaultYield(sec, it) {
     const m = COST_META[costItemKey(sec, it)]; if (m && m.yield) return m.yield;
-    if (sec === 'mad') return 12;   // hardcoded for now (Andrew, 2026-10-13): every madeleine costs as 12 per batch
+    if (sec === 'mad') return it.yield || 12;   // each madeleine's own yield (12; Maple Pecan 11; Lemon Poppy 19 per Andrew 2026-11-07, set near REC_MADS). Was a flat 12, which made the bake sheet and costs wrong for those two.
     if (it.key === 'blueberrymuffin') return 36;   // hardcoded for now
     if (sec === 'mad' && it.versions) return verYield(it, verLatest(it));   // the latest version's own piece count
     if (it.yield) return it.yield;
@@ -7522,15 +7525,16 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   // The bake plan follows the forecast: recipes whose product the plan says to bake are added, and their batches track the
   // plan until you change them by hand (then they're yours). Removing one keeps it off until the page is reloaded.
   const bsDismissed = new Set();
+  const bsPlanDropped = new Set();   // rows the plan removed when its batches hit 0; they come back when the plan needs them again
   function autoFillBakePlan() {
     try { void bakeSheet; } catch { return; }   // not initialised yet
     let changed = false;
     for (const key of Object.keys(BS_PRODUCT)) {
       const proj = bsProjectedBatches(key), ex = bakeSheet.find(b => b.key === key);
       if (proj > 0) {
-        if (!ex) { /* the list is this season's recipes; other forecast products are not added */ }
+        if (!ex) { if (bsPlanDropped.has(key) && !bsDismissed.has(key)) { bakeSheet.push({ key, b: proj, plan: true }); bsPlanDropped.delete(key); changed = true; } }   // otherwise: the list is this season's recipes, other forecast products are not added
         else if (!ex.manual && (ex.b !== proj || !ex.plan)) { ex.b = proj; ex.plan = true; changed = true; }
-      } else if (ex && ex.plan && !ex.manual) { bakeSheet.splice(bakeSheet.indexOf(ex), 1); changed = true; }
+      } else if (ex && ex.plan && !ex.manual) { bakeSheet.splice(bakeSheet.indexOf(ex), 1); bsPlanDropped.add(key); changed = true; }
     }
     if (changed) { saveBakeSheet(); renderBakeSheet(); }
   }
@@ -7820,11 +7824,11 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       // Piping bags: one per madeleine batch and one per Pumpkin Muffin batch (single use).
       if (f.sec === 'mad' || BS_PRODUCT[b.key] === 'Pumpkin Muffin') add('Piping Bags', Math.ceil(b.b - 1e-9));
       // Dropper pipettes: one per Lemon Poppy madeleine (filling injector).
-      if (BS_PRODUCT[b.key] === 'Lemon Poppy') add('Dropper Pipettes', Math.ceil(b.b * (PRODUCT_YIELD['Lemon Poppy'] || BATCH_YIELD) - 1e-9));
+      if (BS_PRODUCT[b.key] === 'Lemon Poppy') add('Dropper Pipettes', Math.ceil(b.b * (PRODUCT_YIELD['Lemon Poppy'] || BATCH_YIELD) * pipetteShare() - 1e-9));
     }
     // Nitrile gloves: a set of GLOVES_PER_SET (10-12, Andrew) per item per bake session. The whole plan counts every bake date from today (at least one session).
     { const items = new Set(list.map(b => b.key).filter(k => bsFind(k)));
-      const sessions = arguments.length ? 1 : Math.max(1, Object.keys(planDatesCache || {}).filter(d => d >= todayISO()).length);
+      const sessions = arguments.length ? 1 : Math.max(1, planBakeDates.filter(d => d >= todayISO()).length);
       if (items.size) add('Nitrile Gloves', items.size * sessions * GLOVES_PER_SET); }
     // ...and one per storage pan (a Cambro box is one layer, never stacked), only for the whole plan.
     if (!arguments.length) { try { const t = boxPlan().total; if (t > 0) add('Pan Liners', t); } catch {} }
@@ -7851,7 +7855,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       if (name === 'Pan Liners' && f.sec === 'mad') q += Math.ceil(b.b - 1e-9);
       if (name === 'Nitrile Gloves') q += GLOVES_PER_SET;
       if (name === 'Piping Bags' && (f.sec === 'mad' || BS_PRODUCT[b.key] === 'Pumpkin Muffin')) q += Math.ceil(b.b - 1e-9);
-      if (name === 'Dropper Pipettes' && BS_PRODUCT[b.key] === 'Lemon Poppy') q += Math.ceil(b.b * (PRODUCT_YIELD['Lemon Poppy'] || BATCH_YIELD) - 1e-9);
+      if (name === 'Dropper Pipettes' && BS_PRODUCT[b.key] === 'Lemon Poppy') q += Math.ceil(b.b * (PRODUCT_YIELD['Lemon Poppy'] || BATCH_YIELD) * pipetteShare() - 1e-9);
       if (q > 0) out.push({ label: f.it.name || b.key, batches: b.b, q });
     }
     return out;
