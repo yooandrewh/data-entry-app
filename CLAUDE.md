@@ -157,6 +157,10 @@ Costco receipts print a quantity line (`3 @ 4.99`) above an item whose price is 
 
 Inventory → **Storage** and Entry → **Storage** (6th type; the type buttons are now 3 x 2). Tracks finished pieces in the four storages (`STORAGES`: BP / Fullerton / La Mirada / Stanton Storage). Moves: **Kitchen → storage → delivery** or **Kitchen → delivery**. Sheet tab **Storage** (`Id, Group, Date, Storage, Item, Amount, Kind move|count, From, To, Note, Deleted`), `api/storage.js` (GET open; POST `add` / `remove` need `x-ledger-code`; soft delete; removing a row removes its whole Group). Only storages get rows: a move in is +, out is −, storage to storage is two rows with one Group; Kitchen and delivery appear only in From / To. A **count** row sets a storage's number for an item; moves after it add to it (`storageStock()` replays oldest first). Entry's From / To are dropdowns (`#stFrom`, `#stTo`); a move to a store delivery also writes the normal delivery entry (memo `From <storage>`), and Kitchen → delivery writes only that delivery. If the Storage write fails nothing is saved and the confirm sheet stays open. Storage moves are not in localStorage; history is on the Storage page. Not yet tied to the Boxes card; real pieces per pan still unknown.
 
+## Design pass (v1.149.00)
+
+Last CSS block: **every `<select>` has one style** (white, 1px #c9c9c9, 12px radius, 44px, black chevron; `.row-select` and `[data-labi]` excluded); the Forecast store toggle (`.fc-locs`) uses the pill style. On desktop (>=900px) all pages share a 1120px column, page chips sit centered at natural width, the Trends donut is 220px. On phones the 5 Inventory chips shrink (11px padding) to fit. Counts' total says "pieces", not "madeleines". Still open: coloured snowflake/flame/arrow icons in Forecast misses (breaks the B/W rule), today's half-finished day shows as a 0.0x miss, Stock's section headers use the old grey band style.
+
 ## Sizing rules (from Andrew's phone screenshots, v1.146.01)
 
 The headless check at 390px misses what iOS does. Apply these to every new or changed control, and look at the phone screenshot before calling it done.
@@ -169,7 +173,7 @@ The headless check at 390px misses what iOS does. Apply these to every new or ch
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.148.00**; the next feature is v1.149.00, a fix v1.148.01. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.149.00**; the next feature is v1.150.00, a fix v1.149.01. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 
