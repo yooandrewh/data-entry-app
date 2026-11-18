@@ -2261,6 +2261,9 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
 .pw-gross { margin: 14px 0 4px; padding: 14px 16px; border: 1px solid #000; border-radius: 12px; font-size: var(--fs-body); }
 .pw-gross b { font-size: var(--fs-figure); display: block; }
 .pw-gross small { display: block; margin-top: 4px; font-size: var(--fs-caption); color: #6b6b6b; }
+.pw-dest { margin-top: 10px; }
+.pw-dest > div { padding: 6px 0; border-top: 1px solid #e3e3e3; font-size: var(--fs-body); }
+.pw-dest b { font-size: var(--fs-body); }
 .pw-pans small { display: block; margin-top: 4px; font-size: var(--fs-caption); color: #6b6b6b; }
 @media (min-width: 900px) {
   #bakingPlan[data-step="1"] #planWiz #pwRows { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 56px; align-items: start; }
@@ -2650,7 +2653,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.170.00 · Nov 18, 3:55 PM PST</div>
+<div class="ver-badge">v1.170.01 · Nov 18, 3:57 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -5669,17 +5672,22 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     const items = [], byItem = ZERO(); let trays = 0;
     for (const p of PRODUCTS) {
       const n = Math.round(planBakeTotals[p] || 0); if (n <= 0) continue;
-      const boxes = Math.ceil(n / boxCap(p)); byItem[p] = boxes; items.push({ p, pcs: n, boxes }); trays += Math.ceil(n / boxSize(p));
+      const boxes = Math.ceil(n / boxCap(p)); byItem[p] = boxes;
+      // Where the pieces go: split by each store's step-1 shortfall (pans stay pooled; this only says where the pieces end up).
+      const L = (wizLast && wizLast[p] && wizLast[p].loc) || {}, ks = Object.keys(L).filter(k => L[k].bake > 0), tot = ks.reduce((a, k) => a + L[k].bake, 0);
+      let left = n; const dest = tot > 0 ? ks.map((k, i) => { const q = i === ks.length - 1 ? left : Math.min(left, Math.round(n * L[k].bake / tot)); left -= q; return { loc: k, pcs: q, pans: q / boxCap(p) }; }).filter(d => d.pcs > 0) : [];
+      items.push({ p, pcs: n, boxes, dest }); trays += Math.ceil(n / boxSize(p));
     }
     return { items, byItem, trays, total: items.reduce((a, x) => a + x.boxes, 0) };
   }
+  const destLine = x => (x.dest || []).map(d => `${esc(d.loc)} ${d.pcs} pcs (${(Math.round(d.pans * 10) / 10)} pan${Math.round(d.pans * 10) / 10 === 1 ? '' : 's'})`).join(' · ');
   function boxPaint() {
     const el = document.getElementById('pwBoxes'); if (!el) return;
     const bx = boxPlan(), any = PRODUCTS.some(p => (planBakeTotals[p] || 0) > 0);
     let h = `<h3>Boxes</h3>`;
     if (!any) { el.innerHTML = h + '<div class="bx-none">Nothing to box yet. Pick a span for at least one item in step 1.</div>'; return; }
     h += `<div class="bx-total"><b>${bx.total}</b> pan${bx.total === 1 ? '' : 's'} in all (a pan is one Cambro full-size 4" deep food pan, 14PP190). Only for the pieces you bake, not the stock already on hand. One item per pan, rounded up per item; not split by location.<br>${panLine(bx.total)}</div>`;
-    h += bx.items.map(x => `<div class="bx-row"><span>${esc(pdisp(x.p))}<small>${x.pcs} pieces · ${boxCap(x.p)} per pan${boxCfg.frozen && FROZEN_STACK.includes(x.p) ? ' (frozen, 2 layers)' : ''}</small></span><b>${x.boxes} pan${x.boxes === 1 ? '' : 's'}</b></div>`).join('');
+    h += bx.items.map(x => `<div class="bx-row"><span>${esc(pdisp(x.p))}<small>${x.pcs} pieces · ${boxCap(x.p)} per pan${boxCfg.frozen && FROZEN_STACK.includes(x.p) ? ' (frozen, 2 layers)' : ''}${x.dest && x.dest.length ? '<br>Goes to ' + destLine(x) : ''}</small></span><b>${x.boxes} pan${x.boxes === 1 ? '' : 's'}</b></div>`).join('');
     h += `<details><summary>Pan sizes</summary><div class="bx-set hd"><span>Item</span><span>Per pan</span></div>`
       + PRODUCTS.map(p => `<div class="bx-set"><span>${esc(pdisp(p))}</span><input type="number" inputmode="numeric" min="1" data-bx="size" data-p="${esc(p)}" value="${boxSize(p)}"></div>`).join('')
       + `<div class="bx-set hd"><span>Pans on hand</span><span>Count</span></div>`
@@ -5721,7 +5729,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     const grossHtml = gross > 0 ? `<div class="pw-gross"><b>${money0(gross)}</b> expected gross sales<small>${Math.round(grossPcs)} pieces over ${grossDays === 1 ? '1 day' : grossDays + ' days'} at your retail prices, both stores. Moves as you change the days.</small></div>` : '';
     let pans = '';
     if (bx && bx.total > 0) {
-      pans = `<div class="pw-pans"><b>${bx.total}</b> Cambro pan${bx.total === 1 ? '' : 's'} needed<button type="button" class="pw-frz${boxCfg.frozen ? ' on' : ''}" data-frz aria-pressed="${!!boxCfg.frozen}">Frozen: 2 layers (madeleines, bundt, cake pops)</button><small>${panLine(bx.total)}<br>Only for the pieces you bake, not the stock already on hand. Full-size, 4" deep. One item per pan, not split by location.</small></div>`;
+      pans = `<div class="pw-pans"><b>${bx.total}</b> Cambro pan${bx.total === 1 ? '' : 's'} needed<button type="button" class="pw-frz${boxCfg.frozen ? ' on' : ''}" data-frz aria-pressed="${!!boxCfg.frozen}">Frozen: 2 layers (madeleines, bundt, cake pops)</button>${bx.items.length ? '<div class="pw-dest">' + bx.items.map(x => `<div><b>${esc(pdisp(x.p))}</b> · ${x.boxes} pan${x.boxes === 1 ? '' : 's'}${x.dest && x.dest.length ? `<small>Goes to ${destLine(x)}</small>` : ''}</div>`).join('') + '</div>' : ''}<small>${panLine(bx.total)}<br>Only for the pieces you bake, not the stock already on hand. Full-size, 4" deep. One item per pan; the pan count is not split by location, the lines above say where the pieces go.</small></div>`;
     }
     const top = `<div class="pw-head"><b>What do you want to bake?</b><span>Drag the slider or pick how long each item should last. Each store's goal is ${STOCK_TARGET}x its expected sales for that time. You bake the gap between the goal and what it has now.</span></div>`
       + `<div class="pw-label">Make everything last</div><div class="pw-slide"><div class="pw-slide-val" id="pwAllVal">${dayLbl(all)}</div><input type="range" id="pwAll" min="1" max="90" step="1" value="${all}" aria-label="Days everything should last"><div class="pw-slide-ticks"><span>1 day</span><span>1 month</span><span>2 months</span><span>3 months</span></div></div>`
