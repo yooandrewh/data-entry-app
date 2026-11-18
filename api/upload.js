@@ -11,7 +11,7 @@
 // Cost cap: the token is refused when too many files are waiting or the waiting files are too big,
 // and every token carries a per-file size limit, an allowed content type, and a pathname that must start with inbox/.
 //
-// Required env vars: BLOB_READ_WRITE_TOKEN (set by connecting a Blob store), UPLOAD_CODE
+// Required env vars: BLOB_READ_WRITE_TOKEN or BLOB_STORE_ID (either is set by connecting a Blob store), UPLOAD_CODE
 
 import { handleUpload } from '@vercel/blob/client';
 import { list } from '@vercel/blob';
@@ -30,7 +30,7 @@ export default async function handler(req, res) {
 
   const code = process.env.UPLOAD_CODE;
   if (!code) return res.status(503).json({ error: 'Set UPLOAD_CODE in Vercel to enable uploads' });
-  if (!process.env.BLOB_READ_WRITE_TOKEN) return res.status(503).json({ error: 'Connect a Blob store in Vercel first' });
+  if (!(process.env.BLOB_READ_WRITE_TOKEN || process.env.BLOB_STORE_ID)) return res.status(503).json({ error: 'Connect a Blob store in Vercel first' });
 
   try {
     let body = req.body;

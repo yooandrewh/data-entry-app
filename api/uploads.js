@@ -6,7 +6,7 @@
 // Auth: both need the x-ledger-code header to match env LEDGER_CODE (503 if unset, 401 if wrong).
 // Only paths under inbox/ can be listed or removed. No paid API is called; remove is capped at MAX_REMOVE per call.
 //
-// Required env vars: BLOB_READ_WRITE_TOKEN, LEDGER_CODE
+// Required env vars: BLOB_READ_WRITE_TOKEN or BLOB_STORE_ID (set by connecting a Blob store), LEDGER_CODE
 
 import { list, del } from '@vercel/blob';
 
@@ -22,7 +22,7 @@ export default async function handler(req, res) {
   const code = process.env.LEDGER_CODE;
   if (!code) return res.status(503).json({ error: 'Set LEDGER_CODE in Vercel' });
   if (req.headers['x-ledger-code'] !== code) return res.status(401).json({ error: 'Wrong code' });
-  if (!process.env.BLOB_READ_WRITE_TOKEN) return res.status(503).json({ error: 'Connect a Blob store in Vercel first' });
+  if (!(process.env.BLOB_READ_WRITE_TOKEN || process.env.BLOB_STORE_ID)) return res.status(503).json({ error: 'Connect a Blob store in Vercel first' });
 
   try {
     if (req.method === 'GET') {
