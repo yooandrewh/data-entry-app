@@ -2230,6 +2230,16 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
 @media (min-width: 1800px) {
   body[data-page="sales"] #view-db #dbList > details.db-fold { grid-column: span 2; }
 }
+
+/* On hand fold: collapsed list, pack count first then weight on the right */
+.pn-fold > summary { list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between; min-height: 44px; }
+.pn-fold > summary::-webkit-details-marker { display: none; }
+.pn-fold > summary h3 { margin: 0; }
+.pn-fold > summary::after { content: '\203A'; font-size: var(--fs-lg); transition: transform .15s; }
+.pn-fold[open] > summary::after { transform: rotate(90deg); }
+.pn-r { text-align: right; }
+.pn-r .pn-w { display: block; color: var(--muted); font-size: var(--fs-caption); font-weight: 400; }
+.pn-r .pn-none { color: var(--muted); font-weight: 400; }
 </style>
 </head>
 <body>
@@ -2609,7 +2619,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.161.00 · Nov 18, 2:53 PM PST</div>
+<div class="ver-badge">v1.162.00 · Nov 18, 2:58 PM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -8052,6 +8062,19 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     const c = arr.filter(x => x.cold), sh = arr.filter(x => !x.cold), lab = t => `<div class="cold-h">${t}</div>`;
     return (c.length && sh.length) ? lab('Fridge &amp; freezer') + c.map(x => x.html).join('') + lab('Shelf') + sh.map(x => x.html).join('') : arr.map(x => x.html).join('');
   };
+  // On hand, right side: how many packs (tubs, bottles...) first, then the weight or volume. Nothing left reads "None".
+  const PACK_WORD = [[/baking powder/i, 'tub'], [/honey|emulsion|extract|lemon juice|pie spice|vanilla|syrup/i, 'bottle'], [/butter/i, 'box'], [/cone/i, '']];
+  function pnQty(s) {
+    if (s.onHand <= 1e-9) return '<b class="pn-none">None</b>';
+    const w = esc(buyFmt(s.onHand, s.unit));
+    const p = (typeof costPrices !== 'undefined' && costPrices[s.name]) || {};
+    const pk = p.amt > 0 ? toGrams(s.name, p.amt, p.unit).amt : 0;
+    if (!(pk > 0) || s.unit === 'pcs' || s.mixed) return `<b>${w}</b>`;
+    const n = Math.round(s.onHand / pk * 10) / 10;
+    const hit = PACK_WORD.find(x => x[0].test(s.name)), word = hit ? hit[1] : 'pack';
+    if (!word) return `<b>${w}</b>`;
+    return `<b>${n.toLocaleString()} ${word}${n === 1 ? '' : 's'}</b><small class="pn-w">${w}</small>`;
+  }
   function renderPantry() {
     const box = document.getElementById('homePantry'); if (!box) return;
     if (PANTRY === null && !pantryBusy) fetchPantry();
@@ -8064,7 +8087,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     const rowArr = stock.map(s => {
       const pl = need[s.name], same = pl && pl.unit === s.unit, nd = pl ? pl.qty : null, low = same && s.onHand + 1e-9 < nd;
       const sub = (s.uncounted ? `Not counted · only purchases since ${esc(pantryDate(s.date))}` : `Counted ${s.was ? esc(s.was) + ' (about ' + buyFmt(s.count, s.unit) + ')' : buyFmt(s.count, s.unit)} on ${esc(pantryDate(s.date))}`) + (s.bought && !s.uncounted ? ` · +${esc(buyFmt(s.bought, s.unit))} bought since` : '') + (s.mixed ? ' · some purchases use another unit and are not added' : '') + (pl ? ` · plan needs ${esc(buyFmt(nd, pl.unit))}${same ? '' : ` (counted in ${esc(s.unit)}, not compared)`}` : '') + (s.note ? ` · ${esc(s.note)}` : '');
-      return { cold: isCold(s.name), html: `<div class="pn-row"><span class="pn-main"><b>${esc(s.name)}</b><small>${sub}</small></span><span class="pn-r">${low ? '<i class="pn-flag">Low</i>' : ''}<b>${esc(buyFmt(s.onHand, s.unit))}</b>${s.id ? `<button class="pn-x" data-pnx="${esc(s.id)}" aria-label="Remove this count">✕</button>` : ''}</span></div>` };
+      return { cold: isCold(s.name), html: `<div class="pn-row"><span class="pn-main"><b>${esc(s.name)}</b><small>${sub}</small></span><span class="pn-r">${low ? '<i class="pn-flag">Low</i>' : ''}${pnQty(s)}${s.id ? `<button class="pn-x" data-pnx="${esc(s.id)}" aria-label="Remove this count">✕</button>` : ''}</span></div>` };
     });
     const rows = coldSplit(rowArr);
     const names = (typeof costAllNames === 'function' ? costAllNames() : []).sort((a, b) => a.localeCompare(b));
@@ -8078,8 +8101,8 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
         `<div class="pn-note">Whole bake plan against your counts and approved purchases. Tick items as you shop. For one bake at a time, open Bake Day.</div><div class="pn-bar"><button type="button" class="btn-ghost" id="pnBake">Open Bake Day</button></div>`;
     } catch {}
     box.innerHTML = (pantryErr ? `<div class="pn-note">${esc(pantryErr)}</div>` : '') +
-      `<h3>On hand</h3>` + (rows ? `<div class="pn-list">${rows}</div>` : '<div class="pn-note">No counts yet. Count what is in the kitchen and save it in Count something, below. On hand then updates itself from approved purchases.</div>') +
-      `<div class="pn-note">On hand is your latest count plus approved ledger purchases after that date. A new count replaces it. ✕ removes the latest count, so the one before it shows again.</div>` +
+      `<details class="pn-fold"><summary><h3>On hand (${stock.length})</h3></summary>` + (rows ? `<div class="pn-list">${rows}</div>` : '<div class="pn-note">No counts yet. Count what is in the kitchen and save it in Count something, below. On hand then updates itself from approved purchases.</div>') +
+      `<div class="pn-note">On hand is your latest count plus approved ledger purchases after that date. A new count replaces it. ✕ removes the latest count, so the one before it shows again.</div></details>` +
       wtb +
       `<h3>Count something</h3>` +
       `<div class="pn-form"><label>Item</label><input data-pn="item" list="pnItems" autocomplete="off" value="${esc(keep.item || '')}" placeholder="Start typing an ingredient"><datalist id="pnItems">${names.map(n => `<option value="${esc(n)}">`).join('')}</datalist>` +
