@@ -2168,7 +2168,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.126.00 · Nov 17, 8:29 PM PST</div>
+<div class="ver-badge">v1.126.01 · Nov 17, 8:32 PM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -7179,6 +7179,10 @@
   try { buyExtras = JSON.parse(localStorage.getItem(BUY_EXTRA)) || []; } catch {}
   const buySave = () => { try { localStorage.setItem(BUY_KEY, JSON.stringify(buyChecked)); localStorage.setItem(BUY_EXTRA, JSON.stringify(buyExtras)); localStorage.setItem(BUY_RECIPES, JSON.stringify(buyRecipes)); } catch {} };
   const money2 = n => '$' + n.toFixed(2);
+  // Approximate g per ml for liquids the ledger sells by volume, so a count or purchase in ml can be compared with a plan written in grams.
+  // Physical averages (about 1% to 3% off between brands). Items not listed are never converted.
+  const DENSITY = { 'Milk': 1.03, 'Organic Whole Milk': 1.03, 'Coconut Milk': 0.97, 'Heavy Cream': 0.99, 'Lemon Juice': 1.03, 'Vegetable Oil': 0.92, 'Vanilla Extract': 0.88, 'Lemon Emulsion': 0.95, 'Ube Extract': 1.0, 'Wine': 0.99, 'Honey': 1.42, 'Maple Syrup': 1.33 };
+  const toGrams = (name, amt, unit) => unit === 'ml' && DENSITY[name] ? { amt: amt * DENSITY[name], unit: 'g', conv: true } : { amt, unit };
   function buyItems(list = [...bakeSheet, ...buyRecipes]) {
     if (!Object.keys(costPrices).length) loadCosts();
     const need = new Map();
@@ -7195,8 +7199,9 @@
     }
     return [...need.entries()].map(([name, qty]) => {
       const p = costPrices[name] || {}, unit = isCone(name) ? 'pcs' : 'g';
-      const pk = p.amt > 0 && p.price > 0 ? Math.max(1, Math.ceil(qty / p.amt - 1e-9)) : null;
-      return { name, qty, unit, pk, pkAmt: p.amt, cost: pk ? pk * p.price : null };
+      const pkAmt = p.amt > 0 ? toGrams(name, p.amt, p.unit).amt : p.amt;   // a pack sold in ml is sized in grams here, like the plan
+      const pk = pkAmt > 0 && p.price > 0 ? Math.max(1, Math.ceil(qty / pkAmt - 1e-9)) : null;
+      return { name, qty, unit, pk, pkAmt, cost: pk ? pk * p.price : null };
     }).sort((a, b) => a.name.localeCompare(b.name));
   }
   const buyFmt = (n, u) => n >= 1000 ? `${(Math.round(n / 10) / 100).toLocaleString()} ${u === 'ml' ? 'L' : 'kg'}` : `${Math.round(n).toLocaleString()} ${u}`;
@@ -7234,11 +7239,13 @@
     ledgerReceipts().forEach(r => r.items.filter(l => l.approved).forEach(l => buys.push(l)));
     const out = [...latest.entries()].map(([name, p]) => {
       let bought = 0, mixed = false;
+      const c = toGrams(name, p.amt, p.unit);   // a count in ml becomes grams when the item has a density
       buys.forEach(l => {
         if (costCanon(l.item) !== name || !(isoD(l.date) > isoD(p.date))) return;
-        if (l.unit === p.unit || (p.unit === 'pcs' && isCone(name))) bought += l.amt || 0; else mixed = true;
+        const b = toGrams(name, l.amt || 0, l.unit);
+        if (b.unit === c.unit || (c.unit === 'pcs' && isCone(name))) bought += b.amt; else mixed = true;
       });
-      return { name, unit: p.unit, count: p.amt, date: p.date, note: p.note, id: p.id, bought, onHand: p.amt + bought, mixed };
+      return { name, unit: c.unit, count: c.amt, date: p.date, note: p.note, id: p.id, bought, onHand: c.amt + bought, mixed, was: c.conv ? `${Math.round(p.amt)} ml` : '' };
     });
     // Items never counted: once the pantry has a first count, approved purchases dated after it are still on hand (a floor, not a count).
     const start = (PANTRY || []).map(p => isoD(p.date)).filter(Boolean).sort()[0];
@@ -7246,8 +7253,9 @@
       const seen = new Set(latest.keys()), un = new Map();
       buys.forEach(l => {
         const name = costCanon(l.item); if (seen.has(name) || !(isoD(l.date) > start)) return;
-        const u = un.get(name) || { name, unit: isCone(name) ? 'pcs' : l.unit, count: 0, date: start, note: '', id: null, bought: 0, onHand: 0, mixed: false, uncounted: true };
-        if (l.unit === u.unit || (u.unit === 'pcs' && isCone(name))) { u.bought += l.amt || 0; u.onHand += l.amt || 0; } else u.mixed = true;
+        const u = un.get(name) || { name, unit: isCone(name) ? 'pcs' : toGrams(name, 0, l.unit).unit, count: 0, date: start, note: '', id: null, bought: 0, onHand: 0, mixed: false, uncounted: true };
+        const b = toGrams(name, l.amt || 0, l.unit);
+        if (b.unit === u.unit || (u.unit === 'pcs' && isCone(name))) { u.bought += b.amt; u.onHand += b.amt; } else u.mixed = true;
         un.set(name, u);
       });
       un.forEach(u => out.push(u));
@@ -7266,7 +7274,7 @@
     let need = {}; try { buyItems().forEach(i => { need[i.name] = { qty: i.qty, unit: i.unit }; }); } catch {}
     const rows = stock.map(s => {
       const pl = need[s.name], same = pl && pl.unit === s.unit, nd = pl ? pl.qty : null, low = same && s.onHand + 1e-9 < nd;
-      const sub = (s.uncounted ? `Not counted · only purchases since ${esc(pantryDate(s.date))}` : `Counted ${buyFmt(s.count, s.unit)} on ${esc(pantryDate(s.date))}`) + (s.bought && !s.uncounted ? ` · +${esc(buyFmt(s.bought, s.unit))} bought since` : '') + (s.mixed ? ' · some purchases use another unit and are not added' : '') + (pl ? ` · plan needs ${esc(buyFmt(nd, pl.unit))}${same ? '' : ` (counted in ${esc(s.unit)}, not compared)`}` : '') + (s.note ? ` · ${esc(s.note)}` : '');
+      const sub = (s.uncounted ? `Not counted · only purchases since ${esc(pantryDate(s.date))}` : `Counted ${s.was ? esc(s.was) + ' (about ' + buyFmt(s.count, s.unit) + ')' : buyFmt(s.count, s.unit)} on ${esc(pantryDate(s.date))}`) + (s.bought && !s.uncounted ? ` · +${esc(buyFmt(s.bought, s.unit))} bought since` : '') + (s.mixed ? ' · some purchases use another unit and are not added' : '') + (pl ? ` · plan needs ${esc(buyFmt(nd, pl.unit))}${same ? '' : ` (counted in ${esc(s.unit)}, not compared)`}` : '') + (s.note ? ` · ${esc(s.note)}` : '');
       return `<div class="pn-row"><span class="pn-main"><b>${esc(s.name)}</b><small>${sub}</small></span><span class="pn-r">${low ? '<i class="pn-flag">Low</i>' : ''}<b>${esc(buyFmt(s.onHand, s.unit))}</b>${s.id ? `<button class="pn-x" data-pnx="${esc(s.id)}" aria-label="Remove this count">✕</button>` : ''}</span></div>`;
     }).join('');
     const names = (typeof costAllNames === 'function' ? costAllNames() : []).sort((a, b) => a.localeCompare(b));
