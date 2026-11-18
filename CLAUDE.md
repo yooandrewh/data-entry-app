@@ -72,6 +72,10 @@ Tab **Pantry** (`Id, Item, Amount, Unit, Date, Note, Deleted`); each row is one 
 **On hand = latest count + approved ledger item lines dated after it, in the same unit** (`pantryStock()`); lines in another unit set `mixed`. Compared with `buyItems()` for a "Low" flag. Units g, kg, oz, lb, ml, L, fl oz (converted to base on save) and pcs.
 Status: live API tested (add/remove round trip); browser-tested 2026-11-17 on desktop Chrome (10 checks pass); **not yet tested on a phone**.
 
+## Shopping list (v1.144.00)
+
+Every To buy / What to buy list (Pantry, Bake Day, Plan step 2) is grouped by vendor (`bkBuyList`, vendor from the newest approved ledger price, `Other` / `No price yet` last) and each row leads with the pack count (`3 packs All Purpose Flour`, pack size in lb and kg). **`BUY_WASTE = 0.2`: `buyItems()` adds 20% for waste** (Andrew, 2026-11-18), so shopping and the Bake done pantry use include it; the printed bake sheet still shows the plain recipe.
+
 ## Refresh (v1.142.00)
 
 **v1.142.01:** while Entry is open its nav button is lit (others unlit, `paintNavForEntry`) and the page behind is frozen (`body` fixed at the saved scroll, restored in `closeEntry`).
@@ -141,7 +145,7 @@ Costco receipts print a quantity line (`3 @ 4.99`) above an item whose price is 
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.143.00**; the next feature is v1.144.00, a fix v1.143.01. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.144.00**; the next feature is v1.145.00, a fix v1.144.01. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 
