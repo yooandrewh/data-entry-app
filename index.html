@@ -2266,6 +2266,8 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   #pwRows .pw-pans, #pwRows .pw-note { max-width: 760px; }
   #planWiz .pw-slide { max-width: 760px; }
 }
+.pw-frz { display: block; width: 100%; margin: 10px 0 2px; min-height: 44px; border: 1px solid #c9c9c9; border-radius: 22px; background: #fff; color: #000; font-family: inherit; font-size: var(--fs-caption); font-weight: 600; padding: 0 12px; }
+.pw-frz.on { background: #000; color: #fff; border-color: #000; }
 </style>
 </head>
 <body>
@@ -2645,7 +2647,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.169.06 · Nov 18, 3:44 PM PST</div>
+<div class="ver-badge">v1.169.07 · Nov 18, 3:46 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -5654,13 +5656,16 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   const BOX_FIT = { 'Lemon Poppy': 36, 'Sea Salt': 36, 'Maple Pecan': 36, 'Pumpkin Muffin': 18, 'Blueberry Muffin': 18, 'Pumpkin Bundt': 22, 'Cookie': 40, 'Chookie': 40, 'Cake Pop': 50 };
   const boxSize = p => Math.max(1, Math.floor(Number(boxCfg.size[p]) || BOX_FIT[p] || BATCH_YIELD));
   // Pans are pooled across stores: one item per pan, rounded up per item. Where the pans end up is not planned here.
+  // Frozen: madeleines, Pumpkin Bundt and Cake Pops stack two layers in a pan, so a pan holds double (Andrew, 2026-11-18). Muffins and cookies do not stack.
+  const FROZEN_STACK = ['Lemon Poppy', 'Sea Salt', 'Maple Pecan', 'Pumpkin Bundt', 'Cake Pop'];
+  const boxCap = p => boxSize(p) * (boxCfg.frozen && FROZEN_STACK.includes(p) ? 2 : 1);
   function boxPlan() {
-    const items = [], byItem = ZERO();
+    const items = [], byItem = ZERO(); let trays = 0;
     for (const p of PRODUCTS) {
       const n = Math.round(planBakeTotals[p] || 0); if (n <= 0) continue;
-      const boxes = Math.ceil(n / boxSize(p)); byItem[p] = boxes; items.push({ p, pcs: n, boxes });
+      const boxes = Math.ceil(n / boxCap(p)); byItem[p] = boxes; items.push({ p, pcs: n, boxes }); trays += Math.ceil(n / boxSize(p));
     }
-    return { items, byItem, total: items.reduce((a, x) => a + x.boxes, 0) };
+    return { items, byItem, trays, total: items.reduce((a, x) => a + x.boxes, 0) };
   }
   function boxPaint() {
     const el = document.getElementById('pwBoxes'); if (!el) return;
@@ -5668,7 +5673,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     let h = `<h3>Boxes</h3>`;
     if (!any) { el.innerHTML = h + '<div class="bx-none">Nothing to box yet. Pick a span for at least one item in step 1.</div>'; return; }
     h += `<div class="bx-total"><b>${bx.total}</b> pan${bx.total === 1 ? '' : 's'} in all (a pan is one Cambro full-size 4" deep food pan, 14PP190). Only for the pieces you bake, not the stock already on hand. One item per pan, rounded up per item; not split by location.<br>${panLine(bx.total)}</div>`;
-    h += bx.items.map(x => `<div class="bx-row"><span>${esc(pdisp(x.p))}<small>${x.pcs} pieces · ${boxSize(x.p)} per pan</small></span><b>${x.boxes} pan${x.boxes === 1 ? '' : 's'}</b></div>`).join('');
+    h += bx.items.map(x => `<div class="bx-row"><span>${esc(pdisp(x.p))}<small>${x.pcs} pieces · ${boxCap(x.p)} per pan${boxCfg.frozen && FROZEN_STACK.includes(x.p) ? ' (frozen, 2 layers)' : ''}</small></span><b>${x.boxes} pan${x.boxes === 1 ? '' : 's'}</b></div>`).join('');
     h += `<details><summary>Pan sizes</summary><div class="bx-set hd"><span>Item</span><span>Per pan</span></div>`
       + PRODUCTS.map(p => `<div class="bx-set"><span>${esc(pdisp(p))}</span><input type="number" inputmode="numeric" min="1" data-bx="size" data-p="${esc(p)}" value="${boxSize(p)}"></div>`).join('')
       + `<div class="bx-set hd"><span>Pans on hand</span><span>Count</span></div>`
@@ -5706,7 +5711,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     }).join('');
     let pans = '';
     if (bx && bx.total > 0) {
-      pans = `<div class="pw-pans"><b>${bx.total}</b> Cambro pan${bx.total === 1 ? '' : 's'} needed<small>${panLine(bx.total)}<br>Only for the pieces you bake, not the stock already on hand. Full-size, 4" deep. One item per pan, not split by location.</small></div>`;
+      pans = `<div class="pw-pans"><b>${bx.total}</b> Cambro pan${bx.total === 1 ? '' : 's'} needed<button type="button" class="pw-frz${boxCfg.frozen ? ' on' : ''}" data-frz aria-pressed="${!!boxCfg.frozen}">Frozen: 2 layers (madeleines, bundt, cake pops)</button><small>${panLine(bx.total)}<br>Only for the pieces you bake, not the stock already on hand. Full-size, 4" deep. One item per pan, not split by location.</small></div>`;
     }
     const top = `<div class="pw-head"><b>What do you want to bake?</b><span>Drag the slider or pick how long each item should last. Each store's goal is ${STOCK_TARGET}x its expected sales for that time. You bake the gap between the goal and what it has now.</span></div>`
       + `<div class="pw-label">Make everything last</div><div class="pw-slide"><div class="pw-slide-val" id="pwAllVal">${dayLbl(all)}</div><input type="range" id="pwAll" min="1" max="90" step="1" value="${all}" aria-label="Days everything should last"><div class="pw-slide-ticks"><span>1 day</span><span>1 month</span><span>2 months</span><span>3 months</span></div></div>`
@@ -5754,6 +5759,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     }
   }
   document.getElementById('planWiz').addEventListener('click', e => {
+    if (e.target.closest('[data-frz]')) { boxCfg.frozen = !boxCfg.frozen; boxSave(); wizPaint(); return; }
     const ch = e.target.closest('button[data-wall]');
     if (ch) { for (const p of PRODUCTS) wizSpan[p] = Number(ch.dataset.wall); wizSave(); if (lastPlanSales) paintPlan(false); else wizPaint(); return; }
     const g = e.target.closest('[data-wgo],[data-wstep]'); if (!g) return;
@@ -7831,7 +7837,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       const sessions = arguments.length ? 1 : Math.max(1, planBakeDates.filter(d => d >= todayISO()).length);
       if (items.size) add('Nitrile Gloves', items.size * sessions * GLOVES_PER_SET); }
     // ...and one per storage pan (a Cambro box is one layer, never stacked), only for the whole plan.
-    if (!arguments.length) { try { const t = boxPlan().total; if (t > 0) add('Pan Liners', t); } catch {} }
+    if (!arguments.length) { try { const t = boxPlan().trays; if (t > 0) add('Pan Liners', t); } catch {} }
     return [...need.entries()].map(([name, qty]) => {
       const p = costPrices[name] || {}, unit = isCone(name) ? 'pcs' : 'g';
       const pkAmt = p.amt > 0 ? toGrams(name, p.amt, p.unit).amt : p.amt;   // a pack sold in ml is sized in grams here, like the plan

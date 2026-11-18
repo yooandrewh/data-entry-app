@@ -207,6 +207,8 @@ Ingredients: **Dark Chocolate 70% and Dark Chocolate Couverture are retired into
 
 **v1.169.06: audit fixes** (independent audit of the plan path). (1) `autoFillBakePlan` dropped a bake-sheet row when its plan hit 0 and never re-added it (drag the slider low and back and only bundts stayed); now `bsPlanDropped` brings it back. (2) Chookie is 12 per batch (Andrew; `PRODUCT_YIELD`). (3) "Not now" (span 0) gives 0 to bake; an item with no span picked yet keeps the date-driven total. (4) `STORE_PROXY`: Stanton's Lemon Poppy rate is its Lemon Poppy **plus** Sea Salt sales (Sea Salt stopped there, so Sea Salt alone faded toward 0). (5) Gloves: sessions = planned bake dates from today, not delivery dates. (6) `costDefaultYield` for madeleines returns the recipe's own yield (it was a flat 12, so Lemon Poppy showed 12 per batch and cost per piece was too high; Maple Pecan 11). (7) **Stanton Lemon Poppy needs no dropper pipette** (Andrew): `NO_PIPETTE` / `pipetteShare()` scale the pipette count by the La Mirada share of the Lemon Poppy bake. **Still open from the audit:** `bakeEffort()` treats every item as a madeleine at 12 per pan (kitchen hours overstated for 1.5 months, about 12.7 h was a wrong figure); Bake Day's per-date views and the "Only <date>" Pieces-made prefill still come from the date-driven plan, not step-1 spans; old saved bake sheets and `boxCfg.v1` sizes on a device keep old numbers.
 
+**v1.169.07: Frozen toggle** on Plan step 1's pans card (`boxCfg.frozen`, `FROZEN_STACK`, `boxCap()`): when on, madeleines, Pumpkin Bundt and Cake Pops hold double per pan (two layers; muffins and cookies do not). It changes the pan count and the "per pan" lines on step 3; Pan Liners still follow `boxPlan().trays` (one per layer, assumed, not confirmed).
+
 ## Design pass (v1.149.00)
 
 Last CSS block: **every `<select>` has one style** (white, 1px #c9c9c9, 12px radius, 44px, black chevron; `.row-select` and `[data-labi]` excluded); the Forecast store toggle (`.fc-locs`) uses the pill style. On desktop (>=900px) all pages share a 1120px column, page chips sit centered at natural width, the Trends donut is 220px. On phones the 5 Inventory chips shrink (11px padding) to fit. Counts' total says "pieces", not "madeleines". Still open: coloured snowflake/flame/arrow icons in Forecast misses (breaks the B/W rule), today's half-finished day shows as a 0.0x miss, Stock's section headers use the old grey band style.
@@ -227,7 +229,7 @@ The headless check at 390px misses what iOS does. Apply these to every new or ch
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.169.06**; the next feature is v1.170.00, a fix v1.169.07. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.169.07**; the next feature is v1.170.00, a fix v1.169.08. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 
