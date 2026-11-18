@@ -2244,6 +2244,28 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
 .buy-open { display: inline-block; margin: 0 0 6px 49px; min-height: 32px; line-height: 32px; font-size: var(--fs-caption); font-weight: 600; color: var(--text); text-decoration: underline; }
 
 .buy-spare { font-weight: 600; }
+/* Desktop refresh button (pull-to-refresh needs a touch screen) */
+#refreshBtn { display: none; }
+@media (min-width: 900px) {
+  #refreshBtn { display: inline-flex !important; align-items: center; gap: 6px; position: fixed; top: 10px; right: 16px; z-index: 60; min-height: 44px; padding: 0 16px; border: 1px solid #c9c9c9; border-radius: 22px; background: #fff; color: #000; font-family: inherit; font-size: var(--fs-caption); font-weight: 600; cursor: pointer; }
+  #refreshBtn:hover { background: #f2f2f2; }
+  .ver-badge, body.home-landing .ver-badge { right: 128px !important; top: 22px !important; }
+}
+/* Plan step 1: slider and pans */
+.pw-slide { margin: 0 0 8px; }
+.pw-slide-val { font-size: var(--fs-lg); font-weight: 700; margin-bottom: 4px; }
+.pw-slide input[type=range] { width: 100%; height: 44px; margin: 0; accent-color: #000; touch-action: pan-y; }
+.pw-slide-ticks { display: flex; justify-content: space-between; font-size: var(--fs-micro); color: #6b6b6b; }
+.pw-pans { margin: 14px 0 4px; padding: 14px 16px; border: 1px solid #c9c9c9; border-radius: 12px; font-size: var(--fs-body); }
+.pw-pans b { font-size: var(--fs-title); }
+.pw-pans small { display: block; margin-top: 4px; font-size: var(--fs-caption); color: #6b6b6b; }
+@media (min-width: 900px) {
+  #bakingPlan[data-step="1"] #planWiz #pwRows { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 56px; align-items: start; }
+  #pwRows > * { grid-column: 1 / -1; min-width: 0; }
+  #pwRows > .pw-row { grid-column: auto; }
+  #pwRows .pw-pans, #pwRows .pw-note { max-width: 760px; }
+  #planWiz .pw-slide { max-width: 760px; }
+}
 </style>
 </head>
 <body>
@@ -2623,7 +2645,8 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.168.00 · Nov 18, 3:26 PM PST</div>
+<div class="ver-badge">v1.169.00 · Nov 18, 3:30 PM PST</div>
+<button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -5550,7 +5573,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       html += `<div class="proj-card"><h3>${c.loc}</h3><div class="proj-sub">${c.st.hasInv ? 'No recent sales to forecast from.' : 'Add an inventory count to include this store.'}</div></div>`;
     if (!html) html = `<div class="db-empty"><div class="big">${ic('calendar')}</div>Nothing to plan.</div>`;
     document.getElementById('planList').innerHTML = html;
-    const wiz = wizCompute(usable, todayYmd);
+    const wiz = wizCompute(usable, todayYmd); wizLast = wiz;
     for (const p of PRODUCTS) if (wiz[p].days > 0) planTotals[p] = wiz[p].bake;   // a span picked in step 1 replaces the date-driven total for that item
     planBakeTotals = planTotals; planDateTotals = dateTotals;
     try { boxPaint(); } catch (e) { console.error(e); }
@@ -5585,19 +5608,22 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   const wizSave = () => { try { localStorage.setItem('planSpans.v1', JSON.stringify(wizSpan)); } catch {} };
   // Pieces to bake per item so it lasts `days` days: expected sales (weekday/weekend rates, trend counted for up to 4 weeks) plus the same
   // variability buffer the forecast uses, minus what is on hand, summed over the stores that have counts.
+  // Each store is stocked up to STOCK_TARGET x its own expected sales over the span (or the CV buffer when that is bigger, which short spans get);
+  // the shortfall is worked out store by store, so extra stock at one store never covers a shortage at the other.
+  const STOCK_TARGET = 1.2;
   function wizCompute(usable, today) {
     const out = {};
     for (const p of PRODUCTS) {
-      const days = wizSpan[p] || 0, r = { days, need: 0, have: 0, bake: 0, rate: 0 };
+      const days = wizSpan[p] || 0, r = { days, need: 0, have: 0, bake: 0, rate: 0, loc: {} };
       if (days > 0) for (const c of usable) {
         let need = 0;
         for (let i = 1; i <= days; i++) {
           const dt = parseEntryDate(addDays(today, i)), we = [0, 6].includes(dt.getDay());
           need += (we ? c.dowr.rate[p].we : c.dowr.rate[p].wd) * Math.pow(c.st.growth || 1, Math.min(i - 1, 28) / 7);
         }
-        const m = Math.min(0.6, FCAST_Z * (c.st.dailyCV || 0) / Math.sqrt(days)), n = need * (1 + m);
-        const hv = c.st.stock[p] || 0;
-        r.rate += need / days; r.need += n; r.have += hv; r.bake += Math.max(0, Math.ceil(n - hv));
+        const m = Math.min(0.6, FCAST_Z * (c.st.dailyCV || 0) / Math.sqrt(days)), n = need * Math.max(STOCK_TARGET, 1 + m);
+        const hv = c.st.stock[p] || 0, b = Math.max(0, Math.ceil(n - hv));
+        r.rate += need / days; r.need += n; r.have += hv; r.bake += b; r.loc[c.loc] = { need: n, have: hv, bake: b };
       }
       if (days > 0) { const pool = storedPool(p); if (pool > 0) { r.have += pool; r.bake = Math.max(0, r.bake - pool); } }
       out[p] = r;
@@ -5627,10 +5653,11 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       const bp = Math.min(n, Math.max(0, Math.floor(Number(boxCfg.hold.bp[p]) || 0)));
       const fu = Math.min(n - bp, Math.max(0, Math.floor(Number(boxCfg.hold.fu[p]) || 0)));
       const rest = n - bp - fu, a = rate[p]['La Mirada'], b = rate[p]['Stanton'];
-      const lm = a + b > 0 ? Math.round(rest * a / (a + b)) : rest, st = rest - lm;
+      const wl = wizLast && wizLast[p] && wizLast[p].days > 0 ? wizLast[p].loc : null, wa = wl && wl['La Mirada'] ? wl['La Mirada'].bake : 0, wb = wl && wl['Stanton'] ? wl['Stanton'].bake : 0;   // per-store shortfall from step 1 when there is one
+      const lm = wa + wb > 0 ? Math.round(rest * wa / (wa + wb)) : a + b > 0 ? Math.round(rest * a / (a + b)) : rest, st = rest - lm;
       [bp, fu, lm, st].forEach((q, i) => { if (q > 0) { out[i].items.push({ p, pcs: q, boxes: Math.ceil(q / boxSize(p)) }); tot[p] += Math.ceil(q / boxSize(p)); } });
     }
-    return { locs: out, total: Object.values(tot).reduce((x, y) => x + y, 0) };
+    return { locs: out, byItem: tot, total: Object.values(tot).reduce((x, y) => x + y, 0) };
   }
   function boxPaint() {
     const el = document.getElementById('pwBoxes'); if (!el) return;
@@ -5656,6 +5683,36 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     });
   }
   let boxOpen = false;
+  const dayLbl = d => d === 1 ? '1 day' : d + ' days' + (d >= 21 ? ' · about ' + String(Math.round(d / 3) / 10).replace(/\.0$/, '') + ' months' : '');
+  let wizAllLast = 45;
+  function wizStep1() {
+    const same = PRODUCTS.every(q => wizSpan[q] > 0 && wizSpan[q] === wizSpan[PRODUCTS[0]]);
+    if (same) wizAllLast = wizSpan[PRODUCTS[0]];
+    const all = wizAllLast;
+    const opts = sel => (WIZ_SPANS.some(([d]) => d === sel) || !sel ? '' : `<option value="${sel}" selected>${dayLbl(sel)}</option>`) + WIZ_SPANS.map(([d, l]) => `<option value="${d}"${d === sel ? ' selected' : ''}>${l}</option>`).join('');
+    let bx = null; try { bx = boxPlan(); } catch {}
+    const rows = PRODUCTS.map(p => {
+      const r = (wizLast && wizLast[p]) || { days: 0, loc: {} };
+      let sub = 'Not planned';
+      if (r.days > 0) {
+        const pans = bx && bx.byItem[p] ? bx.byItem[p] : 0;
+        const locLine = Object.keys(r.loc).map(l => `${esc(l)}: have ${Math.round(r.loc[l].have)}, goal ${Math.round(r.loc[l].need)}`).join('<br>');
+        sub = !(r.rate > 0) ? 'No recent sales to forecast from'
+          : r.bake > 0 ? `Bake <b>${r.bake}</b> · ${flavorBatches(r.bake, p)} batch${flavorBatches(r.bake, p) === 1 ? '' : 'es'}${pans ? ` · <b>${pans}</b> pan${pans === 1 ? '' : 's'}` : ''}<br>${locLine}`
+          : `Enough on hand<br>${locLine}`;
+      }
+      return `<div class="pw-row"><span class="pw-nm">${tok(p)}<span><b>${esc(p)}</b><small>${sub}</small></span></span><select data-wsp="${esc(p)}" aria-label="${esc(p)} should last">${opts(r.days)}</select></div>`;
+    }).join('');
+    let pans = '';
+    if (bx && bx.total > 0) {
+      const parts = bx.locs.map(l => [l.name, l.items.reduce((a, x) => a + x.boxes, 0)]).filter(x => x[1] > 0);
+      pans = `<div class="pw-pans"><b>${bx.total}</b> Cambro pan${bx.total === 1 ? '' : 's'} needed<small>${parts.map(([n, c]) => `${esc(n.replace(' Storage', ''))} ${c}`).join(' · ')} · full-size, 4" deep. One item per pan, one layer.</small></div>`;
+    }
+    const top = `<div class="pw-head"><b>What do you want to bake?</b><span>Drag the slider or pick how long each item should last. Each store's goal is ${STOCK_TARGET}x its expected sales for that time. You bake the gap between the goal and what it has now.</span></div>`
+      + `<div class="pw-label">Make everything last</div><div class="pw-slide"><div class="pw-slide-val" id="pwAllVal">${dayLbl(all)}</div><input type="range" id="pwAll" min="1" max="90" step="1" value="${all}" aria-label="Days everything should last"><div class="pw-slide-ticks"><span>1 day</span><span>1 month</span><span>2 months</span><span>3 months</span></div></div>`
+      + `<div class="pw-chips">${[[1, '1 day'], [7, '1 week'], [30, '1 month'], [45, '1.5 months']].map(([d, l]) => `<button type="button" data-wall="${d}" class="${PRODUCTS.every(q => wizSpan[q] === d) ? 'on' : ''}">${l}</button>`).join('')}</div>`;
+    return { all, top, rows: pans + `<div class="pw-label">Or set each item</div>` + rows + `<div class="pw-note">Sales are assumed to grow 1.2% a week on top of the recent daily rate (counted for up to 4 weeks).</div>` };
+  }
   function wizPaint() {
     const box = document.getElementById('planWiz'), root = document.getElementById('bakingPlan');
     if (!box || !root) return;
@@ -5663,19 +5720,15 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     const steps = [['1', 'Bake'], ['2', 'Ingredients'], ['3', 'Bake sheet']];
     let h = `<div class="pw-steps">${steps.map(([n, l]) => `<button type="button" data-wstep="${n}" class="${Number(n) === wizStep ? 'on' : ''}"><i>${n}</i>${l}</button>`).join('')}</div>`;
     if (wizStep === 1) {
-      const opts = sel => WIZ_SPANS.map(([d, l]) => `<option value="${d}"${d === sel ? ' selected' : ''}>${l}</option>`).join('');
-      const rows = PRODUCTS.map(p => {
-        const r = (wizLast && wizLast[p]) || { days: 0 };
-        let sub = 'Not planned';
-        if (r.days > 0) sub = !(r.rate > 0) ? 'No recent sales to forecast from'
-          : r.bake > 0 ? `Bake <b>${r.bake}</b> pieces · ${flavorBatches(r.bake, p)} batch${flavorBatches(r.bake, p) === 1 ? '' : 'es'}<br>need about ${Math.round(r.need)}, have ${Math.round(r.have)}`
-          : `Enough on hand (need about ${Math.round(r.need)}, have ${Math.round(r.have)})`;
-        return `<div class="pw-row"><span class="pw-nm">${tok(p)}<span><b>${esc(p)}</b><small>${sub}</small></span></span><select data-wsp="${esc(p)}" aria-label="${esc(p)} should last">${opts(r.days)}</select></div>`;
-      }).join('');
-      h += `<div class="pw-head"><b>What do you want to bake?</b><span>Pick how long each item should last. The amount comes from recent sales and what is on hand.</span></div>`
-        + `<div class="pw-label">Make everything last</div><div class="pw-chips">${[[1, '1 day'], [7, '1 week'], [30, '1 month'], [45, '1.5 months']].map(([d, l]) => `<button type="button" data-wall="${d}" class="${PRODUCTS.every(p => wizSpan[p] === d) ? 'on' : ''}">${l}</button>`).join('')}</div>`
-        + `<div class="pw-label">Or set each item</div>` + rows + `<div class="pw-note">Sales are assumed to grow 1.2% a week on top of the recent daily rate (counted for up to 4 weeks).</div>`
-        + `<div class="pw-nav"><button type="button" class="btn-primary" data-wgo="2">Next: ingredients</button></div>`;
+      const sec = wizStep1();
+      if (box.dataset.s1 === '1' && box.querySelector('#pwRows')) {   // dragging the slider: update in place so the thumb is not rebuilt under the finger
+        box.querySelector('#pwRows').innerHTML = sec.rows;
+        const sl = box.querySelector('#pwAll'); if (sl && sl.value !== String(sec.all)) sl.value = String(sec.all);
+        const lv = box.querySelector('#pwAllVal'); if (lv) lv.textContent = dayLbl(sec.all);
+        box.querySelectorAll('[data-wall]').forEach(b => b.classList.toggle('on', PRODUCTS.every(q => wizSpan[q] === Number(b.dataset.wall))));
+        return;
+      }
+      h += sec.top + `<div id="pwRows">${sec.rows}</div>` + `<div class="pw-nav"><button type="button" class="btn-primary" data-wgo="2">Next: ingredients</button></div>`;
     } else if (wizStep === 2) {
       let body = '<div class="pn-note">Loading…</div>';
       try {
@@ -5693,7 +5746,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       h += `<div class="pw-head"><b>Bake sheet</b><span>Batches from step 1. Change a number or add a recipe, then preview or print.</span></div>`
         + `<div class="pw-nav pw-nav-top"><button type="button" class="btn-ghost" data-wgo="2">Back</button><span></span></div>`;
     }
-    box.innerHTML = h;
+    box.innerHTML = h; box.dataset.s1 = wizStep === 1 ? '1' : '';
     try { boxPaint(); } catch {}
     if (wizStep === 2) {
       const b = document.getElementById('pwBuy'); if (b) { try { bkWireTicks(b); } catch {} }
@@ -5705,6 +5758,15 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     if (ch) { for (const p of PRODUCTS) wizSpan[p] = Number(ch.dataset.wall); wizSave(); if (lastPlanSales) paintPlan(false); else wizPaint(); return; }
     const g = e.target.closest('[data-wgo],[data-wstep]'); if (!g) return;
     wizStep = Number(g.dataset.wgo || g.dataset.wstep); wizPaint(); window.scrollTo(0, 0);
+  });
+  let wizSlideT = null;
+  document.getElementById('planWiz').addEventListener('input', e => {
+    const sl = e.target.closest('#pwAll'); if (!sl) return;
+    const d = Math.max(1, Math.min(90, Number(sl.value) || 1)); wizAllLast = d;
+    for (const p of PRODUCTS) wizSpan[p] = d;
+    const lv = document.getElementById('pwAllVal'); if (lv) lv.textContent = dayLbl(d);
+    clearTimeout(wizSlideT);
+    wizSlideT = setTimeout(() => { wizSave(); if (lastPlanSales) paintPlan(false); else wizPaint(); }, 120);
   });
   document.getElementById('planWiz').addEventListener('change', e => {
     const sp = e.target.closest('[data-wsp]');
@@ -9018,7 +9080,8 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       y0 = null; dy = 0;
     }, { passive: true });
     document.addEventListener('touchcancel', () => { y0 = null; dy = 0; hideInd(); }, { passive: true });
-    document.addEventListener('click', e => { if (e.target.closest('.ver-badge') && !upBusy) { try { sessionStorage.setItem('lastScroll.v1', String(window.scrollY)); } catch {} ind.textContent = 'Refreshing…'; location.reload(); } });
+    try { document.getElementById('refreshBtn').innerHTML = ic('refresh', 18) + ' Refresh'; } catch {}
+    document.addEventListener('click', e => { if (e.target.closest('.ver-badge, #refreshBtn') && !upBusy) { try { sessionStorage.setItem('lastScroll.v1', String(window.scrollY)); } catch {} ind.textContent = 'Refreshing…'; location.reload(); } });
   })();
   track('open', { standalone: !!(window.navigator.standalone || matchMedia('(display-mode: standalone)').matches) });
   // A refresh keeps you on the same page (sessionStorage: survives reload, not a fresh launch of the app).

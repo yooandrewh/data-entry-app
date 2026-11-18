@@ -203,6 +203,8 @@ Ingredients: **Dark Chocolate 70% and Dark Chocolate Couverture are retired into
 
 **v1.168.00: Piping Bags** (COLOGO 24 in, 200 ct, $19.99, Amazon B0CP6Q7JDK; ledger 200 "g" counted as pieces, no waste): 1 per madeleine batch and 1 per Pumpkin Muffin batch (Andrew's wording was a question, not confirmed). Lesson: always `node --check` the extracted script before committing (a duplicate `vendorOf` broke the live page for a minute in v1.167.01).
 
+**v1.169.00: Plan step 1 slider, per-store goals, pans.** "Make everything last" is a drag slider (`#pwAll`, 1-90 days; the four chips stay as shortcuts; per-item dropdowns still override). While dragging, `wizPaint()` updates only `#pwRows` (`box.dataset.s1`), never the slider. `wizCompute()` now sets each store's goal = `max(STOCK_TARGET 1.2, 1 + CV buffer)` x its expected sales over the span (Andrew: stock each location up to 1.2x) and bakes the gap **per store** (`r.loc[store] = {need, have, bake}`), so one store's surplus never covers the other. Rows show each store's have / goal and the pans for that item. A card under the slider shows total Cambro pans and the per-storage split; `boxPlan()` now splits each item between La Mirada and Stanton by their step-1 shortfall (falls back to sales rate) and returns `byItem`. Desktop (>=900px) has a **Refresh** button (`#refreshBtn`, top right, reloads like pull-to-refresh). Browser-tested headless at 390 and 1600px; not on a phone. Pans cover the pieces being baked, not the stock already in the stores.
+
 ## Design pass (v1.149.00)
 
 Last CSS block: **every `<select>` has one style** (white, 1px #c9c9c9, 12px radius, 44px, black chevron; `.row-select` and `[data-labi]` excluded); the Forecast store toggle (`.fc-locs`) uses the pill style. On desktop (>=900px) all pages share a 1120px column, page chips sit centered at natural width, the Trends donut is 220px. On phones the 5 Inventory chips shrink (11px padding) to fit. Counts' total says "pieces", not "madeleines". Still open: coloured snowflake/flame/arrow icons in Forecast misses (breaks the B/W rule), today's half-finished day shows as a 0.0x miss, Stock's section headers use the old grey band style.
@@ -223,7 +225,7 @@ The headless check at 390px misses what iOS does. Apply these to every new or ch
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.168.00**; the next feature is v1.169.00, a fix v1.168.01. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.169.00**; the next feature is v1.170.00, a fix v1.169.01. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 
