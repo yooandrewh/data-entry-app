@@ -2258,12 +2258,15 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
 .pw-slide-ticks { display: flex; justify-content: space-between; font-size: var(--fs-micro); color: #6b6b6b; }
 .pw-pans { margin: 14px 0 4px; padding: 14px 16px; border: 1px solid #c9c9c9; border-radius: 12px; font-size: var(--fs-body); }
 .pw-pans b { font-size: var(--fs-title); }
+.pw-gross { margin: 14px 0 4px; padding: 14px 16px; border: 1px solid #000; border-radius: 12px; font-size: var(--fs-body); }
+.pw-gross b { font-size: var(--fs-figure); display: block; }
+.pw-gross small { display: block; margin-top: 4px; font-size: var(--fs-caption); color: #6b6b6b; }
 .pw-pans small { display: block; margin-top: 4px; font-size: var(--fs-caption); color: #6b6b6b; }
 @media (min-width: 900px) {
   #bakingPlan[data-step="1"] #planWiz #pwRows { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 56px; align-items: start; }
   #pwRows > * { grid-column: 1 / -1; min-width: 0; }
   #pwRows > .pw-row { grid-column: auto; }
-  #pwRows .pw-pans, #pwRows .pw-note { max-width: 760px; }
+  #pwRows .pw-gross, #pwRows .pw-pans, #pwRows .pw-note { max-width: 760px; }
   #planWiz .pw-slide { max-width: 760px; }
 }
 .pw-frz { display: block; width: 100%; margin: 10px 0 2px; min-height: 44px; border: 1px solid #c9c9c9; border-radius: 22px; background: #fff; color: #000; font-family: inherit; font-size: var(--fs-caption); font-weight: 600; padding: 0 12px; }
@@ -2647,7 +2650,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.169.10 · Nov 18, 3:54 PM PST</div>
+<div class="ver-badge">v1.170.00 · Nov 18, 3:55 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -5625,13 +5628,14 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   function wizCompute(usable, today) {
     const out = {};
     for (const p of PRODUCTS) {
-      const days = wizSpan[p] || 0, hz = days > 0 ? Math.max(days, MIN_STOCK_DAYS[p] || 0) : 0, r = { days, hz, need: 0, have: 0, bake: 0, rate: 0, loc: {} };
+      const days = wizSpan[p] || 0, hz = days > 0 ? Math.max(days, MIN_STOCK_DAYS[p] || 0) : 0, r = { days, hz, sales: 0, need: 0, have: 0, bake: 0, rate: 0, loc: {} };
       if (days > 0) for (const c of usable) {
         if (!storeSells(c.loc, p)) continue;   // this store does not carry the item: no goal, its stock does not count
         let need = 0;
         for (let i = 1; i <= hz; i++) {
           const dt = parseEntryDate(addDays(today, i)), we = [0, 6].includes(dt.getDay());
-          need += (we ? c.dowr.rate[p].we : c.dowr.rate[p].wd) * Math.pow(c.st.growth || 1, Math.min(i - 1, 28) / 7);
+          const dayN = (we ? c.dowr.rate[p].we : c.dowr.rate[p].wd) * Math.pow(c.st.growth || 1, Math.min(i - 1, 28) / 7);
+          need += dayN; if (i <= days) r.sales += dayN;   // r.sales: expected pieces sold over the chosen span only (the Lemon Poppy minimum stock reaches further)
         }
         const m = Math.min(0.6, FCAST_Z * (c.st.dailyCV || 0) / Math.sqrt(hz)), n = need * Math.max(STOCK_TARGET, 1 + m);
         const hv = c.st.stock[p] || 0, b = Math.max(0, Math.ceil(n - hv));
@@ -5710,8 +5714,11 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
           : r.bake > 0 ? `Bake <b>${r.bake}</b> · ${flavorBatches(r.bake, p)} batch${flavorBatches(r.bake, p) === 1 ? '' : 'es'}${pans ? ` · <b>${pans}</b> pan${pans === 1 ? '' : 's'}` : ''}<br>${locLine}${minNote}`
           : `Enough on hand<br>${locLine}${minNote}`;
       }
+      if (r.days > 0 && r.sales > 0) sub += `<br>Expected sales <b>${money0(r.sales * unitPriceOn(p, todayISO()))}</b> (${Math.round(r.sales)} pcs)`;
       return `<div class="pw-row"><span class="pw-nm">${tok(p)}<span><b>${esc(p)}</b><small>${sub}</small></span></span><select data-wsp="${esc(p)}" aria-label="${esc(p)} should last">${opts(r.days)}</select></div>`;
     }).join('');
+    let gross = 0, grossPcs = 0, grossDays = 0; PRODUCTS.forEach(p => { const r = wizLast && wizLast[p]; if (r && r.days > 0 && r.sales > 0) { gross += r.sales * unitPriceOn(p, todayISO()); grossPcs += r.sales; grossDays = Math.max(grossDays, r.days); } });
+    const grossHtml = gross > 0 ? `<div class="pw-gross"><b>${money0(gross)}</b> expected gross sales<small>${Math.round(grossPcs)} pieces over ${grossDays === 1 ? '1 day' : grossDays + ' days'} at your retail prices, both stores. Moves as you change the days.</small></div>` : '';
     let pans = '';
     if (bx && bx.total > 0) {
       pans = `<div class="pw-pans"><b>${bx.total}</b> Cambro pan${bx.total === 1 ? '' : 's'} needed<button type="button" class="pw-frz${boxCfg.frozen ? ' on' : ''}" data-frz aria-pressed="${!!boxCfg.frozen}">Frozen: 2 layers (madeleines, bundt, cake pops)</button><small>${panLine(bx.total)}<br>Only for the pieces you bake, not the stock already on hand. Full-size, 4" deep. One item per pan, not split by location.</small></div>`;
@@ -5719,7 +5726,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     const top = `<div class="pw-head"><b>What do you want to bake?</b><span>Drag the slider or pick how long each item should last. Each store's goal is ${STOCK_TARGET}x its expected sales for that time. You bake the gap between the goal and what it has now.</span></div>`
       + `<div class="pw-label">Make everything last</div><div class="pw-slide"><div class="pw-slide-val" id="pwAllVal">${dayLbl(all)}</div><input type="range" id="pwAll" min="1" max="90" step="1" value="${all}" aria-label="Days everything should last"><div class="pw-slide-ticks"><span>1 day</span><span>1 month</span><span>2 months</span><span>3 months</span></div></div>`
       + `<div class="pw-chips">${[[1, '1 day'], [7, '1 week'], [30, '1 month'], [45, '1.5 months']].map(([d, l]) => `<button type="button" data-wall="${d}" class="${PRODUCTS.every(q => wizSpan[q] === d) ? 'on' : ''}">${l}</button>`).join('')}</div>`;
-    return { all, top, rows: pans + `<div class="pw-label">Or set each item</div>` + rows + `<div class="pw-note">Sales are assumed to grow 1.2% a week on top of the recent daily rate (counted for up to 4 weeks).</div>` };
+    return { all, top, rows: grossHtml + pans + `<div class="pw-label">Or set each item</div>` + rows + `<div class="pw-note">Sales are assumed to grow 1.2% a week on top of the recent daily rate (counted for up to 4 weeks).</div>` };
   }
   function wizPaint() {
     const box = document.getElementById('planWiz'), root = document.getElementById('bakingPlan');
@@ -7808,6 +7815,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   try { buyExtras = JSON.parse(localStorage.getItem(BUY_EXTRA)) || []; } catch {}
   const buySave = () => { try { localStorage.setItem(BUY_KEY, JSON.stringify(buyChecked)); localStorage.setItem(BUY_EXTRA, JSON.stringify(buyExtras)); localStorage.setItem(BUY_RECIPES, JSON.stringify(buyRecipes)); } catch {} };
   const money2 = n => '$' + n.toFixed(2);
+  const money0 = n => '$' + Math.round(n).toLocaleString('en-US');
   // Approximate g per ml for liquids the ledger sells by volume, so a count or purchase in ml can be compared with a plan written in grams.
   // Physical averages (about 1% to 3% off between brands). Items not listed are never converted.
   const DENSITY = { 'Milk': 1.03, 'Organic Whole Milk': 1.03, 'Coconut Milk': 0.97, 'Heavy Cream': 0.99, 'Lemon Juice': 1.03, 'Vegetable Oil': 0.92, 'Vanilla Extract': 0.88, 'Lemon Emulsion': 0.95, 'Ube Extract': 1.0, 'Wine': 0.99, 'Honey': 1.42, 'Maple Syrup': 1.33 };
