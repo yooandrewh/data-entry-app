@@ -2647,7 +2647,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.169.08 · Nov 18, 3:49 PM PST</div>
+<div class="ver-badge">v1.169.09 · Nov 18, 3:51 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -5620,20 +5620,22 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   // Each store is stocked up to STOCK_TARGET x its own expected sales over the span (or the CV buffer when that is bigger, which short spans get);
   // the shortfall is worked out store by store, so extra stock at one store never covers a shortage at the other.
   const STOCK_TARGET = 1.2;
+  // Minimum stock (Andrew, 2026-11-18): Lemon Poppy is always stocked to at least 30 days of expected sales per store, however short the span. Add an item here to extend the rule.
+  const MIN_STOCK_DAYS = { 'Lemon Poppy': 30 };
   function wizCompute(usable, today) {
     const out = {};
     for (const p of PRODUCTS) {
-      const days = wizSpan[p] || 0, r = { days, need: 0, have: 0, bake: 0, rate: 0, loc: {} };
+      const days = wizSpan[p] || 0, hz = days > 0 ? Math.max(days, MIN_STOCK_DAYS[p] || 0) : 0, r = { days, hz, need: 0, have: 0, bake: 0, rate: 0, loc: {} };
       if (days > 0) for (const c of usable) {
         if (!storeSells(c.loc, p)) continue;   // this store does not carry the item: no goal, its stock does not count
         let need = 0;
-        for (let i = 1; i <= days; i++) {
+        for (let i = 1; i <= hz; i++) {
           const dt = parseEntryDate(addDays(today, i)), we = [0, 6].includes(dt.getDay());
           need += (we ? c.dowr.rate[p].we : c.dowr.rate[p].wd) * Math.pow(c.st.growth || 1, Math.min(i - 1, 28) / 7);
         }
-        const m = Math.min(0.6, FCAST_Z * (c.st.dailyCV || 0) / Math.sqrt(days)), n = need * Math.max(STOCK_TARGET, 1 + m);
+        const m = Math.min(0.6, FCAST_Z * (c.st.dailyCV || 0) / Math.sqrt(hz)), n = need * Math.max(STOCK_TARGET, 1 + m);
         const hv = c.st.stock[p] || 0, b = Math.max(0, Math.ceil(n - hv));
-        r.rate += need / days; r.need += n; r.have += hv; r.bake += b; r.loc[c.loc] = { need: n, have: hv, bake: b };
+        r.rate += need / hz; r.need += n; r.have += hv; r.bake += b; r.loc[c.loc] = { need: n, have: hv, bake: b };
       }
       if (days > 0) { const pool = storedPool(p); if (pool > 0) { r.have += pool; r.bake = Math.max(0, r.bake - pool); } }
       out[p] = r;
@@ -5703,9 +5705,10 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       if (r.days > 0) {
         const pans = bx && bx.byItem[p] ? bx.byItem[p] : 0;
         const locLine = Object.keys(r.loc).map(l => `${esc(l)}: have ${Math.round(r.loc[l].have)}, goal ${Math.round(r.loc[l].need)}`).join('<br>');
+        const minNote = r.hz > r.days ? `<br><i>Minimum stock: ${r.hz} days of sales per store</i>` : '';
         sub = !(r.rate > 0) ? 'No recent sales to forecast from'
-          : r.bake > 0 ? `Bake <b>${r.bake}</b> · ${flavorBatches(r.bake, p)} batch${flavorBatches(r.bake, p) === 1 ? '' : 'es'}${pans ? ` · <b>${pans}</b> pan${pans === 1 ? '' : 's'}` : ''}<br>${locLine}`
-          : `Enough on hand<br>${locLine}`;
+          : r.bake > 0 ? `Bake <b>${r.bake}</b> · ${flavorBatches(r.bake, p)} batch${flavorBatches(r.bake, p) === 1 ? '' : 'es'}${pans ? ` · <b>${pans}</b> pan${pans === 1 ? '' : 's'}` : ''}<br>${locLine}${minNote}`
+          : `Enough on hand<br>${locLine}${minNote}`;
       }
       return `<div class="pw-row"><span class="pw-nm">${tok(p)}<span><b>${esc(p)}</b><small>${sub}</small></span></span><select data-wsp="${esc(p)}" aria-label="${esc(p)} should last">${opts(r.days)}</select></div>`;
     }).join('');
