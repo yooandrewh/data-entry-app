@@ -2111,6 +2111,7 @@ select:not(.row-select):not([data-labi]) { -webkit-appearance: none !important; 
 .fc-locs button { min-height: 44px !important; padding: 0 18px !important; border-radius: 22px !important; border: 1px solid #c9c9c9 !important; background: #fff !important; color: #000 !important; font-size: var(--fs-caption) !important; font-weight: 600 !important; box-shadow: none !important; }
 .fc-locs button.on { background: #000 !important; color: #fff !important; border-color: #000 !important; }
 @media (min-width: 900px) { #homeForecast .pg-card { margin-left: 0 !important; max-width: 640px !important; } }
+.buy-cart { display: flex; align-items: center; justify-content: center; min-height: 44px; margin: 8px 0; border: 1px solid #000; border-radius: 12px; background: #fff; color: #000 !important; font-size: var(--fs-body); font-weight: 700; text-decoration: none; }
 </style>
 </head>
 <body>
@@ -2495,7 +2496,7 @@ select:not(.row-select):not([data-labi]) { -webkit-appearance: none !important; 
   </div>
 </div>
 
-<div class="ver-badge">v1.149.00 · Nov 18, 1:48 PM PST</div>
+<div class="ver-badge">v1.150.00 · Nov 18, 2:05 PM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -8557,6 +8558,21 @@ select:not(.row-select):not([data-labi]) { -webkit-appearance: none !important; 
   const bkVendor = r => { const v = (costPrices[r.i.name] || {}).vendor; return v && String(v).trim() ? String(v).trim() : (bkPart(r).n ? 'Other' : 'No price yet'); };
   const bkHaveRow = r => `<div class="buy-row buy-big buy-have"><span class="buy-ok">✓</span><span class="buy-main"><em class="buy-tag">Have it</em><b><s>${esc(r.i.name)}</s></b><small>need ${buyFmt(r.i.qty, r.i.unit)} · have ${buyFmt(r.s.onHand, r.i.unit)}</small></span></div>`;
   // rows = still to buy; all = every ingredient the plan needs (the ones already on hand are shown greyed under the same store, marked Have it).
+  // Amazon: the ledger keeps each Amazon item's product link. The ASIN in it lets one tap open Amazon's Add to Cart page with the packs filled in (you still tap Add and check out on Amazon yourself).
+  const amzAsin = l => { const m = /(?:\/dp\/|\/gp\/product\/|\/product\/)([A-Z0-9]{10})(?:[\/?#]|$)/i.exec(String(l || '')); return m ? m[1].toUpperCase() : ''; };
+  const amzFor = name => {
+    const c = costPrices[name]; let a = c && amzAsin(c.link); if (a) return a;
+    const k = costCanon(name); for (const l of (LEDGER || [])) if (l.link && costCanon(l.item) === k && (a = amzAsin(l.link))) return a;
+    return '';
+  };
+  const amzCart = buy => {
+    const have = [], miss = [];
+    buy.forEach(r => { const a = amzFor(r.i.name); if (a) have.push({ a, n: bkPart(r).n || 1 }); else miss.push(r.i.name); });
+    if (!have.length && !miss.length) return '';
+    const url = 'https://www.amazon.com/gp/aws/cart/add.html?' + have.map((h, k) => `ASIN.${k + 1}=${h.a}&Quantity.${k + 1}=${h.n}`).join('&');
+    return (have.length ? `<a class="buy-cart" href="${url}" target="_blank" rel="noopener">Add ${have.length} item${have.length === 1 ? '' : 's'} to Amazon cart</a>` : '') +
+      (miss.length ? `<div class="pn-note">No Amazon link yet for ${miss.map(esc).join(', ')}. Add the product link to its ledger line.</div>` : '');
+  };
   function bkBuyList(rows, all) {
     const have = (all || []).filter(r => r.st === 'ok');
     if (!rows.length && !have.length) return '';
@@ -8566,6 +8582,7 @@ select:not(.row-select):not([data-labi]) { -webkit-appearance: none !important; 
     return `<div class="pn-note">Amounts include ${Math.round(BUY_WASTE * 100)}% extra for waste.${have.length ? ' Items marked Have it are already on hand.' : ''}</div>` + order.map(v => {
       const g = by.get(v), sub = g.buy.reduce((n, r) => n + (bkPart(r).cost || 0), 0);
       return `<div class="buy-vendor"><span>${esc(v)}</span><small>${g.buy.length} to buy${g.have.length ? ` · ${g.have.length} on hand` : ''}${sub ? ' · ' + money2(sub) : ''}</small></div>` +
+        (/amazon/i.test(v) ? amzCart(g.buy) : '') +
         g.buy.sort(byName).map(bkBuyRow).join('') + g.have.sort(byName).map(bkHaveRow).join('');
     }).join('');
   }

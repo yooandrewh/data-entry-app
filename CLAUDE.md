@@ -161,6 +161,10 @@ Inventory → **Storage** and Entry → **Storage** (6th type; the type buttons 
 
 Last CSS block: **every `<select>` has one style** (white, 1px #c9c9c9, 12px radius, 44px, black chevron; `.row-select` and `[data-labi]` excluded); the Forecast store toggle (`.fc-locs`) uses the pill style. On desktop (>=900px) all pages share a 1120px column, page chips sit centered at natural width, the Trends donut is 220px. On phones the 5 Inventory chips shrink (11px padding) to fit. Counts' total says "pieces", not "madeleines". Still open: coloured snowflake/flame/arrow icons in Forecast misses (breaks the B/W rule), today's half-finished day shows as a 0.0x miss, Stock's section headers use the old grey band style.
 
+## Amazon cart (v1.150.00)
+
+In every What to buy / To buy list the **Amazon** vendor group has an **Add N items to Amazon cart** button (`amzCart` in `bkBuyList`): link `amazon.com/gp/aws/cart/add.html?ASIN.1=..&Quantity.1=<packs>`, ASIN read from the item's ledger `Link` (`/dp/<ASIN>`; `amzFor` falls back to any ledger line for the same canonical item). Items with no Amazon link are named under the button. Opens Amazon in a new tab; Andrew taps Add and checks out himself, the app never orders. **Cart URL not tested while signed in to Amazon.**
+
 ## Sizing rules (from Andrew's phone screenshots, v1.146.01)
 
 The headless check at 390px misses what iOS does. Apply these to every new or changed control, and look at the phone screenshot before calling it done.
@@ -173,7 +177,7 @@ The headless check at 390px misses what iOS does. Apply these to every new or ch
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.149.00**; the next feature is v1.150.00, a fix v1.149.01. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.150.00**; the next feature is v1.151.00, a fix v1.150.01. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 
