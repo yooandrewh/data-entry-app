@@ -2645,7 +2645,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.169.01 · Nov 18, 3:34 PM PST</div>
+<div class="ver-badge">v1.169.02 · Nov 18, 3:35 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -4617,7 +4617,8 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   // so un-entered days don't dilute it) + current stock (latest inventory +
   // deliveries since − sales since).
   // Products a store doesn't carry anymore: the forecast and the bake plan ignore their sales there.
-  const STORE_SKIP = {};
+  // MANUAL OVERRIDE (Andrew, 2026-11-18): Stanton sells Lemon Poppy but not Sea Salt, whatever the sales data shows. Edit here to change it.
+  const STORE_SKIP = { 'Stanton': ['Sea Salt'] };
   // Products a store carries only from a date (Andrew, 2026-11-07: Lemon Poppy is delivered to Stanton starting in November).
   // Earlier sales of it there are OCR noise, so with a date given they are ignored.
   const STORE_FROM = { 'Stanton': { 'Lemon Poppy': '2026-11-01' } };
@@ -5616,6 +5617,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     for (const p of PRODUCTS) {
       const days = wizSpan[p] || 0, r = { days, need: 0, have: 0, bake: 0, rate: 0, loc: {} };
       if (days > 0) for (const c of usable) {
+        if (!storeSells(c.loc, p)) continue;   // this store does not carry the item: no goal, its stock does not count
         let need = 0;
         for (let i = 1; i <= days; i++) {
           const dt = parseEntryDate(addDays(today, i)), we = [0, 6].includes(dt.getDay());
