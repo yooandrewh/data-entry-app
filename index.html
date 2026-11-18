@@ -1893,6 +1893,9 @@ h1, h2, h3, h4, .hero-title, .sheet h2, #hpTitle, .proj-card h3, .card h3, #bsSc
 .rv-h { display: flex; justify-content: space-between; gap: 4px 12px; flex-wrap: wrap; align-items: baseline; }
 .rv-h span { color: var(--muted); font-size: var(--fs-caption); }
 .ver-badge, body.home-landing .ver-badge { background: #fff !important; padding: 2px 6px !important; border-radius: 6px; }
+.ds-earlier { grid-column: 1 / -1; margin-top: 6px; border-top: 1px solid var(--sep); }
+.ds-erows { display: grid; grid-template-columns: 1fr 1fr; column-gap: 18px; }
+.ds-earlier summary { cursor: pointer; padding: 8px 0; color: var(--muted); font-size: var(--fs-caption); }
 </style>
 </head>
 <body>
@@ -2251,7 +2254,7 @@ h1, h2, h3, h4, .hero-title, .sheet h2, #hpTitle, .proj-card h3, .card h3, #bsSc
   </div>
 </div>
 
-<div class="ver-badge">v1.134.00 · Nov 18, 10:35 AM PST</div>
+<div class="ver-badge">v1.135.00 · Nov 18, 10:40 AM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -2485,6 +2488,9 @@ h1, h2, h3, h4, .hero-title, .sheet h2, #hpTitle, .proj-card h3, .card h3, #bsSc
   document.querySelectorAll('[data-tok]').forEach(el => { el.outerHTML = tok(el.dataset.tok); });   // Entry's amount rows: logo left of the name
   const LOCATIONS = ['La Mirada', 'Stanton'];
   // Flavors the app stocks (PRODUCTS) plus extra ones that show up in sales.
+  // Retired flavors still show in history, but folded under "Earlier flavors" so the current ones lead.
+  const EARLIER_FLAVORS = ['Ube', 'Dot', 'Earl Grey', 'Earl Grey Mini', 'Matcha', 'Chocolate'];
+  const earlierSplit = (names, mk) => { const cur = names.filter(p => !EARLIER_FLAVORS.includes(p)).map(mk).join(''), old = names.filter(p => EARLIER_FLAVORS.includes(p)).map(mk).join(''); return cur + (old ? `<details class="ds-earlier"><summary>Earlier flavors</summary><div class="ds-erows">${old}</div></details>` : ''); };
   const SALES_FLAVORS = ['Lemon Poppy', 'Sea Salt', 'Maple Pecan', 'Pumpkin Muffin', 'Blueberry Muffin', 'Ube', 'Dot', 'Earl Grey', 'Matcha', 'Chocolate', 'Dubai Ball', 'Pumpkin Bundt', 'Cake Pop', 'Chookie', 'Unknown'];
   const PRICE_PER_UNIT = 2.50;   // $/madeleine (from Financial Dashboard: $192.50 / 77 units)
   const UNIT_PRICE = { 'Pumpkin Muffin': 2.75, 'Blueberry Muffin': 3, 'Pumpkin Bundt': 3.35, 'Earl Grey Mini': 2.75, 'Cake Pop': 2.75, 'Chookie': 2.75, 'Dubai Ball': 3.50 };   // items that sell for something other than PRICE_PER_UNIT
@@ -3002,8 +3008,7 @@ h1, h2, h3, h4, .hero-title, .sheet h2, #hpTitle, .proj-card h3, .card h3, #bsSc
       locTotals[e.location] = (locTotals[e.location] || 0) + sum;
     }
     const mag = v => (gw || isXferView) ? Math.abs(v) : v;
-    const breakdown = HIST_PRODUCTS.filter(p => (totals[p] || 0) !== 0)
-      .map(p => kvRow(tok(p), pdisp(p), mag(totals[p]))).join('');
+    const breakdown = earlierSplit(HIST_PRODUCTS.filter(p => (totals[p] || 0) !== 0), p => kvRow(tok(p), pdisp(p), mag(totals[p])));
     const locBreak = LOCATIONS.map(l => `<span>${l} <b>${mag(locTotals[l] || 0)}</b></span>`).join('');
     const sumLabel = gw ? `madeleine${Math.abs(grand) === 1 ? '' : 's'} given out`
       : isXferView ? `madeleine${mag(grand) === 1 ? '' : 's'} moved`
@@ -3075,7 +3080,7 @@ h1, h2, h3, h4, .hero-title, .sheet h2, #hpTitle, .proj-card h3, .card h3, #bsSc
       const tot = {}; HIST_PRODUCTS.forEach(p => tot[p] = live.reduce((a, e) => a + (isXferView ? Math.max(0, e.amounts[p] || 0) : (e.amounts[p] || 0)), 0));
       const sum = HIST_PRODUCTS.reduce((a, p) => a + tot[p], 0);
       const head = dbFilter === 'inventory' ? `${es.length} count${es.length === 1 ? '' : 's'}` : `${mag(sum)} ${verb}`;
-      const rows = dbFilter === 'inventory' ? '' : HIST_PRODUCTS.filter(p => tot[p] !== 0).map(p => kvRow(tok(p), pdisp(p), mag(tot[p]))).join('');
+      const rows = dbFilter === 'inventory' ? '' : earlierSplit(HIST_PRODUCTS.filter(p => tot[p] !== 0), p => kvRow(tok(p), pdisp(p), mag(tot[p])));
       html += `<details class="db-entry db-fold db-month"><summary class="db-head"><span class="db-daylabel">${monthName(ym)}</span><span class="db-when">${head}</span></summary>
           ${rows ? `<div class="db-amts">${rows}</div>` : ''}<div class="db-mdays">${withDays(es)}</div></details>`;
     }
@@ -4181,8 +4186,7 @@ h1, h2, h3, h4, .hero-title, .sheet h2, #hpTitle, .proj-card h3, .card h3, #bsSc
       locTotals[s.location] = (locTotals[s.location] || 0) + st;
       totalFlights += (s.flights || 0);
     }
-    const breakdown = SALES_FLAVORS.filter(f => flavorTotals[f] > 0)
-      .map(f => kvRow(tok(f), f, flavorTotals[f])).join('');
+    const breakdown = earlierSplit(SALES_FLAVORS.filter(f => flavorTotals[f] > 0), f => kvRow(tok(f), f, flavorTotals[f]));
     const locBreak = LOCATIONS.map(l => `<span>${l} <b>${locTotals[l] || 0}</b></span>`).join('');
     const flightLine = totalFlights > 0
       ? `<div class="ds-flights">${tok('Flights')}<b>${totalFlights}</b> flight${totalFlights === 1 ? '' : 's'} <span class="ds-note">(included in totals above)</span></div>`
