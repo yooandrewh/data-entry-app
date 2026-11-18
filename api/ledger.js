@@ -7,6 +7,7 @@
 //
 // GET  -> { rows: [...] }  (rows not removed)
 // POST { action: 'add', lines: [...] } | { action: 'remove', ids: [...] } | { action: 'approve', ids: [...], approved?: false }
+//      | { action: 'setlink', ids: [...], link: '<Amazon product link>' }  (saved as https://www.amazon.com/dp/<ASIN>)
 // Costs use only lines with Approved = TRUE; new lines start unapproved unless the add sets approved: true.
 //
 // Auth: reads are open (the seed prices were already public in the app source). Writes need the
@@ -26,6 +27,23 @@ const num = (v) => { const n = Number(v); return Number.isFinite(n) && n >= 0 ? 
 const priceFor = (kind, v) => { const n = Number(v); if (v === '' || v == null || !Number.isFinite(n)) return null; return n >= 0 || kind === 'tax' || kind === 'fee' ? n : null; };
 const isoDate = (v) => (/^\d{4}-\d{2}-\d{2}$/.test(String(v || '')) ? String(v) : '');
 const isTrue = (v) => v === true || String(v).toUpperCase() === 'TRUE';
+
+// Amazon links: only amazon.com product pages and the amzn.to / a.co short links are accepted (a short link is followed
+// on the server, host-checked at every hop, so the app cannot be pointed at other sites). Saved as the plain /dp/ASIN form.
+const AMZ_HOST = /^(www\.)?amazon\.com$/i, AMZ_SHORT = /^(amzn\.to|a\.co)$/i;
+const asinOf = (u) => { const m = /(?:\/dp\/|\/gp\/product\/|\/product\/)([A-Z0-9]{10})(?:[\/?#]|$)/i.exec(u); return m ? m[1].toUpperCase() : ''; };
+async function amazonLink(input) {
+  let u; try { u = new URL(String(input || '').trim()); } catch { return ''; }
+  for (let hop = 0; hop < 4; hop++) {
+    if (u.protocol !== 'https:') return '';
+    if (AMZ_HOST.test(u.hostname)) { const a = asinOf(u.href); return a ? 'https://www.amazon.com/dp/' + a : ''; }
+    if (!AMZ_SHORT.test(u.hostname)) return '';
+    const r = await fetch(u.href, { redirect: 'manual', headers: { 'User-Agent': 'Mozilla/5.0' }, signal: AbortSignal.timeout(6000) });
+    const loc = r.headers.get('location'); if (!loc) return '';
+    try { u = new URL(loc, u); } catch { return ''; }
+  }
+  return '';
+}
 
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -98,6 +116,17 @@ export default async function handler(req, res) {
       let n = 0;
       for (const r of rows) if (ids.has(String(r.Id)) && !isTrue(r.Deleted)) { await updateCell(TAB, header, r._row, 'Approved', val); n++; }
       return res.status(200).json({ approved: val ? n : 0, cleared: val ? 0 : n });
+    }
+    // Attach an Amazon product link to ledger lines (the shopping list's Add to cart button reads it).
+    if (body.action === 'setlink') {
+      const link = await amazonLink(body.link);
+      if (!link) return res.status(400).json({ error: 'That is not an Amazon product link' });
+      const ids = new Set((Array.isArray(body.ids) ? body.ids : []).slice(0, MAX_LINES).map(String));
+      const { header, rows } = await getRows(TAB);
+      let n = 0;
+      for (const r of rows) if (ids.has(String(r.Id)) && !isTrue(r.Deleted) && String(r.Kind) === 'item') { await updateCell(TAB, header, r._row, 'Link', link); n++; }
+      if (!n) return res.status(400).json({ error: 'No matching lines' });
+      return res.status(200).json({ updated: n, link });
     }
     return res.status(400).json({ error: 'Unknown action' });
   } catch (e) {

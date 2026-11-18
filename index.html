@@ -2112,6 +2112,12 @@ select:not(.row-select):not([data-labi]) { -webkit-appearance: none !important; 
 .fc-locs button.on { background: #000 !important; color: #fff !important; border-color: #000 !important; }
 @media (min-width: 900px) { #homeForecast .pg-card { margin-left: 0 !important; max-width: 640px !important; } }
 .buy-cart { display: flex; align-items: center; justify-content: center; min-height: 44px; margin: 8px 0; border: 1px solid #000; border-radius: 12px; background: #fff; color: #000 !important; font-size: var(--fs-body); font-weight: 700; text-decoration: none; }
+.amz-add { margin: 0 0 8px; }
+.amz-add label { display: block; font-size: var(--fs-caption); margin: 0 0 4px; }
+.amz-add > div { display: flex; gap: 8px; }
+.amz-add input { flex: 1; min-width: 0; min-height: 44px; border: 1px solid #c9c9c9; border-radius: 12px; padding: 0 12px; font-size: 16px; background: #fff; color: #000; }
+.amz-add button { min-height: 44px; padding: 0 18px; border: 1px solid #000; border-radius: 12px; background: #000; color: #fff !important; font-size: var(--fs-body); font-weight: 700; }
+.amz-add button:disabled { opacity: .5; }
 </style>
 </head>
 <body>
@@ -2496,7 +2502,7 @@ select:not(.row-select):not([data-labi]) { -webkit-appearance: none !important; 
   </div>
 </div>
 
-<div class="ver-badge">v1.150.00 · Nov 18, 2:05 PM PST</div>
+<div class="ver-badge">v1.151.00 · Nov 18, 2:40 PM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -8571,8 +8577,20 @@ select:not(.row-select):not([data-labi]) { -webkit-appearance: none !important; 
     if (!have.length && !miss.length) return '';
     const url = 'https://www.amazon.com/gp/aws/cart/add.html?' + have.map((h, k) => `ASIN.${k + 1}=${h.a}&Quantity.${k + 1}=${h.n}`).join('&');
     return (have.length ? `<a class="buy-cart" href="${url}" target="_blank" rel="noopener">Add ${have.length} item${have.length === 1 ? '' : 's'} to Amazon cart</a>` : '') +
-      (miss.length ? `<div class="pn-note">No Amazon link yet for ${miss.map(esc).join(', ')}. Add the product link to its ledger line.</div>` : '');
+      (miss.length ? `<div class="pn-note">Paste the Amazon link for ${miss.length === 1 ? 'this item' : 'these items'} to add ${miss.length === 1 ? 'it' : 'them'} to the cart button.</div>` + miss.map(n => `<div class="amz-add"><label>${esc(n)}</label><div><input type="url" inputmode="url" placeholder="Paste Amazon link" data-amz-in="${esc(n)}"><button type="button" data-amz-save="${esc(n)}">Save</button></div></div>`).join('') : '');
   };
+  // Save a pasted Amazon link onto every ledger line of that item; the server checks it and keeps the plain /dp/ASIN form.
+  document.addEventListener('click', async e => {
+    const b = e.target.closest && e.target.closest('[data-amz-save]'); if (!b) return;
+    const name = b.dataset.amzSave, box = b.closest('.amz-add'), inp = box && box.querySelector('input'), link = inp ? inp.value.trim() : '';
+    if (!link) { rcpToast('Paste the Amazon link first'); return; }
+    const k = costCanon(name), ids = (LEDGER || []).filter(l => l.kind === 'item' && costCanon(l.item) === k).map(l => l.id);
+    if (!ids.length) { rcpToast('No ledger line for that item'); return; }
+    b.disabled = true;
+    const ok = await ledgerPost({ action: 'setlink', ids, link });
+    b.disabled = false;
+    if (ok) rcpToast('Amazon link saved');
+  });
   function bkBuyList(rows, all) {
     const have = (all || []).filter(r => r.st === 'ok');
     if (!rows.length && !have.length) return '';

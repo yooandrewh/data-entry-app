@@ -163,7 +163,7 @@ Last CSS block: **every `<select>` has one style** (white, 1px #c9c9c9, 12px rad
 
 ## Amazon cart (v1.150.00)
 
-In every What to buy / To buy list the **Amazon** vendor group has an **Add N items to Amazon cart** button (`amzCart` in `bkBuyList`): link `amazon.com/gp/aws/cart/add.html?ASIN.1=..&Quantity.1=<packs>`, ASIN read from the item's ledger `Link` (`/dp/<ASIN>`; `amzFor` falls back to any ledger line for the same canonical item). Items with no Amazon link are named under the button. Opens Amazon in a new tab; Andrew taps Add and checks out himself, the app never orders. **Cart URL not tested while signed in to Amazon.**
+In every What to buy / To buy list the **Amazon** vendor group has an **Add N items to Amazon cart** button (`amzCart` in `bkBuyList`): link `amazon.com/gp/aws/cart/add.html?ASIN.1=..&Quantity.1=<packs>`, ASIN read from the item's ledger `Link` (`/dp/<ASIN>`; `amzFor` falls back to any ledger line for the same canonical item). Items with no Amazon link are named under the button. **v1.151.00:** items with no link get a paste box (`data-amz-save`) that calls `api/ledger.js` action `setlink` (needs the ledger code): the server accepts only amazon.com product links or amzn.to / a.co short links (followed server-side, host-checked each hop), saves plain `https://www.amazon.com/dp/<ASIN>` on every ledger item line of that item. Prices are not read from Amazon. Opens Amazon in a new tab; Andrew taps Add and checks out himself, the app never orders. **Cart URL not tested while signed in to Amazon.**
 
 ## Sizing rules (from Andrew's phone screenshots, v1.146.01)
 
@@ -177,7 +177,7 @@ The headless check at 390px misses what iOS does. Apply these to every new or ch
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.150.00**; the next feature is v1.151.00, a fix v1.150.01. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.151.00**; the next feature is v1.152.00, a fix v1.151.01. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 
