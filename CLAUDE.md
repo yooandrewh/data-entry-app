@@ -79,7 +79,7 @@ Status: live API tested (add/remove round trip); browser-tested 2026-11-17 on de
 ## Bake protocol additions (v1.134.00, 2026-11-18)
 
 - **Yield:** in Bake Day's *Only <date>* view, **Bake done** has a "Pieces made" field per recipe (prefilled with planned = batches x pieces per batch). Pantry use per ingredient = planned need x made / planned (`buyItems([x])` per recipe). "Review and save" shows an in-page confirm (`bdPending`, no native dialog); items with less on hand than used are set to 0 and named in the confirm. The Bakes row's Recipes text records `made N of M`.
-- **Pantry** opens with **What to buy**: the whole plan against on hand (`bakeRows()`, shared `bkBuyRow`/`bkTotal`/`bkWireTicks` with Bake Day), ticks shared with the Buy list.
+- **Pantry** (v1.138.02 order: On hand, What to buy, Count something) opens with **What to buy**: the whole plan against on hand (`bakeRows()`, shared `bkBuyRow`/`bkTotal`/`bkWireTicks` with Bake Day), ticks shared with the Buy list.
 - **Receipts** opens with **To review** (`rvPaint`): unapproved ledger item lines grouped by receipt; Approve N lines / Approve all / Remove receipt (tap twice) / remove a line. Calls `ledgerPost` approve/remove in chunks of 80. No auto-approve.
 - Baking Plan shows the **Make it last until / Bake days / Add date** card again (it was hidden since v1.120.01, which left Bake Day with no way to set dates). Stanton delivers stays hidden.
 - Mock-server browser test passed (pantry, receipts, yield scaling, confirm). Not tried on a phone.
@@ -119,7 +119,7 @@ Costco receipts print a quantity line (`3 @ 4.99`) above an item whose price is 
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.138.01**; the next feature is v1.139.00, a fix v1.138.02. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.138.02**; the next feature is v1.139.00, a fix v1.138.03. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 
