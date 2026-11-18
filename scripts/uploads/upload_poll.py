@@ -36,6 +36,10 @@ VIDEOS = HOME / "videos"
 LOG = HOME / "poll.log"
 STATE = HOME / "air_synced.json"
 LOCK = HOME / "poll.lock"
+OCR_LOCK = HOME / "ocr.lock"
+OCR_DIR = Path(os.environ.get("KAIROS_OCR_DIR", Path.home() / "kairos-ocr"))
+OCR_PY = os.environ.get("KAIROS_OCR_PY", "/opt/homebrew/bin/python3")
+OCR_PATH = "/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
 
 
 # ---------- pure helpers (unit-tested) ----------
@@ -314,10 +318,49 @@ def sync_air(dry):
     return sent
 
 
+# ---------- sales video OCR (reuses ~/kairos-ocr/kairos_inbox_watch.py; never writes to the Sheet) ----------
+def queued_videos():
+    return [f for f in VIDEOS.glob("*") if f.is_file() and f.suffix.lower() in (".mov", ".mp4", ".m4v")]
+
+
+def start_ocr():
+    """Start the OCR run in its own process group (it outlives this poll). No-op if nothing is queued or one is running."""
+    if not queued_videos() or not (OCR_DIR / "kairos_inbox_watch.py").exists():
+        return False
+    subprocess.Popen([sys.executable, str(Path(__file__).resolve()), "--ocr"], start_new_session=True,
+                     stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    return True
+
+
+def run_ocr():
+    """The --ocr mode: frames -> Apple Vision -> parse with KAIROS_NO_PUSH=1. The watcher moves queued videos to videos/done/
+    and writes ~/kairos-ocr/inbox_summary.md for Andrew to review before running the push scripts with --write."""
+    lock = open(OCR_LOCK, "w")
+    try:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        return 0
+    env = dict(os.environ, PATH=OCR_PATH, KAIROS_NO_PUSH="1", KAIROS_NO_DRYRUN="1")
+    log(f"ocr: starting on {len(queued_videos())} queued video(s)", quiet=True)
+    try:
+        r = subprocess.run([OCR_PY, str(OCR_DIR / "kairos_inbox_watch.py"), str(VIDEOS)], cwd=str(OCR_DIR),
+                           env=env, capture_output=True, text=True, timeout=4 * 3600)
+        log(f"ocr: finished (exit {r.returncode}); summary at {OCR_DIR / 'inbox_summary.md'}", quiet=True)
+        if r.returncode:
+            log("ocr: " + (r.stderr or r.stdout or "")[-300:].replace("\n", " "), quiet=True)
+        return r.returncode
+    except Exception as e:
+        log(f"ocr: failed ({type(e).__name__})", quiet=True)
+        return 1
+
+
 # ---------- main ----------
 def main(argv=None):
     argv = sys.argv[1:] if argv is None else argv
     dry = "--dry-run" in argv
+    if "--ocr" in argv:
+        HOME.mkdir(parents=True, exist_ok=True)
+        return run_ocr()
     for d in (TMP, ARCHIVE / "video", ARCHIVE / "receipt", VIDEOS):
         d.mkdir(parents=True, exist_ok=True)
     lock = open(LOCK, "w")
@@ -352,6 +395,8 @@ def main(argv=None):
             failed += 1
             log(f"{f.get('pathname')}: unexpected {type(e).__name__}, will retry")
     sent = sync_air(dry)
+    if not dry and start_ocr():
+        print("sales video OCR started in the background")
     if not files and not sent:
         print("nothing waiting")
     else:

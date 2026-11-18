@@ -1,10 +1,10 @@
 # Upload poller (phone -> Vercel Blob -> Mac)
 
-The app uploads sales videos (`inbox/video/<Store yyyy-MM-dd HHmm>.mov`) and receipt photos (`inbox/receipt/<name>`) to Vercel Blob. `upload_poll.py` runs every 5 minutes on the Mac, saves each file locally, and only then deletes it from Blob. Stdlib only. It never runs the sales OCR.
+The app uploads sales videos (`inbox/video/<Store yyyy-MM-dd HHmm>.mov`) and receipt photos (`inbox/receipt/<name>`) to Vercel Blob. `upload_poll.py` runs every 5 minutes on the Mac, saves each file locally, and only then deletes it from Blob. Stdlib only. After new sales videos arrive it starts the sales OCR in the background (`--ocr` mode, own process group, own lock) using `~/kairos-ocr/kairos_inbox_watch.py` with `KAIROS_NO_PUSH=1` and `KAIROS_NO_DRYRUN=1`. Nothing is written to the Sheet: review `~/kairos-ocr/inbox_summary.md`, run the three push scripts without `--write`, then with `--write`.
 
 ## Folders (all under your home, so macOS lets a background job use them)
 - `~/.kairos-uploads/archive/video` and `archive/receipt`: permanent copies. Never overwritten (`name-2.ext`, `-3` ...).
-- `~/.kairos-uploads/videos/`: queue the sales OCR pipeline reads by hand (a hardlink of the archive file).
+- `~/.kairos-uploads/videos/`: queue the sales OCR reads (a hardlink of the archive file); the OCR moves processed ones to `videos/done/`.
 - `~/.kairos-uploads/tmp/`: downloads in progress (cleaned after a day).
 - `~/.kairos-uploads/poll.log`: one line per action. `launchd.log`: LaunchAgent output. `air_synced.json`: files already copied to the Air. `poll.lock`: stops two runs overlapping.
 - Receipts reuse `scripts/receipts/receipt_poll.py` (`process()`): Apple Vision (`~/.kairos-receipts/bin/vision_ocr`), parse, unapproved ledger lines. Held or failed receipts keep their archive copy and the reason is in `poll.log`. Approve lines in the app as usual.
