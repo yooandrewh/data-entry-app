@@ -4,7 +4,7 @@ Last updated: 2026-11-17 (evening)
 After a `/compact` or in a new chat: read this file first, then CLAUDE.md. Stable rules live in CLAUDE.md; only status lives here.
 
 ## Now
-- **v1.125.01 live:** Bake Day has a 'Through <date>' view (cumulative bakes up to a date); Pantry 'Low' flag now compares only same-unit counts. Node-tested only. Chrome extension still not connected (list_connected_browsers returned empty), so the browser test has failed to start three times.
+- **v1.125.01 live:** Bake Day has a 'Through <date>' view (cumulative bakes up to a date); Pantry 'Low' flag now compares only same-unit counts. **Browser-tested 2026-11-17 (desktop Chrome, fake counts, 390px iframe): all 10 checks pass, no console errors, no POSTs.** Open nits: at 390px the 'Not counted' tag squeezes the item text and the amount/unit inputs stack; Pantry 'plan needs' differs until the plan has run once (Pantry page never calls renderPlan); Copy list untested on a real device. Phone test still Andrew's.
 - **v1.125.00: Bake Day** (Home → Bake Day): shopping list from plan vs on hand, 'Not counted' / 'Unit' flags, recount-after-bake form. Syntax + shortfall logic tested in node only; UI untested (Chrome still not connected).
 - **v1.124.01 (78ed71f) live:** the three Pantry nits are fixed. Browser UI test tried again, Chrome still not connected (open Chrome, click the Claude icon, sign in), so it is still untested in a browser.
 - **Done in v1.125.00 (was Andrew's idea):** Bake Day page. Pick a bake date, show plan needs vs on hand, list what to buy. Gaps: stock never goes down after a bake (leaning: recount after the bake, not auto-subtract), uncounted items must read 'not counted', not zero.
@@ -12,7 +12,7 @@ After a `/compact` or in a new chat: read this file first, then CLAUDE.md. Stabl
 - Context-overhead trim: project CLAUDE.md (44k → 13k bytes) and global CLAUDE.md (22k → 10k) done; old text kept in `docs/HISTORY.md` and `~/.claude/docs/CLAUDE-HISTORY.md`. Three local skills moved to `~/.claude/skills-disabled/`. Connectors Crisp, Supabase, Figma, Drive, Vercel turned off. `autoCompactWindow` raised 150k to 250k (may be capped by the real window size).
 
 ## Next
-0. Browser UI test of Pantry: re-run via a subagent once Chrome is open and signed in to the Claude extension (page renders, empty state, no-code prompt, fake-row logic, 390px layout). Never give it the ledger code.
+0. (DONE 2026-11-17, see Now) Browser UI test of Pantry: re-run via a subagent once Chrome is open and signed in to the Claude extension (page renders, empty state, no-code prompt, fake-row logic, 390px layout). Never give it the ledger code.
    (Code-review nits done in v1.124.01.)
 1. Andrew: switch off the `design` plugin and synced skills `setup-claude`, `import-memory`, `consolidate-memory`, `morning`, `docx`, `pptx` in the app (Claude can't do this). Check with ListPlugins / ListSkills.
 2. Andrew: test Pantry on a phone (add a count with the ledger code, check on-hand and the "Low" flag).
