@@ -821,9 +821,9 @@
   .sheet .actions { gap: 8px; }
   .btn-primary { padding: 13px; }
   /* ---- New entry: a popup opened from Data's top-right button ---- */
-  .entry-modal { overscroll-behavior: contain; position: fixed; inset: 0 0 calc(var(--tabbar-h) + var(--safe-bottom)) 0; z-index: 58; background: var(--bg); overflow-y: auto; -webkit-overflow-scrolling: touch;
-    padding: calc(var(--safe-top) + 4px) 0 16px; }
-  .entry-modal[hidden] { display: none; }
+  /* Entry is a normal page (a .view), not a popup. */
+  #view-entry { padding: calc(var(--safe-top) + 4px) 0 16px; }
+  body[data-tab="entry"] #secNav { display: none !important; }
   .em-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
   .em-close { width: 38px; height: 38px; border-radius: 50%; border: none; cursor: pointer; font-size: var(--fs-lg); color: var(--text); flex: none; }
   .db-head-row { position: relative; padding-right: 96px; }
@@ -1724,9 +1724,7 @@
     .inv-sheet, #lblScrim .sheet, #bsScrim .sheet, #mlScrim .sheet { max-width: 760px; }
     #seaScrim .sheet, #buyScrim .sheet { max-width: 640px; max-height: 88vh; }
     .scrim.alert .alert-box { max-width: 420px; }
-    .entry-modal { inset: 5vh 0 auto 50%; transform: translateX(-50%); width: 680px; max-width: calc(100vw - 48px); max-height: 90vh;
-      border-radius: 18px; box-shadow: 0 0 0 100vmax rgba(0,0,0,.4) !important; padding-bottom: 24px; }
-    .entry-modal .wrap { max-width: none; padding: 0 28px; }
+    #view-entry .wrap { max-width: 720px; margin: 0 auto; padding: 0 28px 24px; }
     /* Home landing: photo fills the screen, buttons centred and roomy */
     #view-home:not(.paged) .home-menu { width: 100%; max-width: 440px; margin: auto auto auto 0; align-items: flex-start; }
     #view-home:not(.paged) .home-menu button, #view-home:not(.paged) .home-menu a.hm-link { justify-content: flex-start; }
@@ -2279,14 +2277,13 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
 </div>
 
 <!-- ===== ENTRY VIEW ===== -->
-<div class="entry-modal" id="view-entry" hidden role="dialog" aria-modal="true" aria-label="New entry">
+<div class="view" id="view-entry">
   <div class="wrap">
     <header class="em-head">
       <div>
         <h1>New Entry</h1>
         <div class="sub" id="todayLabel">—</div>
       </div>
-      <button type="button" class="em-close" id="entryClose" aria-label="Close">✕</button>
     </header>
 
     <form id="form" autocomplete="off">
@@ -2515,7 +2512,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.159.00 · Nov 18, 8:20 PM PST</div>
+<div class="ver-badge">v1.160.00 · Nov 18, 9:10 PM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -2966,8 +2963,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   const scrim = document.getElementById('scrim');
   // ---- New entry popup (Data tab → + Entry, top right) ----
   const entryModal = document.getElementById('view-entry');
-  // Entry acts like its own section: its nav button is lit, the page behind is frozen (no scrolling through).
-  let entryScrollY = 0;
+  // Entry is a page of its own: its nav button is lit and the other pages are hidden. Leaving it goes back to the page you came from (or the tab you tapped).
   function paintNavForEntry(open) {
     document.querySelectorAll('.tabbar button').forEach(b => {
       if ('entry' in b.dataset) b.classList.toggle('on', open);
@@ -2976,19 +2972,11 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     });
   }
   function openEntry() {
-    if (entryModal.hidden) {
-      entryScrollY = window.scrollY;
-      document.body.style.cssText += ';position:fixed;left:0;right:0;width:100%;top:' + (-entryScrollY) + 'px';
-    }
-    entryModal.hidden = false; entryModal.scrollTop = 0; paintNavForEntry(true); track('entry_open');
+    document.body.dataset.tab = 'entry'; document.body.dataset.page = 'entry';
+    Object.entries(VIEWS).forEach(([t, id]) => document.getElementById(id).classList.toggle('active', t === 'entry'));
+    paintNavForEntry(true); window.scrollTo(0, 0); track('entry_open');
   }
-  function closeEntry() {
-    if (!entryModal.hidden) {
-      document.body.style.position = ''; document.body.style.top = ''; document.body.style.left = ''; document.body.style.right = ''; document.body.style.width = '';
-      window.scrollTo(0, entryScrollY);
-    }
-    entryModal.hidden = true; paintNavForEntry(false);
-  }
+  function closeEntry() { if (entryModal.classList.contains('active')) go(curPage, curSec); }
   document.getElementById('newEntryBtn').addEventListener('click', openEntry);
   // Invoice page → "Forgot an entry?": a short popup that sends you to the entry window with Delivery and the invoice's store preselected.
   document.getElementById('invForgot').addEventListener('click', () => {
@@ -3013,7 +3001,6 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       openEntry(); track('invoice_forgot_entry', { store });
     }
   });
-  document.getElementById('entryClose').addEventListener('click', closeEntry);
   // Every popup gets a boxed X at its top right (the ones that already have one are left alone). The X presses the popup's own
   // Close / Cancel / Go back button when it has one, so each popup's normal clean-up still runs.
   const POP_HAS_X = '.info-x, .sea-x, .pop-x, #bsCloseBtn, [data-tm-edit-close], [data-forgot-close]';
@@ -3031,8 +3018,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     const own = [...sheet.querySelectorAll('button')].find(b => b !== x && !b.hidden && b.offsetParent && /^(close|cancel|go back|not now|done)$/i.test(b.textContent.trim()));
     if (own) own.click(); else if (scrim) scrim.classList.remove('show');
   });
-  document.addEventListener('keydown', e => { if (e.key === 'Escape' && !entryModal.hidden && !scrim.classList.contains('show')) closeEntry(); });
-
+  
 
   let pending = null;
 
@@ -3389,7 +3375,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   }
 
   // ---- Tab switching ----
-  const VIEWS = { home: 'view-home', db: 'view-db', plan: 'view-plan', fin: 'view-fin' };
+  const VIEWS = { home: 'view-home', db: 'view-db', plan: 'view-plan', fin: 'view-fin', entry: 'view-entry' };
   // Bottom bar: Sales, Inventory, Entry (opens the popup), Plan, Other. Each section has a row of pages under the top edge.
   // A page is an existing screen: a Data view, a Home page, a Baking mode or Finance.
   const SECTIONS = {
@@ -3430,6 +3416,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     try { sessionStorage.setItem('lastPage.v1', JSON.stringify({ page, sec: curSec })); } catch {}
     track('page', { page });
     document.body.dataset.tab = P.view; document.body.dataset.page = page;
+    paintNavForEntry(false);
     document.querySelectorAll('.tabbar button[data-sec]').forEach(b => b.classList.toggle('on', b.dataset.sec === curSec));
     Object.entries(VIEWS).forEach(([t, id]) => document.getElementById(id).classList.toggle('active', t === P.view));
     paintSecNav();
@@ -3443,7 +3430,6 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     const btn = e.target.closest('button'); if (!btn) return;
     if ('entry' in btn.dataset) { track('tab', { tab: 'entry' }); openEntry(); return; }
     const sec = btn.dataset.sec; track('tab', { tab: sec });
-    closeEntry();
     go(secLast[sec] || SECTIONS[sec].first, sec);
   });
   document.getElementById('secNav').addEventListener('click', e => {
@@ -8857,7 +8843,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     ind.textContent = 'Pull to refresh';
     document.body.appendChild(ind);
     let y0 = null, dy = 0;
-    const blocked = () => upBusy || !document.getElementById('view-entry').hidden || document.getElementById('scrim').classList.contains('show') || document.querySelector('.sp-pop');
+    const blocked = () => upBusy || document.getElementById('view-entry').classList.contains('active') || document.getElementById('scrim').classList.contains('show') || document.querySelector('.sp-pop');
     function doReload() { try { sessionStorage.setItem('lastScroll.v1', String(window.scrollY)); } catch {} ind.textContent = 'Refreshing…'; ind.style.visibility = 'visible'; ind.style.transform = 'translateY(0)'; setTimeout(() => location.reload(), 150); }
     document.addEventListener('touchstart', e => {
       y0 = (window.scrollY <= 0 && e.touches.length === 1 && !blocked()) ? e.touches[0].clientY : null; dy = 0;

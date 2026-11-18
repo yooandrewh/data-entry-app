@@ -37,7 +37,7 @@ Notion is dead: nothing writes to it, and the `NOTION_*` Vercel env vars can be 
 - **Soft delete only**: 🗑️ (password `kairos`, a client-side deterrent) sets "Tagged for deletion" = TRUE via `api/tag-delete.js`. Nothing is hard-deleted.
 - **Edit** (✏️) works on delivery/inventory only. Goodwill and transfers are signed/paired, so the button is hidden *and* `api/update-entry.js` refuses them. Keep both guards.
 - Goodwill has one Location dropdown (`#goodwillLoc`: La Mirada / Stanton / Church). Church records `recipient: 'Church'` and takes stock from La Mirada. Every entry type has an optional Note (≤200 chars, `·` stripped).
-- Entry is a popup (`#view-entry`), opened by **+ Entry** on Data and the Entry button on Home. Submit goes through the confirm sheet (`#scrim`).
+- **Entry is a page** (v1.160.00, `#view-entry` is a `.view` in `VIEWS`, `openEntry()` shows it, `closeEntry()` / `go()` leave it; no popup, no X), opened by the Entry tab, **+ Entry** on Data and Forgot an entry. Submit goes through the confirm sheet (`#scrim`) and then returns to the page you came from.
 
 ## Tabs and Home
 
