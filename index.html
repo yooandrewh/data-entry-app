@@ -1994,6 +1994,7 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
 #bakingPlan[data-step="2"] .bs-card, #bakingPlan[data-step="1"] .bs-card { display: none; }
 #bakingPlan:not([data-step="1"]) .pw-adv { display: none; }
 
+.sh-foot { margin-top: 8px; font-size: var(--fs-caption); }
 /* Upload page */
 #homeUpload select { width: 100% !important; min-height: 44px; font-size: var(--fs-body); box-sizing: border-box; }
 #homeUpload .pn-bar { gap: 8px; }
@@ -2351,7 +2352,7 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
   </div>
 </div>
 
-<div class="ver-badge">v1.141.02 · Nov 18, 11:54 AM PST</div>
+<div class="ver-badge">v1.141.03 · Nov 18, 12:12 PM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -4374,6 +4375,18 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
     list.innerHTML = html;
   }
   // Top of the Sales page: about what this week has made, what is about to run out (forecast), best seller and next bake.
+  // How many are left TODAY. The stock is as of st.asOf (the newest sales row or count for that store); every day since
+  // is assumed to sell at the store's usual weekday/weekend rate, so the number is an estimate (est) when asOf is before today.
+  function estLeftNow(st, p) {
+    const stock = st.stock[p] || 0, elapsed = Math.max(0, daysSince(st.asOf));
+    if (!elapsed) return { left: stock, est: false };
+    let rem = stock; const d = parseEntryDate(st.asOf);
+    for (let i = 0; i < elapsed && rem > 0; i++) {
+      rem -= ([0, 6].includes(d.getDay()) ? st.dowRate[p].we : st.dowRate[p].wd);
+      d.setDate(d.getDate() + 1);
+    }
+    return { left: Math.max(0, Math.round(rem)), est: true };
+  }
   async function salesHomeHtml(sales) {
     const today = nowPST().slice(0, 10), wk = weekStart(today), prevWk = addDays(wk, -7), prevSame = addDays(today, -7);
     const cnt = s => (typeof s.total === 'number' ? s.total : SALES_FLAVORS.reduce((t, f) => t + (s.amounts[f] || 0), 0)) + (s.extra || 0);
@@ -4393,11 +4406,13 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
       for (const loc of locs) {
         const st = locStats(loc, sales, entries); if (!st.hasInv) continue;
         const ro = runoutBand(st);
-        for (const p of PRODUCTS) if (ro.days[p] !== Infinity && ro.days[p] <= 14) items.push({ loc, p, d: ro.days[p], left: st.stock[p] });
+        for (const p of PRODUCTS) if (ro.days[p] !== Infinity && ro.days[p] <= 14) { const e = estLeftNow(st, p); items.push({ loc, p, d: ro.days[p], left: e.left, est: e.est, asOf: st.asOf }); }
       }
       items.sort((a, b) => a.d - b.d);
-      const rows = items.slice(0, 5).map(i => `<div class="sh-row"><span class="sh-nm">${tok(i.p)}<span><b>${esc(pdisp(i.p))}</b><small>${locs.length > 1 ? esc(i.loc) + ' · ' : ''}${i.left} left</small></span></span><span class="sh-when${i.d < 3 ? ' soon' : ''}">${fmtD(i.d)}<small>${wkShort(addDays(today, Math.max(0, Math.floor(i.d))))} ${fmtWhen(addDays(today, Math.max(0, Math.floor(i.d))))}</small></span></div>`).join('');
-      run = `<div class="sh-card"><div class="sh-lab">Running out</div>${rows || '<div class="sh-sub">Nothing runs out in the next 2 weeks.</div>'}</div>`;
+      const rows = items.slice(0, 5).map(i => `<div class="sh-row"><span class="sh-nm">${tok(i.p)}<span><b>${esc(pdisp(i.p))}</b><small>${locs.length > 1 ? esc(i.loc) + ' · ' : ''}${i.left}${i.est ? '*' : ''} left</small></span></span><span class="sh-when${i.d < 3 ? ' soon' : ''}">${fmtD(i.d)}<small>${wkShort(addDays(today, Math.max(0, Math.floor(i.d))))} ${fmtWhen(addDays(today, Math.max(0, Math.floor(i.d))))}</small></span></div>`).join('');
+      const shown = items.slice(0, 5).filter(i => i.est), stale = [...new Set(shown.map(i => `${i.loc} (${wkShort(i.asOf)} ${fmtWhen(i.asOf)})`))];
+      const foot = stale.length ? `<div class="sh-sub sh-foot">* Estimate. Latest sales or count on file: ${stale.map(esc).join(', ')}. Days since then are counted at the usual sales rate. A new count or sales video corrects it.</div>` : '';
+      run = `<div class="sh-card"><div class="sh-lab">Running out</div>${rows || '<div class="sh-sub">Nothing runs out in the next 2 weeks.</div>'}${foot}</div>`;
     } catch (e) { /* no entries: skip the card */ }
     // Best seller this week, and the next planned bake.
     const tot = {}; for (const s of thisRows) for (const f of SALES_FLAVORS) tot[f] = (tot[f] || 0) + (s.amounts[f] || 0);

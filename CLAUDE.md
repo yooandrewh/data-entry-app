@@ -78,7 +78,7 @@ Other -> Upload. Hyebin (iPhone) picks Sales video La Mirada / Stanton or Receip
 
 ## Sales dashboard (v1.140.00, 2026-11-18)
 
-`salesHomeHtml()` (next to `renderSalesView`) puts four things above the Sales summary, which is now labelled **Overall**: **This week** (about $, Monday to the last sales day, vs the same days last week; same math as the summary: count x `PRICE_PER_UNIT` + `salesAdj`), **Running out** (`runoutBand().days`, expected scenario, every store with a count, within 14 days, soonest 5), **Best seller** this week, **Next bake** (`planBakeDates`). It ignores the Sales filters. Plan step 1 also got big span chips (1 day, 1 week, 1 month, 1.5 months), text-style per-item span pickers and a pinned Next button.
+`salesHomeHtml()` (next to `renderSalesView`) puts four things above the Sales summary, which is now labelled **Overall**: **This week** (about $, Monday to the last sales day, vs the same days last week; same math as the summary: count x `PRICE_PER_UNIT` + `salesAdj`), **Running out** (`runoutBand().days`, expected scenario, every store with a count, within 14 days, soonest 5; "left" is `estLeftNow()`: the count minus the usual weekday/weekend rate for every day since the store's newest sales row or count, shown with `*` and a footnote when that date is before today), **Best seller** this week, **Next bake** (`planBakeDates`). It ignores the Sales filters. Plan step 1 also got big span chips (1 day, 1 week, 1 month, 1.5 months), text-style per-item span pickers and a pinned Next button.
 
 ## Plan steps (v1.139.00, 2026-11-18)
 
@@ -131,7 +131,7 @@ Costco receipts print a quantity line (`3 @ 4.99`) above an item whose price is 
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.141.02**; the next feature is v1.142.00, a fix v1.141.03. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.141.03**; the next feature is v1.142.00, a fix v1.141.04. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 
