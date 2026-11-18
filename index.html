@@ -2497,7 +2497,7 @@ select:not(.row-select):not([data-labi]) { -webkit-appearance: none !important; 
   </div>
 </div>
 
-<div class="ver-badge">v1.155.00 · Nov 18, 5:30 PM PST</div>
+<div class="ver-badge">v1.155.01 · Nov 18, 6:00 PM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -8009,21 +8009,9 @@ select:not(.row-select):not([data-labi]) { -webkit-appearance: none !important; 
     box.innerHTML = (storageErr ? `<div class="pn-note">${esc(storageErr)}</div>` : '') +
       `<div class="pn-bar"><button type="button" class="primary" id="stMove">Log a move</button></div>` +
       `<div class="st-grid">${card('All pieces (stores + storage)', total, 'Nothing logged yet. Log a move from the kitchen into a storage.')}${STORAGES.map(cardFor).join('')}</div>` +
-      `<div class="pn-note">BP and Fullerton: the last count plus every move since. La Mirada and Stanton show the store's inventory. Deliveries are written as normal delivery entries too.</div>` +
-      `<h3>Recent moves</h3>` + (histHtml || '<div class="pn-note">No moves yet.</div>') +
-      `<h3>Count BP or Fullerton</h3><div class="pn-note">Count what is really there and save it. It replaces the number above. Stores are counted with an Inventory entry.</div>` +
-      `<div class="pn-form"><label>Storage</label><select data-st="stor">${opt(['BP Storage', 'Fullerton Storage'], keep.stor)}</select>` +
-      `<label>Item</label><select data-st="item">${opt(ENTRY_PRODUCTS, keep.item)}</select>` +
-      `<label>Pieces counted</label><input data-st="amt" type="number" inputmode="numeric" min="0" step="1" value="${esc(keep.amt || '')}">` +
-      `<div class="pn-bar" style="margin-top:12px"><button class="primary" id="stCount">Save count</button></div></div>`;
+      `<div class="pn-note">BP and Fullerton: every move in and out. La Mirada and Stanton show the store's inventory. Deliveries are written as normal delivery entries too.</div>` +
+      `<h3>Recent moves</h3>` + (histHtml || '<div class="pn-note">No moves yet.</div>');
     box.querySelector('#stMove').onclick = () => { const b = document.querySelector('#view-entry .seg [data-type="storage"]'); if (b) b.click(); openEntry(); };
-    const val = k => box.querySelector(`[data-st="${k}"]`).value;
-    box.querySelector('#stCount').onclick = async () => {
-      const n = parseInt(val('amt'), 10);
-      if (!(n >= 0)) return rcpToast('Enter the pieces counted');
-      const ok = await pantryPost({ action: 'add', lines: [{ date: nowPST(), storage: val('stor'), item: val('item'), amt: n, kind: 'count' }] }, '/api/storage');
-      if (ok) { rcpToast('Count saved'); const e = document.querySelector('#homeStorage [data-st="amt"]'); if (e) e.value = ''; }
-    };
     box.querySelectorAll('[data-stx]').forEach(btn => btn.onclick = async () => {
       if (!confirm('Remove this entry? The numbers above change back.')) return;
       if (await pantryPost({ action: 'remove', ids: [btn.dataset.stx] }, '/api/storage')) rcpToast('Removed');
