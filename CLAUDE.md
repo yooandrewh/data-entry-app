@@ -81,6 +81,8 @@ Status: live API tested (add/remove round trip); browser-tested 2026-11-17 on de
 - Baking Plan shows the **Make it last until / Bake days / Add date** card again (it was hidden since v1.120.01, which left Bake Day with no way to set dates). Stanton delivers stays hidden.
 - Mock-server browser test passed (pantry, receipts, yield scaling, confirm). Not tried on a phone.
 
+- **Data summary (v1.135.00):** the breakdown at the top and in month folds lists current flavors first; retired ones (`EARLIER_FLAVORS`: Ube, Dot, Earl Grey, Earl Grey Mini, Matcha, Chocolate) sit under a collapsed "Earlier flavors" (`earlierSplit()`). Data is never removed.
+
 ## Trends (Home → Trends, built 2026-11-18)
 
 `renderTrends()` next to Pantry; reads `getSales()` (same rows as Data), no new API. Store select (La Mirada / Stanton / Both) and a **Chart | Raw data** toggle (`trLoc`, `trView`). Chart: last 8 Mon–Sun weeks, stacked Lemon Poppy / Sea Salt / Maple Pecan / Other, plus a madeleine table and an Other-items table (BM, CP, PB, CK). **Madeleine total = `trMad()` (madeleine flavors only); the sheet row `total` also counts muffins and cookies, so never use it here.** Weeks under 7 days are hatched and get no change arrow; arrows compare to the last full week. A dash = not tracked yet; `~` = estimated from stock counts (`row.derived`). Raw view: one row per day. Browser-tested headless at 390px; not on a phone.
@@ -114,7 +116,7 @@ Costco receipts print a quantity line (`3 @ 4.99`) above an item whose price is 
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.134.00**; the next feature is v1.135.00, a fix v1.134.01. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.135.00**; the next feature is v1.136.00, a fix v1.135.01. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 
