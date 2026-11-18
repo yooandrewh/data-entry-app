@@ -1820,6 +1820,10 @@
 .rc-text { width: 100%; box-sizing: border-box; min-height: 160px; font-family: inherit; font-size: var(--fs-body); }
 .rc-bad { color: var(--text); font-weight: 700; border-left: 3px solid var(--accent); padding: 2px 0 2px 8px; margin: 8px 0; font-size: var(--fs-body); }
 .rc-ok { color: var(--green); font-weight: 700; margin: 8px 0; }
+.rx-file { flex: 1 1 100%; min-width: 0; color: var(--muted); font-size: var(--fs-caption); overflow-wrap: anywhere; }
+.rx-sec h3 { margin: 4px 0 8px; }
+.rc-paste { margin-top: 16px; }
+.rc-paste > summary { cursor: pointer; padding: 10px 2px; font-weight: 700; font-size: var(--fs-body); color: var(--accent); }
 </style>
 </head>
 <body>
@@ -2173,7 +2177,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.127.01 · Nov 18, 8:29 AM PST</div>
+<div class="ver-badge">v1.128.00 · Nov 18, 8:33 AM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -7308,15 +7312,93 @@
   }
   // RECEIPTS-PARSER-END
   let rcParsed = null, rcBusy = false, rcDone = '';
+  // ----- Receipt photos: phone -> ReceiptInbox sheet tab (api/receipt-inbox.js) -> the Mac reads it and reports back a status -----
+  let rxFile = null, rxBusy = false, rxRows = null, rxErr = '';
+  const RX_STATUS = { pending: 'Waiting for the Mac', done: 'Done', held: 'Held', failed: 'Failed' };
+  const rxBlobB64 = blob => new Promise((ok, no) => { const fr = new FileReader(); fr.onload = () => ok(String(fr.result).split(',')[1] || ''); fr.onerror = () => no(fr.error); fr.readAsDataURL(blob); });
+  async function rxEncode(file) {
+    let src, url = '';
+    if (window.createImageBitmap) { try { src = await createImageBitmap(file); } catch { src = null; } }
+    if (!src) {
+      url = URL.createObjectURL(file);
+      src = await new Promise((ok, no) => { const im = new Image(); im.onload = () => ok(im); im.onerror = () => no(new Error('decode')); im.src = url; });
+    }
+    try {
+      const w0 = src.naturalWidth || src.width, h0 = src.naturalHeight || src.height;
+      if (!w0 || !h0) throw new Error('decode');
+      const tryAt = async (maxSide, qs) => {
+        const k = Math.min(1, maxSide / Math.max(w0, h0)), c = document.createElement('canvas');
+        c.width = Math.max(1, Math.round(w0 * k)); c.height = Math.max(1, Math.round(h0 * k));
+        c.getContext('2d').drawImage(src, 0, 0, c.width, c.height);
+        for (const q of qs) {
+          const blob = await new Promise(ok => c.toBlob(ok, 'image/jpeg', q));
+          if (!blob) throw new Error('encode');
+          const b64 = await rxBlobB64(blob);
+          if (b64.length <= 600000) return b64;
+        }
+        return '';
+      };
+      return (await tryAt(1800, [0.85, 0.75, 0.65, 0.55, 0.5])) || (await tryAt(1400, [0.85, 0.7, 0.55, 0.5])) || '';
+    } finally { if (url) URL.revokeObjectURL(url); if (src.close) src.close(); }
+  }
+  async function rxFetch() {
+    try { const r = await fetch('/api/receipt-inbox'); if (!r.ok) throw new Error(r.status); rxRows = (await r.json()).rows || []; rxErr = ''; }
+    catch { rxErr = "Couldn't load the list."; if (rxRows === null) rxRows = []; }
+    rxPaintList();
+  }
+  const rxWhen = iso => { const d = new Date(iso); if (isNaN(d)) return ''; const t = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); return d.toDateString() === new Date().toDateString() ? t : d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ', ' + t; };
+  function rxPaintList() {
+    const el = document.querySelector('#homeReceipts #rxList'); if (!el) return;
+    if (rxRows === null) { el.innerHTML = '<div class="pn-note">Loading...</div>'; return; }
+    el.innerHTML = (rxErr ? `<div class="pn-note">${esc(rxErr)}</div>` : '') +
+      (rxRows.length ? rxRows.map(r => `<div class="pn-row"><span class="pn-main"><b>${esc(r.name || 'photo')}</b><small>${esc(rxWhen(r.created))}${r.result ? ' · ' + esc(r.result) : ''}</small></span><span class="pn-r"><b>${esc(RX_STATUS[r.status] || r.status)}</b></span></div>`).join('')
+        : (rxErr ? '' : '<div class="pn-note">No photos sent yet.</div>'));
+  }
+  function rxPaintSend(msg) {
+    const f = document.querySelector('#homeReceipts #rxFileName'), b = document.querySelector('#homeReceipts #rxSend'), m = document.querySelector('#homeReceipts #rxMsg');
+    if (f) f.textContent = rxFile ? rxFile.name || 'photo' : 'No photo chosen';
+    if (b) b.disabled = !rxFile || rxBusy;
+    if (m && msg != null) m.textContent = msg;
+  }
+  async function rxSend() {
+    if (!rxFile || rxBusy) return;
+    const code = ledgerCode(); if (!code) { rcpToast('Enter the access code to send'); return; }
+    rxBusy = true; rxPaintSend('Sending...');
+    try {
+      const data = await rxEncode(rxFile);
+      if (!data) { rxPaintSend("That photo is too big to send. Try a closer shot."); return; }
+      const r = await fetch('/api/receipt-inbox', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-ledger-code': code }, body: JSON.stringify({ action: 'add', name: rxFile.name || 'photo', data }) });
+      const j = await r.json().catch(() => ({}));
+      if (r.status === 401) { try { localStorage.removeItem('ledgerCode'); } catch {} rxPaintSend(''); rcpToast('Wrong ledger code'); return; }
+      if (r.status === 503) { rxPaintSend(''); rcpToast('Sending is off: set LEDGER_CODE in Vercel'); return; }
+      if (!r.ok) { rxPaintSend(j.error || 'Could not send'); return; }
+      rxFile = null; const inp = document.querySelector('#homeReceipts #rxInput'); if (inp) inp.value = '';
+      rxPaintSend('Sent. The Mac reads it within about 5 minutes if it is awake; lines land unapproved in the ledger.');
+      rxFetch();
+    } catch { rxPaintSend("Couldn't read that photo or reach the server."); }
+    finally { rxBusy = false; rxPaintSend(); }
+  }
   function renderReceipts() {
     const box = document.getElementById('homeReceipts'); if (!box) return;
     if (!box.querySelector('#rcText')) {
-      box.innerHTML = `<div class="pn-note">On your iPhone: open the receipt photo, press and hold the text, tap Copy All, then paste it here.</div>` +
+      box.innerHTML = `<div class="rx-sec"><h3>Send a photo to the Mac</h3>` +
+        `<div class="pn-note">Take a photo of the receipt or pick one from your library.</div>` +
+        `<input type="file" id="rxInput" accept="image/*" hidden>` +
+        `<div class="pn-bar"><button id="rxPick">Choose photo</button><button class="primary" id="rxSend" disabled>Send</button><span class="rx-file" id="rxFileName">No photo chosen</span></div>` +
+        `<div class="pn-note" id="rxMsg"></div>` +
+        `<div class="pn-bar"><button id="rxRefresh">Refresh</button></div><div id="rxList"></div></div>` +
+        `<details class="rc-paste"><summary>Paste text instead</summary>` +
+        `<div class="pn-note">On your iPhone: open the receipt photo, press and hold the text, tap Copy All, then paste it here.</div>` +
         `<textarea id="rcText" class="rc-text" placeholder="Paste the receipt text" autocomplete="off"></textarea>` +
-        `<div class="pn-bar" style="margin-top:8px"><button class="primary" id="rcRead">Read</button></div><div id="rcOut"></div>`;
+        `<div class="pn-bar" style="margin-top:8px"><button class="primary" id="rcRead">Read</button></div><div id="rcOut"></div></details>`;
       box.querySelector('#rcRead').onclick = () => { rcDone = ''; rcParsed = parseReceipt(box.querySelector('#rcText').value); paintReceipt(); };
       box.querySelector('#rcOut').addEventListener('click', e => { if (e.target.closest('#rcPost')) rcPost(); });
+      box.querySelector('#rxPick').onclick = () => box.querySelector('#rxInput').click();
+      box.querySelector('#rxInput').onchange = e => { rxFile = (e.target.files && e.target.files[0]) || null; rxPaintSend(''); };
+      box.querySelector('#rxSend').onclick = rxSend;
+      box.querySelector('#rxRefresh').onclick = rxFetch;
     }
+    rxPaintSend(); rxPaintList(); rxFetch();
     paintReceipt();
   }
   function paintReceipt() {

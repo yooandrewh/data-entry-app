@@ -1,5 +1,7 @@
 # Receipt upload (iPhone -> Mac -> Ledger)
 
+**Main route:** app Home -> Receipts -> Send a photo. `receipt_poll.py` (LaunchAgent every 5 min) does Apple Vision + parse + unapproved ledger lines and reports back in the app. Install: copy `com.kairos.receipt-poll.plist` to `~/Library/LaunchAgents/` and `launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/com.kairos.receipt-poll.plist`. Needs `~/.kairos-receipts/bin/vision_ocr` (copy of `~/Downloads/kairos_videos_raw/vision_ocr`; rebuild with `swiftc -O vision_ocr.swift -o vision_ocr`). The rest of this file describes the older iCloud-folder route, which is run by hand.
+
 Same process as the sales videos (`~/Downloads/kairos_videos_raw/kairos_inbox_watch.py`): everything local, free, nothing writes to the Sheet until you say so.
 
 | | Sales videos | Receipts |
