@@ -2621,7 +2621,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.163.00 · Nov 18, 3:07 PM PST</div>
+<div class="ver-badge">v1.164.00 · Nov 18, 3:10 PM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -6104,7 +6104,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     return `Unsalted Butter (${brand})` + (extra ? ', ' + extra : '');
   }
   // Waffle cones are counted, not weighed: their costing row is a piece count (62 per Cake Pop batch).
-  const isCone = n => /waffle cone/i.test(String(n));
+  const isCone = n => /waffle cone|pan liner/i.test(String(n));   // counted in pieces, not grams
   function recIngRows(rows, mult, ctx, addin) {
     const mad = recState.sec === 'mad';
     return rows.map(r => {
@@ -7736,7 +7736,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   // Physical averages (about 1% to 3% off between brands). Items not listed are never converted.
   const DENSITY = { 'Milk': 1.03, 'Organic Whole Milk': 1.03, 'Coconut Milk': 0.97, 'Heavy Cream': 0.99, 'Lemon Juice': 1.03, 'Vegetable Oil': 0.92, 'Vanilla Extract': 0.88, 'Lemon Emulsion': 0.95, 'Ube Extract': 1.0, 'Wine': 0.99, 'Honey': 1.42, 'Maple Syrup': 1.33 };
   const toGrams = (name, amt, unit) => unit === 'ml' && DENSITY[name] ? { amt: amt * DENSITY[name], unit: 'g', conv: true } : { amt, unit };
-  const buyWaste = name => isCone(name) ? 0.1 : BUY_WASTE;   // waffle cones: 10% breakage (Andrew, 2026-11-18)
+  const buyWaste = name => /pan liner/i.test(name) ? 0 : isCone(name) ? 0.1 : BUY_WASTE;   // waffle cones: 10% breakage (Andrew, 2026-11-18)
   const BUY_WASTE = 0.2;   // shopping and pantry-use amounts include 20% extra for waste (Andrew, 2026-11-18); the printed bake sheet shows the plain recipe
   function buyItems(list = [...bakeSheet, ...buyRecipes]) {
     if (!Object.keys(costPrices).length) loadCosts();
@@ -7751,7 +7751,11 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
         else if (c === 'Tea Bags') add('Earl Grey Tea Leaves', q * 2);
         else add(c, q);
       }
+      // Pan liners (Dixie Lift-Off): one per oven tray, and a tray holds one batch of madeleines (12), so one liner per madeleine batch. Liners do not stack.
+      if (f.sec === 'mad') add('Pan Liners', Math.ceil(b.b - 1e-9));
     }
+    // ...and one per storage pan (a Cambro box is one layer, never stacked), only for the whole plan.
+    if (!arguments.length) { try { const t = boxPlan().total; if (t > 0) add('Pan Liners', t); } catch {} }
     return [...need.entries()].map(([name, qty]) => {
       const p = costPrices[name] || {}, unit = isCone(name) ? 'pcs' : 'g';
       const pkAmt = p.amt > 0 ? toGrams(name, p.amt, p.unit).amt : p.amt;   // a pack sold in ml is sized in grams here, like the plan
@@ -7772,6 +7776,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
         else if (c === 'Tea Bags') { if (name === 'Earl Grey Tea Leaves') q += x * 2; }
         else if (c === name) q += x;
       }
+      if (name === 'Pan Liners' && f.sec === 'mad') q += Math.ceil(b.b - 1e-9);
       if (q > 0) out.push({ label: f.it.name || b.key, batches: b.b, q });
     }
     return out;
