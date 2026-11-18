@@ -2318,8 +2318,6 @@ select:not(.row-select):not([data-labi]) { -webkit-appearance: none !important; 
             <option value="Kitchen">Kitchen</option>
             <option value="BP Storage">BP Storage</option>
             <option value="Fullerton Storage">Fullerton Storage</option>
-            <option value="La Mirada Storage">La Mirada Storage</option>
-            <option value="Stanton Storage">Stanton Storage</option>
           </select>
         </div>
         <div class="row" id="stToRow" hidden>
@@ -2328,8 +2326,6 @@ select:not(.row-select):not([data-labi]) { -webkit-appearance: none !important; 
             <option value="" selected hidden>Choose where</option>
             <option value="BP Storage">BP Storage</option>
             <option value="Fullerton Storage">Fullerton Storage</option>
-            <option value="La Mirada Storage">La Mirada Storage</option>
-            <option value="Stanton Storage">Stanton Storage</option>
             <option value="La Mirada delivery">La Mirada delivery</option>
             <option value="Stanton delivery">Stanton delivery</option>
           </select>
@@ -2502,7 +2498,7 @@ select:not(.row-select):not([data-labi]) { -webkit-appearance: none !important; 
   </div>
 </div>
 
-<div class="ver-badge">v1.152.01 · Nov 18, 3:30 PM PST</div>
+<div class="ver-badge">v1.153.00 · Nov 18, 4:00 PM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -8305,6 +8301,20 @@ select:not(.row-select):not([data-labi]) { -webkit-appearance: none !important; 
     storageBusy = false;
     if (homeTab === 'storage') renderStorage();
   }
+  // La Mirada Storage and Stanton Storage are those stores' inventory (Andrew, 2026-11-18): the Storage page shows each store's inventory level
+  // (latest count + deliveries - sales, same as Stock) instead of keeping a second record. Only BP and Fullerton Storage take counts and moves.
+  const STORE_ST = { 'La Mirada Storage': 'La Mirada', 'Stanton Storage': 'Stanton' };
+  let STORE_INV = null, storeInvBusy = false;
+  async function loadStoreInv() {
+    storeInvBusy = true;
+    try {
+      const [sales, entries] = await Promise.all([getSales(), fetchRemoteEntries()]);
+      STORE_INV = {};
+      for (const loc of Object.values(STORE_ST)) { const st = locStats(loc, sales, entries); STORE_INV[loc] = st.hasInv ? { stock: st.stock, asOf: st.invDate } : null; }
+    } catch { STORE_INV = {}; }
+    storeInvBusy = false;
+    if (homeTab === 'storage') renderStorage();
+  }
   const stNorm = d => (String(d || '') + 'T00:00').slice(0, 16);
   // { storage: { item: pieces } } replaying counts and moves oldest first.
   function storageStock() {
@@ -8368,7 +8378,11 @@ select:not(.row-select):not([data-labi]) { -webkit-appearance: none !important; 
     if (STORAGE === null && !storageBusy) fetchStorage();
     if (STORAGE === null) { box.innerHTML = '<div class="pn-note">Loading…</div>'; return; }
     const keep = {}; box.querySelectorAll('[data-st]').forEach(e => { keep[e.dataset.st] = e.value; });
+    if (STORE_INV === null && !storeInvBusy) loadStoreInv();
     const stock = storageStock();
+    for (const [sn, loc] of Object.entries(STORE_ST)) { const v = STORE_INV && STORE_INV[loc]; stock[sn] = v ? Object.assign({}, v.stock) : {}; }
+    const NOTE = { 'La Mirada Storage': 'La Mirada inventory', 'Stanton Storage': 'Stanton inventory' };
+    const cardFor = s => { const loc = STORE_ST[s], v = loc && STORE_INV && STORE_INV[loc]; return loc ? card(s, stock[s], STORE_INV === null ? 'Loading…' : 'No inventory count yet.').replace('</h3>', `</h3><div class="pn-note">${esc(NOTE[s])}${v ? ' as of ' + esc(fmtWhen(v.asOf)) : ''}. Change it with an Inventory entry.</div>`) : card(s, stock[s], 'Nothing here.'); };
     const names = m => [...ENTRY_PRODUCTS, ...Object.keys(m).filter(k => !ENTRY_PRODUCTS.includes(k))].filter(k => m[k]);
     const total = {}; STORAGES.forEach(s => Object.entries(stock[s]).forEach(([k, v]) => { total[k] = (total[k] || 0) + v; }));
     const line = (p, n) => `<div class="st-line"><span class="st-k">${tok(p)}<span>${pdisp(p)}</span></span><b${n < 0 ? ' class="st-neg"' : ''}>${n}${n < 0 ? '<small>check count</small>' : ''}</b></div>`;
@@ -8384,11 +8398,11 @@ select:not(.row-select):not([data-labi]) { -webkit-appearance: none !important; 
     const opt = (list, sel) => list.map(v => `<option value="${esc(v)}"${v === sel ? ' selected' : ''}>${esc(pdisp(v))}</option>`).join('');
     box.innerHTML = (storageErr ? `<div class="pn-note">${esc(storageErr)}</div>` : '') +
       `<div class="pn-bar"><button type="button" class="primary" id="stMove">Log a move</button></div>` +
-      `<div class="st-grid">${card('All storage', total, 'Nothing logged yet. Log a move from the kitchen into a storage.')}${STORAGES.map(s => card(s, stock[s], 'Nothing here.')).join('')}</div>` +
-      `<div class="pn-note">Each number is the last count plus every move since. Deliveries out of a storage are written as normal delivery entries too.</div>` +
+      `<div class="st-grid">${card('All pieces (stores + storage)', total, 'Nothing logged yet. Log a move from the kitchen into a storage.')}${STORAGES.map(cardFor).join('')}</div>` +
+      `<div class="pn-note">BP and Fullerton: the last count plus every move since. La Mirada and Stanton show the store's inventory. Deliveries are written as normal delivery entries too.</div>` +
       `<h3>Recent moves</h3>` + (histHtml || '<div class="pn-note">No moves yet.</div>') +
-      `<h3>Count a storage</h3><div class="pn-note">Count what is really there and save it. It replaces the number above.</div>` +
-      `<div class="pn-form"><label>Storage</label><select data-st="stor">${opt(STORAGES, keep.stor)}</select>` +
+      `<h3>Count BP or Fullerton</h3><div class="pn-note">Count what is really there and save it. It replaces the number above. Stores are counted with an Inventory entry.</div>` +
+      `<div class="pn-form"><label>Storage</label><select data-st="stor">${opt(['BP Storage', 'Fullerton Storage'], keep.stor)}</select>` +
       `<label>Item</label><select data-st="item">${opt(ENTRY_PRODUCTS, keep.item)}</select>` +
       `<label>Pieces counted</label><input data-st="amt" type="number" inputmode="numeric" min="0" step="1" value="${esc(keep.amt || '')}">` +
       `<div class="pn-bar" style="margin-top:12px"><button class="primary" id="stCount">Save count</button></div></div>`;

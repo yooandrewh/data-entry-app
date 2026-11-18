@@ -157,7 +157,7 @@ Costco receipts print a quantity line (`3 @ 4.99`) above an item whose price is 
 
 Inventory → **Storage** and Entry → **Storage** (6th type; the type buttons are now 3 x 2). Tracks finished pieces in the four storages (`STORAGES`: BP / Fullerton / La Mirada / Stanton Storage). Moves: **Kitchen → storage → delivery** or **Kitchen → delivery**. Sheet tab **Storage** (`Id, Group, Date, Storage, Item, Amount, Kind move|count, From, To, Note, Deleted`), `api/storage.js` (GET open; POST `add` / `remove` need `x-ledger-code`; soft delete; removing a row removes its whole Group). Only storages get rows: a move in is +, out is −, storage to storage is two rows with one Group; Kitchen and delivery appear only in From / To. A **count** row sets a storage's number for an item; moves after it add to it (`storageStock()` replays oldest first). Entry's From / To are dropdowns (`#stFrom`, `#stTo`); a move to a store delivery also writes the normal delivery entry (memo `From <storage>`), and Kitchen → delivery writes only that delivery. If the Storage write fails nothing is saved and the confirm sheet stays open. Storage moves are not in localStorage; history is on the Storage page. Not yet tied to the Boxes card; real pieces per pan still unknown.
 
-**v1.152.01: Plan and BP / Fullerton Storage.** Andrew: La Mirada Storage and Stanton Storage *are* those stores' inventory level, so the plan does not add them on top of the store's inventory count (that would double count). Only BP and Fullerton Storage are pooled (`storedPool`) and taken off the span bake total. Stock and run-out use shelf counts only. Open: the Storage page's La Mirada / Stanton numbers and the Inventory counts are still two separate records.
+**v1.152.01: Plan and BP / Fullerton Storage.** Andrew: La Mirada Storage and Stanton Storage *are* those stores' inventory level, so the plan does not add them on top of the store's inventory count (that would double count). Only BP and Fullerton Storage are pooled (`storedPool`) and taken off the span bake total. Stock and run-out use shelf counts only. **v1.153.00:** the Storage page's La Mirada / Stanton cards now show each store's inventory level (`loadStoreInv`, `locStats` stock: latest count + deliveries - sales); only BP and Fullerton take counts and moves, and Entry's From / To no longer list La Mirada / Stanton Storage (use "La Mirada delivery" / "Stanton delivery"). `api/storage.js` still accepts those two names.
 
 ## Backup (v1.152.00)
 
@@ -183,7 +183,7 @@ The headless check at 390px misses what iOS does. Apply these to every new or ch
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.152.01**; the next feature is v1.153.00, a fix v1.152.02. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.153.00**; the next feature is v1.154.00, a fix v1.153.01. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 
