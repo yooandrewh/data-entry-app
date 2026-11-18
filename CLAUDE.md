@@ -72,6 +72,10 @@ Tab **Pantry** (`Id, Item, Amount, Unit, Date, Note, Deleted`); each row is one 
 **On hand = latest count + approved ledger item lines dated after it, in the same unit** (`pantryStock()`); lines in another unit set `mixed`. Compared with `buyItems()` for a "Low" flag. Units g, kg, oz, lb, ml, L, fl oz (converted to base on save) and pcs.
 Status: live API tested (add/remove round trip); browser-tested 2026-11-17 on desktop Chrome (10 checks pass); **not yet tested on a phone**.
 
+## Upload page (v1.141.00, 2026-11-18)
+
+Other -> Upload. Hyebin (iPhone) picks Sales video La Mirada / Stanton or Receipt photos and sends them **straight to Vercel Blob** (`api/upload.js` is only the token endpoint: needs env `UPLOAD_CODE`, sent as the client payload; 503 if unset; caps 200 MB per file, 40 files / 1.5 GB waiting; video/* and image/* only; paths must start `inbox/video/` or `inbox/receipt/`). Files are public-URL blobs with a random suffix (unlisted, not private), so the Mac must collect them fast. `api/uploads.js` (GET list, POST remove) needs `x-ledger-code`. **Mac collector** `scripts/uploads/upload_poll.py` (LaunchAgent `com.kairos.upload-poll`, every 5 min; README there): downloads to `~/.kairos-uploads/archive/<kind>/`, checks the byte count, only then deletes from Blob; videos are also linked into `~/.kairos-uploads/videos/` (OCR is still run by hand); receipts go through `receipt_poll.process()` into unapproved ledger lines; archived files are rsynced to `andrews-macbook-air:~/kairos-uploads`. **Setup Andrew must do:** create a Blob store in Vercel (Project -> Storage -> Blob, public) which sets `BLOB_READ_WRITE_TOKEN`, add env `UPLOAD_CODE`, redeploy, install the LaunchAgent. Not tested with a real upload yet.
+
 ## Sales dashboard (v1.140.00, 2026-11-18)
 
 `salesHomeHtml()` (next to `renderSalesView`) puts four things above the Sales summary, which is now labelled **Overall**: **This week** (about $, Monday to the last sales day, vs the same days last week; same math as the summary: count x `PRICE_PER_UNIT` + `salesAdj`), **Running out** (`runoutBand().days`, expected scenario, every store with a count, within 14 days, soonest 5), **Best seller** this week, **Next bake** (`planBakeDates`). It ignores the Sales filters. Plan step 1 also got big span chips (1 day, 1 week, 1 month, 1.5 months), text-style per-item span pickers and a pinned Next button.
@@ -127,7 +131,7 @@ Costco receipts print a quantity line (`3 @ 4.99`) above an item whose price is 
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.140.00**; the next feature is v1.141.00, a fix v1.140.01. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.141.00**; the next feature is v1.142.00, a fix v1.141.01. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 
