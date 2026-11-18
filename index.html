@@ -2038,7 +2038,8 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
 
   .buy-have { opacity: .6; cursor: default; }
   .buy-have .buy-ok { width: 24px; height: 24px; flex: none; display: flex; align-items: center; justify-content: center; border-radius: 6px; background: #000; color: #fff; font-size: 15px; font-weight: 700; }
-  .buy-have .buy-main b em { font-weight: 700; }
+  .buy-have .buy-tag { display: block; font-style: normal; font-size: var(--fs-micro); font-weight: 700; letter-spacing: .4px; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; }
+  .buy-have .buy-main b s { text-decoration: line-through; text-decoration-thickness: 1.5px; font-weight: 600; }
 
   /* Top page row: solid white bar so scrolling content no longer shows through it (an older "transparent db-filter" rule made it see-through). */
   #secNav.sec-nav { background: #fff !important; border-bottom: 1px solid #e5e5e5 !important; z-index: 35; }
@@ -2408,7 +2409,7 @@ button { color: var(--text, #000); }
   </div>
 </div>
 
-<div class="ver-badge">v1.146.01 · Nov 18, 12:57 PM PST</div>
+<div class="ver-badge">v1.146.02 · Nov 18, 12:59 PM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -8288,7 +8289,7 @@ button { color: var(--text, #000); }
     return `<label class="buy-row buy-big${buyChecked[nm] ? ' done' : ''}"><input type="checkbox" data-bkc="${esc(nm)}"${buyChecked[nm] ? ' checked' : ''}><span class="buy-main"><b><em>${big}</em> ${esc(nm)}</b><small>${sub}</small></span><span class="buy-r">${q.cost != null ? money2(q.cost) : ''}</span></label>`;
   };
   const bkVendor = r => { const v = (costPrices[r.i.name] || {}).vendor; return v && String(v).trim() ? String(v).trim() : (bkPart(r).n ? 'Other' : 'No price yet'); };
-  const bkHaveRow = r => `<div class="buy-row buy-big buy-have"><span class="buy-ok">✓</span><span class="buy-main"><b><em>Have it</em> ${esc(r.i.name)}</b><small>need ${buyFmt(r.i.qty, r.i.unit)} · have ${buyFmt(r.s.onHand, r.i.unit)}</small></span></div>`;
+  const bkHaveRow = r => `<div class="buy-row buy-big buy-have"><span class="buy-ok">✓</span><span class="buy-main"><em class="buy-tag">Have it</em><b><s>${esc(r.i.name)}</s></b><small>need ${buyFmt(r.i.qty, r.i.unit)} · have ${buyFmt(r.s.onHand, r.i.unit)}</small></span></div>`;
   // rows = still to buy; all = every ingredient the plan needs (the ones already on hand are shown greyed under the same store, marked Have it).
   function bkBuyList(rows, all) {
     const have = (all || []).filter(r => r.st === 'ok');

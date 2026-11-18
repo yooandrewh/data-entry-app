@@ -80,7 +80,7 @@ Status: live API tested (add/remove round trip); browser-tested 2026-11-17 on de
 
 ## Shopping list (v1.144.00)
 
-Every To buy / What to buy list (Pantry, Bake Day, Plan step 2) is grouped by vendor (`bkBuyList`, vendor from the newest approved ledger price, `Other` / `No price yet` last) and each row leads with the pack count (`3 packs All Purpose Flour`, pack size in lb and kg). **`BUY_WASTE = 0.2`: `buyItems()` adds 20% for waste** (Andrew, 2026-11-18), so shopping and the Bake done pantry use include it. **v1.144.01:** items already on hand show greyed under their store as **Have it** (`bkHaveRow`; Bake Day's separate Have enough list was removed); the printed bake sheet still shows the plain recipe.
+Every To buy / What to buy list (Pantry, Bake Day, Plan step 2) is grouped by vendor (`bkBuyList`, vendor from the newest approved ledger price, `Other` / `No price yet` last) and each row leads with the pack count (`3 packs All Purpose Flour`, pack size in lb and kg). **`BUY_WASTE = 0.2`: `buyItems()` adds 20% for waste** (Andrew, 2026-11-18), so shopping and the Bake done pantry use include it. **v1.144.01:** items already on hand show greyed under their store with a small HAVE IT label above the crossed-out name (`bkHaveRow`, v1.146.02; Bake Day's separate Have enough list was removed); the printed bake sheet still shows the plain recipe.
 
 ## Refresh (v1.142.00)
 
@@ -161,7 +161,7 @@ The headless check at 390px misses what iOS does. Apply these to every new or ch
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.146.01**; the next feature is v1.147.00, a fix v1.146.02. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.146.02**; the next feature is v1.147.00, a fix v1.146.03. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 
