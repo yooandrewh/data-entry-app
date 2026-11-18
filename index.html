@@ -2248,6 +2248,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
 
     <!-- Invoice -->
     <div id="homeInvoice" hidden>
+      <div id="invSched"></div>
       <div class="card"><div class="sum" style="margin:0 12px">
         <div class="inv-field"><span>Store</span><div class="inv-store" id="invStoreBtns"><button type="button" data-store="La Mirada" class="on">La Mirada</button><button type="button" data-store="Stanton">Stanton</button><button type="button" data-store="Both">Both</button></div><select id="invStore" hidden data-native><option>La Mirada</option><option>Stanton</option><option>Both</option></select></div>
         <div class="inv-field"><span>From</span><input type="date" id="invFrom" /></div>
@@ -2507,7 +2508,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.156.00 · Nov 18, 6:30 PM PST</div>
+<div class="ver-badge">v1.157.00 · Nov 18, 7:15 PM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -3856,8 +3857,39 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   }
   // Dubai Ball's price row stays hidden: Stanton invoices skip it.
   function syncInvDubai() { const r = document.getElementById('invDubaiRow'); if (r) r.hidden = true; }   // Dubai Ball is no longer billed on any invoice
+  // Billing schedule (Andrew, 2026-11-18): an invoice per store is due on the 2nd and 4th Sunday of every month. It covers the Sunday of the previous due date
+  // through the Saturday before this one (so back to back, nothing is missed or billed twice), and is prepared on the Friday or Saturday before the due Sunday.
+  const nthSunday = (y, m, n) => { const d = new Date(y, m, 1); d.setDate(1 + ((7 - d.getDay()) % 7) + 7 * (n - 1)); return d.toLocaleDateString('en-CA'); };
+  const invDues = (y, m) => [nthSunday(y, m, 2), nthSunday(y, m, 4)];
+  function invNextDues(today) {
+    const [y, m] = today.split('-').map(Number), all = [];
+    for (let k = -1; k <= 2; k++) { const d = new Date(y, m - 1 + k, 1); all.push(...invDues(d.getFullYear(), d.getMonth())); }
+    all.sort();
+    const i = all.findIndex(d => d >= today);
+    return i < 1 ? [] : [{ due: all[i], from: all[i - 1], to: addDays(all[i], -1) }, all[i + 1] ? { due: all[i + 1], from: all[i], to: addDays(all[i + 1], -1) } : null].filter(Boolean);
+  }
+  function invSchedPaint() {
+    const box = document.getElementById('invSched'); if (!box) return;
+    const today = nowPST().slice(0, 10), [a, b] = invNextDues(today); if (!a) { box.innerHTML = ''; return; }
+    const fri = addDays(a.due, -2), day = d => `${wkShort(d)} ${fmtWhen(d)}`;
+    const when = today >= fri ? '<b>Ready to prepare now</b>' : `Prepare on ${day(fri)} or ${day(addDays(a.due, -1))}`;
+    box.innerHTML = `<div class="group-label">Next invoices</div><div class="card"><div class="sum" style="margin:0 12px">` +
+      `<div class="inv-field"><span>Due ${day(a.due)}<small style="display:block;color:var(--muted)">Covers ${day(a.from)} to ${day(a.to)} · ${when}</small></span></div>` +
+      `<div class="inv-field" id="invSchedBtns"><div class="inv-store"><button type="button" data-ist="La Mirada">Prepare La Mirada</button><button type="button" data-ist="Stanton">Prepare Stanton</button></div></div>` +
+      (b ? `<div class="inv-field"><span style="color:var(--muted)">Then ${day(b.due)}<small style="display:block">Covers ${day(b.from)} to ${day(b.to)}</small></span></div>` : '') +
+      `</div></div>`;
+    box.querySelector('#invSchedBtns').onclick = e => {
+      const btn = e.target.closest('button[data-ist]'); if (!btn) return;
+      document.getElementById('invStore').value = btn.dataset.ist;
+      document.getElementById('invFrom').value = a.from; document.getElementById('invTo').value = a.to;
+      document.getElementById('invDue').value = a.due; document.getElementById('invIssue').value = today > fri ? today : fri;
+      document.querySelectorAll('#invStoreBtns button').forEach(x => x.classList.toggle('on', x.dataset.store === btn.dataset.ist));
+      try { syncInvDubai(); } catch {}
+      document.getElementById('invGenBtn').scrollIntoView({ block: 'center' });
+    };
+  }
   function initInvoiceForm() {
-    paintInvHistory(); invSync();
+    paintInvHistory(); invSync(); invSchedPaint();
     const today = nowPST().slice(0, 10);
     if (!document.getElementById('invFrom').value) document.getElementById('invFrom').value = today;
     if (!document.getElementById('invTo').value) document.getElementById('invTo').value = today;

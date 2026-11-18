@@ -175,6 +175,10 @@ Ingredients' On hand list and every What to buy / To buy list (inside each store
 
 Every row in the shopping lists (What to buy, Plan step 2, Bake Day) has a **What it is for and when** drop-down (`usesHtml` / `usesInList`, a native `<details>` under the row): per-recipe amounts and batches for the whole plan (waste included, same numbers as the list) and, when the plan has bake dates (`planDatesCache`, dates from today on), one line per bake date with the recipes and amount. With no bake dates it says so and points to Bake dates in Plan step 1. Date lines cover forecast-driven recipes only, like Bake Day's per-date views. Checked in the headless browser at 390px; not on a phone.
 
+## Invoice schedule (v1.157.00)
+
+Andrew: each store is invoiced on the **2nd and 4th Sunday** of every month (4 invoices a month: La Mirada and Stanton, twice). Each covers the previous due Sunday through the **Saturday before** this one (back to back, nothing missed or doubled), and is prepared the Friday or Saturday before. `invNextDues()` / `invSchedPaint()` (top of the Invoice page, `#invSched`): shows the next due date, its range and when to prepare, with **Prepare La Mirada / Stanton** buttons that fill Store, From, To, Issue (Friday, or today if later) and Due. The range comes from the calendar, not from the last saved invoice, so a late entry lands in the next invoice. Christmas Friday: prepare Saturday. No push reminder yet.
+
 ## Design pass (v1.149.00)
 
 Last CSS block: **every `<select>` has one style** (white, 1px #c9c9c9, 12px radius, 44px, black chevron; `.row-select` and `[data-labi]` excluded); the Forecast store toggle (`.fc-locs`) uses the pill style. On desktop (>=900px) all pages share a 1120px column, page chips sit centered at natural width, the Trends donut is 220px. On phones the 5 Inventory chips shrink (11px padding) to fit. Counts' total says "pieces", not "madeleines". Still open: coloured snowflake/flame/arrow icons in Forecast misses (breaks the B/W rule), today's half-finished day shows as a 0.0x miss, Stock's section headers use the old grey band style.
@@ -195,7 +199,7 @@ The headless check at 390px misses what iOS does. Apply these to every new or ch
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.156.00**; the next feature is v1.157.00, a fix v1.156.01. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.157.00**; the next feature is v1.158.00, a fix v1.157.01. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 
