@@ -2014,6 +2014,22 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
   .up-box .upName { display: block; font-size: var(--fs-lg); font-weight: 600; margin: 6px 0; word-break: break-all; }
   .up-box .upMsg { font-size: var(--fs-lg) !important; }
 
+  /* ---- Trends: every item, share-of-sales donut ---- */
+  .tr-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 10px; }
+  .tr-chips button { min-height: 40px; padding: 0 14px; border-radius: 999px; font-size: var(--fs-caption); }
+  .tr-chips button.on { background: #000 !important; color: #fff !important; border-color: #000 !important; }
+  .tr-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -2px; }
+  .tr-pie { display: flex; align-items: center; gap: 14px; margin: 4px 0 14px; }
+  .tr-pie svg { width: 160px; height: 160px; flex: none; }
+  .tr-pie-n { font-size: 26px; font-weight: 700; fill: var(--text); font-family: inherit; }
+  .tr-pie-s { font-size: 11px; fill: var(--muted); font-family: inherit; }
+  .tr-pie-list { flex: 1 1 auto; min-width: 0; }
+  .tr-pie-row { display: flex; align-items: center; gap: 8px; padding: 5px 0; font-size: var(--fs-caption); border-bottom: 1px solid var(--sep); }
+  .tr-pie-row i { width: 12px; height: 12px; border-radius: 3px; flex: none; border: 1px solid rgba(0,0,0,.15); }
+  .tr-pie-row span { flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tr-pie-row b { font-weight: 700; }
+  .tr-pie-row em { font-style: normal; color: var(--muted); min-width: 34px; text-align: right; }
+
 </style>
 </head>
 <body>
@@ -2371,7 +2387,7 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
   </div>
 </div>
 
-<div class="ver-badge">v1.142.01 · Nov 18, 12:27 PM PST</div>
+<div class="ver-badge">v1.143.00 · Nov 18, 12:31 PM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -8083,18 +8099,20 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
     });
   }
   // ----- Trends (Home → Trends): weekly sales as a stacked chart plus a table, and a raw day-by-day list. Reads the same /api/sales rows as the Data tab. -----
-  let trLoc = 'La Mirada', trView = 'chart';
+  let trLoc = 'La Mirada', trView = 'chart', trItem = 'All', trSpan = 4;
   const TR_MAD = ['Lemon Poppy', 'Sea Salt', 'Maple Pecan'];
   const TR_OTHER = ['Blueberry Muffin', 'Cake Pop', 'Pumpkin Bundt', 'Chookie'];
   const TR_MAD_ALL = [...TR_MAD, 'Ube', 'Dot', 'Earl Grey', 'Matcha', 'Chocolate', 'Unknown'];   // every madeleine flavor, retired and unread ones included (the sheet's total also counts muffins, cookies and the rest)
   const trMad = a => TR_MAD_ALL.reduce((n, p) => n + ((a && a[p]) || 0), 0);
+  const trAll = a => Object.values(a || {}).reduce((n, v) => n + (v || 0), 0);   // every item sold, madeleines or not
+  const TR_RAMP = ['#111', '#3a3a3a', '#5e5e5e', '#808080', '#a0a0a0', '#bdbdbd', '#d6d6d6', '#ebebeb'];
   function trWeeks(rows) {
     // one record per day (rows of the chosen store(s) summed), then one record per Mon–Sun week
     const days = new Map();
     for (const r of rows) {
       if (trLoc !== 'Both' && r.location !== trLoc) continue;
       const d = days.get(r.date) || { date: r.date, amounts: {}, total: 0, locs: new Set(), est: new Set() };
-      d.locs.add(r.location); d.total += trMad(r.amounts); (r.derived || []).forEach(p => d.est.add(p));
+      d.locs.add(r.location); d.total += trAll(r.amounts); (r.derived || []).forEach(p => d.est.add(p));
       for (const [k, v] of Object.entries(r.amounts || {})) d.amounts[k] = (d.amounts[k] || 0) + (v || 0);
       days.set(r.date, d);
     }
@@ -8109,33 +8127,49 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
     return { days: [...days.values()].sort((a, b) => b.date.localeCompare(a.date)), weeks: [...weeks.values()].sort((a, b) => a.start.localeCompare(b.start)) };
   }
   const trFmtDay = (ymd, o) => { const [y, m, d] = ymd.split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString('en-US', o || { month: 'short', day: 'numeric' }); };
-  function trChartSvg(weeks) {
+  function trChartSvg(weeks, val, label) {
     const W = 360, H = 190, L = 8, R = 8, T = 18, B = 26, n = weeks.length;
-    const max = Math.max(10, ...weeks.map(w => w.total));
+    const max = Math.max(10, ...weeks.map(val));
     const top = Math.ceil(max / 10) * 10, bw = Math.min(34, (W - L - R) / n * 0.62), step = (W - L - R) / n;
     const y = v => T + (H - T - B) * (1 - v / top);
     let g = `<defs><pattern id="trHatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2" height="5" fill="#fff" fill-opacity=".7"/></pattern></defs>`;
     for (const t of [0, top / 2, top]) g += `<line x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}" stroke="var(--sep, #ddd)" stroke-width="1"/><text x="${L}" y="${y(t) - 3}">${t}</text>`;
     weeks.forEach((w, i) => {
-      const x = L + step * i + (step - bw) / 2, part = w.days < 7;
-      let acc = 0;
-      const mad = TR_MAD.map(p => [p, w.amounts[p] || 0]); const rest = Math.max(0, w.total - mad.reduce((a, [, v]) => a + v, 0));
-      for (const [p, v] of [...mad, ['Unknown', rest]]) {
-        if (!v) continue;
-        const y1 = y(acc + v), h = y(acc) - y1;
-        g += `<rect class="trc-${PRODUCT_TOKEN[p].replace('?', 'X')}" x="${x}" y="${y1}" width="${bw}" height="${h}" fill="${PRODUCT_COLOR[p]}"${part ? ' fill-opacity=".45"' : ''}/>`;
-        acc += v;
-      }
-      if (part) g += `<rect x="${x}" y="${y(w.total)}" width="${bw}" height="${y(0) - y(w.total)}" fill="url(#trHatch)" stroke="var(--muted, #6d6660)" stroke-dasharray="3 2" stroke-width="1"/>`;
-      g += `<text class="tr-tot" x="${x + bw / 2}" y="${y(w.total) - 4}" text-anchor="middle">${w.total}</text>`;
+      const x = L + step * i + (step - bw) / 2, part = w.days < 7, v = val(w);
+      if (v) g += `<rect x="${x}" y="${y(v)}" width="${bw}" height="${y(0) - y(v)}" fill="#111"${part ? ' fill-opacity=".45"' : ''}/>`;
+      if (part && v) g += `<rect x="${x}" y="${y(v)}" width="${bw}" height="${y(0) - y(v)}" fill="url(#trHatch)" stroke="var(--muted, #6d6660)" stroke-dasharray="3 2" stroke-width="1"/>`;
+      g += `<text class="tr-tot" x="${x + bw / 2}" y="${y(v) - 4}" text-anchor="middle">${v}</text>`;
       g += `<text x="${x + bw / 2}" y="${H - 12}" text-anchor="middle">${esc(trFmtDay(w.start))}</text>`;
       if (part) g += `<text x="${x + bw / 2}" y="${H - 2}" text-anchor="middle" style="font-size:9px">${w.days}/7d</text>`;
     });
-    return `<svg class="tr-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Madeleines sold per week, stacked by flavor">${g}</svg>`;
+    return `<svg class="tr-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(label)} sold per week">${g}</svg>`;
   }
-  function trDelta(cur, prev) {
-    if (!prev || prev.days < 7 || cur.days < 7 || !prev.total) return '';
-    const pct = Math.round((cur.total - prev.total) / prev.total * 100);
+  // Share of sales: donut + list, largest first, darkest first. Items under 3% fold into "Smaller items".
+  function trPie(weeks, items) {
+    const sum = {}; let tot = 0;
+    for (const w of weeks) for (const [k, v] of Object.entries(w.amounts)) { if (!v) continue; sum[k] = (sum[k] || 0) + v; tot += v; }
+    if (!tot) return '<div class="pn-note">No sales in this period.</div>';
+    let parts = Object.entries(sum).map(([k, v]) => ({ k, v })).sort((a, b) => b.v - a.v);
+    const small = parts.filter(x => x.v / tot < 0.03), big = parts.filter(x => x.v / tot >= 0.03);
+    if (small.length > 1) parts = [...big, { k: 'Smaller items', v: small.reduce((n, x) => n + x.v, 0) }]; else parts = [...big, ...small];
+    const nm = k => (k === 'Unknown' ? 'Not read' : k);
+    const R = 70, r = 42, C = 80; let a0 = -Math.PI / 2, paths = '';
+    parts.forEach((x, i) => {
+      const a1 = a0 + x.v / tot * Math.PI * 2, col = TR_RAMP[Math.min(i, TR_RAMP.length - 1)];
+      if (parts.length === 1) paths += `<circle cx="${C}" cy="${C}" r="${(R + r) / 2}" fill="none" stroke="${col}" stroke-width="${R - r}"/>`;
+      else {
+        const p = (rad, ang) => `${(C + rad * Math.cos(ang)).toFixed(2)} ${(C + rad * Math.sin(ang)).toFixed(2)}`, big = a1 - a0 > Math.PI ? 1 : 0;
+        paths += `<path d="M ${p(R, a0)} A ${R} ${R} 0 ${big} 1 ${p(R, a1)} L ${p(r, a1)} A ${r} ${r} 0 ${big} 0 ${p(r, a0)} Z" fill="${col}" stroke="#fff" stroke-width="1.5"/>`;
+      }
+      a0 = a1;
+    });
+    const list = parts.map((x, i) => `<div class="tr-pie-row"><i style="background:${TR_RAMP[Math.min(i, TR_RAMP.length - 1)]}"></i><span>${esc(nm(x.k))}</span><b>${x.v}</b><em>${Math.round(x.v / tot * 100)}%</em></div>`).join('');
+    return `<div class="tr-pie"><svg viewBox="0 0 160 160" role="img" aria-label="Share of sales by item">${paths}<text x="${C}" y="${C - 2}" text-anchor="middle" class="tr-pie-n">${tot}</text><text x="${C}" y="${C + 14}" text-anchor="middle" class="tr-pie-s">sold</text></svg><div class="tr-pie-list">${list}</div></div>`;
+  }
+  function trDelta(cur, prev, val) {
+    val = val || (w => w.total);
+    if (!prev || prev.days < 7 || cur.days < 7 || !val(prev)) return '';
+    const pct = Math.round((val(cur) - val(prev)) / val(prev) * 100);
     return pct === 0 ? '<span class="tr-d">flat</span>' : `<span class="tr-d ${pct > 0 ? 'tr-up' : 'tr-dn'}">${pct > 0 ? '▲' : '▼'} ${Math.abs(pct)}%</span>`;
   }
   async function renderTrends() {
@@ -8151,27 +8185,36 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
     if (!weeks.length) body = '<div class="pn-note">No sales for this store yet.</div>';
     else if (trView === 'chart') {
       const shown = weeks.slice(-8), tbl = shown.slice().reverse();
-      const firstSeen = {}; for (const p of TR_OTHER) { const w = weeks.find(x => (x.amounts[p] || 0) > 0); firstSeen[p] = w ? w.start : null; }
+      const seen = new Set(); for (const w of shown) for (const [k, v] of Object.entries(w.amounts)) if (v) seen.add(k);
+      const cols = SALES_FLAVORS.filter(p => p !== 'Unknown' && seen.has(p));
+      if (trItem !== 'All' && !cols.includes(trItem)) trItem = 'All';
+      const val = trItem === 'All' ? (w => w.total) : (w => w.amounts[trItem] || 0);
+      const firstSeen = {}; for (const p of cols) { const w = weeks.find(x => (x.amounts[p] || 0) > 0); firstSeen[p] = w ? w.start : null; }
       const cell = (w, p) => (firstSeen[p] && w.start >= firstSeen[p]) ? (w.amounts[p] || 0) + (w.est.has(p) ? '~' : '') : '—';
-      const rowsHtml = (cols, mk) => tbl.map(w => { const prev = weeks.slice(0, weeks.indexOf(w)).reverse().find(x => x.days >= 7); return `<tr${w.days < 7 ? ' class="tr-part"' : ''}><td>${esc(trFmtDay(w.start))}${w.days < 7 ? `<span class="tr-d">${w.days} of 7 days</span>` : ''}</td>${mk(w, prev)}</tr>`; }).join('');
-      body = trChartSvg(shown) +
-        `<div class="tr-leg">${TR_MAD.map(p => `<span><i class="trc-${PRODUCT_TOKEN[p]}" style="background:${PRODUCT_COLOR[p]}"></i>${esc(p)}</span>`).join('')}<span><i class="trc-X" style="background:${PRODUCT_COLOR.Unknown}"></i>Other</span></div>` +
-        `<h3>Madeleines by week</h3><table class="tr-tbl"><tr><th>Week of</th><th>Total</th><th>LP</th><th>SS</th><th>MP</th></tr>` +
-        rowsHtml(0, (w, prev) => `<td><b>${w.total}</b>${trDelta(w, prev)}</td>${TR_MAD.map(p => `<td>${w.amounts[p] || 0}</td>`).join('')}`) + `</table>` +
-        `<h3>Other items</h3><table class="tr-tbl"><tr><th>Week of</th><th>BM</th><th>CP</th><th>PB</th><th>CK</th></tr>` +
-        rowsHtml(0, w => TR_OTHER.map(p => `<td>${cell(w, p)}</td>`).join('')) + `</table>` +
-        `<div class="pn-note">Hatched bars are weeks with fewer than 7 days of data, so they are not compared. Change arrows compare a full week with the last full week before it. A dash means the item was not tracked yet that week, not that it sold zero. A ~ means part of the number is worked out from stock counts, not read from receipts. LP Lemon Poppy, SS Sea Salt, MP Maple Pecan, BM Blueberry Muffin, CP Cake Pop, PB Pumpkin Bundt, CK Cookie.</div>`;
+      const chip = (k, t) => `<button type="button" data-tri="${esc(k)}" class="${trItem === k ? 'on' : ''}">${esc(t)}</button>`;
+      const span = n => `<button type="button" data-trs="${n}" class="${trSpan === n ? 'on' : ''}">${n === 1 ? 'Last week' : n + ' weeks'}</button>`;
+      const rowsHtml = mk => tbl.map(w => { const prev = weeks.slice(0, weeks.indexOf(w)).reverse().find(x => x.days >= 7); return `<tr${w.days < 7 ? ' class="tr-part"' : ''}><td>${esc(trFmtDay(w.start))}${w.days < 7 ? `<span class="tr-d">${w.days} of 7 days</span>` : ''}</td>${mk(w, prev)}</tr>`; }).join('');
+      const pieWeeks = trSpan === 1 ? shown.slice(-1) : shown.slice(-trSpan);
+      body = `<h3>Share of sales</h3><div class="tr-chips tr-spans">${span(1)}${span(4)}${span(8)}</div>` + trPie(pieWeeks, cols) +
+        `<h3>${trItem === 'All' ? 'All items' : esc(trItem)} by week</h3>` +
+        `<div class="tr-chips">${chip('All', 'All items')}${cols.map(p => chip(p, p)).join('')}</div>` +
+        trChartSvg(shown, val, trItem === 'All' ? 'All items' : trItem) +
+        `<h3>Every item by week</h3><div class="tr-scroll"><table class="tr-tbl"><tr><th>Week of</th><th>All</th>${cols.map(p => `<th>${esc(PRODUCT_TOKEN[p])}</th>`).join('')}</tr>` +
+        rowsHtml((w, prev) => `<td><b>${w.total}</b>${trDelta(w, prev)}</td>${cols.map(p => `<td>${cell(w, p)}</td>`).join('')}`) + `</table></div>` +
+        `<div class="pn-note">${cols.map(p => `${PRODUCT_TOKEN[p]} ${esc(p)}`).join(' · ')}. All counts every item sold. Hatched bars are weeks with fewer than 7 days of data, so they are not compared. Change arrows compare a full week with the last full week before it. A dash means the item was not tracked yet that week, not that it sold zero. A ~ means the number was worked out from stock counts, not read from receipts.</div>`;
     } else {
       const all = [...TR_MAD_ALL, ...TR_OTHER.filter(p => !TR_MAD_ALL.includes(p))];
       body = `<div class="pn-note">One row per day, newest first, straight from the sheet. A ~ is worked out from stock counts, not read from receipts. Cake Pop, Pumpkin Bundt and Cookie before Nov 2026 were not read from receipts.</div>` +
         days.slice(0, 120).map(d => {
           const bits = all.filter(p => d.amounts[p]).map(p => `<span>${esc(PRODUCT_TOKEN[p])} <b>${d.amounts[p]}${d.est.has(p) ? '~' : ''}</b></span>`).join('');
           const loc = trLoc === 'Both' ? ` · ${[...d.locs].join(' + ')}` : '';
-          return `<div class="tr-day"><div><b>${esc(trFmtDay(d.date, { weekday: 'short', month: 'short', day: 'numeric' }))}${loc}</b><span>${d.total} madeleines</span></div>${bits ? `<div class="tr-ch">${bits}</div>` : '<small>Nothing recorded</small>'}</div>`;
+          return `<div class="tr-day"><div><b>${esc(trFmtDay(d.date, { weekday: 'short', month: 'short', day: 'numeric' }))}${loc}</b><span>${d.total} sold</span></div>${bits ? `<div class="tr-ch">${bits}</div>` : '<small>Nothing recorded</small>'}</div>`;
         }).join('');
     }
     box.innerHTML = head + body;
     box.querySelector('#trLoc').onchange = e => { trLoc = e.target.value; renderTrends(); };
+    box.querySelectorAll('[data-tri]').forEach(b => b.onclick = () => { trItem = b.dataset.tri; renderTrends(); });
+    box.querySelectorAll('[data-trs]').forEach(b => b.onclick = () => { trSpan = +b.dataset.trs; renderTrends(); });
     box.querySelectorAll('[data-trv]').forEach(b => b.onclick = () => { trView = b.dataset.trv; track('trends_view', { view: trView }); renderTrends(); });
   }
   // ----- Bake Day: the bake plan's ingredients against what's on hand (Pantry). Shows what to buy, then lets you recount after the bake. -----
