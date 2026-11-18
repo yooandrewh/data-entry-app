@@ -1796,6 +1796,19 @@
   /* Recipes tab: eight view buttons wrap to two rows of four (2026-10-25) */
   #recSection { flex-wrap: wrap; }
   #recSection button { flex: 1 0 22%; padding: 10px 4px; font-size: var(--fs-caption); }
+/* Pantry (2026-11-17) */
+.pn-bar { display: flex; gap: 8px; margin: 4px 0 12px; flex-wrap: wrap; }
+.pn-bar button { flex: 1 1 0; }
+.pn-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 2px; border-bottom: 1px solid var(--sep); }
+.pn-main { display: flex; flex-direction: column; min-width: 0; }
+.pn-main small { color: var(--muted); font-size: var(--fs-caption); }
+.pn-r { display: flex; align-items: center; gap: 8px; text-align: right; font-size: var(--fs-body); }
+.pn-flag { font-style: normal; font-size: var(--fs-micro); text-transform: uppercase; color: var(--accent); border: 1px solid var(--accent); padding: 1px 5px; }
+.pn-x { background: none; border: 0; color: var(--muted); font-size: var(--fs-body); padding: 4px; }
+.pn-form label { display: block; margin: 10px 0 4px; }
+.pn-form input, .pn-form select { width: 100%; box-sizing: border-box; }
+.pn-b { width: 64px; text-align: center; }
+.pn-note { color: var(--muted); font-size: var(--fs-caption); margin: 10px 0; }
 </style>
 </head>
 <body>
@@ -1817,6 +1830,7 @@
       <button type="button" data-hpage="forecast"><span class="hm-ic" data-ic="chart"></span><span class="hm-t">Forecast</span><span class="hm-go">›</span></button>
       <button type="button" data-hpage="plan"><span class="hm-ic" data-ic="book"></span><span class="hm-t">Baking Plan</span><span class="hm-go">›</span></button>
       <button type="button" data-hpage="invoice"><span class="hm-ic" data-ic="tag"></span><span class="hm-t">Invoice / Labels</span><span class="hm-go">›</span></button>
+      <button type="button" data-hpage="pantry"><span class="hm-ic" data-ic="box"></span><span class="hm-t">Pantry</span><span class="hm-go">›</span></button>
 </div>
     
 
@@ -1895,6 +1909,8 @@
     <div id="homeTimers" hidden></div>
 
     <div id="homeLogs" hidden></div>
+
+    <div id="homePantry" hidden></div>
 
     <!-- Invoice -->
     <div id="homeInvoice" hidden>
@@ -3291,7 +3307,7 @@
 
   // ---- Home: a landing screen with three buttons; each opens its own page ----
   let homeTab = null;   // null = landing | 'forecast' | 'plan' | 'invoice'
-  const HOME_TITLES = { forecast: 'Forecast', plan: 'Baking Plan', invoice: 'Invoice / Labels', timers: 'Timers', logs: 'Kairos Logs' };
+  const HOME_TITLES = { forecast: 'Forecast', plan: 'Baking Plan', invoice: 'Invoice / Labels', timers: 'Timers', logs: 'Kairos Logs', pantry: 'Pantry' };
   // The version line lives over the photo on Home's landing; everywhere else it is the fixed strip.
   function syncVer() {
     const onHome = (document.querySelector('.tabbar button.on') || {}).dataset?.tab === 'home';
@@ -3308,10 +3324,12 @@
     document.getElementById('homeInvoice').hidden = homeTab !== 'invoice';
     document.getElementById('homeTimers').hidden = homeTab !== 'timers';
     document.getElementById('homeLogs').hidden = homeTab !== 'logs';
+    document.getElementById('homePantry').hidden = homeTab !== 'pantry';
     document.getElementById('hpTitle').textContent = HOME_TITLES[homeTab] || '';
     if (homeTab === 'plan') { renderBakeSheet(); renderPlan(); }
     if (homeTab === 'invoice') initInvoiceForm();
     if (homeTab === 'logs') logsOpen();
+    if (homeTab === 'pantry') renderPantry();
     if (homeTab === 'timers') renderTimers(); else stopTick();
     syncVer(); window.scrollTo(0, 0);
   }
@@ -5917,6 +5935,7 @@
     buildCostPrices();
     if (!document.getElementById('bakingCosts').hidden) renderCosts();
     if (document.getElementById('view-fin').classList.contains('active')) renderFin();
+    if (homeTab === 'pantry') renderPantry();
   }
   const saveCosts = () => { try { localStorage.setItem('costYields.v1', JSON.stringify(costYields)); } catch {} };
 
@@ -7141,11 +7160,11 @@
   try { buyExtras = JSON.parse(localStorage.getItem(BUY_EXTRA)) || []; } catch {}
   const buySave = () => { try { localStorage.setItem(BUY_KEY, JSON.stringify(buyChecked)); localStorage.setItem(BUY_EXTRA, JSON.stringify(buyExtras)); localStorage.setItem(BUY_RECIPES, JSON.stringify(buyRecipes)); } catch {} };
   const money2 = n => '$' + n.toFixed(2);
-  function buyItems() {
+  function buyItems(list = [...bakeSheet, ...buyRecipes]) {
     if (!Object.keys(costPrices).length) loadCosts();
     const need = new Map();
     const add = (name, g) => need.set(name, (need.get(name) || 0) + g);
-    for (const b of [...bakeSheet, ...buyRecipes]) {
+    for (const b of list) {
       const f = bsFind(b.key); if (!f) continue;
       for (const [n, g] of costRows(f.sec, f.it, bsVers(f.it) ? bsVerOf(f.it, b) : null)) {
         if (/^water$/i.test(String(n).split(',')[0].replace(/\(.*?\)/g, '').trim())) continue;
@@ -7162,6 +7181,86 @@
     }).sort((a, b) => a.name.localeCompare(b.name));
   }
   const buyFmt = (n, u) => n >= 1000 ? `${(Math.round(n / 10) / 100).toLocaleString()} ${u === 'ml' ? 'L' : 'kg'}` : `${Math.round(n).toLocaleString()} ${u}`;
+
+  // ----- Pantry: what's on hand. Each row in the Pantry tab is one physical count on a date. On hand now = the latest count
+  // plus approved ledger purchases dated after it (same unit only). Counts are soft-deleted, never erased. -----
+  let PANTRY = null, pantryBusy = false, pantryErr = '';
+  async function fetchPantry() {
+    pantryBusy = true;
+    try { const r = await fetch('/api/pantry'); if (!r.ok) throw new Error(r.status); const j = await r.json(); PANTRY = (j.rows || []).map((p, i) => Object.assign(p, { idx: i })); pantryErr = ''; }
+    catch (e) { pantryErr = 'Pantry offline: counts not loaded.'; if (PANTRY === null) PANTRY = []; }
+    pantryBusy = false;
+    if (homeTab === 'pantry') renderPantry();
+  }
+  async function pantryPost(body) {
+    const code = ledgerCode(); if (!code) return false;
+    try {
+      const r = await fetch('/api/pantry', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-ledger-code': code }, body: JSON.stringify(body) });
+      const j = await r.json().catch(() => ({}));
+      if (r.status === 401) { try { localStorage.removeItem('ledgerCode'); } catch {} rcpToast('Wrong ledger code'); return false; }
+      if (r.status === 503) { rcpToast('Pantry writes are off: set LEDGER_CODE in Vercel'); return false; }
+      if (!r.ok) { rcpToast(j.error || 'Could not save'); return false; }
+      await fetchPantry(); return true;
+    } catch { rcpToast('Could not reach the pantry'); return false; }
+  }
+  // [{name, unit, count, date, note, id, bought, onHand, mixed}] one per canonical item that has a count, sorted by name.
+  function pantryStock() {
+    const latest = new Map();
+    (PANTRY || []).forEach(p => {
+      const k = costCanon(p.item), cur = latest.get(k);
+      if (!cur || isoD(p.date) > isoD(cur.date) || (isoD(p.date) === isoD(cur.date) && p.idx > cur.idx)) latest.set(k, p);
+    });
+    const buys = [];
+    ledgerReceipts().forEach(r => r.items.filter(l => l.approved).forEach(l => buys.push(l)));
+    return [...latest.entries()].map(([name, p]) => {
+      let bought = 0, mixed = false;
+      buys.forEach(l => {
+        if (costCanon(l.item) !== name || !(isoD(l.date) > isoD(p.date))) return;
+        if (l.unit === p.unit || (p.unit === 'pcs' && isCone(name))) bought += l.amt || 0; else mixed = true;
+      });
+      return { name, unit: p.unit, count: p.amt, date: p.date, note: p.note, id: p.id, bought, onHand: p.amt + bought, mixed };
+    }).sort((a, b) => a.name.localeCompare(b.name));
+  }
+  const pantryDate = d => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d || ''); return m ? new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : (d || ''); };
+  function renderPantry() {
+    const box = document.getElementById('homePantry'); if (!box) return;
+    if (PANTRY === null && !pantryBusy) fetchPantry();
+    if (LEDGER === null && !ledgerBusy) { loadCosts(); }
+    if (PANTRY === null || LEDGER === null) { box.innerHTML = '<div class="pn-note">Loading…</div>'; return; }
+    // keep what's being typed if the list repaints (ledger or pantry just finished loading)
+    const keep = {}; box.querySelectorAll('[data-pn]').forEach(e => { keep[e.dataset.pn] = e.value; });
+    const stock = pantryStock();
+    let need = {}; try { buyItems().forEach(i => { need[i.name] = i.qty; }); } catch {}
+    const rows = stock.map(s => {
+      const nd = need[s.name], low = nd != null && s.onHand + 1e-9 < nd;
+      const sub = `Counted ${buyFmt(s.count, s.unit)} on ${esc(pantryDate(s.date))}` + (s.bought ? ` · +${esc(buyFmt(s.bought, s.unit))} bought since` : '') + (s.mixed ? ' · some purchases use another unit and are not added' : '') + (nd != null ? ` · plan needs ${esc(buyFmt(nd, s.unit))}` : '') + (s.note ? ` · ${esc(s.note)}` : '');
+      return `<div class="pn-row"><span class="pn-main"><b>${esc(s.name)}</b><small>${sub}</small></span><span class="pn-r">${low ? '<i class="pn-flag">Low</i>' : ''}<b>${esc(buyFmt(s.onHand, s.unit))}</b><button class="pn-x" data-pnx="${esc(s.id)}" aria-label="Remove this count">✕</button></span></div>`;
+    }).join('');
+    const names = (typeof costAllNames === 'function' ? costAllNames() : []).sort((a, b) => a.localeCompare(b));
+    const units = ['g', 'kg', 'oz', 'lb', 'ml', 'L', 'fl oz', 'pcs'];
+    box.innerHTML = (pantryErr ? `<div class="pn-note">${esc(pantryErr)}</div>` : '') +
+      `<div class="pn-form"><label>Item</label><input data-pn="item" list="pnItems" autocomplete="off" value="${esc(keep.item || '')}" placeholder="Start typing an ingredient"><datalist id="pnItems">${names.map(n => `<option value="${esc(n)}">`).join('')}</datalist>` +
+      `<label>Amount counted</label><div class="pn-bar"><input data-pn="amt" type="number" inputmode="decimal" min="0" step="any" value="${esc(keep.amt || '')}"><select data-pn="unit" data-native>${units.map(u => `<option${(keep.unit || 'g') === u ? ' selected' : ''}>${u}</option>`).join('')}</select></div>` +
+      `<label>Date</label><input data-pn="date" type="date" value="${esc(keep.date || todayISO())}">` +
+      `<label>Note (optional)</label><input data-pn="note" maxlength="200" value="${esc(keep.note || '')}">` +
+      `<div class="pn-bar" style="margin-top:12px"><button class="primary" id="pnAdd">Save count</button></div></div>` +
+      `<h3>On hand</h3>` + (rows || '<div class="pn-note">No counts yet. Count what is in the kitchen and save it above. On hand then updates itself from approved purchases.</div>') +
+      `<div class="pn-note">On hand is your latest count plus approved ledger purchases after that date. A new count replaces it. ✕ removes the latest count, so the one before it shows again.</div>`;
+    const val = k => box.querySelector(`[data-pn="${k}"]`).value;
+    box.querySelector('#pnAdd').onclick = async () => {
+      const item = val('item').trim(), n = parseFloat(val('amt')), u = val('unit'), date = val('date');
+      if (!item) return rcpToast('Pick an item');
+      if (!(n >= 0)) return rcpToast('Enter the amount counted');
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return rcpToast('Pick a date');
+      const b = u === 'pcs' ? { amt: n, unit: 'pcs' } : toBase(n, u);
+      const ok = await pantryPost({ action: 'add', lines: [{ item, amt: b.amt, unit: b.unit, date, note: val('note').trim() }] });
+      if (ok) { rcpToast('Count saved'); renderPantry(); }
+    };
+    box.querySelectorAll('[data-pnx]').forEach(btn => btn.onclick = async () => {
+      if (!confirm('Remove this count?')) return;
+      if (await pantryPost({ action: 'remove', ids: [btn.dataset.pnx] })) rcpToast('Count removed');
+    });
+  }
   function buyPaint() {
     const items = buyItems();
     const total = items.reduce((a, i) => a + (i.cost || 0), 0), unpriced = items.filter(i => i.cost == null).length;
