@@ -199,6 +199,8 @@ Ingredients: **Dark Chocolate 70% and Dark Chocolate Couverture are retired into
 
 **v1.167.00: spare pack.** `bakeRows()` (whole plan only, not the per-date Bake Day views) buys `need + SPARE_PACKS * pack - on hand` for every **shelf** item (not `isCold`) with a known pack size, so one pack is always left after the plan; the row says "incl. 1 spare pack" or "spare pack only". Fridge / freezer items get no spare. Andrew's wording was "at least 1x on hand at all times ... mark that some of it is just excess"; one pack may not equal a month of use, not confirmed.
 
+**v1.167.01: Costco Business Center is its own store** in the shopping lists (`vendorOf()`): a ledger line with vendor Costco whose link is costcobusinessdelivery.com or whose note says Business Delivery / Business Center is grouped as "Costco Business Center". Brown Sugar, Maple Syrup and Pan Liners are Business Center; the rest stay Costco. The ledger vendor text is unchanged.
+
 ## Design pass (v1.149.00)
 
 Last CSS block: **every `<select>` has one style** (white, 1px #c9c9c9, 12px radius, 44px, black chevron; `.row-select` and `[data-labi]` excluded); the Forecast store toggle (`.fc-locs`) uses the pill style. On desktop (>=900px) all pages share a 1120px column, page chips sit centered at natural width, the Trends donut is 220px. On phones the 5 Inventory chips shrink (11px padding) to fit. Counts' total says "pieces", not "madeleines". Still open: coloured snowflake/flame/arrow icons in Forecast misses (breaks the B/W rule), today's half-finished day shows as a 0.0x miss, Stock's section headers use the old grey band style.
@@ -219,7 +221,7 @@ The headless check at 390px misses what iOS does. Apply these to every new or ch
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.167.00**; the next feature is v1.168.00, a fix v1.167.01. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.167.01**; the next feature is v1.168.00, a fix v1.167.02. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 
