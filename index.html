@@ -2115,7 +2115,7 @@ select:not(.row-select):not([data-labi]) { -webkit-appearance: none !important; 
 .fc-locs button { min-height: 44px !important; padding: 0 18px !important; border-radius: 22px !important; border: 1px solid #c9c9c9 !important; background: #fff !important; color: #000 !important; font-size: var(--fs-caption) !important; font-weight: 600 !important; box-shadow: none !important; }
 .fc-locs button.on { background: #000 !important; color: #fff !important; border-color: #000 !important; }
 @media (min-width: 900px) { #homeForecast .pg-card { margin-left: 0 !important; max-width: 640px !important; } }
-.buy-cart { display: flex; align-items: center; justify-content: center; min-height: 44px; margin: 8px 0; border: 1px solid #000; border-radius: 12px; background: #fff; color: #000 !important; font-size: var(--fs-body); font-weight: 700; text-decoration: none; }
+.buy-cart { display: flex; width: 100%; box-sizing: border-box; cursor: pointer; align-items: center; justify-content: center; min-height: 44px; margin: 8px 0; border: 1px solid #000; border-radius: 12px; background: #fff; color: #000 !important; font-size: var(--fs-body); font-weight: 700; text-decoration: none; }
 .amz-add { margin: 0 0 8px; }
 .amz-add label { display: block; font-size: var(--fs-caption); margin: 0 0 4px; }
 .amz-add > div { display: flex; gap: 8px; }
@@ -2647,7 +2647,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.169.07 · Nov 18, 3:46 PM PST</div>
+<div class="ver-badge">v1.169.08 · Nov 18, 3:49 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -8532,17 +8532,34 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     return (have.length ? `<a class="buy-cart" href="${url}" target="_blank" rel="noopener">Add ${have.length} item${have.length === 1 ? '' : 's'} to Amazon cart</a>` : '') +
       (miss.length ? `<div class="pn-note">Paste the Amazon link for ${miss.length === 1 ? 'this item' : 'these items'} to add ${miss.length === 1 ? 'it' : 'them'} to the cart button.</div>` + miss.map(n => `<div class="amz-add"><label>${esc(n)}</label><div><input type="url" inputmode="url" placeholder="Paste Amazon link" data-amz-in="${esc(n)}"><button type="button" data-amz-save="${esc(n)}">Save</button></div></div>`).join('') : '');
   };
+  // Other stores (Target, Costco, ...): one button opens every saved product page; items with no link get a search link (to find the product) and a paste box (to save it).
+  const SHOP_SEARCH = [[/costco business/i, k => 'https://www.costcobusinessdelivery.com/CatalogSearch?keyword=' + k], [/costco/i, k => 'https://www.costco.com/CatalogSearch?dept=All&keyword=' + k], [/target/i, k => 'https://www.target.com/s?searchTerm=' + k], [/webstaurant/i, k => 'https://www.webstaurantstore.com/search/' + k + '.html']];
+  const shopPages = (v, buy) => {
+    const have = [], miss = [];
+    buy.forEach(r => { const u = shopUrl(r.i.name); if (u) have.push(u); else miss.push(r.i.name); });
+    if (!have.length && !miss.length) return '';
+    const sr = SHOP_SEARCH.find(x => x[0].test(v));
+    const uniq = [...new Set(have)];
+    return (uniq.length ? `<button type="button" class="buy-cart" data-open-all="${esc(uniq.join(' '))}">Open ${uniq.length} ${esc(v)} page${uniq.length === 1 ? '' : 's'}</button>` +
+        (uniq.length > 1 ? '<div class="pn-note">If only one page opens, allow pop-ups for this site, or use Open store page under each item.</div>' : '') : '') +
+      (miss.length ? `<div class="pn-note">No ${esc(v)} product page saved for ${miss.length === 1 ? 'this item' : 'these items'}. Find it${sr ? ' with Search' : ''}, then paste the product link and Save.</div>` +
+        miss.map(n => `<div class="amz-add"><label>${esc(n)}${sr ? ` · <a href="${esc(sr[1](encodeURIComponent(n)))}" target="_blank" rel="noopener">Search ${esc(v)}</a>` : ''}</label><div><input type="url" inputmode="url" placeholder="Paste ${esc(v)} link" data-amz-in="${esc(n)}"><button type="button" data-amz-save="${esc(n)}">Save</button></div></div>`).join('') : '');
+  };
+  document.addEventListener('click', e => {
+    const b = e.target.closest && e.target.closest('[data-open-all]'); if (!b) return;
+    String(b.dataset.openAll).split(' ').filter(u => /^https:\/\//.test(u)).forEach(u => window.open(u, '_blank', 'noopener'));
+  });
   // Save a pasted Amazon link onto every ledger line of that item; the server checks it and keeps the plain /dp/ASIN form.
   document.addEventListener('click', async e => {
     const b = e.target.closest && e.target.closest('[data-amz-save]'); if (!b) return;
     const name = b.dataset.amzSave, box = b.closest('.amz-add'), inp = box && box.querySelector('input'), link = inp ? inp.value.trim() : '';
-    if (!link) { rcpToast('Paste the Amazon link first'); return; }
+    if (!link) { rcpToast('Paste the product link first'); return; }
     const k = costCanon(name), ids = (LEDGER || []).filter(l => l.kind === 'item' && costCanon(l.item) === k).map(l => l.id);
     if (!ids.length) { rcpToast('No ledger line for that item'); return; }
     b.disabled = true;
     const ok = await ledgerPost({ action: 'setlink', ids, link });
     b.disabled = false;
-    if (ok) rcpToast('Amazon link saved');
+    if (ok) rcpToast('Product link saved');
   });
   function bkBuyList(rows, all) {
     const have = (all || []).filter(r => r.st === 'ok');
@@ -8553,7 +8570,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     return `<div class="buy-list"><div class="pn-note">Amounts include ${Math.round(BUY_WASTE * 100)}% extra for waste (10% for waffle cones). Shelf items also keep 1 spare pack on hand after the plan.${have.length ? ' Items marked Have it are already on hand.' : ''}</div>` + order.map(v => {
       const g = by.get(v), sub = g.buy.reduce((n, r) => n + (bkPart(r).cost || 0), 0);
       return `<div class="buy-vendor"><span>${esc(v)}</span><small>${g.buy.length} to buy${g.have.length ? ` · ${g.have.length} on hand` : ''}${sub ? ' · ' + money2(sub) : ''}</small></div>` +
-        (/amazon/i.test(v) ? amzCart(g.buy) : '') +
+        (/amazon/i.test(v) ? amzCart(g.buy) : (v === 'Other' || v === 'No price yet') ? '' : shopPages(v, g.buy)) +
         coldSplit(g.buy.sort(byName).map(r => ({ cold: isCold(r.i.name), html: bkBuyRow(r) }))) + g.have.sort(byName).map(bkHaveRow).join('');
     }).join('') + '</div>';
   }
