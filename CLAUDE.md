@@ -41,6 +41,8 @@ Notion is dead: nothing writes to it, and the `NOTION_*` Vercel env vars can be 
 
 ## Tabs and Home
 
+**v1.144.02:** the top page row `#secNav` is a solid white sticky bar (an old `.db-filter { background: transparent !important }` rule had made it see-through, so content scrolled behind the chips).
+
 **Spacing (v1.138.01):** the last CSS block ("Spacing pass") sets 16px side margins, 44px tap height on the page-row chips (`#secNav`) and Data/Plan filters, 8px gaps, roomier cards, and bottom padding that clears the tab bar. Older `!important` rules on `.db-filter` win unless the new rule uses `#secNav` / `#view-x` and `!important`. Checked headless at 390px, not on a phone.
 
 Bottom bar (v1.138.00): **Sales · Inventory · Entry · Plan · Other**. Entry opens the Entry popup (`openEntry()`); the other four each show a row of pages at the top (`#secNav`, `SECTIONS` / `PAGES` / `go(page, sec)`). Every page is an existing screen reused as it was (a Data view, a Home page in `#homePage`, a Baking mode, or Finance); there is no Home photo page any more.
@@ -145,7 +147,7 @@ Costco receipts print a quantity line (`3 @ 4.99`) above an item whose price is 
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.144.01**; the next feature is v1.145.00, a fix v1.144.02. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.144.02**; the next feature is v1.145.00, a fix v1.144.03. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 

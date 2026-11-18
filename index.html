@@ -2042,6 +2042,9 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
   .buy-have .buy-ok { width: 24px; height: 24px; flex: none; display: flex; align-items: center; justify-content: center; border-radius: 6px; background: #000; color: #fff; font-size: 15px; font-weight: 700; }
   .buy-have .buy-main b em { font-weight: 700; }
 
+  /* Top page row: solid white bar so scrolling content no longer shows through it (an older "transparent db-filter" rule made it see-through). */
+  #secNav.sec-nav { background: #fff !important; border-bottom: 1px solid #e5e5e5 !important; z-index: 35; }
+
 </style>
 </head>
 <body>
@@ -2399,7 +2402,7 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
   </div>
 </div>
 
-<div class="ver-badge">v1.144.01 · Nov 18, 12:35 PM PST</div>
+<div class="ver-badge">v1.144.02 · Nov 18, 12:36 PM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
