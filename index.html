@@ -818,7 +818,7 @@
   .sheet .actions { gap: 8px; }
   .btn-primary { padding: 13px; }
   /* ---- New entry: a popup opened from Data's top-right button ---- */
-  .entry-modal { position: fixed; inset: 0 0 calc(var(--tabbar-h) + var(--safe-bottom)) 0; z-index: 58; background: var(--bg); overflow-y: auto; -webkit-overflow-scrolling: touch;
+  .entry-modal { overscroll-behavior: contain; position: fixed; inset: 0 0 calc(var(--tabbar-h) + var(--safe-bottom)) 0; z-index: 58; background: var(--bg); overflow-y: auto; -webkit-overflow-scrolling: touch;
     padding: calc(var(--safe-top) + 4px) 0 16px; }
   .entry-modal[hidden] { display: none; }
   .em-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
@@ -2371,7 +2371,7 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
   </div>
 </div>
 
-<div class="ver-badge">v1.142.00 · Nov 18, 12:26 PM PST</div>
+<div class="ver-badge">v1.142.01 · Nov 18, 12:27 PM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -2815,8 +2815,29 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
   const scrim = document.getElementById('scrim');
   // ---- New entry popup (Data tab → + Entry, top right) ----
   const entryModal = document.getElementById('view-entry');
-  function openEntry() { entryModal.hidden = false; entryModal.scrollTop = 0; track('entry_open'); }
-  function closeEntry() { entryModal.hidden = true; }
+  // Entry acts like its own section: its nav button is lit, the page behind is frozen (no scrolling through).
+  let entryScrollY = 0;
+  function paintNavForEntry(open) {
+    document.querySelectorAll('.tabbar button').forEach(b => {
+      if ('entry' in b.dataset) b.classList.toggle('on', open);
+      else if (open) b.classList.remove('on');
+      else b.classList.toggle('on', b.dataset.sec === curSec);
+    });
+  }
+  function openEntry() {
+    if (entryModal.hidden) {
+      entryScrollY = window.scrollY;
+      document.body.style.cssText += ';position:fixed;left:0;right:0;width:100%;top:' + (-entryScrollY) + 'px';
+    }
+    entryModal.hidden = false; entryModal.scrollTop = 0; paintNavForEntry(true); track('entry_open');
+  }
+  function closeEntry() {
+    if (!entryModal.hidden) {
+      document.body.style.position = ''; document.body.style.top = ''; document.body.style.left = ''; document.body.style.right = ''; document.body.style.width = '';
+      window.scrollTo(0, entryScrollY);
+    }
+    entryModal.hidden = true; paintNavForEntry(false);
+  }
   document.getElementById('newEntryBtn').addEventListener('click', openEntry);
   // Invoice page → "Forgot an entry?": a short popup that sends you to the entry window with Delivery and the invoice's store preselected.
   document.getElementById('invForgot').addEventListener('click', () => {

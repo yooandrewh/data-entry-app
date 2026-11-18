@@ -74,6 +74,8 @@ Status: live API tested (add/remove round trip); browser-tested 2026-11-17 on de
 
 ## Refresh (v1.142.00)
 
+**v1.142.01:** while Entry is open its nav button is lit (others unlit, `paintNavForEntry`) and the page behind is frozen (`body` fixed at the saved scroll, restored in `closeEntry`).
+
 Pull down at the top of any page reloads the app (indicator `#ptr`); tapping the version badge also reloads. Skipped while the Entry popup, confirm sheet, a select list is open or an upload is sending, so nothing half-typed is lost. Not tried on a phone.
 
 ## Upload page (v1.141.02, 2026-11-18)
@@ -137,7 +139,7 @@ Costco receipts print a quantity line (`3 @ 4.99`) above an item whose price is 
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.142.00**; the next feature is v1.143.00, a fix v1.142.01. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.142.01**; the next feature is v1.143.00, a fix v1.142.02. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 
