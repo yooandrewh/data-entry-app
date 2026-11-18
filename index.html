@@ -2052,6 +2052,23 @@ button { color: var(--text, #000); }
 #homeTrends .tr-chips button { box-sizing: border-box !important; min-height: 40px !important; padding: 0 14px !important; border: 1px solid transparent !important; }
 #homeTrends .tr-chips button.on { border-color: #000 !important; }
 
+/* Boxes card (v1.147.00): end of the Bake plan, step 3 only */
+#bakingPlan:not([data-step="3"]) #pwBoxes { display: none; }
+#pwBoxes { padding: 16px; margin: 12px 0 0; }
+#pwBoxes h3 { margin: 0 0 4px; }
+.bx-total { font-size: var(--fs-caption); color: var(--muted); margin-bottom: 10px; }
+.bx-loc { display: flex; justify-content: space-between; align-items: baseline; background: #000; color: #fff; padding: 10px 12px; font-size: var(--fs-body); font-weight: 700; margin-top: 10px; }
+.bx-loc span { font-size: var(--fs-caption); font-weight: 500; }
+.bx-row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 10px 2px; border-bottom: 1px solid var(--sep, #ddd); font-size: var(--fs-body); }
+.bx-row small { display: block; color: var(--muted); font-size: var(--fs-caption); }
+.bx-row b { font-size: var(--fs-lg); white-space: nowrap; }
+.bx-none { color: var(--muted); font-size: var(--fs-caption); padding: 10px 2px; }
+#pwBoxes details { margin-top: 14px; }
+#pwBoxes summary { min-height: 44px; display: flex; align-items: center; font-weight: 700; font-size: var(--fs-body); }
+.bx-set { display: grid; grid-template-columns: 1fr 72px 72px 72px; gap: 8px; align-items: center; padding: 6px 0; font-size: var(--fs-caption); }
+.bx-set.hd { color: var(--muted); font-weight: 700; }
+.bx-set input { width: 100%; min-height: 44px; font-size: var(--fs-body); text-align: center; border: 1px solid #000; border-radius: 0; background: #fff; color: #000; }
+
 </style>
 </head>
 <body>
@@ -2154,6 +2171,7 @@ button { color: var(--text, #000); }
         <div id="bsKitchen"></div>
         <div class="bs-foot"><button type="button" class="btn-primary" id="bsOpen">Preview plan</button><div class="bs-foot2"><button type="button" class="btn-ghost" id="bsSave">Save this plan</button><button type="button" class="btn-ghost" id="bsHist">Saved plans</button></div></div>
       </div>
+      <div class="card" id="pwBoxes"></div>
     </div>
       <details class="kt" style="display:none"><summary>Kitchen Times</summary><div class="kt-grid" id="ktGrid"></div></details>
     </div>
@@ -2409,7 +2427,7 @@ button { color: var(--text, #000); }
   </div>
 </div>
 
-<div class="ver-badge">v1.146.02 · Nov 18, 12:59 PM PST</div>
+<div class="ver-badge">v1.147.00 · Nov 18, 1:03 PM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -5502,6 +5520,7 @@ button { color: var(--text, #000); }
     const wiz = wizCompute(usable, todayYmd);
     for (const p of PRODUCTS) if (wiz[p].days > 0) planTotals[p] = wiz[p].bake;   // a span picked in step 1 replaces the date-driven total for that item
     planBakeTotals = planTotals; planDateTotals = dateTotals;
+    try { boxPaint(); } catch (e) { console.error(e); }
     try { const cut = addDays(todayYmd, -7), m = {}; for (const d of Object.keys(planDatesCache)) if (d >= cut && d <= todayYmd) m[d] = planDatesCache[d]; Object.assign(m, dateTotals); planDatesCache = m; localStorage.setItem(PD_KEY, JSON.stringify(m)); } catch {}
     autoFillBakePlan();
 
@@ -5550,6 +5569,56 @@ button { color: var(--text, #000); }
     }
     return out;
   }
+
+  // ----- Boxes: how many boxes the plan needs and which storage each goes to (end of Plan step 3) -----
+  // Pieces to bake per item come from planBakeTotals. BP Storage and Fullerton Storage get the pieces Andrew sets aside there;
+  // the rest is split between the two store storages by each store's recent sales rate. Box size defaults to 12 (one batch).
+  const BOX_LOCS = ['BP Storage', 'Fullerton Storage', 'La Mirada Storage', 'Stanton Storage'];
+  let boxCfg = { size: {}, hold: { bp: {}, fu: {} } };
+  try { const c = JSON.parse(localStorage.getItem('boxCfg.v1') || 'null'); if (c && c.size && c.hold) boxCfg = c; } catch {}
+  const boxSave = () => { try { localStorage.setItem('boxCfg.v1', JSON.stringify(boxCfg)); } catch {} };
+  const boxSize = p => Math.max(1, Math.floor(Number(boxCfg.size[p]) || BATCH_YIELD));
+  function boxPlan() {
+    const out = BOX_LOCS.map(name => ({ name, items: [] })), tot = ZERO();
+    const rate = {};
+    for (const loc of ['La Mirada', 'Stanton']) {
+      let d = null; try { d = lastPlanSales ? dowRates(lastPlanSales, loc, 28) : null; } catch {}
+      for (const p of PRODUCTS) (rate[p] = rate[p] || {})[loc] = d && d.rate && d.rate[p] ? (d.rate[p].wd * 5 + d.rate[p].we * 2) / 7 : 0;
+    }
+    for (const p of PRODUCTS) {
+      const n = Math.round(planBakeTotals[p] || 0); if (n <= 0) continue;
+      const bp = Math.min(n, Math.max(0, Math.floor(Number(boxCfg.hold.bp[p]) || 0)));
+      const fu = Math.min(n - bp, Math.max(0, Math.floor(Number(boxCfg.hold.fu[p]) || 0)));
+      const rest = n - bp - fu, a = rate[p]['La Mirada'], b = rate[p]['Stanton'];
+      const lm = a + b > 0 ? Math.round(rest * a / (a + b)) : rest, st = rest - lm;
+      [bp, fu, lm, st].forEach((q, i) => { if (q > 0) { out[i].items.push({ p, pcs: q, boxes: Math.ceil(q / boxSize(p)) }); tot[p] += Math.ceil(q / boxSize(p)); } });
+    }
+    return { locs: out, total: Object.values(tot).reduce((x, y) => x + y, 0) };
+  }
+  function boxPaint() {
+    const el = document.getElementById('pwBoxes'); if (!el) return;
+    const bx = boxPlan(), any = PRODUCTS.some(p => (planBakeTotals[p] || 0) > 0);
+    let h = `<h3>Boxes</h3>`;
+    if (!any) { el.innerHTML = h + '<div class="bx-none">Nothing to box yet. Pick a span for at least one item in step 1.</div>'; return; }
+    h += `<div class="bx-total"><b>${bx.total}</b> box${bx.total === 1 ? '' : 'es'} in all. La Mirada and Stanton split by recent sales; BP and Fullerton get what you set aside below.</div>`;
+    for (const l of bx.locs) {
+      const n = l.items.reduce((a, x) => a + x.boxes, 0);
+      h += `<div class="bx-loc">${esc(l.name)}<span>${n} box${n === 1 ? '' : 'es'}</span></div>`;
+      h += l.items.length ? l.items.map(x => `<div class="bx-row"><span>${esc(pdisp(x.p))}<small>${x.pcs} pieces · ${boxSize(x.p)} per box</small></span><b>${x.boxes} box${x.boxes === 1 ? '' : 'es'}</b></div>`).join('') : '<div class="bx-none">Nothing goes here.</div>';
+    }
+    h += `<details><summary>Box sizes and storage</summary><div class="bx-set hd"><span>Item</span><span>Per box</span><span>To BP</span><span>To Fullerton</span></div>`
+      + PRODUCTS.map(p => `<div class="bx-set"><span>${esc(pdisp(p))}</span><input type="number" inputmode="numeric" min="1" data-bx="size" data-p="${esc(p)}" value="${boxSize(p)}"><input type="number" inputmode="numeric" min="0" data-bx="bp" data-p="${esc(p)}" value="${boxCfg.hold.bp[p] || 0}"><input type="number" inputmode="numeric" min="0" data-bx="fu" data-p="${esc(p)}" value="${boxCfg.hold.fu[p] || 0}"></div>`).join('')
+      + `<div class="bx-none">To BP and To Fullerton are pieces set aside in those storages. Everything else goes to the two stores.</div></details>`;
+    el.innerHTML = h;
+    el.querySelector('details').open = !!boxOpen;
+    el.querySelector('details').ontoggle = e => { boxOpen = e.target.open; };
+    el.querySelectorAll('input[data-bx]').forEach(i => i.onchange = () => {
+      const v = Math.max(0, Math.floor(Number(i.value) || 0)), k = i.dataset.bx, p = i.dataset.p;
+      if (k === 'size') boxCfg.size[p] = Math.max(1, v); else boxCfg.hold[k][p] = v;
+      boxSave(); boxOpen = true; boxPaint();
+    });
+  }
+  let boxOpen = false;
   function wizPaint() {
     const box = document.getElementById('planWiz'), root = document.getElementById('bakingPlan');
     if (!box || !root) return;
@@ -5588,6 +5657,7 @@ button { color: var(--text, #000); }
         + `<div class="pw-nav pw-nav-top"><button type="button" class="btn-ghost" data-wgo="2">Back</button><span></span></div>`;
     }
     box.innerHTML = h;
+    try { boxPaint(); } catch {}
     if (wizStep === 2) {
       const b = document.getElementById('pwBuy'); if (b) { try { bkWireTicks(b); } catch {} }
       if (PANTRY === null || LEDGER === null) setTimeout(() => { if (wizStep === 2) wizPaint(); }, 1200);   // repaint once the pantry and ledger have loaded
