@@ -2502,7 +2502,7 @@ select:not(.row-select):not([data-labi]) { -webkit-appearance: none !important; 
   </div>
 </div>
 
-<div class="ver-badge">v1.152.00 · Nov 18, 3:10 PM PST</div>
+<div class="ver-badge">v1.152.01 · Nov 18, 3:30 PM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -5565,8 +5565,6 @@ select:not(.row-select):not([data-labi]) { -webkit-appearance: none !important; 
     const computed = locs.map(loc => ({ loc, st: locStats(loc, sales, entries), dowr: dowRates(sales, loc, 28) }));
     const usable = computed.filter(c => c.st.hasInv && c.dowr);
     if (STORAGE === null && !storageBusy) fetchStorage().then(() => { if (document.getElementById('planList')) paintPlan(); });
-    // A store's own storage counts as stock for the plan (shelf count + pieces in that store's storage).
-    usable.forEach(c => { const stock = {}; PRODUCTS.forEach(p => { stock[p] = (c.st.stock[p] || 0) + storedFor(c.loc, p); }); c.st = Object.assign({}, c.st, { stock }); });
     const skipped = computed.filter(c => !(c.st.hasInv && c.dowr));
     // Slider only makes sense for exactly two bake dates.
     const splitOn = bakeDateSet.size && activeDates.length === 2;
@@ -8317,9 +8315,8 @@ select:not(.row-select):not([data-labi]) { -webkit-appearance: none !important; 
     });
     return out;
   }
-  // Pieces sitting in a store's own storage (La Mirada Storage / Stanton Storage) count toward what that store can cover, so the plan does not
-  // bake them again. BP and Fullerton Storage are not tied to a store: storedPool() is their total, taken off the combined bake. (Plan only; Stock still shows shelf counts.)
-  const storedFor = (loc, p) => { const m = storageStock()[loc + ' Storage']; return Math.max(0, (m && m[p]) || 0); };
+  // La Mirada Storage and Stanton Storage ARE those stores' inventory (Andrew, 2026-11-18), already counted through the store's inventory entries, so the plan
+  // never adds them again. BP and Fullerton Storage are not a store's shelf: storedPool() is their total, taken off the combined span bake total.
   const storedPool = p => { const o = storageStock(); return Math.max(0, (o['BP Storage'][p] || 0)) + Math.max(0, (o['Fullerton Storage'][p] || 0)); };
   // '' when the move is fine, else the sentence to show.
   function stMoveProblem(p) {
