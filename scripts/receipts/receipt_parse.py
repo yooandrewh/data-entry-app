@@ -34,16 +34,23 @@ def parse(lines):
     m = re.search(r"(\d{2})/(\d{2})/(\d{4})", text)
     if m: res["date"] = f"{m.group(3)}-{m.group(1)}-{m.group(2)}"
     res["receipt"] = " ".join(x for x in ["Costco", place, res["date"] or ""] if x)
+    qty = None   # a "3 @ 4.99" line applies to the next item row, whose printed price is the line total
     for r in rs:
         r = r.strip()
+        q = re.match(r"^(\d{1,3})\s*@\s*(\d{1,4}\.\d{2})$", r)
+        if q: qty = (int(q.group(1)), float(q.group(2))); continue
         m = ITEM_RE.match(r)
         if m and not re.match(r"(?i)(sub)?total|tax|visa|change", m.group(2)):
-            num, label, price = m.group(1), m.group(2), float(m.group(3))
+            num, label, line = m.group(1), m.group(2), float(m.group(3))
+            n, price = 1, line
+            if qty:
+                if abs(qty[0] * qty[1] - line) < 0.015: n, price = qty
+                else: res["unhandled"].append(f"quantity {qty[0]} @ {qty[1]} does not match line total {line} for #{num}")
+                qty = None
             it = ITEMS.get(num)
-            if it:
-                res["items"].append({"num": num, "label": label, "price": price, **it})
-            else:
-                res["unknown"].append({"num": num, "label": label, "price": price})
+            for _ in range(n):
+                if it: res["items"].append({"num": num, "label": label, "price": price, **it})
+                else: res["unknown"].append({"num": num, "label": label, "price": price})
             continue
         if DISC_RE.match(r):
             res["unhandled"].append(r); continue

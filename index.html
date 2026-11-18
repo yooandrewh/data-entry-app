@@ -2173,7 +2173,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.127.00 · Nov 17, 8:51 PM PST</div>
+<div class="ver-badge">v1.127.01 · Nov 18, 8:29 AM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -7243,14 +7243,17 @@
     const reTotalLbl = /^[*\s]*(SUBTOTAL|TAX|TOTAL)\b/i;
     const reCoupon = /^\d{3,8}\s*\/\s*\d{3,8}\b|\d+\.\d{2}\s*-\s*[A-Za-z]?$/;
     const reA = new RegExp('^(?:[A-Za-z] )?(\\d{4,8}) (.+?) ' + PRICE + '(?: ?[A-Za-z])?$');          // E 1752247 CORN STARCH 4.99 N
-    const reB = /^(?:([A-Za-z]) )?(\d{4,8}) ([A-Za-z].*)$/;                                            // E 1752247 CORN STARCH
+    const reB = /^(?:([A-Za-z]) )?(\d{4,8})(?: ([A-Za-z].*))?$/;                                            // E 1752247 CORN STARCH
     const rePriceOnly = new RegExp('^' + PRICE + '(?: ?[A-Za-z])?$');                                   // 4.99 N
     const moneyIn = s => { const m = /(\d{1,5}\.\d{2})\s*[A-Za-z]?$/.exec(s); return m ? parseFloat(m[1]) : null; };
+    const reQty = /^(\d{1,3}) ?@ ?(\d{1,4}\.\d{2})$/;                                                  // 3 @ 4.99 (the next item row prints the line total)
     const entries = [], pending = [], standalone = [];       // standalone: {i, price}
-    let firstLbl = -1, tax = null, total = null;
+    let firstLbl = -1, tax = null, total = null, qty = null;
     const coupons = [];
     rows.forEach((l, i) => {
       if (l === '#consumed') return;
+      const qm = reQty.exec(l);
+      if (qm) { qty = { n: parseInt(qm[1], 10), p: parseFloat(qm[2]) }; return; }
       if (reCoupon.test(l)) { coupons.push(l); return; }
       const lm = reTotalLbl.exec(l);
       if (lm) {
@@ -7264,9 +7267,9 @@
         return;
       }
       let m = reA.exec(l);
-      if (m) { entries.push({ num: m[1], label: m[2], price: parseFloat(m[3]) }); return; }
+      if (m) { entries.push({ num: m[1], label: m[2], price: parseFloat(m[3]), qty }); qty = null; return; }
       m = reB.exec(l);
-      if (m && (m[1] || COSTCO_ITEMS[m[2]])) { const e = { num: m[2], label: m[3], price: null }; entries.push(e); pending.push(e); return; }
+      if (m && (m[1] || COSTCO_ITEMS[m[2]])) { const e = { num: m[2], label: m[3] || '', price: null, qty }; qty = null; entries.push(e); pending.push(e); return; }
       if (rePriceOnly.test(l)) standalone.push({ i, price: moneyIn(l) });
     });
     coupons.forEach(c => blocks.push('Not handled (discount or coupon line): ' + c));
@@ -7277,14 +7280,23 @@
       else pending.forEach((e, k) => { e.price = use[k].price; });
     }
     if (!entries.length) blocks.push("Couldn't find any item lines");
-    const lines = [];
+    // A "N @ P" line means the item row's price is N x P: record N packages at P each.
+    const all = [];
     entries.forEach(e => {
+      if (e.qty && e.price != null) {
+        if (Math.abs(e.qty.n * e.qty.p - e.price) <= 0.015) { for (let k = 0; k < e.qty.n; k++) all.push({ num: e.num, label: e.label, price: e.qty.p }); return; }
+        blocks.push(`Quantity ${e.qty.n} @ ${e.qty.p.toFixed(2)} doesn't match the line total ${e.price.toFixed(2)} for #${e.num}`);
+      }
+      all.push(e);
+    });
+    const lines = [];
+    all.forEach(e => {
       const k = COSTCO_ITEMS[e.num];
       if (!k) { blocks.push(`Unknown item #${e.num} (${e.label}), tell Claude to add it`); return; }
       if (e.price == null) return;
       lines.push({ receipt, date, vendor: 'Costco', kind: 'item', item: k.item, amt: k.size, unit: k.unit, price: e.price, note: `item #${e.num} ${e.label}` });
     });
-    const itemsSum = Math.round(entries.reduce((t, e) => t + (e.price || 0), 0) * 100) / 100;
+    const itemsSum = Math.round(all.reduce((t, e) => t + (e.price || 0), 0) * 100) / 100;
     const taxV = tax || 0;
     if (taxV > 0) lines.push({ receipt, date, vendor: 'Costco', kind: 'tax', price: taxV, note: 'tax' });
     let match = '';
@@ -7292,7 +7304,7 @@
     else if (Math.abs(itemsSum + taxV - total) <= 0.015) match = 'Total matches';
     else { match = `Total does not match (items+tax ${(itemsSum + taxV).toFixed(2)} vs receipt ${total.toFixed(2)})`; blocks.push(match); }
     if (lines.length > 80) blocks.push(`${lines.length} lines is more than the 80 the ledger takes in one go`);
-    return { ok: true, receipt, date, place, vendor: 'Costco', entries, lines, tax: taxV, total, itemsSum, match, blocks };
+    return { ok: true, receipt, date, place, vendor: 'Costco', entries: all, lines, tax: taxV, total, itemsSum, match, blocks: blocks.filter((b, i) => blocks.indexOf(b) === i) };
   }
   // RECEIPTS-PARSER-END
   let rcParsed = null, rcBusy = false, rcDone = '';

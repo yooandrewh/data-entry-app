@@ -79,6 +79,8 @@ iPhone saves a receipt photo to iCloud Drive / **Kairos receipts**; `scripts/rec
 
 **Receipts page (Home → Receipts, v1.127.00):** Andrew copies a receipt photo's text on the iPhone (Live Text, Copy All), pastes it, taps Read, reviews, taps Post. Client-side `parseReceipt()` (next to the Pantry block; `COSTCO_ITEMS` mirrors `scripts/receipts/costco_items.json`, keep both in step). Costco only; reads one-item-per-line or split item/price columns. Post is blocked on an unknown item number, a coupon line, unpaired split columns, items+tax not equal to TOTAL, more than 80 lines, or a receipt id (`Costco <Place> <date>`) already in the Ledger. Lines go in **unapproved** via `ledgerPost`; approve in Baking, Costs, Ingredient prices. Not yet tested on a phone with a real Live Text paste.
 
+Costco receipts print a quantity line (`3 @ 4.99`) above an item whose price is the **line total** (14.97); both parsers turn it into 3 lines at 4.99 and block if quantity x price does not equal the line total. The total check alone cannot catch this (line totals add up either way). Verified on the real 2026-11-12 receipt through Apple Vision (Python) and the app parser (node).
+
 ## Labels, bake sheet, recipes (details in docs/HISTORY.md)
 
 - Labels live only under Home → Labels (`openLabelGen`, ticks several madeleines, `mlSel` in `labelSel.v1`). Net weight is **ounces first, grams in brackets** (`lblNetText`); fixed per-piece weights in `LBL_NET_G`; ingredients most → least by weight; `Contains:` line for the 9 major allergens; the three storage lines (frozen +21 days, thawed 7 days, room temp 2 days, or "discard after 4 hours" for Lemon Poppy and dairy fillings); manufacturer Kairosbaking, Fullerton CA 92833. The single-label sheet (`openLabel`, `#lblScrim`) is unreachable.
@@ -100,7 +102,7 @@ iPhone saves a receipt photo to iCloud Drive / **Kairos receipts**; `scripts/rec
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.127.00**; the next feature is v1.128.00, a fix v1.127.01. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.127.01**; the next feature is v1.128.00, a fix v1.127.02. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 
