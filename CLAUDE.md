@@ -171,6 +171,10 @@ Removed duplicates: the **Forecast** chip (it opened the same page as Stock; Pla
 
 Ingredients' On hand list and every What to buy / To buy list (inside each store) split into **Fridge & freezer** and **Shelf** (`isCold`, `SHELF_RE` / `COLD_RE` above `renderPantry`; the label shows only when both groups are present). Cold = butter, eggs, milk, cream, cheese, ricotta, mascarpone, yeast, frozen items, kataifi, jalapeno; shelf exceptions: cocoa / pistachio butter, coconut / condensed milk, milk powder, cream of tartar. Name-based guess, not data: edit the two regexes when an item is wrong.
 
+## What it is for (v1.156.00)
+
+Every row in the shopping lists (What to buy, Plan step 2, Bake Day) has a **What it is for and when** drop-down (`usesHtml` / `usesInList`, a native `<details>` under the row): per-recipe amounts and batches for the whole plan (waste included, same numbers as the list) and, when the plan has bake dates (`planDatesCache`, dates from today on), one line per bake date with the recipes and amount. With no bake dates it says so and points to Bake dates in Plan step 1. Date lines cover forecast-driven recipes only, like Bake Day's per-date views. Checked in the headless browser at 390px; not on a phone.
+
 ## Design pass (v1.149.00)
 
 Last CSS block: **every `<select>` has one style** (white, 1px #c9c9c9, 12px radius, 44px, black chevron; `.row-select` and `[data-labi]` excluded); the Forecast store toggle (`.fc-locs`) uses the pill style. On desktop (>=900px) all pages share a 1120px column, page chips sit centered at natural width, the Trends donut is 220px. On phones the 5 Inventory chips shrink (11px padding) to fit. Counts' total says "pieces", not "madeleines". Still open: coloured snowflake/flame/arrow icons in Forecast misses (breaks the B/W rule), today's half-finished day shows as a 0.0x miss, Stock's section headers use the old grey band style.
@@ -191,7 +195,7 @@ The headless check at 390px misses what iOS does. Apply these to every new or ch
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.155.01**; the next feature is v1.156.00, a fix v1.155.02. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.156.00**; the next feature is v1.157.00, a fix v1.156.01. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 

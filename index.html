@@ -2118,6 +2118,16 @@ select:not(.row-select):not([data-labi]) { -webkit-appearance: none !important; 
 .amz-add button { min-height: 44px; padding: 0 18px; border: 1px solid #000; border-radius: 12px; background: #000; color: #fff !important; font-size: var(--fs-body); font-weight: 700; }
 .amz-add button:disabled { opacity: .5; }
 .cold-h { margin: 14px 0 4px; font-size: var(--fs-caption); font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+details.buy-use { margin: -2px 0 8px; padding: 0 0 0 44px; }
+details.buy-use > summary { min-height: 44px; display: flex; align-items: center; font-size: var(--fs-caption); font-weight: 700; color: var(--muted); cursor: pointer; list-style: none; }
+details.buy-use > summary::-webkit-details-marker { display: none; }
+details.buy-use > summary::after { content: "\203A"; margin-left: 8px; font-size: 18px; transition: transform .15s; }
+details.buy-use[open] > summary::after { transform: rotate(90deg); }
+.buy-use .use-h { margin: 8px 0 2px; font-size: var(--fs-caption); font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
+.buy-use .use-row { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid #e5e5e5; font-size: var(--fs-body); }
+.buy-use .use-row small { display: block; color: var(--muted); font-size: var(--fs-caption); }
+.buy-use .use-row b { white-space: nowrap; }
+.buy-use .use-note { color: var(--muted); font-size: var(--fs-caption); margin: 8px 0 4px; }
 </style>
 </head>
 <body>
@@ -2497,7 +2507,7 @@ select:not(.row-select):not([data-labi]) { -webkit-appearance: none !important; 
   </div>
 </div>
 
-<div class="ver-badge">v1.155.01 · Nov 18, 6:00 PM PST</div>
+<div class="ver-badge">v1.156.00 · Nov 18, 6:30 PM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -7572,6 +7582,39 @@ select:not(.row-select):not([data-labi]) { -webkit-appearance: none !important; 
       return { name, qty, unit, pk, pkAmt, cost: pk ? pk * p.price : null };
     }).sort((a, b) => a.name.localeCompare(b.name));
   }
+  // Where an ingredient is used: per recipe (whole plan) and, when the plan has bake dates, per bake date. Same amounts as the shopping list (waste included).
+  function usesInList(name, list) {
+    const out = [];
+    for (const b of list) {
+      const f = bsFind(b.key); if (!f) continue;
+      let q = 0;
+      for (const [n, g] of costRows(f.sec, f.it, bsVers(f.it) ? bsVerOf(f.it, b) : null)) {
+        if (/^water$/i.test(String(n).split(',')[0].replace(/\(.*?\)/g, '').trim())) continue;
+        const c = costCanon(n), x = g * b.b * (1 + BUY_WASTE);
+        if (c === 'Cake Flour') { if (name === 'All Purpose Flour') q += x * 436 / 500; else if (name === 'Cornstarch') q += x * 64 / 500; }
+        else if (c === 'Tea Bags') { if (name === 'Earl Grey Tea Leaves') q += x * 2; }
+        else if (c === name) q += x;
+      }
+      if (q > 0) out.push({ label: f.it.name || b.key, batches: b.b, q });
+    }
+    return out;
+  }
+  function usesHtml(name, unit) {
+    let list; try { list = [...bakeSheet, ...buyRecipes]; } catch { return ''; }
+    const whole = usesInList(name, list);
+    if (!whole.length) return '';
+    const fmt = q => buyFmt(q, unit), today = todayISO();
+    const row = (a, b) => `<div class="use-row"><span>${a}</span><b>${b}</b></div>`;
+    let h = `<div class="use-h">What it is for</div>` + whole.sort((a, b) => b.q - a.q).map(u => row(`${esc(u.label)}<small>${u.batches} batch${u.batches === 1 ? '' : 'es'}</small>`, fmt(u.q))).join('');
+    const dates = Object.keys(planDatesCache || {}).filter(d => d >= today).sort();
+    const per = dates.map(d => {
+      const tot = planDatesCache[d], items = bakeSheet.filter(x => x.plan && BS_PRODUCT[x.key]).map(x => ({ ...x, b: flavorBatches(tot[BS_PRODUCT[x.key]] || 0, BS_PRODUCT[x.key]) })).filter(x => x.b > 0);
+      return { d, uses: usesInList(name, items) };
+    }).filter(x => x.uses.length);
+    if (per.length) h += `<div class="use-h">When</div>` + per.map(x => row(`${esc(wkShort(x.d))} ${esc(fmtWhen(x.d))}<small>${x.uses.map(u => esc(u.label)).join(', ')}</small>`, fmt(x.uses.reduce((a, u) => a + u.q, 0)))).join('');
+    else h += `<div class="use-note">No bake dates set, so this is the whole plan at once. Add dates under Bake dates in Plan step 1 to see it by day.</div>`;
+    return `<details class="buy-use"><summary>What it is for and when</summary>${h}<div class="use-note">Includes ${Math.round(BUY_WASTE * 100)}% extra for waste.</div></details>`;
+  }
   const buyFmt = (n, u) => n >= 1000 ? `${(Math.round(n / 10) / 100).toLocaleString()} ${u === 'ml' ? 'L' : 'kg'}` : `${Math.round(n).toLocaleString()} ${u}`;
 
   // ----- Receipts (Home → Receipts): paste the text of a receipt photo (iPhone Live Text → Copy All), read it, review, and post
@@ -8177,10 +8220,10 @@ select:not(.row-select):not([data-labi]) { -webkit-appearance: none !important; 
     const flag = r.st === 'none' || (r.s && r.s.uncounted) ? 'not counted' : r.st === 'unit' ? 'counted in another unit' : '';
     const big = q.n ? `${q.n} ${q.n === 1 ? 'pack' : 'packs'}` : `Buy ${buyFmt(r.short, i.unit)}`;
     const sub = (q.n ? `${packFmt(i.pkAmt, i.unit)} each · ` : 'no price yet · ') + `need ${buyFmt(i.qty, i.unit)}${have}${flag ? ' · ' + flag : ''}`;
-    return `<label class="buy-row buy-big${buyChecked[nm] ? ' done' : ''}"><input type="checkbox" data-bkc="${esc(nm)}"${buyChecked[nm] ? ' checked' : ''}><span class="buy-main"><b><em>${big}</em> ${esc(nm)}</b><small>${sub}</small></span><span class="buy-r">${q.cost != null ? money2(q.cost) : ''}</span></label>`;
+    return `<label class="buy-row buy-big${buyChecked[nm] ? ' done' : ''}"><input type="checkbox" data-bkc="${esc(nm)}"${buyChecked[nm] ? ' checked' : ''}><span class="buy-main"><b><em>${big}</em> ${esc(nm)}</b><small>${sub}</small></span><span class="buy-r">${q.cost != null ? money2(q.cost) : ''}</span></label>${usesHtml(nm, i.unit)}`;
   };
   const bkVendor = r => { const v = (costPrices[r.i.name] || {}).vendor; return v && String(v).trim() ? String(v).trim() : (bkPart(r).n ? 'Other' : 'No price yet'); };
-  const bkHaveRow = r => `<div class="buy-row buy-big buy-have"><span class="buy-ok">✓</span><span class="buy-main"><em class="buy-tag">Have it</em><b><s>${esc(r.i.name)}</s></b><small>need ${buyFmt(r.i.qty, r.i.unit)} · have ${buyFmt(r.s.onHand, r.i.unit)}</small></span></div>`;
+  const bkHaveRow = r => `<div class="buy-row buy-big buy-have"><span class="buy-ok">✓</span><span class="buy-main"><em class="buy-tag">Have it</em><b><s>${esc(r.i.name)}</s></b><small>need ${buyFmt(r.i.qty, r.i.unit)} · have ${buyFmt(r.s.onHand, r.i.unit)}</small></span></div>${usesHtml(r.i.name, r.i.unit)}`;
   // rows = still to buy; all = every ingredient the plan needs (the ones already on hand are shown greyed under the same store, marked Have it).
   // Amazon: the ledger keeps each Amazon item's product link. The ASIN in it lets one tap open Amazon's Add to Cart page with the packs filled in (you still tap Add and check out on Amazon yourself).
   const amzAsin = l => { const m = /(?:\/dp\/|\/gp\/product\/|\/product\/)([A-Z0-9]{10})(?:[\/?#]|$)/i.exec(String(l || '')); return m ? m[1].toUpperCase() : ''; };
