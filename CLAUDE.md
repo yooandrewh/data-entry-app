@@ -20,7 +20,7 @@ App "Sea Salt" maps to the sheet column **"Sea Salt Butter"**.
 
 Notion is dead: nothing writes to it, and the `NOTION_*` Vercel env vars can be removed.
 
-- Sheet id `1kmJHEIKkJ3HTvqmIlx2BwSEYZPNbHt28le3LrPQOuIA` (must be a **native Google Sheet**, not an uploaded `.xlsx`). Tabs: Deliveries / Inventory / Sales / Store Sales / StoreStats / Events / Ledger / Pantry / Logs.
+- Sheet id `1kmJHEIKkJ3HTvqmIlx2BwSEYZPNbHt28le3LrPQOuIA` (must be a **native Google Sheet**, not an uploaded `.xlsx`). Tabs: Deliveries / Inventory / Sales / Store Sales / StoreStats / Events / Ledger / Pantry / Bakes / Logs.
 - Service account `kairos-sheets@premium-griffin-500920-s0.iam.gserviceaccount.com` (Editor). `api/_sheets.js` is a zero-dep client (JWT via `node:crypto`, Sheets v4 REST). Vercel env: `SHEET_ID`, `GOOGLE_SA_JSON` (base64 of the key), `LEDGER_CODE`.
 - `ensureTab()` creates a tab on first use. The app URL is public and unauthenticated; anything that costs money or writes shared data needs a server-side code.
 
@@ -71,7 +71,7 @@ Status: live API tested (add/remove round trip); browser-tested 2026-11-17 on de
 
 ## Bake Day (Home → Bake Day, built 2026-11-17)
 
-`bakeOpen()` / `bakePaint()` / `bakeRows()` next to `buyPaint()`. Takes `buyItems()` (whole bake plan, same as the Buy list) and compares each with `pantryStock()`: **To buy** (short, "Not counted" if no count, "Unit" if counted in a different unit; both list the full need, never treat as zero), **Have enough**, and a collapsed **After the bake: recount** form that saves counts through `pantryPost` (date today, note "After bake"). Baking never subtracts from the pantry by itself; recount is the rule (decided with Andrew). Packs and cost are recomputed on the shortfall. Ticks share `buyChecked` with the Buy list. A dropdown (shown with 2+ bake dates) switches to **Through <date>**: cumulative needs of all bakes up to that date, from `planDateTotals` (pieces per date, filled by `paintPlan`) turned into batches by `bakeList()`; only forecast-driven recipes, hand-added ones are left out. The Pantry page's Low flag only compares when the count and plan use the same unit. Browser-tested on desktop Chrome with fake counts; not yet on a phone.
+`bakeOpen()` / `bakePaint()` / `bakeRows()` next to `buyPaint()`. Takes `buyItems()` (whole bake plan, same as the Buy list) and compares each with `pantryStock()`: **To buy** (short, "Not counted" if no count, "Unit" if counted in a different unit; both list the full need, never treat as zero), **Have enough**, and a collapsed **After the bake: recount** form that saves counts through `pantryPost` (date today, note "After bake"). Baking never subtracts from the pantry by itself; recount is the rule (decided with Andrew). Packs and cost are recomputed on the shortfall. Ticks share `buyChecked` with the Buy list. A dropdown (`bakeView`) switches to **Through <date>** (cumulative bakes from today) or **Only <date>** (one bake), from `planDatesCache` (pieces per date; `paintPlan` fills it and keeps the last 7 days of past dates in `localStorage.planDates.v1` so today's bake can still be marked done) turned into batches by `bakeList()`; only forecast-driven recipes, hand-added ones are left out. **Bake done** (only in the Only-date view, once per date): `api/bakes.js` (tab **Bakes**: `Id, Date, Minutes, Recipes, Note, Deleted`, GET open, POST `add`/`remove` need `x-ledger-code`) records the bake and its minutes (prefilled from Timers' log for that day), then writes estimate counts (today's date, note `Estimate after <date> bake`) = on hand − need for every counted same-unit item; skipped items are listed in the confirm. Items never counted but bought (approved) after the first pantry count show on hand = those purchases, tagged Not counted (`uncounted`, a floor). The Pantry page's Low flag only compares when the count and plan use the same unit. Browser-tested on desktop Chrome with fake counts; not yet on a phone.
 
 ## Labels, bake sheet, recipes (details in docs/HISTORY.md)
 
@@ -94,7 +94,7 @@ Status: live API tested (add/remove round trip); browser-tested 2026-11-17 on de
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.125.02**; the next feature is v1.126.00, a fix v1.125.03. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.126.00**; the next feature is v1.127.00, a fix v1.126.01. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 

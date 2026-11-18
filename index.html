@@ -2168,7 +2168,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.125.02 · Nov 17, 8:24 PM PST</div>
+<div class="ver-badge">v1.126.00 · Nov 17, 8:29 PM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -5031,6 +5031,9 @@
   }
 
   let planBakeTotals = {};
+  const PD_KEY = 'planDates.v1';
+  let planDatesCache = {};   // same as planDateTotals plus the last 7 days of past bakes, so a bake can still be marked done on and after its day
+  try { planDatesCache = JSON.parse(localStorage.getItem(PD_KEY)) || {}; } catch {}
   let planDateTotals = {};   // 'YYYY-MM-DD' -> pieces to bake per product on that bake date (all stores); feeds Bake Day's "through <date>" view
   async function renderPlan() {
     const sub = document.getElementById('planSub');
@@ -5126,6 +5129,7 @@
     if (!html) html = `<div class="db-empty"><div class="big">${ic('calendar')}</div>Nothing to plan.</div>`;
     document.getElementById('planList').innerHTML = html;
     planBakeTotals = planTotals; planDateTotals = dateTotals;
+    try { const cut = addDays(todayYmd, -7), m = {}; for (const d of Object.keys(planDatesCache)) if (d >= cut && d <= todayYmd) m[d] = planDatesCache[d]; Object.assign(m, dateTotals); planDatesCache = m; localStorage.setItem(PD_KEY, JSON.stringify(m)); } catch {}
     autoFillBakePlan();
 
     // Split slider (two dates only).
@@ -7208,18 +7212,18 @@
     if (homeTab === 'pantry') renderPantry();
     if (homeTab === 'bake') bakePaint();
   }
-  async function pantryPost(body) {
+  async function pantryPost(body, url = '/api/pantry') {
     const code = ledgerCode(); if (!code) { rcpToast('Enter the access code to save'); return false; }
     try {
-      const r = await fetch('/api/pantry', { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-ledger-code': code }, body: JSON.stringify(body) });
+      const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', 'x-ledger-code': code }, body: JSON.stringify(body) });
       const j = await r.json().catch(() => ({}));
       if (r.status === 401) { try { localStorage.removeItem('ledgerCode'); } catch {} rcpToast('Wrong ledger code'); return false; }
       if (r.status === 503) { rcpToast('Pantry writes are off: set LEDGER_CODE in Vercel'); return false; }
       if (!r.ok) { rcpToast(j.error || 'Could not save'); return false; }
-      await fetchPantry(); return true;
-    } catch { rcpToast('Could not reach the pantry'); return false; }
+      await (url === '/api/pantry' ? fetchPantry() : fetchBakes()); return true;
+    } catch { rcpToast('Could not reach the server'); return false; }
   }
-  // [{name, unit, count, date, note, id, bought, onHand, mixed}] one per canonical item that has a count, sorted by name.
+  // [{name, unit, count, date, note, id, bought, onHand, mixed, uncounted}] one per canonical item that has a count, plus items never counted but bought since the first count (uncounted: true, id null), sorted by name.
   function pantryStock() {
     const latest = new Map();
     (PANTRY || []).forEach(p => {
@@ -7228,14 +7232,27 @@
     });
     const buys = [];
     ledgerReceipts().forEach(r => r.items.filter(l => l.approved).forEach(l => buys.push(l)));
-    return [...latest.entries()].map(([name, p]) => {
+    const out = [...latest.entries()].map(([name, p]) => {
       let bought = 0, mixed = false;
       buys.forEach(l => {
         if (costCanon(l.item) !== name || !(isoD(l.date) > isoD(p.date))) return;
         if (l.unit === p.unit || (p.unit === 'pcs' && isCone(name))) bought += l.amt || 0; else mixed = true;
       });
       return { name, unit: p.unit, count: p.amt, date: p.date, note: p.note, id: p.id, bought, onHand: p.amt + bought, mixed };
-    }).sort((a, b) => a.name.localeCompare(b.name));
+    });
+    // Items never counted: once the pantry has a first count, approved purchases dated after it are still on hand (a floor, not a count).
+    const start = (PANTRY || []).map(p => isoD(p.date)).filter(Boolean).sort()[0];
+    if (start) {
+      const seen = new Set(latest.keys()), un = new Map();
+      buys.forEach(l => {
+        const name = costCanon(l.item); if (seen.has(name) || !(isoD(l.date) > start)) return;
+        const u = un.get(name) || { name, unit: isCone(name) ? 'pcs' : l.unit, count: 0, date: start, note: '', id: null, bought: 0, onHand: 0, mixed: false, uncounted: true };
+        if (l.unit === u.unit || (u.unit === 'pcs' && isCone(name))) { u.bought += l.amt || 0; u.onHand += l.amt || 0; } else u.mixed = true;
+        un.set(name, u);
+      });
+      un.forEach(u => out.push(u));
+    }
+    return out.sort((a, b) => a.name.localeCompare(b.name));
   }
   const pantryDate = d => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d || ''); return m ? new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : (d || ''); };
   function renderPantry() {
@@ -7249,8 +7266,8 @@
     let need = {}; try { buyItems().forEach(i => { need[i.name] = { qty: i.qty, unit: i.unit }; }); } catch {}
     const rows = stock.map(s => {
       const pl = need[s.name], same = pl && pl.unit === s.unit, nd = pl ? pl.qty : null, low = same && s.onHand + 1e-9 < nd;
-      const sub = `Counted ${buyFmt(s.count, s.unit)} on ${esc(pantryDate(s.date))}` + (s.bought ? ` · +${esc(buyFmt(s.bought, s.unit))} bought since` : '') + (s.mixed ? ' · some purchases use another unit and are not added' : '') + (pl ? ` · plan needs ${esc(buyFmt(nd, pl.unit))}${same ? '' : ` (counted in ${esc(s.unit)}, not compared)`}` : '') + (s.note ? ` · ${esc(s.note)}` : '');
-      return `<div class="pn-row"><span class="pn-main"><b>${esc(s.name)}</b><small>${sub}</small></span><span class="pn-r">${low ? '<i class="pn-flag">Low</i>' : ''}<b>${esc(buyFmt(s.onHand, s.unit))}</b><button class="pn-x" data-pnx="${esc(s.id)}" aria-label="Remove this count">✕</button></span></div>`;
+      const sub = (s.uncounted ? `Not counted · only purchases since ${esc(pantryDate(s.date))}` : `Counted ${buyFmt(s.count, s.unit)} on ${esc(pantryDate(s.date))}`) + (s.bought && !s.uncounted ? ` · +${esc(buyFmt(s.bought, s.unit))} bought since` : '') + (s.mixed ? ' · some purchases use another unit and are not added' : '') + (pl ? ` · plan needs ${esc(buyFmt(nd, pl.unit))}${same ? '' : ` (counted in ${esc(s.unit)}, not compared)`}` : '') + (s.note ? ` · ${esc(s.note)}` : '');
+      return `<div class="pn-row"><span class="pn-main"><b>${esc(s.name)}</b><small>${sub}</small></span><span class="pn-r">${low ? '<i class="pn-flag">Low</i>' : ''}<b>${esc(buyFmt(s.onHand, s.unit))}</b>${s.id ? `<button class="pn-x" data-pnx="${esc(s.id)}" aria-label="Remove this count">✕</button>` : ''}</span></div>`;
     }).join('');
     const names = (typeof costAllNames === 'function' ? costAllNames() : []).sort((a, b) => a.localeCompare(b));
     const units = ['g', 'kg', 'oz', 'lb', 'ml', 'L', 'fl oz', 'pcs'];
@@ -7278,19 +7295,29 @@
     });
   }
   // ----- Bake Day: the bake plan's ingredients against what's on hand (Pantry). Shows what to buy, then lets you recount after the bake. -----
-  let bakeRcOpen = false, bakeThrough = '';   // bakeThrough: '' = whole plan, else a bake date: only the bakes up to and including it
+  let BAKES = null, bakesBusy = false;   // finished bakes from the Bakes tab: [{id, date, minutes, recipes, note}]
+  async function fetchBakes() {
+    bakesBusy = true;
+    try { const r = await fetch('/api/bakes'); if (!r.ok) throw new Error(r.status); BAKES = (await r.json()).rows || []; }
+    catch (e) { if (BAKES === null) BAKES = []; }
+    bakesBusy = false;
+    if (homeTab === 'bake') bakePaint();
+  }
+  let bakeRcOpen = false, bakeView = '';   // '' = whole plan | 't:YYYY-MM-DD' = bakes from today through that date | 'o:YYYY-MM-DD' = that bake only
   async function bakeOpen() {
     if (PANTRY === null && !pantryBusy) fetchPantry();
     if (LEDGER === null && !ledgerBusy) loadCosts();
+    if (BAKES === null && !bakesBusy) fetchBakes();
     bakePaint();
     try { await renderPlan(); } catch {}      // fills bakeSheet from the forecast, as the Buy list does
     if (homeTab === 'bake') bakePaint();
   }
   // Rows for the shopping list. st: 'short' (counted, not enough) | 'ok' | 'none' (never counted) | 'unit' (counted in a different unit).
-  // Recipes for the buy list: the whole plan, or (bakeThrough set) the forecast-driven recipes for the bakes up to that date.
+  // Recipes for the buy list: the whole plan (undefined), or the forecast-driven recipes for one view of the plan.
   function bakeList() {
-    if (!bakeThrough || !planDateTotals[bakeThrough]) return undefined;
-    const tot = ZERO(); for (const d of Object.keys(planDateTotals)) if (d <= bakeThrough) for (const p of PRODUCTS) tot[p] += planDateTotals[d][p] || 0;
+    const m = /^([to]):(\d{4}-\d{2}-\d{2})$/.exec(bakeView); if (!m || !planDatesCache[m[2]]) return undefined;
+    const tot = ZERO(), today = todayISO();
+    for (const d of Object.keys(planDatesCache)) if (m[1] === 'o' ? d === m[2] : (d >= today && d <= m[2])) for (const p of PRODUCTS) tot[p] += planDatesCache[d][p] || 0;
     return bakeSheet.filter(x => x.plan && BS_PRODUCT[x.key]).map(x => ({ ...x, b: flavorBatches(tot[BS_PRODUCT[x.key]] || 0, BS_PRODUCT[x.key]) })).filter(x => x.b > 0);
   }
   function bakeRows(list) {
@@ -7307,8 +7334,10 @@
     const box = document.getElementById('homeBake'); if (!box) return;
     if (PANTRY === null || LEDGER === null) { box.innerHTML = '<div class="pn-note">Loading…</div>'; return; }
     const keep = {}; box.querySelectorAll('[data-bk]').forEach(e => { keep[e.dataset.bk] = e.value; });
-    const dates = Object.keys(planDateTotals).filter(d => d >= todayISO()).sort();
-    if (bakeThrough && !dates.includes(bakeThrough)) bakeThrough = '';
+    const today = todayISO(), cacheDates = Object.keys(planDatesCache).sort();
+    const thruDates = cacheDates.filter(d => d >= today), onlyDates = cacheDates.filter(d => d >= addDays(today, -3));
+    if (bakeView && !(/^o:/.test(bakeView) ? onlyDates : thruDates).includes(bakeView.slice(2))) bakeView = '';
+    const vDate = bakeView.slice(2), single = /^o:/.test(bakeView), done = single && (BAKES || []).find(b => b.date === vDate);
     const rows = bakeRows(bakeList()), allRows = bakeRows();
     if (!allRows.length) { box.innerHTML = '<div class="tm-empty">Nothing in the bake plan yet. Add bake dates in Baking Plan and the ingredients show up here.</div>'; return; }
     const buy = rows.filter(r => r.st !== 'ok'), ok = rows.filter(r => r.st === 'ok');
@@ -7319,20 +7348,26 @@
       const i = r.i, q = part(r), pk = q.n ? ` · ${q.n} × ${buyFmt(i.pkAmt, i.unit)} pack${q.n === 1 ? '' : 's'}` : ' · no price yet';
       if (r.st === 'none') return `need ${buyFmt(i.qty, i.unit)} · not counted, so the full amount is listed${pk}`;
       if (r.st === 'unit') return `need ${buyFmt(i.qty, i.unit)} · counted in ${esc(r.s.unit)}, can't compare, so the full amount is listed${pk}`;
-      return `need ${buyFmt(i.qty, i.unit)} · have ${buyFmt(r.s.onHand, i.unit)} · buy ${buyFmt(r.short, i.unit)}${pk}`;
+      return `need ${buyFmt(i.qty, i.unit)} · have ${buyFmt(r.s.onHand, i.unit)}${r.s.uncounted ? ' (purchases only, not counted)' : ''} · buy ${buyFmt(r.short, i.unit)}${pk}`;
     };
-    const tag = r => r.st === 'none' ? '<i class="pn-flag">Not counted</i> ' : r.st === 'unit' ? '<i class="pn-flag">Unit</i> ' : '';
+    const tag = r => (r.st === 'none' || (r.s && r.s.uncounted)) ? '<i class="pn-flag">Not counted</i> ' : r.st === 'unit' ? '<i class="pn-flag">Unit</i> ' : '';
     const buyRow = r => { const q = part(r); return `<label class="buy-row${buyChecked[r.i.name] ? ' done' : ''}"><input type="checkbox" data-bkc="${esc(r.i.name)}"${buyChecked[r.i.name] ? ' checked' : ''}><span class="buy-main"><b>${esc(r.i.name)} ${tag(r)}</b><small>${sub(r)}</small></span><span class="buy-r">${q.cost != null ? money2(q.cost) : ''}</span></label>`; };
     const okRow = r => `<div class="pn-row"><span class="pn-main"><b>${esc(r.i.name)}</b><small>need ${buyFmt(r.i.qty, r.i.unit)}${r.s.mixed ? ' · some purchases use another unit and are not added' : ''}</small></span><span class="pn-r">${buyFmt(r.s.onHand, r.i.unit)}</span></div>`;
+    const tm = (() => { try { const ms = (TM.log || []).filter(l => l.end && new Date(l.start).toLocaleDateString('en-CA') === vDate).reduce((a, l) => a + (l.end - l.start), 0); return ms > 0 ? Math.round(ms / 60000) : ''; } catch { return ''; } })();
+    const bakeDoneHtml = !single ? '<div class="pn-note">To record a bake and lower the pantry, pick "Only &lt;date&gt;" above.</div>'
+      : done ? `<h3>Bake done</h3><div class="pn-note">Recorded${done.minutes != null ? `: ${esc(String(done.minutes))} min` : ''}${done.recipes ? ` · ${esc(done.recipes)}` : ''}${done.note ? ` · ${esc(done.note)}` : ''}</div>`
+      : `<h3>Bake done</h3><div class="pn-note">Records this bake and its time, and lowers each counted ingredient by what this bake used, as an estimate. Items not counted, or counted in another unit, are skipped. Recount afterward to correct it.</div><div class="pn-form"><label>Minutes (from Timers when you used them that day)</label><input data-bk="bd:min" type="number" inputmode="decimal" min="0" step="any" value="${esc(keep['bd:min'] != null ? keep['bd:min'] : tm)}"><label>Note (optional)</label><input data-bk="bd:note" maxlength="200" value="${esc(keep['bd:note'] || '')}"><div class="pn-bar" style="margin-top:12px"><button class="primary" type="button" id="bdSave">Mark bake done</button></div></div>`;
     const rc = allRows.map(r => { const u = r.s ? r.s.unit : r.i.unit; return `<div class="bk-rc-row"><span>${esc(r.i.name)}</span><input type="number" inputmode="decimal" min="0" step="any" data-bk="${esc(r.i.name)}|${u}" value="${esc(keep[r.i.name + '|' + u] || '')}" aria-label="Left of ${esc(r.i.name)}"><em>${u}</em></div>`; }).join('');
-    const pick = dates.length > 1 ? `<div class="pn-bar"><select data-native id="bkThru" aria-label="Which bakes to shop for"><option value="">Whole plan (${dates.length} bakes)</option>${dates.map(d => `<option value="${d}"${d === bakeThrough ? ' selected' : ''}>Through ${esc(wkShort(d))} ${esc(pantryDate(d))}</option>`).join('')}</select></div>` : '';
-    box.innerHTML = pick + `<div class="bk-sum">${bakeThrough ? `Bakes up to ${esc(pantryDate(bakeThrough))} (forecast recipes only; hand-added recipes are left out)` : `Whole bake plan${next ? ` · next bake ${esc(pantryDate(next))}` : ''}`}. Need is the plan's ingredients; have is your latest count plus approved purchases since.</div>` +
+    const opt = (v, t) => `<option value="${v}"${v === bakeView ? ' selected' : ''}>${t}</option>`, dl = d => `${esc(wkShort(d))} ${esc(pantryDate(d))}`;
+    const pick = onlyDates.length ? `<div class="pn-bar"><select data-native id="bkThru" aria-label="Which bakes to shop for"><option value="">Whole plan (${thruDates.length} bake${thruDates.length === 1 ? '' : 's'})</option>${thruDates.length > 1 ? `<optgroup label="Through a date">${thruDates.map(d => opt('t:' + d, 'Through ' + dl(d))).join('')}</optgroup>` : ''}<optgroup label="One bake only">${onlyDates.map(d => opt('o:' + d, 'Only ' + dl(d) + ((BAKES || []).some(b => b.date === d) ? ' (done)' : ''))).join('')}</optgroup></select></div>` : '';
+    box.innerHTML = pick + `<div class="bk-sum">${bakeView ? (single ? `Only the ${esc(pantryDate(vDate))} bake` : `Bakes from today through ${esc(pantryDate(vDate))}`) + ' (forecast recipes only; hand-added recipes are left out)' : `Whole bake plan${next ? ` · next bake ${esc(pantryDate(next))}` : ''}`}. Need is the plan's ingredients; have is your latest count plus approved purchases since.</div>` +
       `<h3>To buy${buy.length ? ` (${buy.length})` : ''}</h3>` +
       (buy.length ? buy.map(buyRow).join('') + `<div class="buy-total"><span>Estimated total${unpriced ? `<small>${unpriced} item${unpriced === 1 ? '' : 's'} without a price</small>` : ''}</span><b>${money2(total)}</b></div>` : '<div class="pn-note">Everything the plan needs is on hand.</div>') +
       `<div class="pn-bar" style="margin-top:10px"><button type="button" class="btn-ghost" id="bkCopy">Copy list</button><button type="button" class="btn-ghost" id="bkClear">Clear ticks</button></div>` +
       (ok.length ? `<h3>Have enough (${ok.length})</h3>` + ok.map(okRow).join('') : '') +
+      bakeDoneHtml +
       `<details class="bk-rc"${bakeRcOpen ? ' open' : ''}><summary>After the bake: recount what is left</summary><div class="pn-note">Baking does not take anything off the pantry by itself. Weigh what is left and save it; blank rows are skipped. Today's date is used.</div>${rc}<div class="pn-bar" style="margin-top:12px"><button class="primary" type="button" id="bkSave">Save counts</button></div></details>`;
-    const thru = box.querySelector('#bkThru'); if (thru) thru.onchange = () => { bakeThrough = thru.value; bakePaint(); };
+    const thru = box.querySelector('#bkThru'); if (thru) thru.onchange = () => { bakeView = thru.value; bakePaint(); };
     box.querySelector('.bk-rc').addEventListener('toggle', e => { bakeRcOpen = e.target.open; });
     box.querySelectorAll('[data-bkc]').forEach(c => c.onchange = () => { if (c.checked) buyChecked[c.dataset.bkc] = 1; else delete buyChecked[c.dataset.bkc]; buySave(); c.closest('.buy-row').classList.toggle('done', c.checked); });
     box.querySelector('#bkClear').onclick = () => { buyChecked = {}; buySave(); bakePaint(); };
@@ -7344,16 +7379,28 @@
       try { try { await viaClipboard(); } catch { viaSelect(); } e.target.textContent = 'Copied ✓'; } catch { e.target.textContent = 'Couldn’t copy'; }
       setTimeout(() => { e.target.textContent = 'Copy list'; }, 1600);
     };
+    const bd = box.querySelector('#bdSave');
+    if (bd) bd.onclick = async () => {
+      const list = bakeList(); if (!list || !list.length) return rcpToast('No forecast recipes for that bake');
+      const mins = parseFloat(box.querySelector('[data-bk="bd:min"]').value), note = box.querySelector('[data-bk="bd:note"]').value.trim();
+      const used = rows.filter(r => r.s && r.st !== 'unit'), skipped = rows.length - used.length;
+      const lines = used.map(r => ({ item: r.i.name, amt: Math.max(0, Math.round(r.s.onHand - r.i.qty)), unit: r.s.unit, date: todayISO(), note: `Estimate after ${vDate} bake` })).slice(0, 80);
+      if (!confirm(`Mark the ${pantryDate(vDate)} bake done?\n\n${lines.length} pantry count${lines.length === 1 ? '' : 's'} will be lowered by this bake's ingredients` + (skipped ? ` (${skipped} item${skipped === 1 ? '' : 's'} skipped: not counted or another unit)` : '') + '.' + (mins > 0 ? `\nTime: ${mins} min.` : '') + '\n\nRecount afterward to correct the estimates.')) return;
+      const recipes = list.map(x => { const f = bsFind(x.key); return f ? `${costItemName(f.sec, f.it)} × ${rFmt(x.b)}` : null; }).filter(Boolean).join('; ');
+      if (!(await pantryPost({ action: 'add', rows: [{ date: vDate, minutes: mins > 0 ? mins : '', recipes, note }] }, '/api/bakes'))) return;
+      if (lines.length && !(await pantryPost({ action: 'add', lines }))) return rcpToast('Bake recorded, but the pantry counts were not saved');
+      rcpToast('Bake recorded' + (lines.length ? ' and pantry lowered' : '')); bakePaint();
+    };
     box.querySelector('#bkSave').onclick = async () => {
       const lines = [];
       box.querySelectorAll('[data-bk]').forEach(inp => {
-        if (inp.value.trim() === '') return;
+        if (inp.dataset.bk.startsWith('bd:') || inp.value.trim() === '') return;
         const n = parseFloat(inp.value), [item, unit] = inp.dataset.bk.split('|');
         if (n >= 0) lines.push({ item, amt: n, unit, date: todayISO(), note: 'After bake' });
       });
       if (!lines.length) return rcpToast('Enter at least one amount');
       if (lines.length > 80) return rcpToast('Save in two rounds: 80 items at most');
-      if (await pantryPost({ action: 'add', lines })) { rcpToast(lines.length + ' count' + (lines.length === 1 ? '' : 's') + ' saved'); box.querySelectorAll('[data-bk]').forEach(i => { i.value = ''; }); bakePaint(); }
+      if (await pantryPost({ action: 'add', lines })) { rcpToast(lines.length + ' count' + (lines.length === 1 ? '' : 's') + ' saved'); box.querySelectorAll('[data-bk]').forEach(i => { if (!i.dataset.bk.startsWith('bd:')) i.value = ''; }); bakePaint(); }
     };
   }
   function buyPaint() {
