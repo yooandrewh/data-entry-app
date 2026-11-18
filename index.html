@@ -1936,6 +1936,16 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
 .wrap { padding-bottom: calc(var(--tabbar-h) + var(--safe-bottom) + 28px); }
 .tabbar button { gap: 4px; }
 
+/* Bottom bar (2026-11-18): Apple tab-bar pattern. Grey tabs, the selected one in black with a heavier icon; no filled block. */
+.tabbar, body.home-landing .tabbar, body[data-tab] .tabbar { height: calc(60px + var(--safe-bottom)) !important; padding: 4px 8px var(--safe-bottom) !important; background: #fff !important; border-top: 1px solid #d9d9d9 !important; box-shadow: none !important; }
+.tabbar button, body[data-tab] .tabbar button { background: none !important; border-radius: 10px !important; color: #6b6b6b !important; opacity: 1 !important; gap: 3px !important; min-height: 44px; font-size: var(--fs-micro) !important; font-weight: 600 !important; border-left: 0 !important; box-shadow: none !important; }
+.tabbar button .tic, .tabbar button .tic svg { height: 26px !important; width: 26px !important; }
+.tabbar button .tic svg * { stroke-width: 1.5 !important; }
+.tabbar button.on, body[data-tab] .tabbar button.on { background: none !important; color: #000 !important; font-weight: 700 !important; }
+.tabbar button.on svg *, body:not(.home-landing) .tabbar button.on svg * { stroke: #000 !important; stroke-width: 2 !important; }
+.tabbar button:active { background: #f0f0f0 !important; }
+.wrap { padding-bottom: calc(60px + var(--safe-bottom) + 28px); }
+
 </style>
 </head>
 <body>
@@ -2285,7 +2295,7 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
   </div>
 </div>
 
-<div class="ver-badge">v1.138.02 · Nov 18, 11:08 AM PST</div>
+<div class="ver-badge">v1.138.03 · Nov 18, 11:14 AM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
