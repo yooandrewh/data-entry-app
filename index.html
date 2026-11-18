@@ -2645,7 +2645,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.169.02 · Nov 18, 3:35 PM PST</div>
+<div class="ver-badge">v1.169.03 · Nov 18, 3:36 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -4623,6 +4623,9 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   // Earlier sales of it there are OCR noise, so with a date given they are ignored.
   const STORE_FROM = { 'Stanton': { 'Lemon Poppy': '2026-11-01' } };
   const storeSells = (loc, p, date) => !(STORE_SKIP[loc] || []).includes(p) && !(date && STORE_FROM[loc] && STORE_FROM[loc][p] && date < STORE_FROM[loc][p]);
+  // MANUAL OVERRIDE (Andrew, 2026-11-18): Stanton will sell as much Lemon Poppy as it sold Sea Salt, so its Lemon Poppy rate is its Sea Salt sales.
+  const STORE_PROXY = { 'Stanton': { 'Lemon Poppy': 'Sea Salt' } };
+  const storeSale = (loc, p, s) => { const px = STORE_PROXY[loc] && STORE_PROXY[loc][p]; return px ? (s.amounts[px] || 0) : storeSells(loc, p, s.date) ? (s.amounts[p] || 0) : 0; };
   const ASSUMED_RATE = { 'Blueberry Muffin': { wd: 2, we: 3 } };   // per day, products with no sales feed
   function locStats(loc, sales, entries) {
     const locSales = sales.filter(s => s.location === loc);
@@ -4639,7 +4642,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       if (!latestSale || s.date < winStart || s.date > latestSale) continue;
       let any = false, dayTot = 0;
       for (const p of PRODUCTS) {
-        const v = storeSells(loc, p, s.date) ? (s.amounts[p] || 0) : 0; rate[p] += v; dayTot += v;
+        const v = storeSale(loc, p, s); rate[p] += v; dayTot += v;
         if (v > 0) { any = true; if (!firstSeen[p] || s.date < firstSeen[p]) firstSeen[p] = s.date; }
       }
       if (any) {
@@ -5033,7 +5036,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       if (s.date < from) continue;
       const isWe = [0, 6].includes(parseEntryDate(s.date).getDay());
       let any = false;
-      for (const p of PRODUCTS) { const v = storeSells(loc, p, s.date) ? (s.amounts[p] || 0) : 0; (isWe ? we : wd)[p] += v; if (v) any = true; }
+      for (const p of PRODUCTS) { const v = storeSale(loc, p, s); (isWe ? we : wd)[p] += v; if (v) any = true; }
       if (any) (isWe ? weD : wdD).add(s.date);
     }
     const nWd = wdD.size || 1, nWe = weD.size || 1, rate = {};
@@ -5640,10 +5643,10 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   let boxCfg = { size: {}, hold: { bp: {}, fu: {} } };
   try { const c = JSON.parse(localStorage.getItem('boxCfg.v1') || 'null'); if (c && c.size && c.hold) boxCfg = c; } catch {}
   const boxSave = () => { try { localStorage.setItem('boxCfg.v1', JSON.stringify(boxCfg)); } catch {} };
-  // Pieces that fit in one full-size Cambro pan, one layer (Andrew, 2026-11-18). Madeleines can double to 72 and cake pops to 100 once frozen (stacked): not used yet, kept in mind.
+  // Pieces that fit in one full-size Cambro pan (Andrew, 2026-11-18). Madeleines can double to 72 and cake pops to 100 once frozen (stacked): not used yet, kept in mind.
   const BOX_FIT = { 'Lemon Poppy': 36, 'Sea Salt': 36, 'Maple Pecan': 36, 'Pumpkin Muffin': 18, 'Blueberry Muffin': 18, 'Pumpkin Bundt': 22, 'Cookie': 40, 'Chookie': 40, 'Cake Pop': 50 };
   const boxSize = p => Math.max(1, Math.floor(Number(boxCfg.size[p]) || BOX_FIT[p] || BATCH_YIELD));
-  // Pans are pooled across stores: one item per pan, one layer, rounded up per item. Where the pans end up is not planned here.
+  // Pans are pooled across stores: one item per pan, rounded up per item. Where the pans end up is not planned here.
   function boxPlan() {
     const items = [], byItem = ZERO();
     for (const p of PRODUCTS) {
@@ -5657,7 +5660,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     const bx = boxPlan(), any = PRODUCTS.some(p => (planBakeTotals[p] || 0) > 0);
     let h = `<h3>Boxes</h3>`;
     if (!any) { el.innerHTML = h + '<div class="bx-none">Nothing to box yet. Pick a span for at least one item in step 1.</div>'; return; }
-    h += `<div class="bx-total"><b>${bx.total}</b> pan${bx.total === 1 ? '' : 's'} in all (a pan is one Cambro full-size 4" deep food pan, 14PP190). One item per pan, rounded up per item; the pans are not split by location.</div>`;
+    h += `<div class="bx-total"><b>${bx.total}</b> pan${bx.total === 1 ? '' : 's'} in all (a pan is one Cambro full-size 4" deep food pan, 14PP190). Only for the pieces you bake, not the stock already on hand. One item per pan, rounded up per item; not split by location.</div>`;
     h += bx.items.map(x => `<div class="bx-row"><span>${esc(pdisp(x.p))}<small>${x.pcs} pieces · ${boxSize(x.p)} per pan</small></span><b>${x.boxes} pan${x.boxes === 1 ? '' : 's'}</b></div>`).join('');
     h += `<details><summary>Pan sizes</summary><div class="bx-set hd"><span>Item</span><span>Per pan</span></div>`
       + PRODUCTS.map(p => `<div class="bx-set"><span>${esc(pdisp(p))}</span><input type="number" inputmode="numeric" min="1" data-bx="size" data-p="${esc(p)}" value="${boxSize(p)}"></div>`).join('')
@@ -5694,7 +5697,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     }).join('');
     let pans = '';
     if (bx && bx.total > 0) {
-      pans = `<div class="pw-pans"><b>${bx.total}</b> Cambro pan${bx.total === 1 ? '' : 's'} needed<small>Full-size, 4" deep. One item per pan, one layer, not split by location.</small></div>`;
+      pans = `<div class="pw-pans"><b>${bx.total}</b> Cambro pan${bx.total === 1 ? '' : 's'} needed<small>Only for the pieces you bake, not the stock already on hand. Full-size, 4" deep. One item per pan, not split by location.</small></div>`;
     }
     const top = `<div class="pw-head"><b>What do you want to bake?</b><span>Drag the slider or pick how long each item should last. Each store's goal is ${STOCK_TARGET}x its expected sales for that time. You bake the gap between the goal and what it has now.</span></div>`
       + `<div class="pw-label">Make everything last</div><div class="pw-slide"><div class="pw-slide-val" id="pwAllVal">${dayLbl(all)}</div><input type="range" id="pwAll" min="1" max="90" step="1" value="${all}" aria-label="Days everything should last"><div class="pw-slide-ticks"><span>1 day</span><span>1 month</span><span>2 months</span><span>3 months</span></div></div>`
