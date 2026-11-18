@@ -2400,7 +2400,7 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
   </div>
 </div>
 
-<div class="ver-badge">v1.144.04 · Nov 18, 12:43 PM PST</div>
+<div class="ver-badge">v1.145.00 · Nov 18, 12:50 PM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -4715,8 +4715,11 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
   // totals over the last 4 complete weeks. Damped 50% (trends fade) and clamped to
   // ±25%/wk so one hot week can't run away with the forecast. Returns a weekly
   // multiplier (1 = flat) that Forecast/Plan compound day-by-day.
+  // v1.145.00: Andrew's rule is a flat +1.2%/week on the recent daily rate. Set FLAT_GROWTH = null for the measured trend.
+  const FLAT_GROWTH = 0.012;
   function weeklyGrowth(locSales) {
-    const wk = weeklySeries(locSales.map(s => ({
+    if (FLAT_GROWTH != null) return 1 + FLAT_GROWTH;
+    const wk =weeklySeries(locSales.map(s => ({
       date: s.date,
       total: typeof s.total === 'number' ? s.total : PRODUCTS.reduce((t, p) => t + (s.amounts[p] || 0), 0),
     })), 'total').filter(w => w.days >= 6).slice(-4);
@@ -4968,7 +4971,7 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
   }
   // "· trend +9%/wk" note when a store's sales momentum is being folded in.
   function trendNote(st) {
-    const pct = Math.round(((st.growth || 1) - 1) * 100);
+    const pct = Math.round(((st.growth || 1) - 1) * 1000) / 10;
     return pct ? ` · trend ${pct > 0 ? '+' : ''}${pct}%/wk` : '';
   }
   // Per-bake-day schedule: simulate stock forward from tomorrow → target, and on each
@@ -5556,7 +5559,7 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
       }).join('');
       h += `<div class="pw-head"><b>What do you want to bake?</b><span>Pick how long each item should last. The amount comes from recent sales and what is on hand.</span></div>`
         + `<div class="pw-label">Make everything last</div><div class="pw-chips">${[[1, '1 day'], [7, '1 week'], [30, '1 month'], [45, '1.5 months']].map(([d, l]) => `<button type="button" data-wall="${d}" class="${PRODUCTS.every(p => wizSpan[p] === d) ? 'on' : ''}">${l}</button>`).join('')}</div>`
-        + `<div class="pw-label">Or set each item</div>` + rows + `<div class="pw-note">Sales trend is counted for up to 4 weeks, so a long span is a steady-rate estimate.</div>`
+        + `<div class="pw-label">Or set each item</div>` + rows + `<div class="pw-note">Sales are assumed to grow 1.2% a week on top of the recent daily rate (counted for up to 4 weeks).</div>`
         + `<div class="pw-nav"><button type="button" class="btn-primary" data-wgo="2">Next: ingredients</button></div>`;
     } else if (wizStep === 2) {
       let body = '<div class="pn-note">Loading…</div>';

@@ -56,7 +56,7 @@ Add a page: add it to `PAGES` and to a section's `pages`. Jumps between pages us
 
 ## Forecasting model
 
-`locStats` gives weekday/weekend rates (`dowRate`), `dailyCV`, `growth` (`weeklyGrowth()`: geometric-mean WoW over the last 4 complete weeks, **damped 50%, clamped ±25%/wk**). `depleteDow()` walks day by day at rate × growth^(day/7). `runoutBand()` bands by CV, scaled by ÷√days and **capped ±60%** (uncapped, one outlier hides real dips). Scenario dropdown: Bear / Expected / Bull.
+`locStats` gives weekday/weekend rates (`dowRate`), `dailyCV`, `growth` (`weeklyGrowth()`: **flat +1.2%/week since v1.145.00, Andrew's rule** (`FLAT_GROWTH`; set to `null` for the old measured trend: geometric-mean WoW over the last 4 complete weeks, damped 50%, clamped ±25%/wk)). `depleteDow()` walks day by day at rate × growth^(day/7). `runoutBand()` bands by CV, scaled by ÷√days and **capped ±60%** (uncapped, one outlier hides real dips). Scenario dropdown: Bear / Expected / Bull.
 Products with no sales rate read 0.0/day and run-out ∞.
 `BATCH_YIELD = 12` (since 2026-10-13; it also drives Plan batch counts). Plan bake dates are specific calendar dates in `localStorage.planBakeDates`; each covers demand until the next, the last one crams everything through the target date. The bake plan starts from this season's recipes on every load; *Save this plan* keeps one.
 
@@ -151,7 +151,7 @@ Costco receipts print a quantity line (`3 @ 4.99`) above an item whose price is 
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.144.04**; the next feature is v1.145.00, a fix v1.144.05. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.145.00**; the next feature is v1.146.00, a fix v1.145.01. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 
