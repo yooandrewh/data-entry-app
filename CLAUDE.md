@@ -50,7 +50,7 @@ Notion is dead: nothing writes to it, and the `NOTION_*` Vercel env vars can be 
 **Spacing (v1.138.01):** the last CSS block ("Spacing pass") sets 16px side margins, 44px tap height on the page-row chips (`#secNav`) and Data/Plan filters, 8px gaps, roomier cards, and bottom padding that clears the tab bar. Older `!important` rules on `.db-filter` win unless the new rule uses `#secNav` / `#view-x` and `!important`. Checked headless at 390px, not on a phone.
 
 Bottom bar (v1.138.00): **Sales · Inventory · Entry · Plan · Other**. Entry opens the Entry popup (`openEntry()`); the other four each show a row of pages at the top (`#secNav`, `SECTIONS` / `PAGES` / `go(page, sec)`). Every page is an existing screen reused as it was (a Data view, a Home page in `#homePage`, a Baking mode, or Finance); there is no Home photo page any more.
-- **Sales:** Sales (Data's sales view), Trends, Invoice. **Inventory:** Ingredients (Pantry with What to buy), Stock (the Forecast page's stock and run-out, with the Both / La Mirada / Stanton toggle), Counts (Data's Deliveries / Inventory / Goodwill / Transfers log), Receipts. **Plan:** Plan (Baking Plan), Bake Day, Forecast, Recipes. **Other:** Finance, Costs, Labels (opens the label popup), Timers.
+- **Sales:** Sales (Data's sales view), Trends, Invoice. **Inventory:** Ingredients (Pantry with What to buy), Storage (v1.148.00), Stock (the Forecast page's stock and run-out, with the Both / La Mirada / Stanton toggle), Counts (Data's Deliveries / Inventory / Goodwill / Transfers log), Receipts. **Plan:** Plan (Baking Plan), Bake Day, Forecast, Recipes. **Other:** Finance, Costs, Labels (opens the label popup), Timers.
 Add a page: add it to `PAGES` and to a section's `pages`. Jumps between pages use `go(...)`, never `homeTab = ...` alone. The Data header, the Recipes|Costs toggle and Home's old menu are hidden by the last CSS block. Kairos Logs is still unreachable.
 **Stanton** is selling again; it shows in Stock (toggle), Sales and Counts (the store dropdown) and Trends. Plan and Baking default to La Mirada. Kairos Logs and Book Commercial Kitchen are removed.
 
@@ -153,6 +153,10 @@ Costco receipts print a quantity line (`3 @ 4.99`) above an item whose price is 
 
 `#pwBoxes` (`boxPlan()` / `boxPaint()`, shown only on step 3, under the Bake Plan card): boxes needed per storage. Four storages: **BP Storage, Fullerton Storage, La Mirada Storage, Stanton Storage**. **A box is a Cambro full-size 4" deep translucent polypropylene food pan (item # 21414PP, MFR # 14PP190), per Andrew 2026-11-18.** Pieces per item = `planBakeTotals`; pieces per pan still defaults to **12 (a guess: Andrew has not given real box sizes)**, set per item under "Box sizes and storage" (`localStorage.boxCfg.v1`). BP and Fullerton get the pieces Andrew types in for them (default 0, also a guess: what those two hold is not recorded anywhere); the rest splits between La Mirada and Stanton by each store's 28-day sales rate. Boxes are rounded up per storage per item, so one box never mixes items or storages. Ask Andrew for the real box sizes and what BP / Fullerton Storage are for.
 
+## Storage (v1.148.00)
+
+Inventory → **Storage** and Entry → **Storage** (6th type; the type buttons are now 3 x 2). Tracks finished pieces in the four storages (`STORAGES`: BP / Fullerton / La Mirada / Stanton Storage). Moves: **Kitchen → storage → delivery** or **Kitchen → delivery**. Sheet tab **Storage** (`Id, Group, Date, Storage, Item, Amount, Kind move|count, From, To, Note, Deleted`), `api/storage.js` (GET open; POST `add` / `remove` need `x-ledger-code`; soft delete; removing a row removes its whole Group). Only storages get rows: a move in is +, out is −, storage to storage is two rows with one Group; Kitchen and delivery appear only in From / To. A **count** row sets a storage's number for an item; moves after it add to it (`storageStock()` replays oldest first). Entry's From / To are dropdowns (`#stFrom`, `#stTo`); a move to a store delivery also writes the normal delivery entry (memo `From <storage>`), and Kitchen → delivery writes only that delivery. If the Storage write fails nothing is saved and the confirm sheet stays open. Storage moves are not in localStorage; history is on the Storage page. Not yet tied to the Boxes card; real pieces per pan still unknown.
+
 ## Sizing rules (from Andrew's phone screenshots, v1.146.01)
 
 The headless check at 390px misses what iOS does. Apply these to every new or changed control, and look at the phone screenshot before calling it done.
@@ -165,7 +169,7 @@ The headless check at 390px misses what iOS does. Apply these to every new or ch
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.147.02**; the next feature is v1.148.00, a fix v1.147.03. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.148.00**; the next feature is v1.149.00, a fix v1.148.01. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 

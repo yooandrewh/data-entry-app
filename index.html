@@ -72,7 +72,7 @@
 
   /* Segmented type selector — one compact row, so the form fits a phone screen */
   .seg {
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px;
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
     margin-bottom: 16px;
   }
   .seg button {
@@ -93,6 +93,7 @@
   .seg button.on[data-type="inventory"] { border-color: var(--orange); color: var(--orange); }
   .seg button.on[data-type="goodwill"] { border-color: #000; color: #000; }
   .seg button.on[data-type="transfer"] { border-color: #000; color: #000; }
+  .seg button.on[data-type="storage"] { border-color: #000; color: #000; }
 
   .group-label { font-size: var(--fs-micro); color: var(--muted); font-weight: 600;
     text-transform: uppercase; letter-spacing: 0.4px; margin: 0 4px 8px; }
@@ -1999,7 +2000,7 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
 #homeUpload .pn-bar { gap: 8px; }
 
   /* ---- Upload: big controls (Other -> Upload page and the Entry popup's Upload type) ---- */
-  #form .seg { grid-template-columns: repeat(5, 1fr) !important; }
+  #form .seg { grid-template-columns: repeat(3, 1fr) !important; }
   .seg button[data-up].on { border-color: #000; color: #000; }
   #form:not(.up-mode) #entryUpload { display: none !important; }
   #form.up-mode > :not(.seg):not(#entryUpload) { display: none !important; }
@@ -2069,6 +2070,24 @@ button { color: var(--text, #000); }
 .bx-set.hd { color: var(--muted); font-weight: 700; }
 .bx-set input { width: 100%; min-height: 44px; font-size: var(--fs-body); text-align: center; border: 1px solid #000; border-radius: 0; background: #fff; color: #000; }
 
+/* Storage page + Entry storage move (v1.148.00) */
+#homeStorage h3 { margin: 18px 0 6px; }
+#homeStorage .st-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
+#homeStorage .st-card { background: var(--card, #fff); border: 1px solid var(--sep, #ddd); border-radius: 14px; padding: 12px 16px; }
+#homeStorage .st-card h3 { margin: 0 0 6px; }
+#homeStorage .st-line { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 44px; border-bottom: 1px solid var(--sep, #ddd); }
+#homeStorage .st-line:last-child { border-bottom: 0; }
+#homeStorage .st-k { display: flex; align-items: center; gap: 10px; min-width: 0; }
+#homeStorage .st-line b { font-size: var(--fs-lg); white-space: nowrap; text-align: right; }
+#homeStorage .st-line b small { display: block; font-size: var(--fs-micro); font-weight: 400; color: var(--muted); }
+#homeStorage .st-neg { color: #b00020; }
+#homeStorage .pn-bar button, #homeStorage .pn-form button { min-height: 44px; }
+#stFrom, #stTo { min-height: 44px; }
+
+@media (min-width: 900px) {
+  #homeStorage .st-grid { grid-template-columns: 1fr 1fr; }
+  #secNav.sec-nav { flex-wrap: wrap; justify-content: center; overflow: visible !important; max-width: none; }
+}
 </style>
 </head>
 <body>
@@ -2182,6 +2201,7 @@ button { color: var(--text, #000); }
     <div id="homeLogs" hidden></div>
 
     <div id="homePantry" hidden></div>
+    <div id="homeStorage" hidden></div>
     <div id="homeBake" hidden></div>
     <div id="homeReceipts" hidden></div>
     <div id="homeUpload" class="up-box" hidden></div>
@@ -2236,6 +2256,9 @@ button { color: var(--text, #000); }
         <button type="button" data-type="transfer" aria-pressed="false">
           <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9h13l-3.5-3.5M20 15H7l3.5 3.5"/></svg></span><span>Transfer</span>
         </button>
+        <button type="button" data-type="storage" aria-pressed="false">
+          <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5 12 4l8 5.5V20H4z"/><path d="M9 20v-6h6v6"/></svg></span><span>Storage</span>
+        </button>
         <button type="button" data-up aria-pressed="false">
           <span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15.5v-10M8 9l4-4 4 4"/><path d="M4 16v3.5h16V16"/></svg></span><span>Upload</span>
         </button>
@@ -2247,7 +2270,7 @@ button { color: var(--text, #000); }
           <span class="lbl">Date &amp; time</span>
           <input type="datetime-local" id="datetime" />
         </div>
-        <div class="row">
+        <div class="row" id="locRow">
           <span class="lbl" id="locLabel">Location</span>
           <div class="pills" id="locPills">
             <button type="button" class="pill on" data-loc="La Mirada">La Mirada</button>
@@ -2257,6 +2280,28 @@ button { color: var(--text, #000); }
             <option value="La Mirada">La Mirada</option>
             <option value="Stanton">Stanton</option>
             <option value="Church">Church</option>
+          </select>
+        </div>
+        <div class="row" id="stFromRow" hidden>
+          <span class="lbl">From</span>
+          <select id="stFrom" class="row-select" aria-label="Move from">
+            <option value="Kitchen">Kitchen</option>
+            <option value="BP Storage">BP Storage</option>
+            <option value="Fullerton Storage">Fullerton Storage</option>
+            <option value="La Mirada Storage">La Mirada Storage</option>
+            <option value="Stanton Storage">Stanton Storage</option>
+          </select>
+        </div>
+        <div class="row" id="stToRow" hidden>
+          <span class="lbl">To</span>
+          <select id="stTo" class="row-select" aria-label="Move to">
+            <option value="" selected hidden>Choose where</option>
+            <option value="BP Storage">BP Storage</option>
+            <option value="Fullerton Storage">Fullerton Storage</option>
+            <option value="La Mirada Storage">La Mirada Storage</option>
+            <option value="Stanton Storage">Stanton Storage</option>
+            <option value="La Mirada delivery">La Mirada delivery</option>
+            <option value="Stanton delivery">Stanton delivery</option>
           </select>
         </div>
         <div class="row">
@@ -2427,7 +2472,7 @@ button { color: var(--text, #000); }
   </div>
 </div>
 
-<div class="ver-badge">v1.147.02 · Nov 18, 1:08 PM PST</div>
+<div class="ver-badge">v1.148.00 · Nov 18, 1:16 PM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -2753,7 +2798,7 @@ button { color: var(--text, #000); }
   const otherLoc = l => LOCATIONS.find(x => x !== l) || l;
   // Dubai Chewy Ball is a Stanton item: its row only shows when the entry's store is Stanton (and is zeroed when it hides).
   function syncDubai() {
-    const row = document.getElementById('dubaiRow'), on = state.location === 'Stanton';
+    const row = document.getElementById('dubaiRow'), on = state.location === 'Stanton' || state.type === 'storage';
     row.hidden = !on; if (!on) row.querySelector('.val').value = 0;
   }
   function syncTypeUI() {
@@ -2762,6 +2807,11 @@ button { color: var(--text, #000); }
       state.type === 'goodwill' ? 'Samples given out (removed from stock)'
       : isXfer ? 'Quantity to move' : 'Amount';
     document.getElementById('locLabel').textContent = isXfer ? 'From' : 'Location';
+    const isSt = state.type === 'storage';
+    document.getElementById('locRow').hidden = isSt;
+    document.getElementById('stFromRow').hidden = !isSt;
+    document.getElementById('stToRow').hidden = !isSt;
+    if (isSt) document.getElementById('amtLabel').textContent = 'Quantity to move';
     // Goodwill picks its place from one dropdown (La Mirada / Stanton / Church) instead of the pills.
     const gw = state.type === 'goodwill';
     document.getElementById('locPills').hidden = gw;
@@ -2838,7 +2888,8 @@ button { color: var(--text, #000); }
       datetime: dt.value,
       timezone: 'America/Los_Angeles',
       location: state.location,
-      to: state.type === 'transfer' ? otherLoc(state.location) : undefined,
+      to: state.type === 'transfer' ? otherLoc(state.location) : state.type === 'storage' ? document.getElementById('stTo').value : undefined,
+      from: state.type === 'storage' ? document.getElementById('stFrom').value : undefined,
       recipient: state.type === 'goodwill' && state.give ? state.give : undefined,
       memo: document.getElementById('entryNote').value.replace(/\s+/g, ' ').trim().slice(0, 200) || undefined,
       amounts
@@ -2945,6 +2996,11 @@ button { color: var(--text, #000); }
     e.preventDefault();
     pending = readForm();
     const cap = s => s[0].toUpperCase() + s.slice(1);
+    const isStorage = pending.type === 'storage';
+    if (isStorage) {
+      const bad = stMoveProblem(pending);
+      if (bad) { pending = null; rcpToast(bad); return; }
+    }
     const isGoodwill = pending.type === 'goodwill';
     const isXfer = pending.type === 'transfer';
     const amtLines = ENTRY_PRODUCTS
@@ -2959,12 +3015,14 @@ button { color: var(--text, #000); }
       ? `<div class="l"><span class="k">Goodwill</span><span class="v">samples given — removes from stock</span></div>`
       : '';
     const extraRows = (pending.memo ? `<div class="l"><span class="k">Note</span><span class="v">${esc(pending.memo)}</span></div>` : '');
-    const whereRow = isXfer
+    const whereRow = isStorage
+      ? `<div class="l"><span class="k">Move</span><span class="v">${esc(pending.from)} → ${esc(pending.to)}</span></div>`
+      : isXfer
       ? `<div class="l"><span class="k">Move</span><span class="v">${esc(pending.location)} → ${esc(pending.to)}</span></div>`
       : pending.recipient ? `<div class="l"><span class="k">Location</span><span class="v">${esc(pending.recipient)} · from ${esc(pending.location)} stock</span></div>`
       : `<div class="l"><span class="k">Location</span><span class="v">${esc(pending.location)}</span></div>`;
     document.getElementById('sheetSum').innerHTML =
-      `<div class="l"><span class="k">Type</span><span class="v">${esc(cap(pending.type))}</span></div>` +
+      `<div class="l"><span class="k">Type</span><span class="v">${esc(isStorage ? 'Storage move' : cap(pending.type))}</span></div>` +
       `<div class="l"><span class="k">When</span><span class="v">${esc(fmtWhen(pending.datetime))} PST</span></div>` +
       whereRow +
       extraRows +
@@ -2982,6 +3040,7 @@ button { color: var(--text, #000); }
 
   document.getElementById('confirmBtn').addEventListener('click', () => {
     if (!pending) return;
+    if (pending.type === 'storage') { confirmStorageMove(); return; }
     const record = { ...pending, submittedAt: new Date().toISOString(), synced: false };
 
     const all = loadEntries();
@@ -3291,7 +3350,7 @@ button { color: var(--text, #000); }
   // A page is an existing screen: a Data view, a Home page, a Baking mode or Finance.
   const SECTIONS = {
     sales:     { first: 'sales',  pages: ['sales', 'trends', 'invoice'] },
-    inventory: { first: 'pantry', pages: ['pantry', 'stock', 'counts', 'receipts'] },
+    inventory: { first: 'pantry', pages: ['pantry', 'storage', 'stock', 'counts', 'receipts'] },
     plan:      { first: 'plan',   pages: ['plan', 'bake', 'forecast', 'recipes'] },
     other:     { first: 'fin',    pages: ['fin', 'costs', 'labels', 'timers', 'upload'] },
   };
@@ -3300,6 +3359,7 @@ button { color: var(--text, #000); }
     trends:   { t: 'Trends',      view: 'home', home: 'trends' },
     invoice:  { t: 'Invoice',     view: 'home', home: 'invoice' },
     pantry:   { t: 'Ingredients', view: 'home', home: 'pantry' },
+    storage:  { t: 'Storage',     view: 'home', home: 'storage' },
     stock:    { t: 'Stock',       view: 'home', home: 'forecast' },
     counts:   { t: 'Counts',      view: 'db', db: 'delivery' },
     receipts: { t: 'Receipts',    view: 'home', home: 'receipts' },
@@ -3650,7 +3710,7 @@ button { color: var(--text, #000); }
 
   // ---- Home: a landing screen with three buttons; each opens its own page ----
   let homeTab = null;   // null = landing | 'forecast' | 'plan' | 'invoice'
-  const HOME_TITLES = { forecast: 'Forecast', plan: 'Baking Plan', invoice: 'Invoice / Labels', timers: 'Timers', logs: 'Kairos Logs', pantry: 'Pantry', bake: 'Bake Day', receipts: 'Receipts', trends: 'Trends', upload: 'Upload' };
+  const HOME_TITLES = { forecast: 'Forecast', plan: 'Baking Plan', invoice: 'Invoice / Labels', timers: 'Timers', logs: 'Kairos Logs', pantry: 'Pantry', storage: 'Storage', bake: 'Bake Day', receipts: 'Receipts', trends: 'Trends', upload: 'Upload' };
   // The version line lives over the photo on Home's landing; everywhere else it is the fixed strip.
   function syncVer() {
     const onHome = (document.querySelector('.tabbar button.on') || {}).dataset?.tab === 'home';
@@ -3668,6 +3728,7 @@ button { color: var(--text, #000); }
     document.getElementById('homeTimers').hidden = homeTab !== 'timers';
     document.getElementById('homeLogs').hidden = homeTab !== 'logs';
     document.getElementById('homePantry').hidden = homeTab !== 'pantry';
+    document.getElementById('homeStorage').hidden = homeTab !== 'storage';
     document.getElementById('homeBake').hidden = homeTab !== 'bake';
     document.getElementById('homeReceipts').hidden = homeTab !== 'receipts';
     document.getElementById('homeTrends').hidden = homeTab !== 'trends';
@@ -3677,6 +3738,7 @@ button { color: var(--text, #000); }
     if (homeTab === 'invoice') initInvoiceForm();
     if (homeTab === 'logs') logsOpen();
     if (homeTab === 'pantry') { renderPantry(); renderPlan().then(() => { if (homeTab === 'pantry') renderPantry(); }).catch(() => {}); }   // the plan fills in what "plan needs" compares against
+    if (homeTab === 'storage') renderStorage();
     if (homeTab === 'bake') bakeOpen();
     if (homeTab === 'receipts') renderReceipts();
     if (homeTab === 'upload') renderUpload();
@@ -8107,7 +8169,7 @@ button { color: var(--text, #000); }
       if (r.status === 401) { try { localStorage.removeItem('ledgerCode'); } catch {} rcpToast('Wrong ledger code'); return false; }
       if (r.status === 503) { rcpToast('Pantry writes are off: set LEDGER_CODE in Vercel'); return false; }
       if (!r.ok) { rcpToast(j.error || 'Could not save'); return false; }
-      await (url === '/api/pantry' ? fetchPantry() : fetchBakes()); return true;
+      await (url === '/api/pantry' ? fetchPantry() : url === '/api/storage' ? fetchStorage() : fetchBakes()); return true;
     } catch { rcpToast('Could not reach the server'); return false; }
   }
   // [{name, unit, count, date, note, id, bought, onHand, mixed, uncounted}] one per canonical item that has a count, plus items never counted but bought since the first count (uncounted: true, id null), sorted by name.
@@ -8194,6 +8256,117 @@ button { color: var(--text, #000); }
     box.querySelectorAll('[data-pnx]').forEach(btn => btn.onclick = async () => {
       if (!confirm('Remove this count?')) return;
       if (await pantryPost({ action: 'remove', ids: [btn.dataset.pnx] })) rcpToast('Count removed');
+    });
+  }
+  // ----- Storage (Inventory → Storage): finished pieces sitting in the four storages. Only the storages are tracked: a move in is +, a move
+  // out is −, and Kitchen / store deliveries only appear as the other end of a move. A count sets what a storage holds for one item; moves
+  // after it add to it. Rows are soft-deleted (api/storage.js, Sheet tab "Storage"). Entry → Storage logs a move; a move out to a store
+  // also writes the normal delivery entry, so it is only typed once. -----
+  const STORAGES = ['BP Storage', 'Fullerton Storage', 'La Mirada Storage', 'Stanton Storage'];
+  const ST_STORE = { 'La Mirada delivery': 'La Mirada', 'Stanton delivery': 'Stanton' };
+  let STORAGE = null, storageBusy = false, storageErr = '', stSaving = false;
+  async function fetchStorage() {
+    storageBusy = true;
+    try { const r = await fetch('/api/storage', { cache: 'no-store' }); if (!r.ok) throw new Error(r.status); STORAGE = (await r.json()).rows || []; storageErr = ''; }
+    catch (e) { storageErr = 'Storage offline: numbers not loaded.'; if (STORAGE === null) STORAGE = []; }
+    storageBusy = false;
+    if (homeTab === 'storage') renderStorage();
+  }
+  const stNorm = d => (String(d || '') + 'T00:00').slice(0, 16);
+  // { storage: { item: pieces } } replaying counts and moves oldest first.
+  function storageStock() {
+    const out = {}; STORAGES.forEach(s => { out[s] = {}; });
+    (STORAGE || []).map((r, i) => ({ r, i })).sort((a, b) => (stNorm(a.r.date) < stNorm(b.r.date) ? -1 : stNorm(a.r.date) > stNorm(b.r.date) ? 1 : a.i - b.i)).forEach(({ r }) => {
+      const m = out[r.storage]; if (!m) return;
+      m[r.item] = r.kind === 'count' ? r.amt : (m[r.item] || 0) + r.amt;
+    });
+    return out;
+  }
+  // '' when the move is fine, else the sentence to show.
+  function stMoveProblem(p) {
+    if (!p.to) return 'Choose where it goes';
+    if (p.from === p.to) return 'From and To are the same';
+    const vals = ENTRY_PRODUCTS.map(k => p.amounts[k] || 0);
+    if (vals.some(v => v < 0)) return 'Quantities cannot be negative';
+    if (!vals.some(v => v > 0)) return 'Enter a quantity';
+    return '';
+  }
+  async function confirmStorageMove() {
+    if (stSaving || !pending) return;
+    const p = pending, btn = document.getElementById('confirmBtn');
+    const fromSt = STORAGES.includes(p.from), toSt = STORAGES.includes(p.to);
+    const gid = 'g' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    const items = ENTRY_PRODUCTS.filter(k => (p.amounts[k] || 0) > 0);
+    stSaving = true; btn.disabled = true;
+    try {
+      if (fromSt || toSt) {
+        const lines = [];
+        items.forEach(k => {
+          const n = p.amounts[k], base = { group: gid, date: p.datetime, item: k, kind: 'move', from: p.from, to: p.to, note: p.memo || '' };
+          if (fromSt) lines.push({ ...base, storage: p.from, amt: -n });
+          if (toSt) lines.push({ ...base, storage: p.to, amt: n });
+        });
+        if (!(await pantryPost({ action: 'add', lines }, '/api/storage'))) return;   // nothing saved: keep the sheet open so it can be retried
+      }
+      const store = ST_STORE[p.to];
+      if (store) {   // a delivery goes through the normal delivery entry
+        const amounts = {}; ENTRY_PRODUCTS.forEach(k => { amounts[k] = p.amounts[k] || 0; });
+        const memo = ('From ' + p.from + (p.memo ? ' - ' + p.memo : '')).slice(0, 200);
+        const record = { type: 'delivery', datetime: p.datetime, timezone: p.timezone, location: store, memo, amounts, submittedAt: new Date().toISOString(), synced: false };
+        const all = loadEntries(); all.push(record); localStorage.setItem(STORE_KEY, JSON.stringify(all));
+        syncEntry(record);
+      }
+      track('entry_submit', { type: 'storage', loc: p.to, total: items.reduce((s, k) => s + p.amounts[k], 0) });
+      scrim.classList.remove('show'); pending = null;
+      rcpToast(`Moved to ${p.to}`);
+      if (navigator.vibrate) navigator.vibrate([10, 40, 10]);
+      document.querySelectorAll('.amt .val').forEach(v => { v.value = 0; });
+      document.getElementById('entryNote').value = ''; document.getElementById('stTo').value = '';
+      dt.value = nowPST(); syncDubai();
+      closeEntry(); renderDB();
+      if (homeTab === 'storage') renderStorage();
+    } finally { stSaving = false; btn.disabled = false; }
+  }
+  function renderStorage() {
+    const box = document.getElementById('homeStorage'); if (!box) return;
+    if (STORAGE === null && !storageBusy) fetchStorage();
+    if (STORAGE === null) { box.innerHTML = '<div class="pn-note">Loading…</div>'; return; }
+    const keep = {}; box.querySelectorAll('[data-st]').forEach(e => { keep[e.dataset.st] = e.value; });
+    const stock = storageStock();
+    const names = m => [...ENTRY_PRODUCTS, ...Object.keys(m).filter(k => !ENTRY_PRODUCTS.includes(k))].filter(k => m[k]);
+    const total = {}; STORAGES.forEach(s => Object.entries(stock[s]).forEach(([k, v]) => { total[k] = (total[k] || 0) + v; }));
+    const line = (p, n) => `<div class="st-line"><span class="st-k">${tok(p)}<span>${pdisp(p)}</span></span><b${n < 0 ? ' class="st-neg"' : ''}>${n}${n < 0 ? '<small>check count</small>' : ''}</b></div>`;
+    const card = (title, m, empty) => `<div class="st-card"><h3>${esc(title)}</h3>${names(m).map(k => line(k, m[k])).join('') || `<div class="pn-note">${empty}</div>`}</div>`;
+    // history: one entry per move (both legs share a group) or per count, newest first
+    const groups = new Map();
+    (STORAGE || []).forEach((r, i) => {
+      const g = groups.get(r.group) || { id: r.group, date: r.date, kind: r.kind, from: r.from, to: r.to, storage: r.storage, items: {}, note: r.note, i };
+      g.items[r.item] = Math.abs(r.amt); groups.set(r.group, g);
+    });
+    const hist = [...groups.values()].sort((a, b) => (stNorm(a.date) < stNorm(b.date) ? 1 : stNorm(a.date) > stNorm(b.date) ? -1 : b.i - a.i)).slice(0, 15);
+    const histHtml = hist.map(g => `<div class="pn-row"><span class="pn-main"><b>${g.kind === 'count' ? 'Count · ' + esc(g.storage) : esc(g.from || '?') + ' → ' + esc(g.to || '?')}</b><small>${esc(Object.entries(g.items).map(([k, v]) => v + ' ' + pdisp(k)).join(', '))} · ${esc(fmtWhen(g.date))}${g.note ? ' · ' + esc(g.note) : ''}</small></span><span class="pn-r"><button class="pn-x" data-stx="${esc(g.id)}" aria-label="Remove this entry">✕</button></span></div>`).join('');
+    const opt = (list, sel) => list.map(v => `<option value="${esc(v)}"${v === sel ? ' selected' : ''}>${esc(pdisp(v))}</option>`).join('');
+    box.innerHTML = (storageErr ? `<div class="pn-note">${esc(storageErr)}</div>` : '') +
+      `<div class="pn-bar"><button type="button" class="primary" id="stMove">Log a move</button></div>` +
+      `<div class="st-grid">${card('All storage', total, 'Nothing logged yet. Log a move from the kitchen into a storage.')}${STORAGES.map(s => card(s, stock[s], 'Nothing here.')).join('')}</div>` +
+      `<div class="pn-note">Each number is the last count plus every move since. Deliveries out of a storage are written as normal delivery entries too.</div>` +
+      `<h3>Recent moves</h3>` + (histHtml || '<div class="pn-note">No moves yet.</div>') +
+      `<h3>Count a storage</h3><div class="pn-note">Count what is really there and save it. It replaces the number above.</div>` +
+      `<div class="pn-form"><label>Storage</label><select data-st="stor">${opt(STORAGES, keep.stor)}</select>` +
+      `<label>Item</label><select data-st="item">${opt(ENTRY_PRODUCTS, keep.item)}</select>` +
+      `<label>Pieces counted</label><input data-st="amt" type="number" inputmode="numeric" min="0" step="1" value="${esc(keep.amt || '')}">` +
+      `<div class="pn-bar" style="margin-top:12px"><button class="primary" id="stCount">Save count</button></div></div>`;
+    box.querySelector('#stMove').onclick = () => { const b = document.querySelector('#view-entry .seg [data-type="storage"]'); if (b) b.click(); openEntry(); };
+    const val = k => box.querySelector(`[data-st="${k}"]`).value;
+    box.querySelector('#stCount').onclick = async () => {
+      const n = parseInt(val('amt'), 10);
+      if (!(n >= 0)) return rcpToast('Enter the pieces counted');
+      const ok = await pantryPost({ action: 'add', lines: [{ date: nowPST(), storage: val('stor'), item: val('item'), amt: n, kind: 'count' }] }, '/api/storage');
+      if (ok) { rcpToast('Count saved'); const e = document.querySelector('#homeStorage [data-st="amt"]'); if (e) e.value = ''; }
+    };
+    box.querySelectorAll('[data-stx]').forEach(btn => btn.onclick = async () => {
+      if (!confirm('Remove this entry? The numbers above change back.')) return;
+      if (await pantryPost({ action: 'remove', ids: [btn.dataset.stx] }, '/api/storage')) rcpToast('Removed');
     });
   }
   // ----- Trends (Home → Trends): weekly sales as a stacked chart plus a table, and a raw day-by-day list. Reads the same /api/sales rows as the Data tab. -----
