@@ -2502,7 +2502,7 @@ select:not(.row-select):not([data-labi]) { -webkit-appearance: none !important; 
   </div>
 </div>
 
-<div class="ver-badge">v1.151.00 · Nov 18, 2:40 PM PST</div>
+<div class="ver-badge">v1.152.00 · Nov 18, 3:10 PM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -5564,6 +5564,9 @@ select:not(.row-select):not([data-labi]) { -webkit-appearance: none !important; 
     const combined = false;   // one card per store
     const computed = locs.map(loc => ({ loc, st: locStats(loc, sales, entries), dowr: dowRates(sales, loc, 28) }));
     const usable = computed.filter(c => c.st.hasInv && c.dowr);
+    if (STORAGE === null && !storageBusy) fetchStorage().then(() => { if (document.getElementById('planList')) paintPlan(); });
+    // A store's own storage counts as stock for the plan (shelf count + pieces in that store's storage).
+    usable.forEach(c => { const stock = {}; PRODUCTS.forEach(p => { stock[p] = (c.st.stock[p] || 0) + storedFor(c.loc, p); }); c.st = Object.assign({}, c.st, { stock }); });
     const skipped = computed.filter(c => !(c.st.hasInv && c.dowr));
     // Slider only makes sense for exactly two bake dates.
     const splitOn = bakeDateSet.size && activeDates.length === 2;
@@ -5596,7 +5599,7 @@ select:not(.row-select):not([data-labi]) { -webkit-appearance: none !important; 
         const { demand, nDays, nWe } = forecastDemand(c.dowr, addDays(todayYmd, 1), target, c.st.growth);
         const m = Math.min(0.6, FCAST_Z * (c.st.dailyCV || 0) / Math.sqrt(Math.max(1, nDays)));
         const bake = ZERO(), have = ZERO(), exp = ZERO();
-        for (const p of PRODUCTS) { bake[p] = Math.max(0, Math.ceil(demand[p] * (1 + m) - c.st.stock[p])); have[p] = c.st.stock[p]; exp[p] = demand[p]; planTotals[p] += bake[p]; }
+        for (const p of PRODUCTS) { const hv = c.st.stock[p]; bake[p] = Math.max(0, Math.ceil(demand[p] * (1 + m) - hv)); have[p] = hv; exp[p] = demand[p]; planTotals[p] += bake[p]; }
         const eff = bakeEffort(bake);
         const haveRows = PRODUCTS.map(q => `<div class="proj-row"><span class="k">${q}</span><span>have <b>${have[q]}</b> · expected need ${Math.ceil(exp[q])}</span></div>`).join('');
         cols.push({ loc: c.loc, kind: 'lump', bake, have, exp, eff, sub: `${nDays} day${nDays === 1 ? '' : 's'} to go · ${nDays - nWe} weekday / ${nWe} weekend · ${hint}${trendNote(c.st)}`,
@@ -5655,8 +5658,10 @@ select:not(.row-select):not([data-labi]) { -webkit-appearance: none !important; 
           need += (we ? c.dowr.rate[p].we : c.dowr.rate[p].wd) * Math.pow(c.st.growth || 1, Math.min(i - 1, 28) / 7);
         }
         const m = Math.min(0.6, FCAST_Z * (c.st.dailyCV || 0) / Math.sqrt(days)), n = need * (1 + m);
-        r.rate += need / days; r.need += n; r.have += c.st.stock[p] || 0; r.bake += Math.max(0, Math.ceil(n - (c.st.stock[p] || 0)));
+        const hv = c.st.stock[p] || 0;
+        r.rate += need / days; r.need += n; r.have += hv; r.bake += Math.max(0, Math.ceil(n - hv));
       }
+      if (days > 0) { const pool = storedPool(p); if (pool > 0) { r.have += pool; r.bake = Math.max(0, r.bake - pool); } }
       out[p] = r;
     }
     return out;
@@ -8312,6 +8317,10 @@ select:not(.row-select):not([data-labi]) { -webkit-appearance: none !important; 
     });
     return out;
   }
+  // Pieces sitting in a store's own storage (La Mirada Storage / Stanton Storage) count toward what that store can cover, so the plan does not
+  // bake them again. BP and Fullerton Storage are not tied to a store: storedPool() is their total, taken off the combined bake. (Plan only; Stock still shows shelf counts.)
+  const storedFor = (loc, p) => { const m = storageStock()[loc + ' Storage']; return Math.max(0, (m && m[p]) || 0); };
+  const storedPool = p => { const o = storageStock(); return Math.max(0, (o['BP Storage'][p] || 0)) + Math.max(0, (o['Fullerton Storage'][p] || 0)); };
   // '' when the move is fine, else the sentence to show.
   function stMoveProblem(p) {
     if (!p.to) return 'Choose where it goes';
