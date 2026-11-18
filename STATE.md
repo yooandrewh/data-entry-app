@@ -5,7 +5,7 @@ After a `/compact` or in a new chat: read this file first, then CLAUDE.md. Stabl
 
 ## Now
 - **Pantry (Home → Pantry):** merged to `main` and LIVE as **v1.124.00** (2026-11-17, commit 1308a44). Live API tested: GET open, POST rejects missing/wrong code (401), add + remove round trip worked (one soft-deleted "ZZ TEST (delete)" row remains in the Pantry tab). The browser UI test could NOT run (Claude in Chrome was not connected), so Pantry has only API + code-review checks; NOT yet tested on a phone.
-- Context-overhead trim: project CLAUDE.md (44k → 13k bytes) and global CLAUDE.md (22k → 10k) done; old text kept in `docs/HISTORY.md` and `~/.claude/docs/CLAUDE-HISTORY.md`. Three local skills moved to `~/.claude/skills-disabled/`. Connectors Crisp, Supabase, Figma, Drive turned off (Vercel kept).
+- Context-overhead trim: project CLAUDE.md (44k → 13k bytes) and global CLAUDE.md (22k → 10k) done; old text kept in `docs/HISTORY.md` and `~/.claude/docs/CLAUDE-HISTORY.md`. Three local skills moved to `~/.claude/skills-disabled/`. Connectors Crisp, Supabase, Figma, Drive, Vercel turned off. `autoCompactWindow` raised 150k to 250k (may be capped by the real window size).
 
 ## Next
 0. Browser UI test of Pantry: re-run via a subagent once Chrome is open and signed in to the Claude extension (page renders, empty state, no-code prompt, fake-row logic, 390px layout). Never give it the ledger code.
@@ -32,7 +32,7 @@ After a `/compact` or in a new chat: read this file first, then CLAUDE.md. Stabl
 
 ## Decisions (with why)
 - Pantry sat on `pantry-wip` first so untested code wouldn't auto-deploy; merged (fast-forward) after a clean secrets scan and the API tests. Push-to-deploy worked this time within ~20s.
-- Vercel connector kept (deploys, logs); Crisp, Supabase, Figma, Drive turned off: unused, and their tool lists add to every chat's fixed context.
+- Vercel connector turned off 2026-11-17 (200+ tools; push-to-deploy needs only git, a stuck deploy is redeployed from the Vercel dashboard; re-enable from the connectors menu if needed). Crisp, Supabase, Figma, Drive also off: unused, and their tool lists add to every chat's fixed context.
 - Handoff threshold stays 150k for now; revisit once `/context` shows the window size.
 - On hand = latest count + approved ledger lines after it, same unit only; mixed units are flagged, not converted.
 
