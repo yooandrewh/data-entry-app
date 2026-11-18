@@ -2402,7 +2402,7 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
   </div>
 </div>
 
-<div class="ver-badge">v1.144.02 · Nov 18, 12:36 PM PST</div>
+<div class="ver-badge">v1.144.03 · Nov 18, 12:40 PM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -3299,6 +3299,7 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
     if (P.fn) { P.fn(); return; }
     if (sec) curSec = sec;
     curPage = page; secLast[curSec] = page;
+    try { sessionStorage.setItem('lastPage.v1', JSON.stringify({ page, sec: curSec })); } catch {}
     track('page', { page });
     document.body.dataset.tab = P.view; document.body.dataset.page = page;
     document.querySelectorAll('.tabbar button[data-sec]').forEach(b => b.classList.toggle('on', b.dataset.sec === curSec));
@@ -8816,7 +8817,7 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
     document.body.appendChild(ind);
     let y0 = null, dy = 0;
     const blocked = () => upBusy || !document.getElementById('view-entry').hidden || document.getElementById('scrim').classList.contains('show') || document.querySelector('.sp-pop');
-    function doReload() { ind.textContent = 'Refreshing…'; ind.style.transform = 'translateY(0)'; setTimeout(() => location.reload(), 150); }
+    function doReload() { try { sessionStorage.setItem('lastScroll.v1', String(window.scrollY)); } catch {} ind.textContent = 'Refreshing…'; ind.style.transform = 'translateY(0)'; setTimeout(() => location.reload(), 150); }
     document.addEventListener('touchstart', e => {
       y0 = (window.scrollY <= 0 && e.touches.length === 1 && !blocked()) ? e.touches[0].clientY : null; dy = 0;
     }, { passive: true });
@@ -8833,10 +8834,16 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
       if (y0 != null && dy > 90) doReload(); else ind.style.transform = 'translateY(-100%)';
       y0 = null; dy = 0;
     }, { passive: true });
-    document.addEventListener('click', e => { if (e.target.closest('.ver-badge') && !upBusy) { ind.textContent = 'Refreshing…'; location.reload(); } });
+    document.addEventListener('click', e => { if (e.target.closest('.ver-badge') && !upBusy) { try { sessionStorage.setItem('lastScroll.v1', String(window.scrollY)); } catch {} ind.textContent = 'Refreshing…'; location.reload(); } });
   })();
   track('open', { standalone: !!(window.navigator.standalone || matchMedia('(display-mode: standalone)').matches) });
-  if (!(document.body.dataset.tab === 'home' && homeTab === 'timers')) go('sales', 'sales');   // a ?timer= link already opened Timers
+  // A refresh keeps you on the same page (sessionStorage: survives reload, not a fresh launch of the app).
+  let startPage = ['sales', 'sales'];
+  try { const lp = JSON.parse(sessionStorage.getItem('lastPage.v1') || 'null'); if (lp && PAGES[lp.page] && SECTIONS[lp.sec] && SECTIONS[lp.sec].pages.includes(lp.page)) startPage = [lp.page, lp.sec]; } catch {}
+  if (!(document.body.dataset.tab === 'home' && homeTab === 'timers')) {   // a ?timer= link already opened Timers
+    go(startPage[0], startPage[1]);
+    try { const y = +sessionStorage.getItem('lastScroll.v1'); sessionStorage.removeItem('lastScroll.v1'); if (y > 0) [900, 1800, 3000].forEach(ms => setTimeout(() => { if (window.scrollY < 5) window.scrollTo(0, y); }, ms)); } catch {}
+  }
 </script>
 </body>
 </html>
