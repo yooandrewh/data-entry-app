@@ -4,17 +4,18 @@ Last updated: 2026-11-17
 After a `/compact` or in a new chat: read this file first, then CLAUDE.md. Stable rules live in CLAUDE.md; only status lives here.
 
 ## Now
-- **Pantry (Home → Pantry):** built and committed on branch `pantry-wip` (commit 6a74317), pushed. NOT on `main`, NOT deployed, NOT tested in a browser or against the live sheet.
+- **Pantry (Home → Pantry):** merged to `main` and LIVE as **v1.124.00** (2026-11-17, commit 1308a44). Live API tested: GET open, POST rejects missing/wrong code (401), add + remove round trip worked (one soft-deleted "ZZ TEST (delete)" row remains in the Pantry tab). The browser UI test could NOT run (Claude in Chrome was not connected), so Pantry has only API + code-review checks; NOT yet tested on a phone.
 - Context-overhead trim: project CLAUDE.md (44k → 13k bytes) and global CLAUDE.md (22k → 10k) done; old text kept in `docs/HISTORY.md` and `~/.claude/docs/CLAUDE-HISTORY.md`. Three local skills moved to `~/.claude/skills-disabled/`. Connectors Crisp, Supabase, Figma, Drive turned off (Vercel kept).
 
 ## Next
+0. Browser UI test of Pantry: re-run via a subagent once Chrome is open and signed in to the Claude extension (page renders, empty state, no-code prompt, fake-row logic, 390px layout). Never give it the ledger code.
+   Small code-review nits (would ship as v1.124.01 if Andrew wants): toast when the ledger-code prompt is cancelled; `word-break` on the Pantry sub-line; remove unused `.pn-b` CSS.
 1. Andrew: switch off the `design` plugin and synced skills `setup-claude`, `import-memory`, `consolidate-memory`, `morning`, `docx`, `pptx` in the app (Claude can't do this). Check with ListPlugins / ListSkills.
-2. Merge `pantry-wip` to main, bump the badge to **v1.124.00**, run the secrets scan, deploy (often needs a manual Redeploy), then test Pantry on a phone and against the live sheet.
+2. Andrew: test Pantry on a phone (add a count with the ledger code, check on-hand and the "Low" flag).
 3. In a fresh chat, run `/context` to measure the savings and see the context window size.
 4. Decision 5 (habits) is open: when to handoff vs `/compact`, and whether to add a "Don't / constraints" section to the handoff skill.
 
 ## Don't
-- Don't push untested Pantry straight to `main`.
 - Don't touch `scripts/reconcile.py` (modified, unknown origin), `exports/`, `scripts/reconcile.py.bak_win`, `.claude/worktrees/`.
 - Don't delete retired product data; don't invent prices or a Maple Pecan bake temperature.
 - Don't print or commit the ledger code (`~/.kairos-ledger-code`).
@@ -30,7 +31,7 @@ After a `/compact` or in a new chat: read this file first, then CLAUDE.md. Stabl
 - After inventory/delivery entries: `scripts/reconcile.py`, then ask Andrew about gaps.
 
 ## Decisions (with why)
-- Pantry went to branch `pantry-wip`, not `main`: push-to-deploy would put untested code live.
+- Pantry sat on `pantry-wip` first so untested code wouldn't auto-deploy; merged (fast-forward) after a clean secrets scan and the API tests. Push-to-deploy worked this time within ~20s.
 - Vercel connector kept (deploys, logs); Crisp, Supabase, Figma, Drive turned off: unused, and their tool lists add to every chat's fixed context.
 - Handoff threshold stays 150k for now; revisit once `/context` shows the window size.
 - On hand = latest count + approved ledger lines after it, same unit only; mixed units are flagged, not converted.
