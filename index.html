@@ -1994,6 +1994,10 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
 #bakingPlan[data-step="2"] .bs-card, #bakingPlan[data-step="1"] .bs-card { display: none; }
 #bakingPlan:not([data-step="1"]) .pw-adv { display: none; }
 
+/* Upload page */
+#homeUpload select, #homeUpload input[type=password] { width: 100% !important; min-height: 44px; font-size: var(--fs-body); box-sizing: border-box; }
+#homeUpload .pn-bar { gap: 8px; }
+
 </style>
 </head>
 <body>
@@ -2108,6 +2112,7 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
     <div id="homePantry" hidden></div>
     <div id="homeBake" hidden></div>
     <div id="homeReceipts" hidden></div>
+    <div id="homeUpload" hidden></div>
     <div id="homeTrends" hidden></div>
 
     <!-- Invoice -->
@@ -2346,7 +2351,7 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
   </div>
 </div>
 
-<div class="ver-badge">v1.140.00 · Nov 18, 11:21 AM PST</div>
+<div class="ver-badge">v1.141.00 · Nov 18, 11:31 AM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -3188,7 +3193,7 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
     sales:     { first: 'sales',  pages: ['sales', 'trends', 'invoice'] },
     inventory: { first: 'pantry', pages: ['pantry', 'stock', 'counts', 'receipts'] },
     plan:      { first: 'plan',   pages: ['plan', 'bake', 'forecast', 'recipes'] },
-    other:     { first: 'fin',    pages: ['fin', 'costs', 'labels', 'timers'] },
+    other:     { first: 'fin',    pages: ['fin', 'costs', 'labels', 'timers', 'upload'] },
   };
   const PAGES = {
     sales:    { t: 'Sales',       view: 'db', db: 'sales' },
@@ -3206,6 +3211,7 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
     costs:    { t: 'Costs',       view: 'plan', mode: 'costs' },
     labels:   { t: 'Labels',      fn: () => mlOpen() },
     timers:   { t: 'Timers',      view: 'home', home: 'timers' },
+    upload:   { t: 'Upload',      view: 'home', home: 'upload' },
   };
   let curSec = 'sales', curPage = 'sales';
   const secLast = {};
@@ -3542,7 +3548,7 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
 
   // ---- Home: a landing screen with three buttons; each opens its own page ----
   let homeTab = null;   // null = landing | 'forecast' | 'plan' | 'invoice'
-  const HOME_TITLES = { forecast: 'Forecast', plan: 'Baking Plan', invoice: 'Invoice / Labels', timers: 'Timers', logs: 'Kairos Logs', pantry: 'Pantry', bake: 'Bake Day', receipts: 'Receipts', trends: 'Trends' };
+  const HOME_TITLES = { forecast: 'Forecast', plan: 'Baking Plan', invoice: 'Invoice / Labels', timers: 'Timers', logs: 'Kairos Logs', pantry: 'Pantry', bake: 'Bake Day', receipts: 'Receipts', trends: 'Trends', upload: 'Upload' };
   // The version line lives over the photo on Home's landing; everywhere else it is the fixed strip.
   function syncVer() {
     const onHome = (document.querySelector('.tabbar button.on') || {}).dataset?.tab === 'home';
@@ -3563,6 +3569,7 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
     document.getElementById('homeBake').hidden = homeTab !== 'bake';
     document.getElementById('homeReceipts').hidden = homeTab !== 'receipts';
     document.getElementById('homeTrends').hidden = homeTab !== 'trends';
+    document.getElementById('homeUpload').hidden = homeTab !== 'upload';
     document.getElementById('hpTitle').textContent = HOME_TITLES[homeTab] || '';
     if (homeTab === 'plan') { renderBakeSheet(); renderPlan(); }
     if (homeTab === 'invoice') initInvoiceForm();
@@ -3570,6 +3577,7 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
     if (homeTab === 'pantry') { renderPantry(); renderPlan().then(() => { if (homeTab === 'pantry') renderPantry(); }).catch(() => {}); }   // the plan fills in what "plan needs" compares against
     if (homeTab === 'bake') bakeOpen();
     if (homeTab === 'receipts') renderReceipts();
+    if (homeTab === 'upload') renderUpload();
     if (homeTab === 'trends') renderTrends();
     if (homeTab === 'timers') renderTimers(); else stopTick();
     syncVer(); window.scrollTo(0, 0);
@@ -7741,6 +7749,63 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
       shFiles = []; const inp = document.querySelector('#homeReceipts #shInput'); if (inp) inp.value = '';
       shPaint(`Shared. If you chose Save to Files, the folder was ${folder}. The Mac reads them when it next runs.`); shPaint();
     } catch (e) { shPaint(e && e.name === 'AbortError' ? 'Cancelled. Nothing was saved.' : "Couldn't share those files."); }
+  }
+  // Upload page: sends receipt photos and sales videos straight from the phone to Vercel Blob (a short waiting room).
+  // The Mac job (scripts/uploads/upload_poll.py) downloads each file into a permanent folder, checks the size, then deletes it from Blob.
+  let upFiles = [], upBusy = false, upLib = null;
+  const upCode = () => { try { return localStorage.getItem('uploadCode') || ''; } catch { return ''; } };
+  function upPaint(msg) {
+    const box = document.getElementById('homeUpload'); if (!box) return;
+    const n = box.querySelector('#upName'), b = box.querySelector('#upGo'), m = box.querySelector('#upMsg');
+    if (n) n.textContent = upFiles.length > 1 ? upFiles.length + ' files chosen' : upFiles.length ? upFiles[0].name : 'Nothing chosen';
+    if (b) { b.disabled = !upFiles.length || upBusy; b.textContent = upBusy ? 'Sending…' : 'Send'; }
+    if (m && msg != null) m.textContent = msg;
+  }
+  async function upGo() {
+    const box = document.getElementById('homeUpload'); if (!box || upBusy || !upFiles.length) return;
+    const code = (box.querySelector('#upCode').value || '').trim();
+    if (!code) { upPaint('Enter the upload code first.'); return; }
+    try { localStorage.setItem('uploadCode', code); } catch {}
+    const kind = box.querySelector('#upKind').value, dir = kind === 'R' ? 'receipt' : 'video';
+    const names = shNames(upFiles, kind).map(n => n.replace(/[\\/]/g, '-'));
+    upBusy = true; upPaint('Starting…');
+    let sent = 0; const total = upFiles.length;
+    try {
+      if (!upLib) upLib = await import('https://esm.sh/@vercel/blob@2.9.0/client');
+      while (upFiles.length) {
+        const f = upFiles[0], name = names[sent];
+        upPaint(`Sending ${sent + 1} of ${total}: ${name} (0%)`);
+        await upLib.upload(`inbox/${dir}/${name}`, f, {
+          access: 'public', handleUploadUrl: '/api/upload', clientPayload: code, multipart: f.size > 20e6,
+          onUploadProgress: p => upPaint(`Sending ${sent + 1} of ${total}: ${name} (${Math.round(p.percentage)}%)`),
+        });
+        upFiles.shift(); sent++;
+      }
+      const inp = box.querySelector('#upInput'); if (inp) inp.value = '';
+      upBusy = false; upPaint(`Sent ${total} ${total > 1 ? 'files' : 'file'}. The Mac picks them up within about 5 minutes.`);
+    } catch (e) {
+      upBusy = false;
+      const t = String((e && e.message) || e);
+      upPaint((/wrong code/i.test(t) ? 'Wrong upload code.' : /UPLOAD_CODE|Blob store/i.test(t) ? 'Uploads are not switched on yet.' : /too many/i.test(t) ? t : "Couldn't send that. Check your connection and try again.") + (sent ? ` Sent ${sent} of ${total}.` : ''));
+    }
+  }
+  function renderUpload() {
+    const box = document.getElementById('homeUpload'); if (!box) return;
+    if (!box.querySelector('#upGo')) {
+      box.innerHTML = `<div class="rx-sec"><h3>Upload</h3>` +
+        `<div class="pn-note">Receipt photos and sales videos. Pick what you are sending, choose the files, tap Send. Keep this page open until it says Sent.</div>` +
+        `<div class="pn-bar"><select id="upKind"><option value="LM">Sales video, La Mirada</option><option value="STN">Sales video, Stanton</option><option value="R">Receipt photos</option></select></div>` +
+        `<input type="file" id="upInput" accept="image/*,video/*" multiple hidden>` +
+        `<div class="pn-bar"><button id="upPick">Choose files</button><button class="primary" id="upGo" disabled>Send</button><span class="rx-file" id="upName">Nothing chosen</span></div>` +
+        `<div class="pn-note" id="upMsg"></div>` +
+        `<div class="pn-bar"><input type="password" id="upCode" placeholder="Upload code" autocomplete="off" value="${esc(upCode())}"></div></div>`;
+      box.addEventListener('click', e => {
+        if (e.target.closest('#upPick')) box.querySelector('#upInput').click();
+        else if (e.target.closest('#upGo')) upGo();
+      });
+      box.addEventListener('change', e => { if (e.target.id === 'upInput') { upFiles = Array.from(e.target.files || []); upPaint(''); } });
+    }
+    upPaint();
   }
   function renderReceipts() {
     const box = document.getElementById('homeReceipts'); if (!box) return;

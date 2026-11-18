@@ -3,5 +3,8 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "iPhone data-entry app for Kairos baking; static frontend + Vercel serverless functions backed by Google Sheets."
+  "description": "iPhone data-entry app for Kairos baking; static frontend + Vercel serverless functions backed by Google Sheets.",
+  "dependencies": {
+    "@vercel/blob": "2.9.0"
+  }
 }
