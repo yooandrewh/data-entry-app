@@ -2647,7 +2647,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.169.09 · Nov 18, 3:51 PM PST</div>
+<div class="ver-badge">v1.169.10 · Nov 18, 3:54 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -8573,7 +8573,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     return `<div class="buy-list"><div class="pn-note">Amounts include ${Math.round(BUY_WASTE * 100)}% extra for waste (10% for waffle cones). Shelf items also keep 1 spare pack on hand after the plan.${have.length ? ' Items marked Have it are already on hand.' : ''}</div>` + order.map(v => {
       const g = by.get(v), sub = g.buy.reduce((n, r) => n + (bkPart(r).cost || 0), 0);
       return `<div class="buy-vendor"><span>${esc(v)}</span><small>${g.buy.length} to buy${g.have.length ? ` · ${g.have.length} on hand` : ''}${sub ? ' · ' + money2(sub) : ''}</small></div>` +
-        (/amazon/i.test(v) ? amzCart(g.buy) : (v === 'Other' || v === 'No price yet') ? '' : shopPages(v, g.buy)) +
+        (/amazon/i.test(v) ? amzCart(g.buy) : (v === 'Other' || v === 'No price yet' || /^costco$/i.test(v)) ? '' : shopPages(v, g.buy)) +
         coldSplit(g.buy.sort(byName).map(r => ({ cold: isCold(r.i.name), html: bkBuyRow(r) }))) + g.have.sort(byName).map(bkHaveRow).join('');
     }).join('') + '</div>';
   }
