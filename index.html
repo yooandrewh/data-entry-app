@@ -1824,6 +1824,31 @@
 .rx-sec h3 { margin: 4px 0 8px; }
 .rc-paste { margin-top: 16px; }
 .rc-paste > summary { cursor: pointer; padding: 10px 2px; font-weight: 700; font-size: var(--fs-body); color: var(--accent); }
+/* Trends (2026-11-18) */
+.tr-bar { display: flex; gap: 8px; margin: 4px 0 12px; }
+.tr-bar select { flex: 1 1 0; min-width: 0; }
+.tr-seg { display: flex; gap: 8px; margin: 0 0 12px; }
+.tr-seg button { flex: 1 1 0; padding: 8px 0; }
+.tr-seg button.on { border-color: var(--accent); color: var(--accent); font-weight: 700; }
+.tr-chart { width: 100%; height: auto; display: block; }
+.tr-chart text { font-family: inherit; fill: var(--muted); font-size: 10px; }
+.tr-chart .tr-tot { fill: var(--text); font-weight: 700; }
+.tr-leg { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: var(--fs-caption); color: var(--muted); margin: 6px 0 10px; }
+.tr-leg i { display: inline-block; width: 10px; height: 10px; margin-right: 5px; vertical-align: -1px; }
+.tr-tbl { width: 100%; border-collapse: collapse; font-size: var(--fs-caption); margin: 4px 0 4px; }
+.tr-tbl th, .tr-tbl td { padding: 7px 3px; border-bottom: 1px solid var(--sep); text-align: right; font-weight: 400; white-space: nowrap; }
+.tr-tbl th:first-child, .tr-tbl td:first-child { text-align: left; }
+.tr-tbl th { color: var(--muted); font-size: var(--fs-micro); text-transform: uppercase; }
+.tr-tbl td b { font-weight: 700; }
+.tr-tbl .tr-part td { color: var(--muted); }
+.tr-d { display: block; font-size: var(--fs-micro); color: var(--muted); }
+.tr-up { color: var(--green); } .tr-dn { color: var(--accent); }
+.tr-day { padding: 9px 2px; border-bottom: 1px solid var(--sep); }
+.tr-day > div:first-child { display: flex; justify-content: space-between; gap: 8px; }
+.tr-day small { color: var(--muted); font-size: var(--fs-caption); }
+.tr-day .tr-ch { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 4px; font-size: var(--fs-caption); }
+.tr-day .tr-ch span { color: var(--muted); } .tr-day .tr-ch b { color: var(--text); }
+.tr-day mark { background: none; color: var(--accent); font-size: var(--fs-micro); text-transform: uppercase; border: 1px solid var(--accent); padding: 0 4px; margin-left: 6px; }
 </style>
 </head>
 <body>
@@ -1843,6 +1868,7 @@
     <div class="home-menu" id="homeMenu">
       <button type="button" data-hentry><span class="hm-ic" data-ic="pencil"></span><span class="hm-t">Entry</span><span class="hm-go">›</span></button>
       <button type="button" data-hpage="forecast"><span class="hm-ic" data-ic="chart"></span><span class="hm-t">Forecast</span><span class="hm-go">›</span></button>
+      <button type="button" data-hpage="trends"><span class="hm-ic" data-ic="trend"></span><span class="hm-t">Trends</span><span class="hm-go">›</span></button>
       <button type="button" data-hpage="plan"><span class="hm-ic" data-ic="book"></span><span class="hm-t">Baking Plan</span><span class="hm-go">›</span></button>
       <button type="button" data-hpage="invoice"><span class="hm-ic" data-ic="tag"></span><span class="hm-t">Invoice / Labels</span><span class="hm-go">›</span></button>
       <button type="button" data-hpage="bake"><span class="hm-ic" data-ic="calendar"></span><span class="hm-t">Bake Day</span><span class="hm-go">›</span></button>
@@ -1930,6 +1956,7 @@
     <div id="homePantry" hidden></div>
     <div id="homeBake" hidden></div>
     <div id="homeReceipts" hidden></div>
+    <div id="homeTrends" hidden></div>
 
     <!-- Invoice -->
     <div id="homeInvoice" hidden>
@@ -2177,7 +2204,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.130.00 · Nov 18, 8:44 AM PST</div>
+<div class="ver-badge">v1.131.00 · Nov 18, 10:00 AM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -2380,6 +2407,7 @@
     book: () => `<path fill="#cfd6df" d="M5 4.500h9a3 3 0 0 1 3 3V20H8a3 3 0 0 1-3-3z"/><path d="M5 17V4.500"/>`,
     house: () => `<path fill="#f3e6d0" d="M5.500 9.800V20h13V9.800L12 4.500z"/><path d="M3.200 11.400 12 4l8.800 7.400M10 20v-5.600h4V20"/>`,
     chart: () => `<rect x="4" y="12" width="3.500" height="8" fill="#e3a866"/><rect x="10.250" y="7" width="3.500" height="13" fill="#e3a866"/><rect x="16.500" y="4" width="3.500" height="16" fill="#e3a866"/><path d="M3 21h18"/>`,
+    trend: () => `<path d="M3 20h18"/><path d="M4 15l5-5 4 3 7-8" fill="none"/><path d="M15 5h5v5" fill="none"/>`,
     calendar: () => `<rect x="4" y="5.500" width="16" height="14.500" fill="#f3e6d0"/><path d="M4 10h16M8.500 3.500v4M15.500 3.500v4"/>`,
     box: () => `<path fill="#f3e6d0" d="M3.500 7.500h17V20h-17z"/><path d="M3.500 7.500 5 4.500h5l1.500 3M9 12.500h6"/>`,
     receipt: () => `<path fill="#f3e6d0" d="M6 3.500h12V21l-2-1.500-2 1.500-2-1.500-2 1.500-2-1.500-2 1.500z"/><path d="M9 8h6M9 11.500h6M9 15h3.500"/>`,
@@ -3327,7 +3355,7 @@
 
   // ---- Home: a landing screen with three buttons; each opens its own page ----
   let homeTab = null;   // null = landing | 'forecast' | 'plan' | 'invoice'
-  const HOME_TITLES = { forecast: 'Forecast', plan: 'Baking Plan', invoice: 'Invoice / Labels', timers: 'Timers', logs: 'Kairos Logs', pantry: 'Pantry', bake: 'Bake Day', receipts: 'Receipts' };
+  const HOME_TITLES = { forecast: 'Forecast', plan: 'Baking Plan', invoice: 'Invoice / Labels', timers: 'Timers', logs: 'Kairos Logs', pantry: 'Pantry', bake: 'Bake Day', receipts: 'Receipts', trends: 'Trends' };
   // The version line lives over the photo on Home's landing; everywhere else it is the fixed strip.
   function syncVer() {
     const onHome = (document.querySelector('.tabbar button.on') || {}).dataset?.tab === 'home';
@@ -3347,6 +3375,7 @@
     document.getElementById('homePantry').hidden = homeTab !== 'pantry';
     document.getElementById('homeBake').hidden = homeTab !== 'bake';
     document.getElementById('homeReceipts').hidden = homeTab !== 'receipts';
+    document.getElementById('homeTrends').hidden = homeTab !== 'trends';
     document.getElementById('hpTitle').textContent = HOME_TITLES[homeTab] || '';
     if (homeTab === 'plan') { renderBakeSheet(); renderPlan(); }
     if (homeTab === 'invoice') initInvoiceForm();
@@ -3354,6 +3383,7 @@
     if (homeTab === 'pantry') { renderPantry(); renderPlan().then(() => { if (homeTab === 'pantry') renderPantry(); }).catch(() => {}); }   // the plan fills in what "plan needs" compares against
     if (homeTab === 'bake') bakeOpen();
     if (homeTab === 'receipts') renderReceipts();
+    if (homeTab === 'trends') renderTrends();
     if (homeTab === 'timers') renderTimers(); else stopTick();
     syncVer(); window.scrollTo(0, 0);
   }
@@ -7571,6 +7601,98 @@
       if (!confirm('Remove this count?')) return;
       if (await pantryPost({ action: 'remove', ids: [btn.dataset.pnx] })) rcpToast('Count removed');
     });
+  }
+  // ----- Trends (Home → Trends): weekly sales as a stacked chart plus a table, and a raw day-by-day list. Reads the same /api/sales rows as the Data tab. -----
+  let trLoc = 'La Mirada', trView = 'chart';
+  const TR_MAD = ['Lemon Poppy', 'Sea Salt', 'Maple Pecan'];
+  const TR_OTHER = ['Blueberry Muffin', 'Cake Pop', 'Pumpkin Bundt', 'Chookie'];
+  const TR_MAD_ALL = [...TR_MAD, 'Ube', 'Dot', 'Earl Grey', 'Matcha', 'Chocolate', 'Unknown'];   // every madeleine flavor, retired and unread ones included (the sheet's total also counts muffins, cookies and the rest)
+  const trMad = a => TR_MAD_ALL.reduce((n, p) => n + ((a && a[p]) || 0), 0);
+  function trWeeks(rows) {
+    // one record per day (rows of the chosen store(s) summed), then one record per Mon–Sun week
+    const days = new Map();
+    for (const r of rows) {
+      if (trLoc !== 'Both' && r.location !== trLoc) continue;
+      const d = days.get(r.date) || { date: r.date, amounts: {}, total: 0, locs: new Set(), est: new Set() };
+      d.locs.add(r.location); d.total += trMad(r.amounts); (r.derived || []).forEach(p => d.est.add(p));
+      for (const [k, v] of Object.entries(r.amounts || {})) d.amounts[k] = (d.amounts[k] || 0) + (v || 0);
+      days.set(r.date, d);
+    }
+    const weeks = new Map();
+    for (const d of days.values()) {
+      const w = weekStart(d.date);
+      const rec = weeks.get(w) || { start: w, days: 0, total: 0, amounts: {}, est: new Set() };
+      rec.days++; rec.total += d.total; d.est.forEach(p => rec.est.add(p));
+      for (const [k, v] of Object.entries(d.amounts)) rec.amounts[k] = (rec.amounts[k] || 0) + v;
+      weeks.set(w, rec);
+    }
+    return { days: [...days.values()].sort((a, b) => b.date.localeCompare(a.date)), weeks: [...weeks.values()].sort((a, b) => a.start.localeCompare(b.start)) };
+  }
+  const trFmtDay = (ymd, o) => { const [y, m, d] = ymd.split('-').map(Number); return new Date(y, m - 1, d).toLocaleDateString('en-US', o || { month: 'short', day: 'numeric' }); };
+  function trChartSvg(weeks) {
+    const W = 360, H = 190, L = 8, R = 8, T = 18, B = 26, n = weeks.length;
+    const max = Math.max(10, ...weeks.map(w => w.total));
+    const top = Math.ceil(max / 10) * 10, bw = Math.min(34, (W - L - R) / n * 0.62), step = (W - L - R) / n;
+    const y = v => T + (H - T - B) * (1 - v / top);
+    let g = `<defs><pattern id="trHatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2" height="5" fill="#fff" fill-opacity=".7"/></pattern></defs>`;
+    for (const t of [0, top / 2, top]) g += `<line x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}" stroke="var(--sep, #ddd)" stroke-width="1"/><text x="${L}" y="${y(t) - 3}">${t}</text>`;
+    weeks.forEach((w, i) => {
+      const x = L + step * i + (step - bw) / 2, part = w.days < 7;
+      let acc = 0;
+      const mad = TR_MAD.map(p => [p, w.amounts[p] || 0]); const rest = Math.max(0, w.total - mad.reduce((a, [, v]) => a + v, 0));
+      for (const [p, v] of [...mad, ['Unknown', rest]]) {
+        if (!v) continue;
+        const y1 = y(acc + v), h = y(acc) - y1;
+        g += `<rect x="${x}" y="${y1}" width="${bw}" height="${h}" fill="${PRODUCT_COLOR[p]}"${part ? ' fill-opacity=".45"' : ''}/>`;
+        acc += v;
+      }
+      if (part) g += `<rect x="${x}" y="${y(w.total)}" width="${bw}" height="${y(0) - y(w.total)}" fill="url(#trHatch)" stroke="var(--muted, #6d6660)" stroke-dasharray="3 2" stroke-width="1"/>`;
+      g += `<text class="tr-tot" x="${x + bw / 2}" y="${y(w.total) - 4}" text-anchor="middle">${w.total}</text>`;
+      g += `<text x="${x + bw / 2}" y="${H - 12}" text-anchor="middle">${esc(trFmtDay(w.start))}</text>`;
+      if (part) g += `<text x="${x + bw / 2}" y="${H - 2}" text-anchor="middle" style="font-size:9px">${w.days}/7d</text>`;
+    });
+    return `<svg class="tr-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Madeleines sold per week, stacked by flavor">${g}</svg>`;
+  }
+  function trDelta(cur, prev) {
+    if (!prev || prev.days < 7 || cur.days < 7 || !prev.total) return '';
+    const pct = Math.round((cur.total - prev.total) / prev.total * 100);
+    return pct === 0 ? '<span class="tr-d">flat</span>' : `<span class="tr-d ${pct > 0 ? 'tr-up' : 'tr-dn'}">${pct > 0 ? '▲' : '▼'} ${Math.abs(pct)}%</span>`;
+  }
+  async function renderTrends() {
+    const box = document.getElementById('homeTrends'); if (!box) return;
+    box.innerHTML = '<div class="pn-note">Loading…</div>';
+    let rows;
+    try { rows = await getSales(); } catch (e) { box.innerHTML = '<div class="pn-note">Could not load sales.</div>'; return; }
+    if (homeTab !== 'trends') return;
+    const { days, weeks } = trWeeks(rows);
+    const head = `<div class="tr-bar"><select id="trLoc" data-native>${['La Mirada', 'Stanton', 'Both'].map(l => `<option${l === trLoc ? ' selected' : ''}>${l}</option>`).join('')}</select></div>` +
+      `<div class="tr-seg"><button type="button" data-trv="chart" class="${trView === 'chart' ? 'on' : ''}">Chart</button><button type="button" data-trv="raw" class="${trView === 'raw' ? 'on' : ''}">Raw data</button></div>`;
+    let body = '';
+    if (!weeks.length) body = '<div class="pn-note">No sales for this store yet.</div>';
+    else if (trView === 'chart') {
+      const shown = weeks.slice(-8), tbl = shown.slice().reverse();
+      const firstSeen = {}; for (const p of TR_OTHER) { const w = weeks.find(x => (x.amounts[p] || 0) > 0); firstSeen[p] = w ? w.start : null; }
+      const cell = (w, p) => (firstSeen[p] && w.start >= firstSeen[p]) ? (w.amounts[p] || 0) + (w.est.has(p) ? '~' : '') : '—';
+      const rowsHtml = (cols, mk) => tbl.map(w => { const prev = weeks.slice(0, weeks.indexOf(w)).reverse().find(x => x.days >= 7); return `<tr${w.days < 7 ? ' class="tr-part"' : ''}><td>${esc(trFmtDay(w.start))}${w.days < 7 ? `<span class="tr-d">${w.days} of 7 days</span>` : ''}</td>${mk(w, prev)}</tr>`; }).join('');
+      body = trChartSvg(shown) +
+        `<div class="tr-leg">${TR_MAD.map(p => `<span><i style="background:${PRODUCT_COLOR[p]}"></i>${esc(p)}</span>`).join('')}<span><i style="background:${PRODUCT_COLOR.Unknown}"></i>Other</span></div>` +
+        `<h3>Madeleines by week</h3><table class="tr-tbl"><tr><th>Week of</th><th>Total</th><th>LP</th><th>SS</th><th>MP</th></tr>` +
+        rowsHtml(0, (w, prev) => `<td><b>${w.total}</b>${trDelta(w, prev)}</td>${TR_MAD.map(p => `<td>${w.amounts[p] || 0}</td>`).join('')}`) + `</table>` +
+        `<h3>Other items</h3><table class="tr-tbl"><tr><th>Week of</th><th>BM</th><th>CP</th><th>PB</th><th>CK</th></tr>` +
+        rowsHtml(0, w => TR_OTHER.map(p => `<td>${cell(w, p)}</td>`).join('')) + `</table>` +
+        `<div class="pn-note">Hatched bars are weeks with fewer than 7 days of data, so they are not compared. Change arrows compare a full week with the last full week before it. A dash means the item was not tracked yet that week, not that it sold zero. A ~ means part of the number is worked out from stock counts, not read from receipts. LP Lemon Poppy, SS Sea Salt, MP Maple Pecan, BM Blueberry Muffin, CP Cake Pop, PB Pumpkin Bundt, CK Cookie.</div>`;
+    } else {
+      const all = [...TR_MAD_ALL, ...TR_OTHER.filter(p => !TR_MAD_ALL.includes(p))];
+      body = `<div class="pn-note">One row per day, newest first, straight from the sheet. A ~ is worked out from stock counts, not read from receipts. Cake Pop, Pumpkin Bundt and Cookie before Nov 2026 were not read from receipts.</div>` +
+        days.slice(0, 120).map(d => {
+          const bits = all.filter(p => d.amounts[p]).map(p => `<span>${esc(PRODUCT_TOKEN[p])} <b>${d.amounts[p]}${d.est.has(p) ? '~' : ''}</b></span>`).join('');
+          const loc = trLoc === 'Both' ? ` · ${[...d.locs].join(' + ')}` : '';
+          return `<div class="tr-day"><div><b>${esc(trFmtDay(d.date, { weekday: 'short', month: 'short', day: 'numeric' }))}${loc}</b><span>${d.total} madeleines</span></div>${bits ? `<div class="tr-ch">${bits}</div>` : '<small>Nothing recorded</small>'}</div>`;
+        }).join('');
+    }
+    box.innerHTML = head + body;
+    box.querySelector('#trLoc').onchange = e => { trLoc = e.target.value; renderTrends(); };
+    box.querySelectorAll('[data-trv]').forEach(b => b.onclick = () => { trView = b.dataset.trv; track('trends_view', { view: trView }); renderTrends(); });
   }
   // ----- Bake Day: the bake plan's ingredients against what's on hand (Pantry). Shows what to buy, then lets you recount after the bake. -----
   let BAKES = null, bakesBusy = false;   // finished bakes from the Bakes tab: [{id, date, minutes, recipes, note}]
