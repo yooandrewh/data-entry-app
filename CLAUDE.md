@@ -50,8 +50,8 @@ Notion is dead: nothing writes to it, and the `NOTION_*` Vercel env vars can be 
 **Spacing (v1.138.01):** the last CSS block ("Spacing pass") sets 16px side margins, 44px tap height on the page-row chips (`#secNav`) and Data/Plan filters, 8px gaps, roomier cards, and bottom padding that clears the tab bar. Older `!important` rules on `.db-filter` win unless the new rule uses `#secNav` / `#view-x` and `!important`. Checked headless at 390px, not on a phone.
 
 Bottom bar (v1.138.00): **Sales · Inventory · Entry · Plan · Other**. Entry opens the Entry popup (`openEntry()`); the other four each show a row of pages at the top (`#secNav`, `SECTIONS` / `PAGES` / `go(page, sec)`). Every page is an existing screen reused as it was (a Data view, a Home page in `#homePage`, a Baking mode, or Finance); there is no Home photo page any more.
-- **Sales:** Sales (Data's sales view), Trends, Invoice. **Inventory:** Ingredients (Pantry with What to buy), Storage (v1.148.00), Stock (the Forecast page's stock and run-out, with the Both / La Mirada / Stanton toggle), Counts (Data's Deliveries / Inventory / Goodwill / Transfers log), Receipts. **Plan:** Plan (Baking Plan), Bake Day, Forecast, Recipes. **Other:** Finance, Costs, Labels (opens the label popup), Timers.
-Add a page: add it to `PAGES` and to a section's `pages`. Jumps between pages use `go(...)`, never `homeTab = ...` alone. The Data header, the Recipes|Costs toggle and Home's old menu are hidden by the last CSS block. Kairos Logs is still unreachable.
+- **Sales:** Sales (Data's sales view), Trends, Invoice. **Inventory:** Ingredients (Pantry with What to buy), Storage (v1.148.00), Stock (the Forecast page's stock and run-out, with the Both / La Mirada / Stanton toggle), Counts (Data's Deliveries / Inventory / Goodwill / Transfers log), Receipts. **Plan:** Plan (Baking Plan), Bake Day, Recipes (Forecast chip removed v1.154.00). **Other:** Finance, Costs, Labels (opens the label popup), Timers.
+Add a page: add it to `PAGES` and to a section's `pages`. Jumps between pages use `go(...)`, never `homeTab = ...` alone. The Data header, the Recipes|Costs toggle and Home's old menu are hidden by the last CSS block. Kairos Logs was removed in v1.154.00.
 **Stanton** is selling again; it shows in Stock (toggle), Sales and Counts (the store dropdown) and Trends. Plan and Baking default to La Mirada. Kairos Logs and Book Commercial Kitchen are removed.
 
 ## Forecasting model
@@ -163,6 +163,10 @@ Inventory → **Storage** and Entry → **Storage** (6th type; the type buttons 
 
 `scripts/backup/backup.py` snapshots the app's open GET endpoints (entries, sales, ledger, pantry, bakes, storage, store-sales, store-stats) to `~/.kairos-backups/YYYY-MM-DD/`, keeps 30 days. `com.kairos.backup.plist` (daily 03:15) is installed in `~/Library/LaunchAgents` (2026-11-18, Andrew said yes); log `~/.kairos-backups/backup.log`. Soft-deleted rows are not in the snapshot (the GETs hide them); the Sheet itself keeps them.
 
+## Cleanup (v1.154.00, 2026-11-18)
+
+Removed duplicates: the **Forecast** chip (it opened the same page as Stock; Plan row is now Plan · Bake Day · Recipes), **Kairos Logs** (client code and `api/logs.js`), and the Receipts page's photo-send, Share to iCloud and paste-text intake (it now has To review plus an Open Upload button; Upload is the one intake path; `parseReceipt` and `api/receipt-inbox.js` stay for the Mac poller). Kept on purpose: the three shopping lists share `bkBuyList` (Ingredients page, Plan step 2, Bake Day) and Bake Day's per-date views still need the old Bake dates card. The old palette CSS blocks and the hidden Home menu are still in the file.
+
 ## Design pass (v1.149.00)
 
 Last CSS block: **every `<select>` has one style** (white, 1px #c9c9c9, 12px radius, 44px, black chevron; `.row-select` and `[data-labi]` excluded); the Forecast store toggle (`.fc-locs`) uses the pill style. On desktop (>=900px) all pages share a 1120px column, page chips sit centered at natural width, the Trends donut is 220px. On phones the 5 Inventory chips shrink (11px padding) to fit. Counts' total says "pieces", not "madeleines". Still open: coloured snowflake/flame/arrow icons in Forecast misses (breaks the B/W rule), today's half-finished day shows as a 0.0x miss, Stock's section headers use the old grey band style.
@@ -183,7 +187,7 @@ The headless check at 390px misses what iOS does. Apply these to every new or ch
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.153.00**; the next feature is v1.154.00, a fix v1.153.01. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.154.00**; the next feature is v1.155.00, a fix v1.154.01. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 

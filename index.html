@@ -1785,8 +1785,7 @@
   .lg-entry .kv { grid-template-columns: auto 1fr auto 1fr; gap: 0 10px; line-height: 1.35; }
   .lg-acts { gap: 6px; }
   .lg-acts button { padding: 5px 10px; }
-  #homeLogs { padding-bottom: 24px; }
-  .lg-rep { overflow-x: auto; background: #fff; color: #111; border: 1px solid var(--sep); padding: 12px; margin-top: 12px; }
+    .lg-rep { overflow-x: auto; background: #fff; color: #111; border: 1px solid var(--sep); padding: 12px; margin-top: 12px; }
   .lg-rep h2 { font-size: var(--fs-lg); margin: 0 0 2px; color: #111; }
   .lg-rep h4 { font-size: var(--fs-caption); margin: 14px 0 6px; color: #111; }
   .lg-rep table { border-collapse: collapse; width: 100%; font-size: var(--fs-micro); min-width: 460px; }
@@ -2228,7 +2227,6 @@ select:not(.row-select):not([data-labi]) { -webkit-appearance: none !important; 
     <!-- Timers -->
     <div id="homeTimers" hidden></div>
 
-    <div id="homeLogs" hidden></div>
 
     <div id="homePantry" hidden></div>
     <div id="homeStorage" hidden></div>
@@ -2498,7 +2496,7 @@ select:not(.row-select):not([data-labi]) { -webkit-appearance: none !important; 
   </div>
 </div>
 
-<div class="ver-badge">v1.153.00 · Nov 18, 4:00 PM PST</div>
+<div class="ver-badge">v1.154.00 · Nov 18, 5:00 PM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -3377,7 +3375,7 @@ select:not(.row-select):not([data-labi]) { -webkit-appearance: none !important; 
   const SECTIONS = {
     sales:     { first: 'sales',  pages: ['sales', 'trends', 'invoice'] },
     inventory: { first: 'pantry', pages: ['pantry', 'storage', 'stock', 'counts', 'receipts'] },
-    plan:      { first: 'plan',   pages: ['plan', 'bake', 'forecast', 'recipes'] },
+    plan:      { first: 'plan',   pages: ['plan', 'bake', 'recipes'] },
     other:     { first: 'fin',    pages: ['fin', 'costs', 'labels', 'timers', 'upload'] },
   };
   const PAGES = {
@@ -3391,7 +3389,6 @@ select:not(.row-select):not([data-labi]) { -webkit-appearance: none !important; 
     receipts: { t: 'Receipts',    view: 'home', home: 'receipts' },
     plan:     { t: 'Plan',        view: 'home', home: 'plan' },
     bake:     { t: 'Bake Day',    view: 'home', home: 'bake' },
-    forecast: { t: 'Forecast',    view: 'home', home: 'forecast' },
     recipes:  { t: 'Recipes',     view: 'plan', mode: 'recipes' },
     fin:      { t: 'Finance',     view: 'fin' },
     costs:    { t: 'Costs',       view: 'plan', mode: 'costs' },
@@ -3736,7 +3733,7 @@ select:not(.row-select):not([data-labi]) { -webkit-appearance: none !important; 
 
   // ---- Home: a landing screen with three buttons; each opens its own page ----
   let homeTab = null;   // null = landing | 'forecast' | 'plan' | 'invoice'
-  const HOME_TITLES = { forecast: 'Forecast', plan: 'Baking Plan', invoice: 'Invoice / Labels', timers: 'Timers', logs: 'Kairos Logs', pantry: 'Pantry', storage: 'Storage', bake: 'Bake Day', receipts: 'Receipts', trends: 'Trends', upload: 'Upload' };
+  const HOME_TITLES = { forecast: 'Forecast', plan: 'Baking Plan', invoice: 'Invoice / Labels', timers: 'Timers', pantry: 'Pantry', storage: 'Storage', bake: 'Bake Day', receipts: 'Receipts', trends: 'Trends', upload: 'Upload' };
   // The version line lives over the photo on Home's landing; everywhere else it is the fixed strip.
   function syncVer() {
     const onHome = (document.querySelector('.tabbar button.on') || {}).dataset?.tab === 'home';
@@ -3752,7 +3749,6 @@ select:not(.row-select):not([data-labi]) { -webkit-appearance: none !important; 
     document.getElementById('homePlan').hidden = homeTab !== 'plan';
     document.getElementById('homeInvoice').hidden = homeTab !== 'invoice';
     document.getElementById('homeTimers').hidden = homeTab !== 'timers';
-    document.getElementById('homeLogs').hidden = homeTab !== 'logs';
     document.getElementById('homePantry').hidden = homeTab !== 'pantry';
     document.getElementById('homeStorage').hidden = homeTab !== 'storage';
     document.getElementById('homeBake').hidden = homeTab !== 'bake';
@@ -3762,7 +3758,6 @@ select:not(.row-select):not([data-labi]) { -webkit-appearance: none !important; 
     document.getElementById('hpTitle').textContent = HOME_TITLES[homeTab] || '';
     if (homeTab === 'plan') { renderBakeSheet(); renderPlan(); }
     if (homeTab === 'invoice') initInvoiceForm();
-    if (homeTab === 'logs') logsOpen();
     if (homeTab === 'pantry') { renderPantry(); renderPlan().then(() => { if (homeTab === 'pantry') renderPantry(); }).catch(() => {}); }   // the plan fills in what "plan needs" compares against
     if (homeTab === 'storage') renderStorage();
     if (homeTab === 'bake') bakeOpen();
@@ -3772,246 +3767,6 @@ select:not(.row-select):not([data-labi]) { -webkit-appearance: none !important; 
     if (homeTab === 'timers') renderTimers(); else stopTick();
     syncVer(); window.scrollTo(0, 0);
   }
-
-  // ---- Kairos Logs: Production / Delivery / Training / Complaints / Print (api/logs.js, one Sheet tab each) ----
-  const LG_ITEMS = ['Lemon Poppy', 'Sea Salt', 'Maple Pecan', 'Pumpkin Muffin', 'Blueberry Muffin'];
-  const LG_DESTS = ['Here and There Coffee, La Mirada', 'Here and There Coffee, Stanton'];
-  const LG_KEYS = ['production', 'delivery', 'training', 'complaints'];
-  const LG_NAMES = { production: 'Production', delivery: 'Delivery Log', training: 'Training Record', complaints: 'Customer Complaints' };
-  const LG_FORMS = {
-    production: { note: 'Save the plan first. When the bake is done, enter the actual quantity. Tree nut items go last in the schedule.' },
-    delivery: { note: "Place the order in the customer's freezer, take a photo, and leave the invoice.", title: 'New Delivery', fields: [
-      { k: 'date', l: 'Date', t: 'date', def: 1 }, { k: 'invoice', l: 'Invoice #', t: 'inv' }, { k: 'dest', l: 'Destination', t: 'dest' },
-      { k: 'left', l: 'Time Left', t: 'time', pair: 1, defTime: 1 }, { k: 'arrived', l: 'Time Arrived', t: 'time', pair: 1 }] },
-    training: { note: 'One row per person who handles food.', title: 'New Training Record', fields: [
-      { k: 'name', l: 'Name', t: 'text' }, { k: 'role', l: 'Role', t: 'text' },
-      { k: 'handler', l: 'Food Handler Card (Expiry)', t: 'text' }, { k: 'manager', l: 'Food Manager Certified (Expiry)', t: 'text' },
-      { k: 'binder', l: 'Read Food Safety Binder (Date)', t: 'date' }, { k: 'sig', l: 'Signature (Type Full Name)', t: 'text' }] },
-    complaints: { note: 'Record every complaint, especially illness or allergic reactions.', title: 'New Complaint', fields: [
-      { k: 'date', l: 'Date', t: 'date', def: 1 }, { k: 'customer', l: 'Customer', t: 'text' }, { k: 'product', l: 'Product and Production Date', t: 'text' },
-      { k: 'problem', l: 'Problem', t: 'area' }, { k: 'action', l: 'Action Taken', t: 'area' }] },
-  };
-  const LG_EDIT = {
-    production: [['date', 'Date', 'date'], ['item', 'Item', 'item'], ['target', 'Target Quantity', 'num'], ['batches', '# of Batches', 'num'], ['batchSize', 'Yield Each', 'num'], ['start', 'Start Time', 'time']],
-    delivery: [['date', 'Date', 'date'], ['invoice', 'Invoice #', 'text'], ['dest', 'Destination', 'text'], ['left', 'Time Left', 'time'], ['arrived', 'Time Arrived', 'time']],
-    training: [['name', 'Name', 'text'], ['role', 'Role', 'text'], ['handler', 'Food Handler Card (Expiry)', 'text'], ['manager', 'Food Manager Certified (Expiry)', 'text'], ['binder', 'Read Food Safety Binder (Date)', 'date'], ['sig', 'Signature', 'text']],
-    complaints: [['date', 'Date', 'date'], ['customer', 'Customer', 'text'], ['product', 'Product and Production Date', 'text'], ['problem', 'Problem', 'area'], ['action', 'Action Taken', 'area'], ['closed', 'Closed (Date)', 'date']],
-  };
-  const LG_SHOW = {
-    delivery: [['invoice', 'Invoice'], ['left', 'Left', 'time'], ['arrived', 'Arrived', 'time']],
-    training: [['role', 'Role'], ['handler', 'Food Handler Card'], ['manager', 'Food Manager'], ['binder', 'Read Binder', 'date'], ['sig', 'Signature']],
-    complaints: [['product', 'Product'], ['problem', 'Problem'], ['action', 'Action'], ['closed', 'Closed', 'date']],
-  };
-  const LG_COLS = {
-    production: [['Item', e => e.item], ['Start', e => lgTime(e.start)], ['Target', e => e.target], ['Batches', e => e.batches], ['Yield Each', e => e.batchSize], ['Actual', e => e.status === 'done' ? e.actual : ''], ['Status', e => e.status === 'done' ? 'Done' : 'Planned']],
-    delivery: [['Invoice #', e => e.invoice], ['Destination', e => e.dest], ['Time Left', e => lgTime(e.left)], ['Time Arrived', e => lgTime(e.arrived)]],
-    training: [['Name', e => e.name], ['Role', e => e.role], ['Food Handler Card (Expiry)', e => e.handler], ['Food Manager Certified (Expiry)', e => e.manager], ['Read Binder', e => lgDate(e.binder)], ['Signature', e => e.sig]],
-    complaints: [['Customer', e => e.customer], ['Product and Production Date', e => e.product], ['Problem', e => e.problem], ['Action Taken', e => e.action], ['Closed', e => lgDate(e.closed)]],
-  };
-  let lgTab = 'production', lgData = {}, lgLoaded = {}, lgRange = { from: '', to: '' }, lgConfirm = null, lgDraft = {}, lgEditing = null, lgOpen = {};
-  const lgEsc = v => String(v == null ? '' : v).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-  const lgDate = s => { const p = String(s || '').split('-'); return p.length === 3 ? `${+p[1]}/${+p[2]}/${p[0]}` : (s || ''); };
-  const lgTime = s => { if (!s) return ''; const p = String(s).split(':'); let h = +p[0]; const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return `${h}:${p[1]} ${ap}`; };
-  const lgLong = s => { const p = String(s || '').split('-'); return p.length === 3 ? new Date(+p[0], +p[1] - 1, +p[2]).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) : 'No Date'; };
-  const lgNowTime = () => new Date().toTimeString().slice(0, 5);
-  const lgNum = v => { const n = parseFloat(String(v).replace(/,/g, '')); return isFinite(n) ? n : 0; };
-  const lgCode = () => { let c = ''; try { c = localStorage.getItem('ledgerCode') || ''; } catch {} if (!c) { c = (prompt('Access code (needed once on this device)') || '').trim(); if (c) try { localStorage.setItem('ledgerCode', c); } catch {} } return c; };
-  async function lgCall(method, body, log) {
-    const code = lgCode(); if (!code) return null;
-    try {
-      const r = await fetch(method === 'GET' ? '/api/logs?log=' + log : '/api/logs', { method, headers: { 'Content-Type': 'application/json', 'x-logs-code': code }, body: method === 'GET' ? undefined : JSON.stringify(body) });
-      const j = await r.json().catch(() => ({}));
-      if (r.status === 401) { try { localStorage.removeItem('ledgerCode'); } catch {} rcpToast('Wrong code'); return null; }
-      if (r.status === 503) { rcpToast('Logs are off until LOGS_CODE is set in Vercel'); return null; }
-      if (!r.ok) { rcpToast(j.error || 'Could not save'); return null; }
-      return j;
-    } catch { rcpToast('Could not reach the server'); return null; }
-  }
-  async function lgLoad(key) { const j = await lgCall('GET', null, key); if (j) { lgData[key] = j.rows; lgLoaded[key] = true; } return !!j; }
-  async function logsOpen() { lgTab = lgTab || 'production'; lgPaint(true); const keys = lgTab === 'print' ? LG_KEYS : [lgTab]; await Promise.all(keys.map(lgLoad)); lgPaint(true); }
-  const lgInRange = d => !((lgRange.from && d < lgRange.from) || (lgRange.to && d > lgRange.to));
-  function lgGroup(arr, asc) {
-    const map = {}, order = [];
-    arr.forEach(e => { const d = e.date || ''; if (!map[d]) { map[d] = []; order.push(d); } map[d].push(e); });
-    order.sort(); if (!asc) order.reverse();
-    return order.map(d => ({ date: d, items: map[d].slice().sort((a, b) => (((a.start || '99:99') + a.createdAt) < ((b.start || '99:99') + b.createdAt) ? -1 : 1) * (asc ? 1 : -1)) }));
-  }
-  const lgYield = item => { const r = (lgData.production || []).filter(e => e.item === item && e.batchSize > 0).sort((a, b) => b.createdAt - a.createdAt)[0]; return r ? r.batchSize : ({ 'Pumpkin Muffin': 10, 'Blueberry Muffin': 36 }[item] || (item ? 12 : '')); };
-  function lgField(f) {
-    const v = f.def ? new Date().toLocaleDateString('en-CA') : (f.defTime ? lgNowTime() : '');
-    if (f.t === 'area') return `<label>${f.l}<textarea name="${f.k}"></textarea></label>`;
-    if (f.t === 'inv') return `<label>${f.l}<select name="${f.k}"><option value="">Choose Invoice</option>${invHistory().map(h => `<option value="${lgEsc(h.num)}">${lgEsc(h.num)} · ${lgEsc(h.store)} · ${lgEsc(h.total)}</option>`).join('')}<option value="__other">Other (Type Below)</option></select><input type="text" name="invOther" placeholder="Invoice number" hidden></label>`;
-    if (f.t === 'dest') return `<label>${f.l}<select name="${f.k}"><option value="">Choose Destination</option>${LG_DESTS.map(d => `<option>${lgEsc(d)}</option>`).join('')}<option value="__other">Other (Type Below)</option></select><input type="text" name="destOther" placeholder="Other destination" hidden></label>`;
-    return `<label>${f.l}<input type="${f.t}" name="${f.k}" value="${v}"></label>`;
-  }
-  function lgFormHtml(key) {
-    if (key === 'production') return `<form class="lg-form" id="lgForm"><div class="lg-2"><label>Date<input type="date" name="date" value="${new Date().toLocaleDateString('en-CA')}"></label><label>Item<select name="item"><option value="">Choose Item</option>${LG_ITEMS.map(i => `<option>${i}</option>`).join('')}</select></label></div><div class="lg-2"><label>Target Quantity<input type="text" inputmode="numeric" name="target" placeholder="e.g. 120"></label><label># of Batches<input type="text" inputmode="numeric" name="batch" placeholder="auto"><span class="lg-note" id="lgYieldNote">Choose an item to see what each batch yields.</span></label></div><div class="lg-calc" id="lgCalc"></div><label>Scheduled Start Time (Optional)<input type="time" name="start"></label><button class="lg-btn pri" type="submit">Save Plan</button></form>`;
-    const c = LG_FORMS[key], fs = c.fields; let h = `<form class="lg-form" id="lgForm">`;
-    for (let i = 0; i < fs.length;) { if (fs[i].pair) { h += '<div class="lg-2">'; while (i < fs.length && fs[i].pair) h += lgField(fs[i++]); h += '</div>'; } else h += lgField(fs[i++]); }
-    return h + `<button class="lg-btn pri" type="submit">Save Entry</button></form>`;
-  }
-  function lgEditHtml(key, e) {
-    const f = LG_EDIT[key].map(([k, l, t]) => {
-      const v = lgEsc(e[k]);
-      if (t === 'area') return `<label>${l}<textarea name="${k}">${v}</textarea></label>`;
-      if (t === 'item') return `<label>${l}<select name="${k}">${[...new Set([...LG_ITEMS, e[k]].filter(Boolean))].map(i => `<option${i === e[k] ? ' selected' : ''}>${lgEsc(i)}</option>`).join('')}</select></label>`;
-      if (t === 'num') return `<label>${l}<input type="text" inputmode="numeric" name="${k}" value="${v}"></label>`;
-      return `<label>${l}<input type="${t}" name="${k}" value="${v}"></label>`;
-    }).join('');
-    const extra = key === 'production' && e.status === 'done' ? `<label>Actual Qty<input type="text" inputmode="numeric" name="actual" value="${lgEsc(e.actual)}"></label>` : '';
-    return `<form class="lg-edit" data-edit="${e.id}"><div class="t">Edit Entry</div>${f}${extra}<div class="lg-acts"><button type="button" data-act="cancel">Cancel</button><button class="lg-btn pri" type="submit">Save Changes</button></div></form>`;
-  }
-  function lgEntryHtml(key, e) {
-    if (lgEditing === e.id) return `<div class="lg-entry">${lgEditHtml(key, e)}</div>`;
-    const kv = []; const add = (l, v) => { if (v !== '' && v != null) kv.push(`<span>${l}</span><span>${lgEsc(v)}</span>`); };
-    let title, badge = '';
-    if (key === 'production') {
-      title = e.item; badge = `<span class="lg-badge ${e.status === 'done' ? 'done' : 'open'}">${e.status === 'done' ? 'Done' : 'Planned'}</span>`;
-      add('Start', lgTime(e.start)); add('Target', e.target); add('Batches', e.batches); add('Yield Each', e.batchSize);
-      if (e.status === 'done') add('Actual', e.actual);
-    } else {
-      title = key === 'delivery' ? (e.dest || 'Delivery') : key === 'training' ? (e.name || 'Person') : (e.customer || 'Customer');
-      for (const [k, l, t] of LG_SHOW[key] || []) add(l, t === 'time' ? lgTime(e[k]) : t === 'date' ? lgDate(e[k]) : e[k]);
-      if (key === 'complaints') badge = `<span class="lg-badge ${e.closed ? 'done' : 'open'}">${e.closed ? 'Closed' : 'Open'}</span>`;
-    }
-    let h = `<div class="lg-entry"><div class="t">${lgEsc(title)}</div>${badge}<div class="kv">${kv.join('')}</div>`;
-    if (key === 'production' && e.status !== 'done') h += `<div class="lg-finish"><label class="lg-form" style="margin:0;display:grid;gap:4px"><span style="font-size:var(--fs-caption);color:var(--muted);font-weight:600">When Finished: Actual Qty</span><input type="text" inputmode="numeric" data-act="actual" data-id="${e.id}" value="${lgEsc(lgDraft[e.id] || '')}" style="font:inherit;padding:10px 12px;border:1px solid var(--sep);background:rgba(255,255,255,.30);border-radius:12px;width:100%;box-sizing:border-box"></label><button class="lg-btn pri" data-act="done" data-id="${e.id}" style="width:auto">Mark Done</button></div>`;
-    h += '<div class="lg-acts">';
-    h += `<button data-act="edit" data-id="${e.id}">Edit</button>`;
-    if (key === 'production' && e.status === 'done') h += `<button data-act="reopen" data-id="${e.id}">Reopen</button>`;
-    if (key === 'complaints' && !e.closed) h += `<button data-act="close" data-id="${e.id}">Mark Closed Today</button>`;
-    h += lgConfirm === e.id ? `<button data-act="keep">Keep</button><button class="danger" data-act="remove" data-id="${e.id}">Delete</button>` : `<button data-act="ask" data-id="${e.id}">Delete</button>`;
-    return h + '</div></div>';
-  }
-  function lgReportHtml() {
-    let h = `<h2>Kairosbaking Food Safety Records</h2><div class="s">Hyebin Kim LLC · LGI Kitchen, 3519 W Commonwealth Ave #L, Fullerton, CA 92833 · (714) 357-6137</div><div class="s">${lgRange.from || lgRange.to ? `Dates: ${lgRange.from ? lgDate(lgRange.from) : 'start'} to ${lgRange.to ? lgDate(lgRange.to) : 'today'}` : 'All dates'} · Printed ${lgDate(new Date().toLocaleDateString('en-CA'))}</div>`;
-    for (const key of LG_KEYS) {
-      const cols = LG_COLS[key]; h += `<h4>${LG_NAMES[key]}</h4>`;
-      const arr = (lgData[key] || []).filter(e => key === 'training' || lgInRange(e.date || ''));
-      if (!arr.length) { h += '<div class="s">No entries.</div>'; continue; }
-      h += `<table><thead><tr>${cols.map(c => `<th>${lgEsc(c[0])}</th>`).join('')}</tr></thead><tbody>`;
-      const row = e => `<tr>${cols.map(c => `<td>${lgEsc(c[1](e))}</td>`).join('')}</tr>`;
-      if (key === 'training') arr.slice().sort((a, b) => (a.name || '').localeCompare(b.name || '')).forEach(e => { h += row(e); });
-      else lgGroup(arr, true).forEach(g => { h += `<tr><td class="dt" colspan="${cols.length}">${lgEsc(lgLong(g.date))} (${g.items.length})</td></tr>`; g.items.forEach(e => { h += row(e); }); });
-      h += '</tbody></table>';
-    }
-    return h;
-  }
-  function lgPrint() {
-    const w = window.open('', '_blank'); if (!w) { rcpToast('Allow pop-ups to print'); return; }
-    w.document.write(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Kairos Baking Records</title><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;600;700&display=swap"><style>@page{size:letter;margin:.5in}body{font:13px/1.4 Archivo,Arial,sans-serif;color:#111;margin:24px}h2{margin:0 0 2px}h4{margin:18px 0 6px;font-size:14px}table{border-collapse:collapse;width:100%;font-size:12px}tr{page-break-inside:avoid}th,td{border:1px solid #888;padding:4px 6px;text-align:left;vertical-align:top}th{background:#eee}td.dt{background:#f4f4f4;font-weight:700}.s{color:#555;font-size:12px}@media print{body{margin:0}}</style></head><body>${lgReportHtml()}</body></html>`);
-    w.document.close(); w.focus(); setTimeout(() => w.print(), 300);
-  }
-  function lgPaint(force) {
-    const box = document.getElementById('homeLogs'); if (!box) return;
-    const tabs = `<div class="lg-tabs">${[...LG_KEYS, 'print'].map(k => `<button type="button" data-tab="${k}" class="${k === lgTab ? 'on' : ''}">${k === 'print' ? 'Print' : LG_NAMES[k].split(' ')[0] === 'Customer' ? 'Complaints' : LG_NAMES[k].split(' ')[0]}</button>`).join('')}</div>`;
-    if (lgTab === 'print') {
-      const act = document.activeElement;
-      if (!force && act && box.contains(act) && act.tagName === 'INPUT') { const r = box.querySelector('.lg-rep'); if (r) r.innerHTML = lgReportHtml(); return; }
-      box.innerHTML = tabs + `<div class="lg-note">All entries, grouped by date. Leave the dates empty for everything.</div><div class="lg-form"><div class="lg-2"><label>From<input type="date" id="lgFrom" value="${lgRange.from}"></label><label>To<input type="date" id="lgTo" value="${lgRange.to}"></label></div><button class="lg-btn pri" type="button" id="lgPrintBtn">Print Records</button></div><div class="lg-rep">${lgReportHtml()}</div>`;
-      return;
-    }
-    const key = lgTab, arr = (lgData[key] || []).slice().sort((a, b) => key === 'training' ? (a.name || '').localeCompare(b.name || '') : (((a.date || '') + '|' + (a.start || '99:99') + '|' + a.createdAt) < ((b.date || '') + '|' + (b.start || '99:99') + '|' + b.createdAt) ? 1 : -1));
-    const keep = !force && box.dataset.key === key && box.querySelector('#lgForm');
-    const saved = keep ? box.querySelector('#lgForm') : null; if (saved) saved.remove();
-    let list = `<div class="lg-day"><span>${lgLoaded[key] ? (arr.length === 1 ? '1 entry' : arr.length + ' entries') : 'Loading'}</span></div>`;
-    if (lgLoaded[key] && !arr.length) list += '<div class="lg-empty">No entries yet. Your first one will show up here.</div>';
-    if (key === 'training') list += arr.map(e => lgEntryHtml(key, e)).join('');
-    else lgGroup(arr, false).forEach((g, i) => {
-      const ok = key + '|' + g.date, open = ok in lgOpen ? lgOpen[ok] : (i === 0 || g.items.some(e => e.id === lgEditing));
-      list += `<button type="button" class="lg-day tg${open ? ' open' : ''}" data-day="${lgEsc(ok)}"><span><span class="chev">›</span>${lgEsc(lgLong(g.date))}</span><span>${g.items.length}</span></button>` + (open ? g.items.map(e => lgEntryHtml(key, e)).join('') : '');
-    });
-    box.innerHTML = tabs + `<div class="lg-note">${lgEsc(LG_FORMS[key].note)}</div>` + (saved ? '<div id="lgSlot"></div>' : lgFormHtml(key)) + `<div id="lgList">${list}</div>`;
-    if (saved) box.querySelector('#lgSlot').replaceWith(saved);
-    box.dataset.key = key; if (key === 'production') lgCalc();
-  }
-  function lgCalc() {
-    const f = document.getElementById('lgForm'), c = document.getElementById('lgCalc'), nt = document.getElementById('lgYieldNote'); if (!f || !c) return;
-    const y = lgNum(lgYield(f.item.value)), t = lgNum(f.target.value);
-    if (nt) nt.textContent = y > 0 ? `Each batch yields ${y} pieces` : 'Choose an item to see what each batch yields.';
-    if (y > 0 && t > 0 && !f.batch.dataset.manual) f.batch.value = Math.ceil(t / y);
-    const n = lgNum(f.batch.value);
-    if (y > 0 && n > 0) c.innerHTML = `<b>${n}</b> ${n === 1 ? 'batch' : 'batches'} × ${y} = ${n * y} pieces${t > 0 && n * y > t ? ` (${n * y - t} extra)` : ''}${t > 0 && n * y < t ? ` (${t - n * y} short of target)` : ''}`;
-    else c.textContent = 'Enter a target quantity to see how many batches to make.';
-  }
-  async function lgSubmit(f) {
-    const key = lgTab, btn = f.querySelector('button[type=submit]'); let rec;
-    if (key === 'production') {
-      const t = lgNum(f.target.value), n = lgNum(f.batch.value), y = lgNum(lgYield(f.item.value));
-      if (!f.item.value || !(t > 0 && n > 0 && y > 0)) { rcpToast('Pick an item, then enter a target quantity'); return; }
-      rec = { date: f.date.value, item: f.item.value, target: t, batchSize: y, batches: n, start: f.start.value, status: 'planned' };
-    } else {
-      rec = {}; LG_FORMS[key].fields.forEach(x => { rec[x.k] = (f.elements[x.k].value || '').trim(); });
-      if (key === 'delivery' && rec.invoice === '__other') rec.invoice = (f.elements.invOther.value || '').trim();
-      if (key === 'delivery' && rec.dest === '__other') rec.dest = (f.elements.destOther.value || '').trim() || 'Other';
-      const need = { delivery: ['invoice', 'dest', 'date'], training: ['name'], complaints: ['customer', 'problem', 'date'] }[key];
-      if (need.some(k => !rec[k])) { rcpToast('Fill in the required fields'); return; }
-    }
-    btn.disabled = true; const j = await lgCall('POST', { action: 'add', log: key, rec }); btn.disabled = false;
-    if (!j) return;
-    track('log_add', { log: key }); rcpToast('Saved'); await lgLoad(key); lgPaint(true);
-  }
-  async function lgAct(b) {
-    const key = lgTab, id = b.dataset.id, a = b.dataset.act;
-    if (a === 'ask') { lgConfirm = id; lgPaint(); return; }
-    if (a === 'keep') { lgConfirm = null; lgPaint(); return; }
-    if (a === 'edit') { lgEditing = id; lgConfirm = null; lgPaint(); return; }
-    if (a === 'cancel') { lgEditing = null; lgPaint(); return; }
-    let body;
-    if (a === 'done') { const v = (document.querySelector(`#homeLogs input[data-act=actual][data-id="${id}"]`) || {}).value || ''; if (v.trim() === '' || !(lgNum(v) >= 0)) { rcpToast('Enter the actual quantity first'); return; } body = { action: 'update', fields: { status: 'done', actual: lgNum(v), doneAt: Date.now() } }; }
-    else if (a === 'reopen') body = { action: 'update', fields: { status: 'planned' } };
-    else if (a === 'close') body = { action: 'update', fields: { closed: new Date().toLocaleDateString('en-CA') } };
-    else if (a === 'remove') { lgConfirm = null; body = { action: 'remove' }; }
-    else return;
-    b.disabled = true; const j = await lgCall('POST', { ...body, log: key, id }); if (!j) { b.disabled = false; return; }
-    delete lgDraft[id]; await lgLoad(key); lgPaint();
-  }
-  async function lgSaveEdit(f) {
-    const key = lgTab, id = f.dataset.edit, fields = {};
-    for (const [k, , t] of LG_EDIT[key]) fields[k] = t === 'num' ? (f.elements[k].value.trim() === '' ? '' : lgNum(f.elements[k].value)) : f.elements[k].value.trim();
-    if (f.elements.actual) fields.actual = lgNum(f.elements.actual.value);
-    const need = { production: ['item', 'date', 'target', 'batchSize'], delivery: ['invoice', 'dest', 'date'], training: ['name'], complaints: ['customer', 'problem', 'date'] }[key];
-    if (need.some(k => !fields[k])) { rcpToast('Fill in the required fields'); return; }
-    const btn = f.querySelector('button[type=submit]'); btn.disabled = true;
-    const j = await lgCall('POST', { action: 'update', log: key, id, fields }); btn.disabled = false;
-    if (!j) return;
-    track('log_edit', { log: key }); rcpToast('Saved'); lgEditing = null; await lgLoad(key); lgPaint();
-  }
-  (() => {
-    const box = document.getElementById('homeLogs');
-    box.addEventListener('click', async e => {
-      const t = e.target.closest('button'); if (!t) return;
-      if (t.dataset.day) { lgOpen[t.dataset.day] = !t.classList.contains('open'); lgPaint(); return; }
-      if (t.dataset.tab) { lgTab = t.dataset.tab; lgConfirm = null; lgEditing = null; track('log_tab', { tab: lgTab }); logsOpen(); return; }
-      if (t.id === 'lgPrintBtn') { lgPrint(); return; }
-      if (t.dataset.act) lgAct(t);
-    });
-    box.addEventListener('submit', e => { e.preventDefault(); if (e.target.dataset.edit) lgSaveEdit(e.target); else lgSubmit(e.target); });
-    box.addEventListener('input', e => {
-      const t = e.target;
-      if (t.closest('#lgForm') && lgTab === 'production') {
-        if (t.name === 'batch') t.dataset.manual = t.value ? '1' : '';
-        lgCalc();
-      }
-      if (t.dataset && t.dataset.act === 'actual') lgDraft[t.dataset.id] = t.value;
-      if (t.id === 'lgFrom' || t.id === 'lgTo') { lgRange = { from: document.getElementById('lgFrom').value, to: document.getElementById('lgTo').value }; lgPaint(); }
-    });
-    box.addEventListener('change', e => {
-      const t = e.target;
-      if (t.name === 'item' && lgTab === 'production') lgCalc();
-      if (t.name === 'dest') t.form.elements.destOther.hidden = t.value !== '__other';
-      if (t.name === 'invoice') t.form.elements.invOther.hidden = t.value !== '__other';
-    });
-  })();
-
-  document.getElementById('homeMenu').addEventListener('click', e => {
-    const b = e.target.closest('button'); if (!b) return;
-    if ('hentry' in b.dataset) { openEntry(); return; }
-    if ('hbuy' in b.dataset) { openBuyList(); return; }
-    homeTab = b.dataset.hpage; track('home_tab', { tab: homeTab }); renderHomeTab();
-  });
-  document.getElementById('homeBack').addEventListener('click', () => { homeTab = null; renderHomeTab(); });
-  syncVer();   // first paint: landing → show the version over the photo, not the strip
 
   // ---- Invoice: deliveries for one store over a date range, priced per unit ----
   const INV_PRICE_KEY = 'invoicePrices.v1';
@@ -7911,108 +7666,6 @@ select:not(.row-select):not([data-labi]) { -webkit-appearance: none !important; 
     return { ok: true, receipt, date, place, vendor: 'Costco', entries: all, lines, tax: taxV, total, itemsSum, match, blocks: blocks.filter((b, i) => blocks.indexOf(b) === i) };
   }
   // RECEIPTS-PARSER-END
-  let rcParsed = null, rcBusy = false, rcDone = '';
-  // ----- Receipt photos: phone -> ReceiptInbox sheet tab (api/receipt-inbox.js) -> the Mac reads it and reports back a status -----
-  let rxFiles = [], rxBusy = false, rxRows = null, rxErr = '';
-  const RX_STATUS = { pending: 'Waiting for the Mac', done: 'Done', held: 'Held', failed: 'Failed' };
-  const rxBlobB64 = blob => new Promise((ok, no) => { const fr = new FileReader(); fr.onload = () => ok(String(fr.result).split(',')[1] || ''); fr.onerror = () => no(fr.error); fr.readAsDataURL(blob); });
-  async function rxEncode(file) {
-    let src, url = '';
-    if (window.createImageBitmap) { try { src = await createImageBitmap(file); } catch { src = null; } }
-    if (!src) {
-      url = URL.createObjectURL(file);
-      src = await new Promise((ok, no) => { const im = new Image(); im.onload = () => ok(im); im.onerror = () => no(new Error('decode')); im.src = url; });
-    }
-    try {
-      const w0 = src.naturalWidth || src.width, h0 = src.naturalHeight || src.height;
-      if (!w0 || !h0) throw new Error('decode');
-      const tryAt = async (maxSide, qs) => {
-        const k = Math.min(1, maxSide / Math.max(w0, h0)), c = document.createElement('canvas');
-        c.width = Math.max(1, Math.round(w0 * k)); c.height = Math.max(1, Math.round(h0 * k));
-        c.getContext('2d').drawImage(src, 0, 0, c.width, c.height);
-        for (const q of qs) {
-          const blob = await new Promise(ok => c.toBlob(ok, 'image/jpeg', q));
-          if (!blob) throw new Error('encode');
-          const b64 = await rxBlobB64(blob);
-          if (b64.length <= 600000) return b64;
-        }
-        return '';
-      };
-      return (await tryAt(1800, [0.85, 0.75, 0.65, 0.55, 0.5])) || (await tryAt(1400, [0.85, 0.7, 0.55, 0.5])) || '';
-    } finally { if (url) URL.revokeObjectURL(url); if (src.close) src.close(); }
-  }
-  async function rxFetch() {
-    try { const r = await fetch('/api/receipt-inbox'); if (!r.ok) throw new Error(r.status); rxRows = (await r.json()).rows || []; rxErr = ''; }
-    catch { rxErr = "Couldn't load the list."; if (rxRows === null) rxRows = []; }
-    rxPaintList();
-  }
-  const rxWhen = iso => { const d = new Date(iso); if (isNaN(d)) return ''; const t = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }); return d.toDateString() === new Date().toDateString() ? t : d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ', ' + t; };
-  function rxPaintList() {
-    const el = document.querySelector('#homeReceipts #rxList'); if (!el) return;
-    if (rxRows === null) { el.innerHTML = '<div class="pn-note">Loading...</div>'; return; }
-    el.innerHTML = (rxErr ? `<div class="pn-note">${esc(rxErr)}</div>` : '') +
-      (rxRows.length ? rxRows.map(r => `<div class="pn-row"><span class="pn-main"><b>${esc(r.name || 'photo')}</b><small>${esc(rxWhen(r.created))}${r.result ? ' · ' + esc(r.result) : ''}</small></span><span class="pn-r"><b>${esc(RX_STATUS[r.status] || r.status)}</b></span></div>`).join('')
-        : (rxErr ? '' : '<div class="pn-note">No photos sent yet.</div>'));
-  }
-  function rxPaintSend(msg) {
-    const f = document.querySelector('#homeReceipts #rxFileName'), b = document.querySelector('#homeReceipts #rxSend'), m = document.querySelector('#homeReceipts #rxMsg');
-    if (f) f.textContent = rxFiles.length > 1 ? rxFiles.length + ' photos chosen' : rxFiles.length ? rxFiles[0].name || 'photo' : 'No photo chosen';
-    if (b) b.disabled = !rxFiles.length || rxBusy;
-    if (m && msg != null) m.textContent = msg;
-  }
-  async function rxSend() {
-    if (!rxFiles.length || rxBusy) return;
-    rxBusy = true;
-    const total = rxFiles.length; let sent = 0;
-    try {
-      while (rxFiles.length) {
-        const f = rxFiles[0];
-        rxPaintSend(total > 1 ? `Sending ${sent + 1} of ${total}...` : 'Sending...');
-        const data = await rxEncode(f);
-        if (!data) { rxPaintSend(`${f.name || 'A photo'} is too big to send. Try a closer shot.` + (sent ? ` Sent ${sent} of ${total}.` : '')); return; }
-        const r = await fetch('/api/receipt-inbox', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'add', name: f.name || 'photo', data }) });
-        const j = await r.json().catch(() => ({}));
-        if (!r.ok) { rxPaintSend((j.error || 'Could not send') + (sent ? `. Sent ${sent} of ${total}.` : '')); return; }
-        rxFiles.shift(); sent++;
-      }
-      const inp = document.querySelector('#homeReceipts #rxInput'); if (inp) inp.value = '';
-      rxPaintSend((total > 1 ? `Sent ${total} photos.` : 'Sent.') + ' The Mac reads them within about 5 minutes if it is awake; lines land unapproved in the ledger.');
-      rxFetch();
-    } catch { rxPaintSend("Couldn't read that photo or reach the server." + (sent ? ` Sent ${sent} of ${total}.` : '')); if (sent) rxFetch(); }
-    finally { rxBusy = false; rxPaintSend(); }
-  }
-  // Share-to-iCloud: a web page cannot write to iCloud Drive, so this opens the iPhone Share sheet (Save to Files) with the chosen files.
-  // Sales videos are renamed "<Store> yyyy-MM-dd HHmm.<ext>" because the Mac watcher reads the store and time from the name.
-  let shFiles = [];
-  function shStamp(ms) { const d = new Date(ms || Date.now()), p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}${p(d.getMinutes())}`; }
-  function shNames(files, kind) {
-    if (kind === 'R') return files.map(f => f.name || 'receipt.jpg');
-    const store = kind === 'STN' ? 'Stanton' : 'La Mirada', used = {};
-    return files.map(f => {
-      const ext = ((/\.([A-Za-z0-9]+)$/.exec(f.name || '') || [])[1] || (/video/.test(f.type) ? 'mov' : 'jpg')).toLowerCase();
-      const base = `${store} ${shStamp(f.lastModified)}`; used[base] = (used[base] || 0) + 1;
-      return `${base}${used[base] > 1 ? ' ' + used[base] : ''}.${ext}`;
-    });
-  }
-  function shPaint(msg) {
-    const n = document.querySelector('#homeReceipts #shName'), b = document.querySelector('#homeReceipts #shGo'), m = document.querySelector('#homeReceipts #shMsg');
-    if (n) n.textContent = shFiles.length > 1 ? shFiles.length + ' files chosen' : shFiles.length ? shFiles[0].name : 'No files chosen';
-    if (b) b.disabled = !shFiles.length;
-    if (m && msg != null) m.textContent = msg;
-  }
-  async function shGo() {
-    const kind = (document.querySelector('#homeReceipts #shKind') || {}).value || 'LM';
-    if (!shFiles.length) return;
-    const names = shNames(shFiles, kind);
-    const files = shFiles.map((f, i) => new File([f], names[i], { type: f.type, lastModified: f.lastModified }));
-    const folder = kind === 'R' ? 'Kairos receipts' : 'Kairos inbox';
-    if (!navigator.share || !navigator.canShare || !navigator.canShare({ files })) { shPaint("This browser can't share files. Open the app in Safari on your iPhone."); return; }
-    try {
-      await navigator.share({ files });
-      shFiles = []; const inp = document.querySelector('#homeReceipts #shInput'); if (inp) inp.value = '';
-      shPaint(`Shared. If you chose Save to Files, the folder was ${folder}. The Mac reads them when it next runs.`); shPaint();
-    } catch (e) { shPaint(e && e.name === 'AbortError' ? 'Cancelled. Nothing was saved.' : "Couldn't share those files."); }
-  }
   // Upload page: sends receipt photos and sales videos straight from the phone to Vercel Blob (a short waiting room).
   // The Mac job (scripts/uploads/upload_poll.py) downloads each file into a permanent folder, checks the size, then deletes it from Blob.
   let upFiles = [], upBusy = false;
@@ -8087,36 +7740,12 @@ select:not(.row-select):not([data-labi]) { -webkit-appearance: none !important; 
   function renderUpload() { renderUploadBox(document.getElementById('homeUpload')); }
   function renderReceipts() {
     const box = document.getElementById('homeReceipts'); if (!box) return;
-    if (!box.querySelector('#rcText')) {
-      box.innerHTML = `<div class="rx-sec" id="rxReview"></div><div class="rx-sec"><h3>Send a photo to the Mac</h3>` +
-        `<div class="pn-note">One photo per receipt. Take one, or pick several from your library (up to 10 at a time).</div>` +
-        `<input type="file" id="rxInput" accept="image/*" multiple hidden>` +
-        `<div class="pn-bar"><button id="rxPick">Choose photos</button><button class="primary" id="rxSend" disabled>Send</button><span class="rx-file" id="rxFileName">No photo chosen</span></div>` +
-        `<div class="pn-note" id="rxMsg"></div>` +
-        `<div class="pn-bar"><button id="rxRefresh">Refresh</button></div><div id="rxList"></div></div>` +
-        `<div class="rx-sec"><h3>Share to iCloud</h3>` +
-        `<div class="pn-note">For sales videos or any photos. Opens the Share sheet: tap Save to Files, then the folder shown after you share (Kairos inbox for sales videos, Kairos receipts for receipts). The Mac reads them from there.</div>` +
-        `<div class="pn-bar"><select id="shKind"><option value="LM">Sales video, La Mirada</option><option value="STN">Sales video, Stanton</option><option value="R">Receipt photos</option></select></div>` +
-        `<input type="file" id="shInput" accept="image/*,video/*" multiple hidden>` +
-        `<div class="pn-bar"><button id="shPick">Choose files</button><button class="primary" id="shGo" disabled>Share</button><span class="rx-file" id="shName">No files chosen</span></div>` +
-        `<div class="pn-note" id="shMsg"></div></div>` +
-        `<details class="rc-paste"><summary>Paste text instead</summary>` +
-        `<div class="pn-note">On your iPhone: open the receipt photo, press and hold the text, tap Copy All, then paste it here.</div>` +
-        `<textarea id="rcText" class="rc-text" placeholder="Paste the receipt text" autocomplete="off"></textarea>` +
-        `<div class="pn-bar" style="margin-top:8px"><button class="primary" id="rcRead">Read</button></div><div id="rcOut"></div></details>`;
-      box.querySelector('#rcRead').onclick = () => { rcDone = ''; rcParsed = parseReceipt(box.querySelector('#rcText').value); paintReceipt(); };
-      box.querySelector('#rcOut').addEventListener('click', e => { if (e.target.closest('#rcPost')) rcPost(); });
-      box.querySelector('#rxPick').onclick = () => box.querySelector('#rxInput').click();
-      box.querySelector('#shPick').onclick = () => box.querySelector('#shInput').click();
-      box.querySelector('#shInput').onchange = e => { shFiles = Array.from(e.target.files || []).slice(0, 20); shPaint(''); };
-      box.querySelector('#shGo').onclick = shGo;
-      box.querySelector('#shKind').onchange = () => shPaint('');
-      box.querySelector('#rxInput').onchange = e => { rxFiles = Array.from((e.target.files) || []).slice(0, 10); rxPaintSend(''); };
-      box.querySelector('#rxSend').onclick = rxSend;
-      box.querySelector('#rxRefresh').onclick = rxFetch;
+    if (!box.querySelector('#rxReview')) {
+      box.innerHTML = `<div class="rx-sec" id="rxReview"></div><div class="rx-sec"><h3>Add a receipt</h3>` +
+        `<div class="pn-note">Photos and sales videos go through Upload. The Mac reads them and the lines land below, unapproved.</div>` +
+        `<div class="pn-bar"><button class="primary" id="rxToUpload">Open Upload</button></div></div>`;
+      box.querySelector('#rxToUpload').onclick = () => go('upload', 'other');
     }
-    rxPaintSend(); rxPaintList(); rxFetch();
-    paintReceipt();
     if (LEDGER === null && !ledgerBusy) loadCosts();
     rvPaint();
   }
@@ -8149,36 +7778,6 @@ select:not(.row-select):not([data-labi]) { -webkit-appearance: none !important; 
     box.querySelectorAll('[data-rvl]').forEach(b => b.onclick = () => { const r = recs.find(x => x.items.some(l => l.id === b.dataset.rvl)); if (!r) return; const last = r.items.length === 1; rvRun('remove', last ? [...r.items, ...r.tax, ...r.fees].map(l => l.id) : [b.dataset.rvl]); });
     const all = box.querySelector('#rvAll'); if (all) all.onclick = () => rvRun('approve', recs.flatMap(r => r.items.filter(l => !l.approved).map(l => l.id)));
   }
-  function paintReceipt() {
-    const out = document.querySelector('#homeReceipts #rcOut'); if (!out) return;
-    const p = rcParsed;
-    if (rcDone) { out.innerHTML = `<div class="rc-ok">${esc(rcDone)}</div>`; return; }
-    if (!p) { out.innerHTML = ''; return; }
-    if (!p.ok) { out.innerHTML = `<div class="rc-bad">${esc(p.error)}</div>`; return; }
-    const groups = new Map();
-    p.lines.filter(l => l.kind === 'item').forEach(l => { const k = l.item + '|' + l.price; const g = groups.get(k) || { l, n: 0 }; g.n++; groups.set(k, g); });
-    const rows = [...groups.values()].map(g => `<div class="pn-row"><span class="pn-main"><b>${esc(g.l.item)}</b><small>${esc(buyFmt(g.l.amt, g.l.unit))} per package · $${g.l.price.toFixed(2)} each · ${g.n} ${g.n === 1 ? 'package' : 'packages'}</small></span><span class="pn-r"><b>$${(g.n * g.l.price).toFixed(2)}</b></span></div>`).join('');
-    const blocked = p.blocks.length > 0 || p.lines.length === 0 || rcBusy;
-    out.innerHTML = `<h3>${esc(p.receipt)}</h3>` + (rows || '<div class="pn-note">No items read.</div>') +
-      `<div class="pn-row"><span class="pn-main"><b>Items</b></span><span class="pn-r"><b>$${p.itemsSum.toFixed(2)}</b></span></div>` +
-      `<div class="pn-row"><span class="pn-main"><b>Tax</b></span><span class="pn-r"><b>$${p.tax.toFixed(2)}</b></span></div>` +
-      `<div class="pn-row"><span class="pn-main"><b>Receipt total</b></span><span class="pn-r"><b>${p.total == null ? 'not found' : '$' + p.total.toFixed(2)}</b></span></div>` +
-      (p.match && !p.blocks.includes(p.match) ? `<div class="rc-ok">${esc(p.match)}</div>` : '') +
-      p.blocks.map(b => `<div class="rc-bad">${esc(b)}</div>`).join('') +
-      `<div class="pn-bar" style="margin-top:12px"><button class="primary" id="rcPost"${blocked ? ' disabled' : ''}>Post ${p.lines.length} ${p.lines.length === 1 ? 'line' : 'lines'}</button></div>` +
-      `<div class="pn-note">Lines go to the Ledger unapproved. Approve them under To review, at the top of this page.</div>`;
-  }
-  async function rcPost() {
-    const p = rcParsed; if (!p || !p.ok || p.blocks.length || !p.lines.length || rcBusy) return;
-    rcBusy = true; paintReceipt();
-    try {
-      await fetchLedger();
-      if (ledgerErr) return rcpToast("Couldn't check the ledger, try again");
-      if ((LEDGER || []).some(l => l.receipt === p.receipt)) { rcpToast('This receipt is already in the ledger'); rcParsed = Object.assign({}, p, { blocks: p.blocks.concat('This receipt is already in the ledger') }); return; }
-      if (await ledgerPost({ action: 'add', lines: p.lines })) { rcDone = `Added ${p.lines.length} lines. Approve them under To review, at the top of this page.`; rcParsed = null; const t = document.querySelector('#homeReceipts #rcText'); if (t) t.value = ''; }
-    } finally { rcBusy = false; paintReceipt(); }
-  }
-
   // ----- Pantry: what's on hand. Each row in the Pantry tab is one physical count on a date. On hand now = the latest count
   // plus approved ledger purchases dated after it (same unit only). Counts are soft-deleted, never erased. -----
   let PANTRY = null, pantryBusy = false, pantryErr = '';
