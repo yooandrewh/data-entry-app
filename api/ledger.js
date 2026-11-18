@@ -7,7 +7,7 @@
 //
 // GET  -> { rows: [...] }  (rows not removed)
 // POST { action: 'add', lines: [...] } | { action: 'remove', ids: [...] } | { action: 'approve', ids: [...], approved?: false }
-//      | { action: 'setlink', ids: [...], link: '<product link>' }  (Amazon saved as https://www.amazon.com/dp/<ASIN>; Costco / Target / WebstaurantStore / Pastry Depot saved without the query string)
+//      | { action: 'setlink', ids: [...], link: '<product link>' }  (Amazon saved as https://www.amazon.com/dp/<ASIN>; Costco / Target / WebstaurantStore / Pastry Depot / Gelato Supply saved without the query string)
 // Costs use only lines with Approved = TRUE; new lines start unapproved unless the add sets approved: true.
 //
 // Auth: reads are open (the seed prices were already public in the app source). Writes need the
@@ -45,8 +45,8 @@ async function amazonLink(input) {
   return '';
 }
 
-// Other retailer links (Costco, Target, WebstaurantStore, Pastry Depot): https only, host on this list, saved without the query string.
-const SHOP_HOST = /^(www\.|sameday\.)?(costco\.com|costcobusinessdelivery\.com|target\.com|webstaurantstore\.com|pastrydepot\.com)$/i;
+// Other retailer links (Costco, Target, WebstaurantStore, Pastry Depot, Gelato Supply): https only, host on this list, saved without the query string.
+const SHOP_HOST = /^(www\.|sameday\.)?(costco\.com|costcobusinessdelivery\.com|target\.com|webstaurantstore\.com|pastrydepot\.com|gelatosupply\.com)$/i;
 async function shopLink(input) {
   const a = await amazonLink(input); if (a) return a;
   let raw = String(input || '').trim(); if (/^(www\.)[a-z0-9.-]+\//i.test(raw)) raw = 'https://' + raw;
@@ -129,7 +129,7 @@ export default async function handler(req, res) {
     // Attach a product link to ledger lines (the shopping list's Amazon Add to cart button reads Amazon ones).
     if (body.action === 'setlink') {
       const link = await shopLink(body.link);
-      if (!link) return res.status(400).json({ error: 'That is not a link from a store the app knows (Amazon, Costco, Target, WebstaurantStore, Pastry Depot)' });
+      if (!link) return res.status(400).json({ error: 'That is not a link from a store the app knows (Amazon, Costco, Target, WebstaurantStore, Pastry Depot, Gelato Supply)' });
       const ids = new Set((Array.isArray(body.ids) ? body.ids : []).slice(0, MAX_LINES).map(String));
       const { header, rows } = await getRows(TAB);
       let n = 0;
