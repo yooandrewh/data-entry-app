@@ -2427,7 +2427,7 @@ button { color: var(--text, #000); }
   </div>
 </div>
 
-<div class="ver-badge">v1.147.00 · Nov 18, 1:03 PM PST</div>
+<div class="ver-badge">v1.147.01 · Nov 18, 1:07 PM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -5600,7 +5600,7 @@ button { color: var(--text, #000); }
     const bx = boxPlan(), any = PRODUCTS.some(p => (planBakeTotals[p] || 0) > 0);
     let h = `<h3>Boxes</h3>`;
     if (!any) { el.innerHTML = h + '<div class="bx-none">Nothing to box yet. Pick a span for at least one item in step 1.</div>'; return; }
-    h += `<div class="bx-total"><b>${bx.total}</b> box${bx.total === 1 ? '' : 'es'} in all. La Mirada and Stanton split by recent sales; BP and Fullerton get what you set aside below.</div>`;
+    h += `<div class="bx-total"><b>${bx.total}</b> box${bx.total === 1 ? '' : 'es'} in all (a box is one Cambro full-size 4" deep food pan, 14PP190). La Mirada and Stanton split by recent sales; BP and Fullerton get what you set aside below.</div>`;
     for (const l of bx.locs) {
       const n = l.items.reduce((a, x) => a + x.boxes, 0);
       h += `<div class="bx-loc">${esc(l.name)}<span>${n} box${n === 1 ? '' : 'es'}</span></div>`;

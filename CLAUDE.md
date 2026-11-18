@@ -151,7 +151,7 @@ Costco receipts print a quantity line (`3 @ 4.99`) above an item whose price is 
 
 ## Boxes (Plan step 3, v1.147.00)
 
-`#pwBoxes` (`boxPlan()` / `boxPaint()`, shown only on step 3, under the Bake Plan card): boxes needed per storage. Four storages: **BP Storage, Fullerton Storage, La Mirada Storage, Stanton Storage**. Pieces per item = `planBakeTotals`; box size defaults to **12 (a guess: Andrew has not given real box sizes)**, set per item under "Box sizes and storage" (`localStorage.boxCfg.v1`). BP and Fullerton get the pieces Andrew types in for them (default 0, also a guess: what those two hold is not recorded anywhere); the rest splits between La Mirada and Stanton by each store's 28-day sales rate. Boxes are rounded up per storage per item, so one box never mixes items or storages. Ask Andrew for the real box sizes and what BP / Fullerton Storage are for.
+`#pwBoxes` (`boxPlan()` / `boxPaint()`, shown only on step 3, under the Bake Plan card): boxes needed per storage. Four storages: **BP Storage, Fullerton Storage, La Mirada Storage, Stanton Storage**. **A box is a Cambro full-size 4" deep translucent polypropylene food pan (item # 21414PP, MFR # 14PP190), per Andrew 2026-11-18.** Pieces per item = `planBakeTotals`; pieces per pan still defaults to **12 (a guess: Andrew has not given real box sizes)**, set per item under "Box sizes and storage" (`localStorage.boxCfg.v1`). BP and Fullerton get the pieces Andrew types in for them (default 0, also a guess: what those two hold is not recorded anywhere); the rest splits between La Mirada and Stanton by each store's 28-day sales rate. Boxes are rounded up per storage per item, so one box never mixes items or storages. Ask Andrew for the real box sizes and what BP / Fullerton Storage are for.
 
 ## Sizing rules (from Andrew's phone screenshots, v1.146.01)
 
@@ -165,7 +165,7 @@ The headless check at 390px misses what iOS does. Apply these to every new or ch
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.147.00**; the next feature is v1.148.00, a fix v1.147.01. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.147.01**; the next feature is v1.148.00, a fix v1.147.02. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 
