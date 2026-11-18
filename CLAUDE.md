@@ -67,7 +67,11 @@ Costs read prices from the sheet's **Ledger** tab through `api/ledger.js` (`Id, 
 
 Tab **Pantry** (`Id, Item, Amount, Unit, Date, Note, Deleted`); each row is one physical count on a date. `api/pantry.js`: GET open, POST `add` / `remove` need `x-ledger-code`. Soft delete only.
 **On hand = latest count + approved ledger item lines dated after it, in the same unit** (`pantryStock()`); lines in another unit set `mixed`. Compared with `buyItems()` for a "Low" flag. Units g, kg, oz, lb, ml, L, fl oz (converted to base on save) and pcs.
-Status: code written and syntax-checked only; **not yet tested in a browser or against the live sheet**.
+Status: live API tested (add/remove round trip); **not yet tested in a browser or on a phone** (Chrome extension was not connected).
+
+## Bake Day (Home → Bake Day, built 2026-11-17)
+
+`bakeOpen()` / `bakePaint()` / `bakeRows()` next to `buyPaint()`. Takes `buyItems()` (whole bake plan, same as the Buy list) and compares each with `pantryStock()`: **To buy** (short, "Not counted" if no count, "Unit" if counted in a different unit; both list the full need, never treat as zero), **Have enough**, and a collapsed **After the bake: recount** form that saves counts through `pantryPost` (date today, note "After bake"). Baking never subtracts from the pantry by itself; recount is the rule (decided with Andrew). Packs and cost are recomputed on the shortfall. Ticks share `buyChecked` with the Buy list. Logic unit-tested in node; **UI untested in a browser**.
 
 ## Labels, bake sheet, recipes (details in docs/HISTORY.md)
 
@@ -90,7 +94,7 @@ Status: code written and syntax-checked only; **not yet tested in a browser or a
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Pantry is a feature, so the next deploy is **v1.124.00**. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.125.00** (Bake Day); the next feature is v1.126.00, a fix v1.125.01. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 

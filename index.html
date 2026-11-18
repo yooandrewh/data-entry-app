@@ -1796,6 +1796,13 @@
   /* Recipes tab: eight view buttons wrap to two rows of four (2026-10-25) */
   #recSection { flex-wrap: wrap; }
   #recSection button { flex: 1 0 22%; padding: 10px 4px; font-size: var(--fs-caption); }
+/* Bake Day (2026-11-17) */
+.bk-sum { color: var(--muted); font-size: var(--fs-caption); margin: 4px 0 10px; }
+.bk-rc { margin-top: 16px; } .bk-rc summary { font-weight: 700; padding: 8px 2px; cursor: pointer; }
+.bk-rc-row { display: flex; align-items: center; gap: 10px; padding: 6px 2px; border-bottom: 1px solid var(--sep); }
+.bk-rc-row span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.bk-rc-row input { width: 96px; box-sizing: border-box; text-align: right; }
+.bk-rc-row em { font-style: normal; color: var(--muted); font-size: var(--fs-caption); width: 28px; }
 /* Pantry (2026-11-17) */
 .pn-bar { display: flex; gap: 8px; margin: 4px 0 12px; flex-wrap: wrap; }
 .pn-bar button { flex: 1 1 0; }
@@ -1829,6 +1836,7 @@
       <button type="button" data-hpage="forecast"><span class="hm-ic" data-ic="chart"></span><span class="hm-t">Forecast</span><span class="hm-go">›</span></button>
       <button type="button" data-hpage="plan"><span class="hm-ic" data-ic="book"></span><span class="hm-t">Baking Plan</span><span class="hm-go">›</span></button>
       <button type="button" data-hpage="invoice"><span class="hm-ic" data-ic="tag"></span><span class="hm-t">Invoice / Labels</span><span class="hm-go">›</span></button>
+      <button type="button" data-hpage="bake"><span class="hm-ic" data-ic="calendar"></span><span class="hm-t">Bake Day</span><span class="hm-go">›</span></button>
       <button type="button" data-hpage="pantry"><span class="hm-ic" data-ic="box"></span><span class="hm-t">Pantry</span><span class="hm-go">›</span></button>
 </div>
     
@@ -1910,6 +1918,7 @@
     <div id="homeLogs" hidden></div>
 
     <div id="homePantry" hidden></div>
+    <div id="homeBake" hidden></div>
 
     <!-- Invoice -->
     <div id="homeInvoice" hidden>
@@ -2157,7 +2166,7 @@
   </div>
 </div>
 
-<div class="ver-badge">v1.124.01 · Nov 17, 8:13 PM PST</div>
+<div class="ver-badge">v1.125.00 · Nov 17, 8:17 PM PST</div>
 
 <!-- ===== Tab bar ===== -->
 <nav class="tabbar"><div class="tab-pill">
@@ -3306,7 +3315,7 @@
 
   // ---- Home: a landing screen with three buttons; each opens its own page ----
   let homeTab = null;   // null = landing | 'forecast' | 'plan' | 'invoice'
-  const HOME_TITLES = { forecast: 'Forecast', plan: 'Baking Plan', invoice: 'Invoice / Labels', timers: 'Timers', logs: 'Kairos Logs', pantry: 'Pantry' };
+  const HOME_TITLES = { forecast: 'Forecast', plan: 'Baking Plan', invoice: 'Invoice / Labels', timers: 'Timers', logs: 'Kairos Logs', pantry: 'Pantry', bake: 'Bake Day' };
   // The version line lives over the photo on Home's landing; everywhere else it is the fixed strip.
   function syncVer() {
     const onHome = (document.querySelector('.tabbar button.on') || {}).dataset?.tab === 'home';
@@ -3324,11 +3333,13 @@
     document.getElementById('homeTimers').hidden = homeTab !== 'timers';
     document.getElementById('homeLogs').hidden = homeTab !== 'logs';
     document.getElementById('homePantry').hidden = homeTab !== 'pantry';
+    document.getElementById('homeBake').hidden = homeTab !== 'bake';
     document.getElementById('hpTitle').textContent = HOME_TITLES[homeTab] || '';
     if (homeTab === 'plan') { renderBakeSheet(); renderPlan(); }
     if (homeTab === 'invoice') initInvoiceForm();
     if (homeTab === 'logs') logsOpen();
     if (homeTab === 'pantry') renderPantry();
+    if (homeTab === 'bake') bakeOpen();
     if (homeTab === 'timers') renderTimers(); else stopTick();
     syncVer(); window.scrollTo(0, 0);
   }
@@ -5935,6 +5946,7 @@
     if (!document.getElementById('bakingCosts').hidden) renderCosts();
     if (document.getElementById('view-fin').classList.contains('active')) renderFin();
     if (homeTab === 'pantry') renderPantry();
+    if (homeTab === 'bake') bakePaint();
   }
   const saveCosts = () => { try { localStorage.setItem('costYields.v1', JSON.stringify(costYields)); } catch {} };
 
@@ -7190,6 +7202,7 @@
     catch (e) { pantryErr = 'Pantry offline: counts not loaded.'; if (PANTRY === null) PANTRY = []; }
     pantryBusy = false;
     if (homeTab === 'pantry') renderPantry();
+    if (homeTab === 'bake') bakePaint();
   }
   async function pantryPost(body) {
     const code = ledgerCode(); if (!code) { rcpToast('Enter the access code to save'); return false; }
@@ -7259,6 +7272,72 @@
       if (!confirm('Remove this count?')) return;
       if (await pantryPost({ action: 'remove', ids: [btn.dataset.pnx] })) rcpToast('Count removed');
     });
+  }
+  // ----- Bake Day: the bake plan's ingredients against what's on hand (Pantry). Shows what to buy, then lets you recount after the bake. -----
+  let bakeRcOpen = false;
+  async function bakeOpen() {
+    if (PANTRY === null && !pantryBusy) fetchPantry();
+    if (LEDGER === null && !ledgerBusy) loadCosts();
+    bakePaint();
+    try { await renderPlan(); } catch {}      // fills bakeSheet from the forecast, as the Buy list does
+    if (homeTab === 'bake') bakePaint();
+  }
+  // Rows for the shopping list. st: 'short' (counted, not enough) | 'ok' | 'none' (never counted) | 'unit' (counted in a different unit).
+  function bakeRows() {
+    const stock = new Map(pantryStock().map(s => [s.name, s]));
+    return buyItems().map(i => {
+      const s = stock.get(i.name);
+      if (!s) return { i, s, st: 'none', short: i.qty };
+      if (s.unit !== i.unit) return { i, s, st: 'unit', short: i.qty };
+      const short = Math.max(0, i.qty - s.onHand);
+      return { i, s, st: short > 1e-9 ? 'short' : 'ok', short };
+    });
+  }
+  function bakePaint() {
+    const box = document.getElementById('homeBake'); if (!box) return;
+    if (PANTRY === null || LEDGER === null) { box.innerHTML = '<div class="pn-note">Loading…</div>'; return; }
+    const keep = {}; box.querySelectorAll('[data-bk]').forEach(e => { keep[e.dataset.bk] = e.value; });
+    const rows = bakeRows();
+    if (!rows.length) { box.innerHTML = '<div class="tm-empty">Nothing in the bake plan yet. Add bake dates in Baking Plan and the ingredients show up here.</div>'; return; }
+    const buy = rows.filter(r => r.st !== 'ok'), ok = rows.filter(r => r.st === 'ok');
+    const part = r => { const i = r.i, n = i.pkAmt > 0 ? Math.max(1, Math.ceil(r.short / i.pkAmt - 1e-9)) : null, per = i.pk ? i.cost / i.pk : null; return { n, cost: n && per != null ? n * per : null }; };
+    const total = buy.reduce((a, r) => a + (part(r).cost || 0), 0), unpriced = buy.filter(r => part(r).cost == null).length;
+    const next = [...planBakeDates].sort().find(d => d >= todayISO());
+    const sub = r => {
+      const i = r.i, q = part(r), pk = q.n ? ` · ${q.n} × ${buyFmt(i.pkAmt, i.unit)} pack${q.n === 1 ? '' : 's'}` : ' · no price yet';
+      if (r.st === 'none') return `need ${buyFmt(i.qty, i.unit)} · not counted, so the full amount is listed${pk}`;
+      if (r.st === 'unit') return `need ${buyFmt(i.qty, i.unit)} · counted in ${esc(r.s.unit)}, can't compare, so the full amount is listed${pk}`;
+      return `need ${buyFmt(i.qty, i.unit)} · have ${buyFmt(r.s.onHand, i.unit)} · buy ${buyFmt(r.short, i.unit)}${pk}`;
+    };
+    const tag = r => r.st === 'none' ? '<i class="pn-flag">Not counted</i> ' : r.st === 'unit' ? '<i class="pn-flag">Unit</i> ' : '';
+    const buyRow = r => { const q = part(r); return `<label class="buy-row${buyChecked[r.i.name] ? ' done' : ''}"><input type="checkbox" data-bkc="${esc(r.i.name)}"${buyChecked[r.i.name] ? ' checked' : ''}><span class="buy-main"><b>${esc(r.i.name)}</b><small>${sub(r)}</small></span><span class="buy-r">${tag(r)}${q.cost != null ? money2(q.cost) : ''}</span></label>`; };
+    const okRow = r => `<div class="pn-row"><span class="pn-main"><b>${esc(r.i.name)}</b><small>need ${buyFmt(r.i.qty, r.i.unit)}${r.s.mixed ? ' · some purchases use another unit and are not added' : ''}</small></span><span class="pn-r">${buyFmt(r.s.onHand, r.i.unit)}</span></div>`;
+    const rc = rows.map(r => { const u = r.s ? r.s.unit : r.i.unit; return `<div class="bk-rc-row"><span>${esc(r.i.name)}</span><input type="number" inputmode="decimal" min="0" step="any" data-bk="${esc(r.i.name)}|${u}" value="${esc(keep[r.i.name + '|' + u] || '')}" aria-label="Left of ${esc(r.i.name)}"><em>${u}</em></div>`; }).join('');
+    box.innerHTML = `<div class="bk-sum">Whole bake plan${next ? ` · next bake ${esc(pantryDate(next))}` : ''}. Need is the plan's ingredients; have is your latest count plus approved purchases since.</div>` +
+      `<h3>To buy${buy.length ? ` (${buy.length})` : ''}</h3>` +
+      (buy.length ? buy.map(buyRow).join('') + `<div class="buy-total"><span>Estimated total${unpriced ? `<small>${unpriced} item${unpriced === 1 ? '' : 's'} without a price</small>` : ''}</span><b>${money2(total)}</b></div>` : '<div class="pn-note">Everything the plan needs is on hand.</div>') +
+      `<div class="pn-bar" style="margin-top:10px"><button type="button" class="btn-ghost" id="bkCopy">Copy list</button><button type="button" class="btn-ghost" id="bkClear">Clear ticks</button></div>` +
+      (ok.length ? `<h3>Have enough (${ok.length})</h3>` + ok.map(okRow).join('') : '') +
+      `<details class="bk-rc"${bakeRcOpen ? ' open' : ''}><summary>After the bake: recount what is left</summary><div class="pn-note">Baking does not take anything off the pantry by itself. Weigh what is left and save it; blank rows are skipped. Today's date is used.</div>${rc}<div class="pn-bar" style="margin-top:12px"><button class="primary" type="button" id="bkSave">Save counts</button></div></details>`;
+    box.querySelector('.bk-rc').addEventListener('toggle', e => { bakeRcOpen = e.target.open; });
+    box.querySelectorAll('[data-bkc]').forEach(c => c.onchange = () => { if (c.checked) buyChecked[c.dataset.bkc] = 1; else delete buyChecked[c.dataset.bkc]; buySave(); c.closest('.buy-row').classList.toggle('done', c.checked); });
+    box.querySelector('#bkClear').onclick = () => { buyChecked = {}; buySave(); bakePaint(); };
+    box.querySelector('#bkCopy').onclick = async e => {
+      const lines = buy.filter(r => !buyChecked[r.i.name]).map(r => { const q = part(r); return `☐ ${r.i.name} — ${buyFmt(r.short, r.i.unit)}${q.n ? ` (${q.n} × ${buyFmt(r.i.pkAmt, r.i.unit)})` : ''}${r.st === 'none' ? ' [not counted]' : ''}`; });
+      try { await navigator.clipboard.writeText('Bake day buy list\n' + lines.join('\n')); e.target.textContent = 'Copied ✓'; } catch { e.target.textContent = 'Couldn’t copy'; }
+      setTimeout(() => { e.target.textContent = 'Copy list'; }, 1600);
+    };
+    box.querySelector('#bkSave').onclick = async () => {
+      const lines = [];
+      box.querySelectorAll('[data-bk]').forEach(inp => {
+        if (inp.value.trim() === '') return;
+        const n = parseFloat(inp.value), [item, unit] = inp.dataset.bk.split('|');
+        if (n >= 0) lines.push({ item, amt: n, unit, date: todayISO(), note: 'After bake' });
+      });
+      if (!lines.length) return rcpToast('Enter at least one amount');
+      if (lines.length > 80) return rcpToast('Save in two rounds: 80 items at most');
+      if (await pantryPost({ action: 'add', lines })) { rcpToast(lines.length + ' count' + (lines.length === 1 ? '' : 's') + ' saved'); box.querySelectorAll('[data-bk]').forEach(i => { i.value = ''; }); bakePaint(); }
+    };
   }
   function buyPaint() {
     const items = buyItems();
