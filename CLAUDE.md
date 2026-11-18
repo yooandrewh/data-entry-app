@@ -94,6 +94,8 @@ Costco receipts print a quantity line (`3 @ 4.99`) above an item whose price is 
 
 ## Visual language
 
+**TEMPORARY (2026-11-18, v1.133.00): the app is black and white with the iPhone system font (SF Pro), so work can stay on function.** One block at the end of the stylesheet, marked `BLACK AND WHITE`, does it (variables, selected states, greyscale photo and icons, grey Trends chart, `-apple-system` font); delete that block and the navy/caramel palette below returns. Printed documents keep Archivo. Until then, new UI uses only black, white and greys (no new colors) and the system font. Finance tab and Entry popup were not checked in B/W.
+
 - **Current look: "Photo palette, bright"** plus **Glass buttons + dropdowns**: cream ground `#f2eee7`, cards `#fbf9f5`, ink `#232a33`, muted `#6d6660`, caramel `#a45a22` (`--accent`: selected, primary, links, values). See-through fills with a 1px navy outline and light blur. Fonts: **Roboto**, with **Italiana** for big titles. Titles are Title Case. Home's landing sits on the photo (`hero.jpg`, `.home-bg`) with transparent cream-outlined buttons.
 - **The last CSS block in the stylesheet wins.** Plum, mauve, apricot, neumorphic, Keys and gradient blocks beneath it are dead weight. Edit the final blocks; don't reintroduce iOS blue or the old palettes.
 - **One type scale** on `:root`: `--fs-micro` 11 / `--fs-nav` 12 / `--fs-caption` 13 / `--fs-body` 15 / `--fs-lg` 17 / `--fs-title` 20 / `--fs-figure` 26 / `--fs-display` 32. **Don't add a raw px font-size.** Exceptions: `h1` (30), `--fs-hero` (40), `.tok`, `.db-empty .big`.
@@ -104,7 +106,7 @@ Costco receipts print a quantity line (`3 @ 4.99`) above an item whose price is 
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.132.00**; the next feature is v1.133.00, a fix v1.132.01. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.133.00**; the next feature is v1.134.00, a fix v1.133.01. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 
