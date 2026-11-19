@@ -2522,7 +2522,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.182.00 · Nov 18, 9:30 PM PST</div>
+<div class="ver-badge">v1.182.01 · Nov 18, 10:05 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -4401,8 +4401,10 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       return true;
     });
     const groups = {};
+    // By week: a Monday-Sunday week that crosses a month edge is split there (Oct 27-31 and Nov 1-2), so each piece is counted in its own month's total.
+    const grpKey = d => { if (salesGroup !== 'week') return d; const w = weekStart(d), m = d.slice(0, 7) + '-01'; return w > m ? w : m; };
     for (const s of rows) {
-      const key = salesGroup === 'week' ? weekStart(s.date) : s.date;
+      const key = grpKey(s.date);
       if (!groups[key]) { groups[key] = { key, amounts: {}, total: 0, flights: 0 }; SALES_FLAVORS.forEach(f => groups[key].amounts[f] = 0); }
       for (const f of SALES_FLAVORS) groups[key].amounts[f] += (s.amounts[f] || 0);
       if (s.derived) { groups[key].derived = groups[key].derived || new Set(); s.derived.forEach(d => groups[key].derived.add(d)); }
@@ -4435,9 +4437,13 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       : '';
     let html = `<div class="db-summary"><div class="ds-total"><b>${grand}</b> sold · ${usd(grand * PRICE_PER_UNIT + salesAdj(rows))}</div><div class="ds-rows">${breakdown}</div>${dataLoc === 'all' ? `<div class="ds-break ds-loc">${locBreak}</div>` : ''}${flightLine}</div>`;
     const dayHtml = (g, open) => {
-      const label = salesGroup === 'week'
-        ? 'Week of ' + new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(parseEntryDate(g.key))
-        : dayKey(g.key);
+      const md = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' });
+      let label;
+      if (salesGroup === 'week') {
+        const mon = weekStart(g.key), [yy, mm] = g.key.split('-').map(Number), monthEnd = `${g.key.slice(0, 7)}-${String(new Date(yy, mm, 0).getDate()).padStart(2, '0')}`;
+        const end = addDays(mon, 6) < monthEnd ? addDays(mon, 6) : monthEnd;
+        label = (g.key === mon && end === addDays(mon, 6)) ? 'Week of ' + md.format(parseEntryDate(g.key)) : md.format(parseEntryDate(g.key)) + (end === g.key ? '' : ' to ' + md.format(parseEntryDate(end)));
+      } else label = dayKey(g.key);
       const flavorChips = SALES_FLAVORS.filter(f => g.amounts[f] > 0)
         .map(f => kvRow(tok(f), f, g.amounts[f] + (g.derived && g.derived.has(f) ? '*' : '')))
         .join('') || `<div class="proj-row"><span class="k">No sales</span></div>`;
@@ -4465,7 +4471,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       const tot = gs.reduce((a, g) => a + g.total, 0), fl = gs.reduce((a, g) => a + (g.flights || 0), 0);
       const amt = {}; SALES_FLAVORS.forEach(f => amt[f] = gs.reduce((a, g) => a + (g.amounts[f] || 0), 0));
       const rows = SALES_FLAVORS.filter(f => amt[f] > 0).map(f => kvRow(tok(f), f, amt[f])).join('') + (fl ? kvRow(tok('Flights'), 'Flights', fl, '', 'pr-flight') : '');
-      html += `<details class="db-entry db-fold db-month"><summary class="db-head"><span class="db-daylabel">${monthName(ym)}</span><span class="db-when">${tot} sold · ${usd(tot * PRICE_PER_UNIT + salesAdj(allRows.filter(r => (salesGroup === 'week' ? weekStart(r.date) : r.date).slice(0, 7) === ym)))}</span></summary>
+      html += `<details class="db-entry db-fold db-month"><summary class="db-head"><span class="db-daylabel">${monthName(ym)}</span><span class="db-when">${tot} sold · ${usd(tot * PRICE_PER_UNIT + salesAdj(allRows.filter(r => r.date.slice(0, 7) === ym)))}</span></summary>
           <div class="db-amts">${rows}</div>
           <div class="db-mdays">${gs.map(g => dayHtml(g, false)).join('')}</div></details>`;
     }
@@ -4485,6 +4491,9 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     }
     return { left: Math.max(0, Math.round(rem)), est: true };
   }
+  // Stock page: "N left" is today's estimate (estLeftNow), starred when the count or sales row it starts from is before today.
+  const leftNow = (st, p) => { const e = estLeftNow(st, p); return e.left + (e.est ? '*' : ''); };
+  const leftFoot = items => { const old = items.filter(x => x.st.hasInv && daysSince(x.st.asOf) > 0); return old.length ? `<div class="proj-sub">* Estimate. Latest sales or count on file: ${old.map(x => `${x.loc} (${wkShort(x.st.asOf)} ${fmtWhen(x.st.asOf)})`).join(', ')}. Days since then are counted at the usual sales rate.</div>` : ''; };
   // Week projection (Andrew, 2026-11-18): the week so far is what the sheet holds (real or count-estimated); every day of this week with no data
   // (today, the rest of the week, and any gap) is projected per store per item = that store's usual weekday/weekend rate x the store's pace
   // this week (actual / usual on the days that do have data, kept between 0.6 and 1.5) x the weekly trend. A forecast, not a promise.
@@ -4968,18 +4977,18 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       // the same flavor names right above this list.
       // First view: one short line per flavor (left · run-out date). Rates and bands are behind the i.
       const rateRows = PRODUCTS.map(p =>
-        `<div class="proj-row pr-fc"><span class="k">${tok(p)}${pdisp(p)}</span><span class="fc-v"><b>${st.stock[p]}</b> left <span class="fc-sub"><b>${fmtD(pick(ro, p))}</b></span></span></div>`).join('');
+        `<div class="proj-row pr-fc"><span class="k">${tok(p)}${pdisp(p)}</span><span class="fc-v"><b>${leftNow(st, p)}</b> left <span class="fc-sub"><b>${fmtD(pick(ro, p))}</b></span></span></div>`).join('');
       const detailRows = PRODUCTS.map(p => {
         const dp = st.sellDaysFor ? st.sellDaysFor[p] : st.sellDays;
         const span = (dp && dp < st.sellDays) ? ` <span style="color:var(--muted)">(${dp}d)</span>` : '';
-        return `<div class="proj-row pr-fc"><span class="k">${p}</span><span class="fc-v"><b>${fmtD(pick(ro, p))}</b>${fmtBand(ro.lo[p], ro.hi[p])}<span class="fc-sub">${st.rate[p].toFixed(1)}/day${span}</span></span></div>`;
+        return `<div class="proj-row pr-fc"><span class="k">${p}</span><span class="fc-v"><b>${fmtD(pick(ro, p))}</b>${fmtBand(ro.lo[p], ro.hi[p])}<span class="fc-sub">${st.rate[p].toFixed(1)}/selling day${span}</span></span></div>`;
       }).join('');
       const runoutTxt = ro.firstD === Infinity
         ? 'No recent sales — can\'t project'
         : `Runs out in <span class="big">${fmtD(pickFirst(ro))}</span><span class="pr-first">${ro.firstP} first</span>`;
       if (gridMode) {
         cols.push({ loc, st, ro, runout: ro.firstD === Infinity ? { t: '—', sub: 'no recent sales' } : { t: fmtD(pickFirst(ro)), sub: `${ro.firstP} first` },
-          cell: p => ({ n: st.stock[p], d: fmtD(pick(ro, p)) }), warn: staleWarn(st),
+          cell: p => ({ n: leftNow(st, p), d: fmtD(pick(ro, p)) }), warn: staleWarn(st),
           detail: `<div class="proj-sub">${st.stockTotal} on hand · counted ${fmtAgo(st.invDate)} · rate from ${st.sellDays} sales ${st.sellDays === 1 ? 'day' : 'days'} · ±${Math.round(st.dailyCV * 100)}% daily swing${trendNote(st)}</div>${ro.firstD === Infinity ? '' : `<div class="be-effort">Overall run-out band: ${fmtD(pickFirst(ro))}${fmtBand(ro.firstLo, ro.firstHi)}</div>`}${detailRows}` });
         continue;
       }
@@ -4989,6 +4998,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
           <div class="proj-runout">${runoutTxt}</div>
           ${staleWarn(st)}
           ${rateRows}
+          ${leftFoot([{ loc, st }])}
           <div class="info-body" hidden>
             <div class="proj-sub">${st.stockTotal} on hand · counted ${fmtAgo(st.invDate)} · rate from ${st.sellDays} sales ${st.sellDays === 1 ? 'day' : 'days'} · ±${Math.round(st.dailyCV * 100)}% daily swing${trendNote(st)}</div>
             <div class="be-section-label">Run-out and daily rate</div>
@@ -5004,6 +5014,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
           <div class="pg-row pg-time"><span class="k">Runs out in</span>${cells(c => c.none ? '<span class="pg-c">—</span>' : `<span class="pg-c"><b>${c.runout.t}</b><small>${esc(c.runout.sub)}</small></span>`)}</div>
           ${PRODUCTS.map(p => `<div class="pg-row"><span class="k">${tok(p)}${pdisp(p)}</span>${cells(c => { if (c.none) return '<span class="pg-c">—</span>'; const x = c.cell(p); return `<span class="pg-c"><span><b>${x.n}</b> left</span><small>${x.d}</small></span>`; })}</div>`).join('')}
           ${cols.map(c => c.warn ? `<div class="pg-stale"><b>${ab(c)}</b> ${c.warn}</div>` : '').join('')}
+          ${leftFoot(cols.filter(c => c.st).map(c => ({ loc: c.loc, st: c.st })))}
           <div class="info-body" hidden>${cols.map(c => c.none ? `<div class="be-section-label">${c.loc}</div><div class="proj-sub">No inventory count logged yet.</div>` : `<div class="be-section-label">${c.loc}</div>${c.detail}`).join('')}</div>
         </div>`;
     }
@@ -5971,8 +5982,8 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       if (r.days > 0 && r.sales > 0) sub += `<br>Expected sales <b>${money0(r.sales * unitPriceOn(p, todayISO()))}</b> (${Math.round(r.sales)} pcs)`;
       return `<div class="pw-row"><span class="pw-nm">${tok(p)}<span><b>${esc(p)}</b><small>${sub}</small></span></span><select data-wsp="${esc(p)}" aria-label="${esc(p)} should last">${opts(r.days)}</select></div>`;
     }).join('');
-    let gross = 0, grossPcs = 0, grossDays = 0; PRODUCTS.forEach(p => { const r = wizLast && wizLast[p]; if (r && r.days > 0 && r.sales > 0) { gross += r.sales * unitPriceOn(p, todayISO()); grossPcs += r.sales; grossDays = Math.max(grossDays, r.days); } });
-    const grossHtml = gross > 0 ? `<div class="pw-gross"><b>${money0(gross)}</b> expected gross sales<small>${Math.round(grossPcs)} pieces over ${grossDays === 1 ? '1 day' : grossDays + ' days'} at your retail prices, both stores. Moves as you change the days.</small></div>` : '';
+    let gross = 0, grossPcs = 0, grossDays = 0; const grossStores = new Set(); PRODUCTS.forEach(p => { const r = wizLast && wizLast[p]; if (r && r.days > 0 && r.sales > 0) { gross += r.sales * unitPriceOn(p, todayISO()); grossPcs += r.sales; grossDays = Math.max(grossDays, r.days); Object.keys(r.loc || {}).forEach(l => grossStores.add(l)); } });
+    const grossHtml = gross > 0 ? `<div class="pw-gross"><b>${money0(gross)}</b> expected gross sales<small>${Math.round(grossPcs)} pieces, each item over its own span (longest ${grossDays === 1 ? '1 day' : grossDays + ' days'}), at your retail prices${grossStores.size ? ', ' + [...grossStores].map(esc).join(' and ') : ''}. Stores without a count are left out. Moves as you change the days.</small></div>` : '';
     let pans = '';
     if (bx && bx.total > 0) {
       pans = `<div class="pw-pans"><b>${bx.total}</b> Cambro pan${bx.total === 1 ? '' : 's'} needed<button type="button" class="pw-frz${boxCfg.frozen ? ' on' : ''}" data-frz aria-pressed="${!!boxCfg.frozen}">Frozen: 2 layers (madeleines, bundt, cake pops)</button>${bx.items.length ? '<div class="pw-dest">' + bx.items.map(x => `<div><b>${esc(pdisp(x.p))}</b> · ${x.boxes} Cambro pan${x.boxes === 1 ? '' : 's'}${x.dest && x.dest.length ? `<small>Goes to ${destLine(x)}</small>` : ''}</div>`).join('') + '</div>' : ''}<small>${panLine(bx.total)}<br>Only for the pieces you bake, not the stock already on hand. Full-size, 4" deep. Madeleines of any flavor can share a Cambro pan, the others get their own; the count is not split by location, the lines above say where the pieces go.</small></div>`;
@@ -6954,7 +6965,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     const from = ymd(st), sums = { mad: 0, pump: 0, blue: 0 };
     ds.forEach(e => { if (String(e.datetime).slice(0, 10) < from) return;
       Object.keys(e.amounts || {}).forEach(p => { const n = Number(e.amounts[p]) || 0; if (!n) return;
-        const k = /pumpkin/i.test(p) ? 'pump' : /blueberry/i.test(p) ? 'blue' : /muffin|dubai/i.test(p) ? null : 'mad'; if (k) sums[k] += n; }); });
+        const g = finGrp(p), k = g === 'Madeleines' ? 'mad' : g !== 'Muffins' ? null : /pumpkin/i.test(p) ? 'pump' : /blueberry/i.test(p) ? 'blue' : null; if (k) sums[k] += n; }); });   // same item lists as the Finance groups (Bundt, Cake Pop, Chookie and Dubai Ball are in none of the three)
     const div = Math.max(1, win / 7);
     AUTO_WK = { days: span, mad: Math.max(0, Math.round(sums.mad / div)), pump: Math.max(0, Math.round(sums.pump / div)), blue: Math.max(0, Math.round(sums.blue / div)) };
   }
@@ -7105,7 +7116,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     return { yv, withTax, pre, mins, name: costItemName(sec, it) };
   }
   const finSave = () => { try { localStorage.setItem(FIN_KEY, JSON.stringify(FIN)); } catch {} };
-  const finGrp = p => /muffin/i.test(p) ? 'Muffins' : /dubai/i.test(p) ? 'Other' : 'Madeleines';
+  const finGrp = p => /muffin/i.test(p) ? 'Muffins' : /dubai/i.test(p) ? 'Other' : /bundt|cake pop|chookie|cookie/i.test(p) ? 'Other baked' : 'Madeleines';   // Madeleines = Lemon Poppy, Sea Salt, Maple Pecan and the retired flavors
   const finWaste = v => { const n = (v == null || v === '' || !Number.isFinite(Number(v))) ? null : Number(v); return n == null ? 5 : Math.min(50, Math.max(0, n)); };
   const finNum = v => (v == null || v === '' || !Number.isFinite(Number(v))) ? null : Number(v);
   // Totals for a month. entries = merged entries. ov = optional what-if overrides (this view only; never touches LAB / FIN / saved settings).
@@ -7252,7 +7263,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     const wchg = k => { if (!wi) return false; const kk = k.startsWith('pcsw:') ? 'pcs:' + k.slice(5) : k, v = finNum(wget(finOv, kk)); if (v == null) return false; let b = finNum(wget(finOv.base || {}, kk)); if (b == null && kk.startsWith('pcs:')) b = 0; return b == null || Math.abs(v - b) > 1e-9; };
     const win = (k, v, ph) => { const c = wchg(k); return `<input class="cost-in${c ? ' fin-wi' : ''}" type="number" inputmode="decimal" step="any" min="0" value="${v == null ? '' : v}"${ph != null ? ` placeholder="${ph}"` : ''} data-wi="${esc(k)}">${c ? '<small class="fin-wtag">what-if</small>' : ''}`; };
     // Group rows: Madeleines (retired flavors too), Muffins, Other. Group total first (bold), flavors indented and muted beneath.
-    const grouped = (lbl, val, tot, hint) => ['Madeleines', 'Muffins', 'Other'].map(name => {
+    const grouped = (lbl, val, tot, hint) => ['Madeleines', 'Muffins', 'Other baked', 'Other'].map(name => {
       const rs = r.rows.filter(x => finGrp(x.p) === name); if (!rs.length) return '';
       return row(`Total ${name}${hint ? `<span class="cost-hint"> · ${hint(rs)}</span>` : ''}`, finMoney(rs.reduce((t, x) => t + tot(x), 0)), 'cost-total')
         + rs.map(x => `<div style="padding-left:16px;color:var(--muted)">${row(lbl(x), val(x))}</div>`).join('');
@@ -7352,7 +7363,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     const dl = (k, v, cls) => `<div class="fin-ind2">${row(k, v, cls)}</div>`;
     const topIn = (g, a) => `<input class="cost-in${wi && finOv.top && typeof finOv.top[topKey[g]] === 'number' ? ' fin-wi' : ''}" type="number" inputmode="decimal" step="any" min="0" value="${a.rev.toFixed(2)}" data-top="${topKey[g]}">`;
     let revHtml = ''; const grand = zero();
-    ['Madeleines', 'Muffins', 'Other'].forEach(name => {
+    ['Madeleines', 'Muffins', 'Other baked', 'Other'].forEach(name => {
       const rs = r.rows.filter(x => finGrp(x.p) === name); if (!rs.length) return;
       const g = zero(), parts = [];
       rs.forEach(x => { const a = mk(x); addTo(g, a); parts.push([x, a]); });
@@ -7666,7 +7677,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   // ----- Price ledger view: vendors as headers, receipts and their items underneath, tax + fees at the end of each receipt -----
   let rcpDraft = null, ledgerOpen = {};
   const activeNames = () => { const s = new Set(); ACTIVE_ITEMS.forEach(k => { const [sec, key] = k.split(/:(.*)/s); const sc = COST_SECTIONS.find(x => x[0] === sec); const it = sc && sc[2]().find(x => (x.key || x.name) === key); if (it) costRows(sec, it).forEach(r => s.add(costCanon(r[0]))); }); return s; };
-  const todayISO = () => new Date().toLocaleDateString('en-CA');
+  const todayISO = () => nowPST().slice(0, 10);   // Pacific, like the rest of the app
   const ledgerCode = () => { let c = ''; try { c = localStorage.getItem('ledgerCode') || ''; } catch {} if (!c) { c = (prompt('Ledger code (needed once on this device)') || '').trim(); if (c) try { localStorage.setItem('ledgerCode', c); } catch {} } return c; };
   async function ledgerPost(body) {
     const code = ledgerCode(); if (!code) return false;
@@ -8607,7 +8618,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       const shown = p ? (w.amounts[p] || 0) : w.total;
       return add >= 0.5 ? `<span class="tr-d">→ ~${Math.round(shown + add)}</span>` : '';
     };
-    const { days, weeks } = trWeeks(rows);
+    const { days, weeks } = trWeeks(rows.map(r => r.date >= curWk ? noLump(r) : r));   // this week drops count-derived lumps, same as Sales > This week
     const head = `<div class="tr-bar"><select id="trLoc" data-native>${['La Mirada', 'Stanton', 'Both'].map(l => `<option${l === trLoc ? ' selected' : ''}>${l}</option>`).join('')}</select></div>`;
     let body = '';
     if (!weeks.length) body = '<div class="pn-note">No sales for this store yet.</div>';
@@ -8620,7 +8631,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       const firstSeen = {}; for (const p of cols) { const w = weeks.find(x => (x.amounts[p] || 0) > 0); firstSeen[p] = w ? w.start : null; }
       const cell = (w, p) => (firstSeen[p] && w.start >= firstSeen[p]) ? (w.amounts[p] || 0) + (w.est.has(p) ? '~' : '') + projTag(w, PRODUCTS.includes(p) ? p : '\u0000') : '—';
       const rowsHtml = mk => tbl.map(w => { const prev = weeks.slice(0, weeks.indexOf(w)).reverse().find(x => x.days >= 7); return `<tr${w.days < 7 ? ' class="tr-part"' : ''}><td>${esc(trFmtDay(w.start))}${w.days < 7 ? `<span class="tr-d">${w.days} of 7 days</span>` : ''}</td>${mk(w, prev)}</tr>`; }).join('');
-      const pieWeeks = trSpan === 0 ? shown.slice(-1) : trSpan === 1 ? shown.filter(w => w.days >= 7).slice(-1) : shown.slice(-trSpan);   // 0 = the newest (often part-way) week, 1 = the last complete week
+      const pieWeeks = trSpan === 0 ? shown.slice(-1) : trSpan === 1 ? shown.filter(w => w.days >= 7).slice(-1) : weeks.filter(w => w.days >= 7 && w.start < curWk && w.start >= addDays(curWk, -7 * trSpan));   // 0 = the newest (often part-way) week, 1 = the last complete week, 4 / 8 = the complete calendar weeks of the last 4 / 8 before this Monday (a missing week is not replaced by an older one)
       const sel = (id, opts, cur) => `<select id="${id}" data-native>${opts.map(([v, t]) => `<option value="${esc(String(v))}"${String(v) === String(cur) ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select>`;
       body = `<h3>Share of sales</h3><div class="tr-bar">${sel('trSpanSel', [[0, 'This week so far'], [1, 'Last full week'], [4, 'Last 4 weeks'], [8, 'Last 8 weeks']], trSpan)}${sel('trMetricSel', [['usd', 'By dollars'], ['qty', 'By pieces']], trMetric)}</div>` + trPie(pieWeeks, cols) +
         `<h3>By week</h3><div class="tr-bar">${sel('trItemSel', [['All', 'All items'], ...cols.map(p => [p, p])], trItem)}</div>` +
