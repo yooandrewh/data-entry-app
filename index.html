@@ -2330,6 +2330,28 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   .sc-blk.sm span, .sc-blk.sm em { display: inline; }
   .sc-blk.sm em { margin-left: 4px; }
   .sc-blk.sm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Schedule on phones: list view, sticky time column */
+.sc-ctl { display: flex; gap: 8px; align-items: center; margin: 8px 0; flex-wrap: wrap; }
+.sc-seg { display: flex; gap: 8px; }
+.sc-seg button { min-height: 44px; min-width: 72px; border: 1px solid #c9c9c9; border-radius: 12px; background: #fff; color: #000; padding: 0 16px; font-size: var(--fs-body); }
+.sc-seg button.on { background: #000; color: #fff; border-color: #000; }
+.sc-show { flex: 1 1 140px; min-width: 0; }
+.sc-opts { margin: 4px 0 8px; }
+.sc-opts summary { min-height: 44px; display: flex; align-items: center; font-size: var(--fs-body); cursor: pointer; }
+.sc-rows { margin-top: 4px; }
+.sc-hr { font-size: var(--fs-caption); font-weight: 600; color: #6b6b6b; padding: 12px 0 4px; border-bottom: 1px solid #e3e3e3; }
+.sc-row { display: grid; grid-template-columns: 52px 1fr; gap: 10px; align-items: center; min-height: 52px; padding: 6px 10px; margin-top: 6px; border-left: 5px solid var(--c, #6b6b6b); border-radius: 6px; background: #f6f6f6; }
+.sc-row.oven { background: #fff; border: 2px solid var(--c, #6b6b6b); border-left-width: 5px; }
+.sc-row.rest { background: repeating-linear-gradient(135deg, #f1f1f1 0 6px, #e4e4e4 6px 12px); border-left-style: dashed; }
+.sc-row.free { background: #fff; border: 1px dashed #c9c9c9; border-left-width: 1px; min-height: 40px; }
+.sc-t b, .sc-x b { display: block; font-size: var(--fs-body); font-weight: 600; color: #000; }
+.sc-t small, .sc-x small { display: block; font-size: var(--fs-caption); color: #6b6b6b; }
+.sc-axis, .sc-chart > .sc-hd:first-child { position: sticky; left: 0; z-index: 4; background: #fff; }
+#homeSched .sc-card { padding: 16px 12px !important; }
+.sc-opts summary { justify-content: space-between; list-style: none; }
+.sc-opts summary::-webkit-details-marker { display: none; }
+.sc-opts summary::after { content: ''; width: 8px; height: 8px; border-right: 2px solid #000; border-bottom: 2px solid #000; transform: rotate(45deg); margin: -4px 6px 0 0; }
+.sc-opts[open] summary::after { transform: rotate(-135deg); margin-top: 4px; }
 </style>
 </head>
 <body>
@@ -2710,7 +2732,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.177.13 · Nov 18, 6:35 PM PST</div>
+<div class="ver-badge">v1.178.00 · Nov 18, 7:10 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -5756,7 +5778,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   }
   // ---- Schedule: who does what, and when. Tasks come from the plan (planBakeTotals); drag a block along its row to move it in time, or to another person / oven. ----
   // Setup -> batch prep -> fill the pans -> oven round -> (cool) -> glaze -> cleaning. People do everything but the oven and the cooling; one oven round at a time per oven.
-  let schedCfg = { people: 2, ovens: 2, fill: 5 }, schedPin = {}, schedOv = {}, schedAt = {}, schedDur = {}, schedZoom = 2, schedSel = null, schedPpm = 2;
+  let schedOptsOpen = !window.matchMedia('(max-width: 700px)').matches, schedCfg = { people: 2, ovens: 2, fill: 5 }, schedPin = {}, schedOv = {}, schedAt = {}, schedDur = {}, schedZoom = 2, schedSel = null, schedPpm = 2;
   try { Object.assign(schedCfg, JSON.parse(localStorage.getItem('sched.v2') || '{}')); const m = JSON.parse(localStorage.getItem('schedMap.v2') || '{}') || {}; schedPin = m.pin || {}; schedOv = m.ov || {}; schedAt = m.at || {}; schedDur = m.dur || {}; schedZoom = m.zoom || 2; } catch (e) {}
   const schedSave = () => { try { localStorage.setItem('sched.v2', JSON.stringify(schedCfg)); localStorage.setItem('schedMap.v2', JSON.stringify({ pin: schedPin, ov: schedOv, at: schedAt, dur: schedDur, zoom: schedZoom })); } catch (e) {} };
   const schedStrip = t => String(t || '').replace(/<br\s*\/?>/g, '\n').replace(/<\/?(b|i|small|p|div|span)[^>]*>/g, '').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
@@ -5898,9 +5920,12 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     const el = document.getElementById('homeSched'); if (!el) return;
     const T = schedTasks();
     const step = (k, lbl, v) => `<div class="sc-set"><span>${lbl}</span><button type="button" data-sc="${k}-" aria-label="Fewer ${lbl}">−</button><b>${v}</b><button type="button" data-sc="${k}+" aria-label="More ${lbl}">+</button></div>`;
-    let h = `<div class="card sc-card"><h3>Who does what</h3><div class="sc-help">Built from the Plan page's bake. Time runs down the page. Drag a block up or down to move it in time, or sideways onto another person or oven to hand it over. Tap a block, then drag the bar on its bottom edge to stretch or shorten it. A block can't start before the step it waits on, so it snaps later if you go too early. Times snap to 5 min.</div>`
-      + `<div class="sc-sets">${step('people', 'People', schedCfg.people)}${step('ovens', 'Ovens', schedCfg.ovens)}${step('fill', 'Min to fill pans', schedCfg.fill)}<div class="sc-set"><span>Zoom</span><button type="button" data-sc="zoom-" aria-label="Zoom out">−</button><b>${schedZoom}×</b><button type="button" data-sc="zoom+" aria-label="Zoom in">+</button></div></div>`;
-    if (!T.length) { el.innerHTML = h + `<div class="sc-none">Nothing to bake yet. Pick days for at least one item on the Plan page (step 1).</div></div>`; return; }
+    const phone = window.matchMedia('(max-width: 700px)').matches;
+    const view = schedCfg.view || (phone ? 'list' : 'chart');
+    const opts = `<details class="sc-opts"${schedOptsOpen ? ' open' : ''}><summary>People, ovens and help</summary><div class="sc-help">Built from the Plan page's bake. Chart view: time runs down the page. Drag a block up or down to move it in time, or sideways onto another person or oven to hand it over. Tap a block, then drag the bar on its bottom edge to stretch or shorten it. A block can't start before the step it waits on, so it snaps later if you go too early. Times snap to 5 min. List view: one step per row, in time order.</div>`
+      + `<div class="sc-sets">${step('people', 'People', schedCfg.people)}${step('ovens', 'Ovens', schedCfg.ovens)}${step('fill', 'Min to fill pans', schedCfg.fill)}${view === 'chart' ? `<div class="sc-set"><span>Zoom</span><button type="button" data-sc="zoom-" aria-label="Zoom out">−</button><b>${schedZoom}×</b><button type="button" data-sc="zoom+" aria-label="Zoom in">+</button></div>` : ''}</div></details>`;
+    let h = `<div class="card sc-card"><h3>Who does what</h3>`;
+    if (!T.length) { el.innerHTML = h + opts + `<div class="sc-none">Nothing to bake yet. Pick days for at least one item on the Plan page (step 1).</div></div>`; return; }
     const R = schedRun(T), total = Math.max(...R.map(x => x.end)), ppm = schedPpm = 1.6 * schedZoom, H = Math.ceil(total * ppm) + 8;
     const lanes = [...Array(schedCfg.people).keys()].map(i => ({ label: 'Person ' + (i + 1), items: R.filter(x => x.who === i), kind: 'p', idx: i })).concat([...Array(schedCfg.ovens).keys()].map(i => ({ label: 'Oven ' + (i + 1), items: R.filter(x => x.ov === i), kind: 'o', idx: i })));
     const rests = R.filter(x => x.rest); if (rests.length) lanes.push({ label: 'Resting', items: rests, kind: 'r', idx: 0 });
@@ -5910,10 +5935,37 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     const blk = x => x.rest ? `<div class="sc-blk rest" data-id="${esc(x.id)}" style="top:${Math.round(x.start * ppm)}px;height:${Math.max(6, Math.round(x.min * ppm) - 1)}px;--c:${col(x)}" title="${esc(x.name)}"><span>${esc(x.name)}</span><em>${dm(x.min)}</em></div>` : `<div class="sc-blk${x.min * ppm < 30 ? ' sm' : ''}${x.oven ? ' oven' : ''}${schedSel === x.id ? ' sel' : ''}${moved(x.id) ? ' mv' : ''}" data-id="${esc(x.id)}" data-drag="1" style="top:${Math.round(x.start * ppm)}px;height:${Math.max(16, Math.round(x.min * ppm) - 1)}px;--c:${col(x)}" title="${esc(x.name)}"><span>${esc(x.name)}</span><em>${dm(x.min)}</em>${schedSel === x.id ? '<i class="sc-rz" data-rz="1"></i>' : ''}</div>`;
     const ticks = []; for (let m = 0; m <= total; m += schedZoom > 1 ? 30 : 60) ticks.push(`<i style="top:${Math.round(m * ppm)}px">${clk(m)}</i>`);
     const busy = lanes.filter(l => l.kind === 'p').map(l => Math.round(l.items.reduce((a, x) => a + x.min, 0)));
-    h += `<div class="sc-sum"><b>${fmtDur(Math.round(total))}</b> start to finish · ${schedCfg.people} ${schedCfg.people === 1 ? 'person' : 'people'} · ${schedCfg.ovens} oven${schedCfg.ovens === 1 ? '' : 's'}<small>Hands-on time: ${busy.map((m, i) => 'Person ' + (i + 1) + ' ' + fmtDur(m)).join(' · ')}</small></div>`
-      + `<div class="sc-scroll"><div class="sc-chart" style="--n:${lanes.length}"><div class="sc-hd"></div>${lanes.map(l => `<div class="sc-hd">${l.label}</div>`).join('')}<div class="sc-axis" style="height:${H}px">${ticks.join('')}</div>${lanes.map(l => `<div class="sc-lane" data-kind="${l.kind}" data-lane="${l.idx}" style="height:${H}px">${l.items.map(blk).join('')}</div>`).join('')}</div></div>`;
+    h += `<div class="sc-sum"><b>${fmtDur(Math.round(total))}</b> start to finish · ${schedCfg.people} ${schedCfg.people === 1 ? 'person' : 'people'} · ${schedCfg.ovens} oven${schedCfg.ovens === 1 ? '' : 's'}<small>Hands-on time: ${busy.map((m, i) => 'Person ' + (i + 1) + ' ' + fmtDur(m)).join(' · ')}</small></div>`;
+    const laneKey = l => l.kind + l.idx;
+    const show = schedCfg.show === 'all' || lanes.some(l => laneKey(l) === schedCfg.show) ? schedCfg.show : (lanes[0] ? laneKey(lanes[0]) : 'all');
+    const chartHtml = `<div class="sc-scroll"><div class="sc-chart" style="--n:${lanes.length}"><div class="sc-hd"></div>${lanes.map(l => `<div class="sc-hd">${l.label}</div>`).join('')}<div class="sc-axis" style="height:${H}px">${ticks.join('')}</div>${lanes.map(l => `<div class="sc-lane" data-kind="${l.kind}" data-lane="${l.idx}" style="height:${H}px">${l.items.map(blk).join('')}</div>`).join('')}</div></div>`;
+    const whoOf = x => x.rest ? 'nobody needed' : x.who >= 0 ? 'Person ' + (x.who + 1) : 'Oven ' + (x.ov + 1);
+    const listHtml = () => {
+      const one = show !== 'all' ? lanes.find(l => laneKey(l) === show) : null;
+      const src = (one ? one.items : R).slice().sort((p, q) => p.start - q.start || p.end - q.end);
+      const out = []; let cur = one && one.kind !== 'r' ? (one.kind === 'p' ? 0 : (src[0] ? src[0].start : 0)) : null, hr = -1;
+      const hour = m => { const hh = Math.floor(m / 60); if (hh !== hr) { hr = hh; out.push(`<div class="sc-hr">${hh}:00</div>`); } };
+      const ents = [];   // back-to-back fills of one item (same person) read as one row: "Cookie fill 1-5"
+      for (const x of src) {
+        const m = /^(.*) fill (\d+)$/.exec(x.name), pv = ents[ents.length - 1];
+        if (m && pv && pv.fill === m[1] && pv.x.who === x.who && pv.end === x.start) { pv.end = x.end; pv.last = m[2]; continue; }
+        ents.push({ x, start: x.start, end: x.end, fill: m ? m[1] : null, first: m ? m[2] : null, last: m ? m[2] : null });
+      }
+      for (const e of ents) {
+        const x = e.x, min = e.end - e.start, nm = e.fill && e.last !== e.first ? e.fill + ' fill ' + e.first + '-' + e.last : x.name;
+        if (cur != null && e.start - cur >= 10) { hour(cur); out.push(`<div class="sc-row free"><div class="sc-t"><b>${clk(cur)}</b><small>${clk(e.start)}</small></div><div class="sc-x"><small>Free · ${dm(e.start - cur)}</small></div></div>`); }
+        hour(e.start);
+        out.push(`<div class="sc-row${x.rest ? ' rest' : ''}${x.oven ? ' oven' : ''}" style="--c:${col(x)}"><div class="sc-t"><b>${clk(e.start)}</b><small>${clk(e.end)}</small></div><div class="sc-x"><b>${esc(nm)}</b><small>${dm(min)}${one ? '' : ' · ' + whoOf(x)}</small></div></div>`);
+        if (cur != null) cur = Math.max(cur, e.end);
+      }
+      if (one && one.kind === 'p' && total - cur >= 10) { hour(cur); out.push(`<div class="sc-row free"><div class="sc-t"><b>${clk(cur)}</b><small>${clk(total)}</small></div><div class="sc-x"><small>Free · ${dm(total - cur)}</small></div></div>`); }
+      return `<div class="sc-rows">${out.join('') || '<div class="sc-none">Nothing for this one.</div>'}</div>`;
+    };
+    h += `<div class="sc-ctl"><div class="sc-seg" role="group" aria-label="View"><button type="button" data-sc="view:list" class="${view === 'list' ? 'on' : ''}">List</button><button type="button" data-sc="view:chart" class="${view === 'chart' ? 'on' : ''}">Chart</button></div>`
+      + (view === 'list' ? `<select id="scShow" class="sc-show" aria-label="Show">${[['all', 'Everyone']].concat(lanes.map(l => [laneKey(l), l.label])).map(([v, t]) => `<option value="${v}"${v === show ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select>` : '') + `</div>` + opts
+      + (view === 'list' ? listHtml() : chartHtml);
     const sel = R.find(x => x.id === schedSel);
-    h += `<div class="sc-detail">${sel ? `<b>${esc(sel.name)}</b> · ${clk(sel.start)} to ${clk(sel.end)} (${sel.min} min)${sel.who >= 0 ? ' · Person ' + (sel.who + 1) : sel.ov >= 0 ? ' · Oven ' + (sel.ov + 1) : ' · resting, nobody needed'}${schedDur[sel.id] ? ' · length set by you' : ''}${moved(sel.id) ? ' · edited by you <button type="button" data-sc="unpin">Put back</button>' : ''}` : 'Tap a block for its details.'}</div>`;
+    if (view === 'chart') h += `<div class="sc-detail">${sel ? `<b>${esc(sel.name)}</b> · ${clk(sel.start)} to ${clk(sel.end)} (${sel.min} min)${sel.who >= 0 ? ' · Person ' + (sel.who + 1) : sel.ov >= 0 ? ' · Oven ' + (sel.ov + 1) : ' · resting, nobody needed'}${schedDur[sel.id] ? ' · length set by you' : ''}${moved(sel.id) ? ' · edited by you <button type="button" data-sc="unpin">Put back</button>' : ''}` : 'Tap a block for its details.'}</div>`;
     h += `<div class="sc-lists">${lanes.map(l => `<div class="sc-list"><b>${l.label}</b>${l.items.map(x => `<div><span>${clk(x.start)}</span> ${esc(x.name)} <small>${x.min} min</small></div>`).join('') || '<div><small>Nothing</small></div>'}</div>`).join('')}</div>`
       + `<h3 style="margin-top:16px">Steps for each item</h3><div class="sc-help">The blocks you drag are the timed parts. Open an item for every step of its method.</div>${schedSteps(T)}<button type="button" class="sc-reset" data-sc="reset">Auto-arrange (clear my moves)</button></div>`;
     el.innerHTML = h;
@@ -5928,12 +5980,15 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
         const v = b.dataset.sc;
         if (v === 'reset') { schedPin = {}; schedOv = {}; schedAt = {}; schedDur = {}; }
         else if (v === 'zoom+' || v === 'zoom-') { schedZoom = Math.max(1, Math.min(6, schedZoom + (v === 'zoom+' ? 1 : -1))); }
+        else if (v.startsWith('view:')) { schedCfg.view = v.slice(5); }
         else if (v === 'unpin') { delete schedPin[schedSel]; delete schedOv[schedSel]; delete schedAt[schedSel]; delete schedDur[schedSel]; }
         else { const k = v.slice(0, -1), d = v.endsWith('+') ? 1 : -1, lim = { people: [1, 4], ovens: [1, 4], fill: [0, 30] }[k]; schedCfg[k] = Math.max(lim[0], Math.min(lim[1], schedCfg[k] + d)); schedPin = Object.fromEntries(Object.entries(schedPin).filter(([, i]) => i < schedCfg.people)); schedOv = Object.fromEntries(Object.entries(schedOv).filter(([, i]) => i < schedCfg.ovens)); }
         schedSave(); schedPaint(); return;
       }
       const bl = e.target.closest('.sc-blk'); if (bl && !drag) { schedSel = bl.dataset.id; schedPaint(); }
     });
+    root.addEventListener('change', e => { if (e.target.id === 'scShow') { schedCfg.show = e.target.value; schedSave(); schedPaint(); } });
+    root.addEventListener('toggle', e => { if (e.target.classList && e.target.classList.contains('sc-opts')) schedOptsOpen = e.target.open; }, true);
     root.addEventListener('pointerdown', e => {
       const bl = e.target.closest('.sc-blk[data-drag]'); if (!bl) return;
       if (e.target.closest('[data-rz]')) { drag = { id: bl.dataset.id, el: bl, rz: true, x: e.clientX, y: e.clientY, h: bl.getBoundingClientRect().height, moved: false }; try { bl.setPointerCapture(e.pointerId); } catch (x) {} e.preventDefault(); return; }

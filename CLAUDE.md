@@ -289,6 +289,8 @@ Ingredients: **Dark Chocolate 70% and Dark Chocolate Couverture are retired into
 
 **v1.177.13: glaze wait 10 min, Maple Pecan in the early oven gap** (Andrew 2026-11-18). Lemon Poppy glaze and Maple Pecan topping can start any time 10 minutes after the bake (`SCHED_GLAZE_WAIT`, was the 5 min cooling). Maple Pecan's second round now fits oven 2's idle time at the start: `SCHED_ORDER` = Cake Pop, Maple Pecan, Muffin, Cookie, Lemon Poppy, Bundt, Sea Salt (all 5,040 searched). 40-day plan: Maple Pecan baked by 1:03 (was 1:28), ovens 25-231 (span 206, was 199), day 6h20 (was 6h21), Lemon Poppy glaze ends 4:05 before the melt at 4:50.
 
+**v1.178.00: Schedule on phones** (Andrew sent a phone screenshot: sideways-scrolling lanes, clipped block names, a long help card above the chart). Schedule now has a **List | Chart** switch (`schedCfg.view`; phones, width <= 700px, default to List, desktop to Chart) and a Show dropdown (`#scShow`, `schedCfg.show`: Everyone / each person / each oven / Resting). List = one row per step in time order (`.sc-row`: start and end time, name, minutes, product colour stripe, ovens outlined, rests hatched), hour headers, dashed **Free** rows for gaps of 10 min or more in one person's or oven's list, and back-to-back fills of one item on one person merged ("Cookie fill 1-5"). Help text and the People / Ovens / Fill / Zoom steppers sit in a collapsed "People, ovens and help" fold on phones (`schedOptsOpen`); Zoom shows only in Chart. Chart keeps dragging and resizing, now with the time column sticky while it scrolls sideways. The card has 12px side padding (an older rule had zeroed it). Headless 390px screenshots only, not on a phone.
+
 ## Design pass (v1.149.00)
 
 Last CSS block: **every `<select>` has one style** (white, 1px #c9c9c9, 12px radius, 44px, black chevron; `.row-select` and `[data-labi]` excluded); the Forecast store toggle (`.fc-locs`) uses the pill style. On desktop (>=900px) all pages share a 1120px column, page chips sit centered at natural width, the Trends donut is 220px. On phones the 5 Inventory chips shrink (11px padding) to fit. Counts' total says "pieces", not "madeleines". Still open: coloured snowflake/flame/arrow icons in Forecast misses (breaks the B/W rule), today's half-finished day shows as a 0.0x miss, Stock's section headers use the old grey band style.
@@ -309,7 +311,7 @@ The headless check at 390px misses what iOS does. Apply these to every new or ch
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.177.13**; the next feature is v1.178.00, a fix v1.177.14. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.178.00**; the next feature is v1.179.00, a fix v1.178.01. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 
