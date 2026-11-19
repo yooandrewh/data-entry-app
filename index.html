@@ -2710,7 +2710,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.176.09 · Nov 18, 9:00 PM PST</div>
+<div class="ver-badge">v1.177.00 · Nov 18, 9:30 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -5834,6 +5834,24 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     return out;
   }
   const clk = m => Math.floor(m / 60) + ':' + String(Math.round(m % 60)).padStart(2, '0');
+  // Mixing bowl guess for an item's whole-amount mix: recipe grams for what goes in the bowl (not glaze, topping or frosting) x batches, in the smallest bowl under its fill limit.
+  const BOWLS = [5, 20, 30, 60], BOWL_FILL = 0.65, DOUGH_FILL = 0.55, DOUGH_ITEMS = ['Chookie'];
+  const BOWL_SKIP = { 'Lemon Poppy': /Powdered Sugar|Lemon Juice|glaze/i, 'Maple Pecan': /topping/i, 'Pumpkin Bundt': /Powdered Sugar/i, 'Cake Pop': /frosting|Powdered Sugar|Heavy Cream|Almond Bark|Cocoa Butter|Cone/i };
+  function batterGrams(p) {
+    try {
+      const key = Object.keys(BS_PRODUCT).find(k => BS_PRODUCT[k] === p), f = key && bsFind(key); if (!f) return 0;
+      const rows = costRows(f.sec, f.it, bsVers(f.it) ? bsVerOf(f.it, { key }) : null), skip = BOWL_SKIP[p];
+      return rows.reduce((a, r) => a + (skip && skip.test(String(r[0])) ? 0 : (Number(r[1]) || 0)), 0);
+    } catch (e) { return 0; }
+  }
+  function bowlLine(grams, dough) {
+    if (!(grams > 0)) return '';
+    const lim = dough ? DOUGH_FILL : BOWL_FILL, cap = q => q * 0.946 * 1000, q = BOWLS.find(b => grams <= cap(b) * lim);
+    const kg = g => (g / 1000).toFixed(1) + ' kg (' + (g / 453.6).toFixed(1) + ' lb)';
+    if (q) return `Mixing bowl: ${q} qt for about ${kg(grams)} of ${dough ? 'dough' : 'batter'}, ${Math.round(grams / cap(q) * 100)}% full. A guess from recipe weights.`;
+    const k = Math.ceil(grams / (cap(60) * lim));
+    return `Mixing bowl: 60 qt, ${k} mixes of about ${kg(grams / k)} each (${Math.round(grams / k / cap(60) * 100)}% full), ${kg(grams)} in all. A guess from recipe weights.`;
+  }
   // The steps for each item in plain words, with the method text from its recipe.
   function schedSteps(T) {
     const bake = planBakeTotals || {}, out = [];
@@ -5844,6 +5862,10 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       try { const key = Object.keys(BS_PRODUCT).find(k => BS_PRODUCT[k] === p), f = key && bsFind(key); method = schedStrip(f && f.sec === 'mad' ? REC_MAD_NOTES : (f && f.it && (f.it.notes || (f.it.versions && f.it.versions[0] && f.it.versions[0].notes))) || ''); } catch (e) {}
       const sharedPrep = !preps.length && T.find(t => /:prep:/.test(t.id) && t.p !== p && SCHED_COMBO.includes(t.p) && SCHED_COMBO.includes(p));
       const steps = sharedPrep ? [`Prep: made together with ${pdisp(sharedPrep.p)}, one ${sharedPrep.min} min block (${flavorBatches(n, p)} batch${flavorBatches(n, p) === 1 ? '' : 'es'}, ${n} pieces). Mix by the method below.`] : [`Prep: ${preps.length} × ${preps[0] ? preps[0].min : 0} min (${flavorBatches(n, p)} batch${flavorBatches(n, p) === 1 ? '' : 'es'}, ${n} pieces). Mix by the method below.`];
+      { const combo = (preps.length || sharedPrep) && SCHED_COMBO.includes(p) && SCHED_COMBO.every(q => Math.round(bake[q] || 0) > 0);
+        const g = combo ? SCHED_COMBO.reduce((a, q) => a + flavorBatches(Math.round(bake[q]), q) * batterGrams(q), 0) : flavorBatches(n, p) * batterGrams(p);
+        const bl = bowlLine(g, DOUGH_ITEMS.includes(p));
+        if (bl) steps.splice(1, 0, combo ? (sharedPrep ? 'Mixing bowl: same mix as ' + pdisp(sharedPrep.p) + ' (both flavors together).' : bl.replace('Mixing bowl:', 'Mixing bowl (' + SCHED_COMBO.map(pdisp).join(' + ') + ' together):')) : bl); }
       if (fills.length) steps.push(`Fill the pans: ${fills.length} round${fills.length === 1 ? '' : 's'} × ${schedCfg.fill} min, ${o.op ? o.op.pans + ' pans × ' + o.op.per : o.cap + ' per round'}.`);
       steps.push(`Bake: ${bakes.length} round${bakes.length === 1 ? '' : 's'} × ${o.bk} min in the oven.`);
       if (o.cool) steps.push(`Cool: ${o.cool} min on the rack after each round.`);
