@@ -2654,7 +2654,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.172.03 · Nov 18, 8:10 PM PST</div>
+<div class="ver-badge">v1.173.00 · Nov 18, 8:40 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -5698,18 +5698,19 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     const o = ovenSteps(bake); if (!o.rows.length) return '';
     return `<div class="${cls || 'pw-pans'}"><b>${o.rounds}</b> oven round${o.rounds === 1 ? '' : 's'} · <b>${fmtDur(o.min)}</b> baking<div class="pw-dest">${o.rows.map(x => `<div><b>${esc(pdisp(x.p))}</b> · round${x.rounds === 1 ? '' : 's'} ${x.rounds === 1 ? x.from : x.from + '–' + (x.from + x.rounds - 1)} · ${x.rounds} × ${x.bk} min${x.cool ? ' + ' + x.cool + ' cool' : ''} = ${fmtDur(x.min)}<small>${x.n} pieces · ${x.op ? x.op.pans + ' pans × ' + x.op.per + ' = ' + x.cap + ' per round' + (x.op.max > x.op.pans ? ' (room for ' + (x.op.max - x.op.pans) + ' more pans)' : ' (oven full)') : x.cap + ' fit per round'}</small></div>`).join('')}</div><small>One item per round, back to back. Oven time only: setup, batch prep, glazing and cleaning are in Kitchen time. Pans per round are the ones you gave (one oven). Madeleines bake ${KT.bakeMin} min plus ${KT.coolMin} cooling (Kitchen times); the others use the recipe's bake time.</small></div>`;
   }
-  // ---- Schedule: who does what, and when. Tasks come from the plan (planBakeTotals); drag a block to the other person to reassign it. ----
+  // ---- Schedule: who does what, and when. Tasks come from the plan (planBakeTotals); drag a block along its row to move it in time, or to another person / oven. ----
   // Setup -> batch prep -> fill the pans -> oven round -> (cool) -> glaze -> cleaning. People do everything but the oven and the cooling; one oven round at a time per oven.
-  let schedCfg = { people: 2, ovens: 1, fill: 5 }, schedPin = {}, schedSel = null;
-  try { Object.assign(schedCfg, JSON.parse(localStorage.getItem('sched.v1') || '{}')); schedPin = JSON.parse(localStorage.getItem('schedPin.v1') || '{}') || {}; } catch (e) {}
-  const schedSave = () => { try { localStorage.setItem('sched.v1', JSON.stringify(schedCfg)); localStorage.setItem('schedPin.v1', JSON.stringify(schedPin)); } catch (e) {} };
+  let schedCfg = { people: 2, ovens: 2, fill: 5 }, schedPin = {}, schedOv = {}, schedAt = {}, schedSel = null, schedPpm = 2;
+  try { Object.assign(schedCfg, JSON.parse(localStorage.getItem('sched.v2') || '{}')); const m = JSON.parse(localStorage.getItem('schedMap.v2') || '{}') || {}; schedPin = m.pin || {}; schedOv = m.ov || {}; schedAt = m.at || {}; } catch (e) {}
+  const schedSave = () => { try { localStorage.setItem('sched.v2', JSON.stringify(schedCfg)); localStorage.setItem('schedMap.v2', JSON.stringify({ pin: schedPin, ov: schedOv, at: schedAt })); } catch (e) {} };
+  const schedStrip = t => String(t || '').replace(/<br\s*\/?>/g, '\n').replace(/<\/?(b|i|small|p|div|span)[^>]*>/g, '').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
   function schedTasks() {
     const T = [{ id: 'setup', name: 'Setup', p: '', min: KT.setupMin, who: true, deps: [] }], bake = planBakeTotals || {};
     for (const p of PRODUCTS) {
       const n = Math.round(bake[p] || 0); if (n <= 0) continue;
       const o = ovenSteps({ [p]: n }).rows[0], batches = flavorBatches(n, p);
-      let mad = true, group = KT.prepGroup, pmin = KT.prepMin;
-      try { const key = Object.keys(BS_PRODUCT).find(k => BS_PRODUCT[k] === p), f = key && bsFind(key); if (f && f.sec !== 'mad') { mad = false; group = 1; pmin = (f.it && f.it.prep) || 20; } } catch (e) {}
+      let group = KT.prepGroup, pmin = KT.prepMin;
+      try { const key = Object.keys(BS_PRODUCT).find(k => BS_PRODUCT[k] === p), f = key && bsFind(key); if (f && f.sec !== 'mad') { group = 1; pmin = (f.it && f.it.prep) || 20; } } catch (e) {}
       const nPrep = Math.ceil(batches / group), perPrep = group * (PRODUCT_YIELD[p] || BATCH_YIELD);
       for (let i = 1; i <= nPrep; i++) T.push({ id: p + ':prep:' + i, name: pdisp(p) + ' prep ' + i + '/' + nPrep, p, min: pmin, who: true, deps: ['setup'] });
       let last = null;
@@ -5724,62 +5725,91 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     if (T.length > 1) T.push({ id: 'clean', name: 'Cleaning', p: '', min: KT.cleanMin, who: true, deps: T.map(t => t.id) });
     return T.length > 1 ? T : [];
   }
+  // First time >= ready where `dur` minutes are free on a resource (slots = [[start, end], ...]).
+  function schedGap(slots, ready, dur) {
+    let t = ready; for (const [a, b] of slots.slice().sort((x, y) => x[0] - y[0])) { if (t + dur <= a) break; if (b > t) t = b; } return t;
+  }
   function schedRun(T) {
-    const pf = Array(schedCfg.people).fill(0), of = Array(schedCfg.ovens).fill(0), end = new Map(), left = T.slice(), out = [];
+    const ps = Array.from({ length: schedCfg.people }, () => []), os = Array.from({ length: schedCfg.ovens }, () => []), end = new Map(), left = T.slice(), out = [];
     while (left.length) {
       let best = null;
       for (const t of left) {
         if (!t.deps.every(d => end.has(d))) continue;
-        const ready = Math.max(0, ...t.deps.map(d => end.get(d))) + (t.delay || 0);
-        let start = ready, who = -1, ov = -1;
-        if (t.who) { const pin = schedPin[t.id]; who = pin != null && pin < pf.length ? pin : pf.indexOf(Math.min(...pf)); start = Math.max(start, pf[who]); }
-        if (t.oven) { ov = of.indexOf(Math.min(...of)); start = Math.max(start, of[ov]); }
-        if (!best || start < best.start) best = { t, start, who, ov };
+        const ready = Math.max(schedAt[t.id] || 0, ...t.deps.map(d => end.get(d)).map((v, i) => v + (t.delay || 0)));
+        let c = null;
+        if (t.who) {
+          const pin = schedPin[t.id], list = pin != null && pin < ps.length ? [pin] : ps.map((_, i) => i);
+          list.forEach(i => { const st = schedGap(ps[i], ready, t.min); if (!c || st < c.start) c = { start: st, who: i, ov: -1 }; });
+        } else {
+          const pin = schedOv[t.id], list = pin != null && pin < os.length ? [pin] : os.map((_, i) => i);
+          list.forEach(i => { const st = schedGap(os[i], ready, t.min); if (!c || st < c.start) c = { start: st, who: -1, ov: i }; });
+        }
+        if (!best || c.start < best.start) best = Object.assign({ t }, c);
       }
       const { t, start, who, ov } = best; left.splice(left.indexOf(t), 1);
-      const e = start + t.min; end.set(t.id, e); if (who >= 0) pf[who] = e; if (ov >= 0) of[ov] = e;
+      const e = start + t.min; end.set(t.id, e); if (who >= 0) ps[who].push([start, e]); if (ov >= 0) os[ov].push([start, e]);
       out.push(Object.assign({}, t, { start, end: e, who, ov }));
     }
     return out;
   }
   const clk = m => Math.floor(m / 60) + ':' + String(Math.round(m % 60)).padStart(2, '0');
+  // The steps for each item in plain words, with the method text from its recipe.
+  function schedSteps(T) {
+    const bake = planBakeTotals || {}, out = [];
+    for (const p of PRODUCTS) {
+      const n = Math.round(bake[p] || 0); if (n <= 0) continue;
+      const mine = T.filter(t => t.p === p), preps = mine.filter(t => /:prep:/.test(t.id)), fills = mine.filter(t => /:fill:/.test(t.id)), bakes = mine.filter(t => t.oven), gl = mine.find(t => /:glaze/.test(t.id));
+      const o = ovenSteps({ [p]: n }).rows[0]; let method = '';
+      try { const key = Object.keys(BS_PRODUCT).find(k => BS_PRODUCT[k] === p), f = key && bsFind(key); method = schedStrip(f && f.sec === 'mad' ? REC_MAD_NOTES : (f && f.it && (f.it.notes || (f.it.versions && f.it.versions[0] && f.it.versions[0].notes))) || ''); } catch (e) {}
+      const steps = [`Prep: ${preps.length} × ${preps[0] ? preps[0].min : 0} min (${flavorBatches(n, p)} batch${flavorBatches(n, p) === 1 ? '' : 'es'}, ${n} pieces). Mix by the method below.`];
+      if (fills.length) steps.push(`Fill the pans: ${fills.length} round${fills.length === 1 ? '' : 's'} × ${schedCfg.fill} min, ${o.op ? o.op.pans + ' pans × ' + o.op.per : o.cap + ' per round'}.`);
+      steps.push(`Bake: ${bakes.length} round${bakes.length === 1 ? '' : 's'} × ${o.bk} min in the oven.`);
+      if (o.cool) steps.push(`Cool: ${o.cool} min on the rack after each round.`);
+      if (gl) steps.push(`Glaze: ${gl.min} min once cooled.`);
+      out.push(`<details class="sc-steps"><summary><b>${esc(pdisp(p))}</b> · ${n} pieces · ${steps.length} steps</summary><ol>${steps.map(x => `<li>${esc(x)}</li>`).join('')}</ol>${method ? `<div class="sc-mh">Every step of the method</div><ol class="sc-mlist">${method.split('\n').map(x => x.trim()).filter(Boolean).map(x => `<li>${esc(x.replace(/^\d+[.)]\s*/, ''))}</li>`).join('')}</ol>` : '<div class="sc-mh">No written method on file for this item.</div>'}</details>`);
+    }
+    return out.join('');
+  }
   function schedPaint() {
     const el = document.getElementById('homeSched'); if (!el) return;
     const T = schedTasks();
-    const step = (k, lbl, v, lo, hi) => `<div class="sc-set"><span>${lbl}</span><button type="button" data-sc="${k}-" aria-label="Fewer ${lbl}">−</button><b>${v}</b><button type="button" data-sc="${k}+" aria-label="More ${lbl}">+</button></div>`;
-    let h = `<div class="card sc-card"><h3>Who does what</h3><div class="sc-help">Built from the Plan page's bake. Drag a block to another person to hand it over; the times shift to fit. Ovens and people each do one thing at a time.</div>`
+    const step = (k, lbl, v) => `<div class="sc-set"><span>${lbl}</span><button type="button" data-sc="${k}-" aria-label="Fewer ${lbl}">−</button><b>${v}</b><button type="button" data-sc="${k}+" aria-label="More ${lbl}">+</button></div>`;
+    let h = `<div class="card sc-card"><h3>Who does what</h3><div class="sc-help">Built from the Plan page's bake. Drag a block along its row to move it in time, or onto another person or oven to hand it over. A block can't start before the step it waits on, so it snaps later if you go too early. Times snap to 5 min.</div>`
       + `<div class="sc-sets">${step('people', 'People', schedCfg.people)}${step('ovens', 'Ovens', schedCfg.ovens)}${step('fill', 'Min to fill pans', schedCfg.fill)}</div>`;
     if (!T.length) { el.innerHTML = h + `<div class="sc-none">Nothing to bake yet. Pick days for at least one item on the Plan page (step 1).</div></div>`; return; }
-    const R = schedRun(T), total = Math.max(...R.map(x => x.end)), ppm = Math.max(1.2, Math.min(6, 640 / total)), W = Math.ceil(total * ppm) + 4;
-    const lanes = [...Array(schedCfg.people).keys()].map(i => ({ k: 'p' + i, label: 'Person ' + (i + 1), items: R.filter(x => x.who === i), drop: i })).concat([...Array(schedCfg.ovens).keys()].map(i => ({ k: 'o' + i, label: 'Oven ' + (i + 1), items: R.filter(x => x.ov === i) })));
+    const R = schedRun(T), total = Math.max(...R.map(x => x.end)), ppm = schedPpm = Math.max(1.2, Math.min(6, 640 / total)), W = Math.ceil(total * ppm) + 4;
+    const lanes = [...Array(schedCfg.people).keys()].map(i => ({ label: 'Person ' + (i + 1), items: R.filter(x => x.who === i), kind: 'p', idx: i })).concat([...Array(schedCfg.ovens).keys()].map(i => ({ label: 'Oven ' + (i + 1), items: R.filter(x => x.ov === i), kind: 'o', idx: i })));
     const col = x => (x.p && PRODUCT_COLOR[x.p]) || '#6b6b6b';
-    const blk = x => `<div class="sc-blk${x.oven ? ' oven' : ''}${schedSel === x.id ? ' sel' : ''}" data-id="${esc(x.id)}" ${x.who >= 0 ? 'data-drag="1"' : ''} style="left:${Math.round(x.start * ppm)}px;width:${Math.max(6, Math.round(x.min * ppm) - 1)}px;--c:${col(x)}" title="${esc(x.name)}"><span>${esc(x.name)}</span></div>`;
+    const moved = id => schedPin[id] != null || schedOv[id] != null || schedAt[id] != null;
+    const blk = x => `<div class="sc-blk${x.oven ? ' oven' : ''}${schedSel === x.id ? ' sel' : ''}${moved(x.id) ? ' mv' : ''}" data-id="${esc(x.id)}" data-drag="1" style="left:${Math.round(x.start * ppm)}px;width:${Math.max(6, Math.round(x.min * ppm) - 1)}px;--c:${col(x)}" title="${esc(x.name)}"><span>${esc(x.name)}</span></div>`;
     const ticks = []; for (let m = 0; m <= total; m += total > 360 ? 60 : 30) ticks.push(`<i style="left:${Math.round(m * ppm)}px">${clk(m)}</i>`);
-    h += `<div class="sc-sum"><b>${fmtDur(Math.round(total))}</b> start to finish · ${schedCfg.people} ${schedCfg.people === 1 ? 'person' : 'people'} · ${schedCfg.ovens} oven${schedCfg.ovens === 1 ? '' : 's'}</div>`
-      + `<div class="sc-scroll"><div class="sc-chart" style="width:${W}px"><div class="sc-axis">${ticks.join('')}</div>${lanes.map(l => `<div class="sc-lane" ${l.drop != null ? `data-lane="${l.drop}"` : ''}><span class="sc-lbl">${l.label}</span>${l.items.map(blk).join('')}</div>`).join('')}</div></div>`;
+    const busy = lanes.filter(l => l.kind === 'p').map(l => Math.round(l.items.reduce((a, x) => a + x.min, 0)));
+    h += `<div class="sc-sum"><b>${fmtDur(Math.round(total))}</b> start to finish · ${schedCfg.people} ${schedCfg.people === 1 ? 'person' : 'people'} · ${schedCfg.ovens} oven${schedCfg.ovens === 1 ? '' : 's'}<small>Hands-on time: ${busy.map((m, i) => 'Person ' + (i + 1) + ' ' + fmtDur(m)).join(' · ')}</small></div>`
+      + `<div class="sc-scroll"><div class="sc-chart" style="width:${W}px"><div class="sc-axis">${ticks.join('')}</div>${lanes.map(l => `<div class="sc-lane" data-kind="${l.kind}" data-lane="${l.idx}"><span class="sc-lbl">${l.label}</span>${l.items.map(blk).join('')}</div>`).join('')}</div></div>`;
     const sel = R.find(x => x.id === schedSel);
-    h += `<div class="sc-detail">${sel ? `<b>${esc(sel.name)}</b> · ${clk(sel.start)} to ${clk(sel.end)} (${sel.min} min)${sel.who >= 0 ? ' · Person ' + (sel.who + 1) : ' · Oven ' + (sel.ov + 1)}${sel.who >= 0 && schedPin[sel.id] != null ? ' · pinned <button type="button" data-sc="unpin">Unpin</button>' : ''}` : 'Tap a block for its details.'}</div>`;
+    h += `<div class="sc-detail">${sel ? `<b>${esc(sel.name)}</b> · ${clk(sel.start)} to ${clk(sel.end)} (${sel.min} min)${sel.who >= 0 ? ' · Person ' + (sel.who + 1) : ' · Oven ' + (sel.ov + 1)}${moved(sel.id) ? ' · moved by you <button type="button" data-sc="unpin">Put back</button>' : ''}` : 'Tap a block for its details.'}</div>`;
     h += `<div class="sc-lists">${lanes.map(l => `<div class="sc-list"><b>${l.label}</b>${l.items.map(x => `<div><span>${clk(x.start)}</span> ${esc(x.name)} <small>${x.min} min</small></div>`).join('') || '<div><small>Nothing</small></div>'}</div>`).join('')}</div>`
-      + `<button type="button" class="sc-reset" data-sc="reset">Reset hand-offs</button></div>`;
+      + `<h3 style="margin-top:16px">Steps for each item</h3><div class="sc-help">The blocks you drag are the timed parts. Open an item for every step of its method.</div>${schedSteps(T)}<button type="button" class="sc-reset" data-sc="reset">Auto-arrange (clear my moves)</button></div>`;
     el.innerHTML = h;
   }
   async function schedOpen() { schedPaint(); try { await renderPlan(); } catch (e) {} if (homeTab === 'sched') schedPaint(); }
   (function schedWire() {
     const root = document.getElementById('homeSched'); if (!root) return;
+    let drag = null;
     root.addEventListener('click', e => {
       const b = e.target.closest('[data-sc]');
       if (b) {
         const v = b.dataset.sc;
-        if (v === 'reset' || v === 'unpin') { if (v === 'reset') schedPin = {}; else delete schedPin[schedSel]; }
-        else { const k = v.slice(0, -1), d = v.endsWith('+') ? 1 : -1, lim = { people: [1, 4], ovens: [1, 4], fill: [0, 30] }[k]; schedCfg[k] = Math.max(lim[0], Math.min(lim[1], schedCfg[k] + d * (k === 'fill' ? 1 : 1))); schedPin = Object.fromEntries(Object.entries(schedPin).filter(([, i]) => i < schedCfg.people)); }
+        if (v === 'reset') { schedPin = {}; schedOv = {}; schedAt = {}; }
+        else if (v === 'unpin') { delete schedPin[schedSel]; delete schedOv[schedSel]; delete schedAt[schedSel]; }
+        else { const k = v.slice(0, -1), d = v.endsWith('+') ? 1 : -1, lim = { people: [1, 4], ovens: [1, 4], fill: [0, 30] }[k]; schedCfg[k] = Math.max(lim[0], Math.min(lim[1], schedCfg[k] + d)); schedPin = Object.fromEntries(Object.entries(schedPin).filter(([, i]) => i < schedCfg.people)); schedOv = Object.fromEntries(Object.entries(schedOv).filter(([, i]) => i < schedCfg.ovens)); }
         schedSave(); schedPaint(); return;
       }
       const bl = e.target.closest('.sc-blk'); if (bl && !drag) { schedSel = bl.dataset.id; schedPaint(); }
     });
-    let drag = null;
     root.addEventListener('pointerdown', e => {
       const bl = e.target.closest('.sc-blk[data-drag]'); if (!bl) return;
-      drag = { id: bl.dataset.id, el: bl, x: e.clientX, y: e.clientY, moved: false }; try { bl.setPointerCapture(e.pointerId); } catch (x) {}
+      drag = { id: bl.dataset.id, el: bl, x: e.clientX, y: e.clientY, grab: e.clientX - bl.getBoundingClientRect().left, moved: false }; try { bl.setPointerCapture(e.pointerId); } catch (x) {}
     });
     root.addEventListener('pointermove', e => {
       if (!drag) return; const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
@@ -5790,8 +5820,13 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       if (!drag) return; const d = drag; drag = null; d.el.style.transform = ''; d.el.classList.remove('drag');
       if (!d.moved) return;
       d.el.style.pointerEvents = 'none'; const under = document.elementFromPoint(e.clientX, e.clientY); d.el.style.pointerEvents = '';
-      const lane = under && under.closest('.sc-lane[data-lane]');
-      if (lane) { schedPin[d.id] = +lane.dataset.lane; schedSel = d.id; schedSave(); }
+      const lane = under && under.closest('.sc-lane'), isOven = d.el.classList.contains('oven');
+      if (lane) {
+        const t = Math.max(0, Math.round((e.clientX - d.grab - lane.getBoundingClientRect().left) / schedPpm / 5) * 5);
+        schedAt[d.id] = t; schedSel = d.id;
+        if (lane.dataset.kind === (isOven ? 'o' : 'p')) { if (isOven) schedOv[d.id] = +lane.dataset.lane; else schedPin[d.id] = +lane.dataset.lane; }
+        schedSave();
+      }
       schedPaint();
     };
     root.addEventListener('pointerup', finish); root.addEventListener('pointercancel', finish);
@@ -9213,6 +9248,16 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
 .sc-blk { position: absolute; top: 16px; height: 28px; border-radius: 6px; background: var(--c, #6b6b6b); color: #fff; font-size: var(--fs-micro); overflow: hidden; white-space: nowrap; padding: 0 4px; line-height: 28px; touch-action: none; cursor: grab; user-select: none; }
 .sc-blk.oven { background: #fff; color: var(--c, #232323); border: 2px solid var(--c, #6b6b6b); line-height: 24px; cursor: default; }
 .sc-blk.sel { outline: 2px solid #000; outline-offset: 1px; }
+.sc-blk.mv::after { content: ''; position: absolute; right: 2px; top: 2px; width: 6px; height: 6px; border-radius: 3px; background: #fff; border: 1px solid #000; }
+.sc-sum small { display: block; margin-top: 2px; font-size: var(--fs-caption); color: #6b6b6b; }
+.sc-steps { border-top: 1px solid #e3e3e3; padding: 6px 0; }
+.sc-steps summary { min-height: 44px; display: flex; align-items: center; font-size: var(--fs-body); cursor: pointer; }
+.sc-steps ol { margin: 4px 0 8px; padding-left: 22px; font-size: var(--fs-caption); }
+.sc-steps li { margin: 4px 0; }
+.sc-mh { font-size: var(--fs-caption); font-weight: 600; margin: 8px 0 4px; }
+.sc-mlist { margin: 0 0 8px; padding-left: 22px; font-size: var(--fs-caption); color: #4a4a4a; }
+.sc-mlist li { margin: 4px 0; }
+.sc-method { white-space: pre-line; font-size: var(--fs-caption); color: #4a4a4a; background: #f6f6f6; border-radius: 10px; padding: 10px 12px; max-height: 320px; overflow: auto; }
 .sc-blk.drag { opacity: .85; box-shadow: 0 4px 12px rgba(0,0,0,.3); }
 .sc-lists { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin-top: 8px; }
 .sc-list > div { font-size: var(--fs-caption); padding: 4px 0; border-top: 1px solid #e3e3e3; }

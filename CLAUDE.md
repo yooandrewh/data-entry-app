@@ -237,6 +237,8 @@ Ingredients: **Dark Chocolate 70% and Dark Chocolate Couverture are retired into
 
 **v1.172.03: oven pans per round (Andrew 2026-11-18, one oven; minutes unchanged).** `OVEN_PANS` (next to `ovenSteps`): madeleines 8 pans x 12 = 96 (room for 2 more), muffins 3 x 24 = 72 (room for 2 more), bundt 10 x 12 = 120 (full), cake pops 5 x 200 = 1,000 (full), cookies 5 x 8 = 40 (full). It overrides the recipe `oven.cap` in `ovenSteps` (recipe caps also updated so the cost model matches) and `KT_DEFAULT.pans` is now 8 (a device with saved Kitchen times keeps its old number). At a 40-day span: 17 oven rounds, 6h 20m (was 39 rounds at the old caps). Muffin and madeleine rounds could take 2 more pans; `max` is stored but unused.
 
+**v1.173.00: Schedule v2** (Andrew: 2 people, 2 ovens). Defaults People 2 / Ovens 2 / fill 5 min (`sched.v2`; moves in `schedMap.v2` = `{pin, ov, at}`). Every block is draggable (pointer events): along the row sets a start time (snaps to 5 min, `schedAt`, can't start before its dependency), onto another person / oven lane hands it over (`schedPin` / `schedOv`); moved blocks get a dot; "Put back" / "Auto-arrange" clear moves. `schedRun` fills gaps per resource. Shows hands-on time per person and, under it, **Steps for each item** (`schedSteps`): the timed steps plus **every step of the recipe method**, one line each. Headless-tested (26 blocks, drag simulated); touch drag not tried on a phone. Same unconfirmed assumptions as v1.172.00.
+
 ## Design pass (v1.149.00)
 
 Last CSS block: **every `<select>` has one style** (white, 1px #c9c9c9, 12px radius, 44px, black chevron; `.row-select` and `[data-labi]` excluded); the Forecast store toggle (`.fc-locs`) uses the pill style. On desktop (>=900px) all pages share a 1120px column, page chips sit centered at natural width, the Trends donut is 220px. On phones the 5 Inventory chips shrink (11px padding) to fit. Counts' total says "pieces", not "madeleines". Still open: coloured snowflake/flame/arrow icons in Forecast misses (breaks the B/W rule), today's half-finished day shows as a 0.0x miss, Stock's section headers use the old grey band style.
@@ -257,7 +259,7 @@ The headless check at 390px misses what iOS does. Apply these to every new or ch
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.172.03**; the next feature is v1.173.00, a fix v1.172.04. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.173.00**; the next feature is v1.174.00, a fix v1.173.01. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 
