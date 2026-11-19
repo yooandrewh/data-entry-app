@@ -182,8 +182,6 @@
   .db-type.inventory { background: rgba(255,149,0,0.14); color: var(--orange); }
   .db-when { font-size: var(--fs-caption); color: var(--muted); text-align: right; }
   .db-daylabel { font-size: var(--fs-body); font-weight: 700; }
-  .db-loc { font-size: var(--fs-body); color: var(--muted); margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; gap: 5px; }
-  .db-loc .loc-name { display: flex; align-items: center; gap: 5px; }
   /* Flavour monogram — fixed width and colour, so every list lines up and the
      same mark means the same flavour on every tab. */
   .tok {
@@ -212,16 +210,6 @@
   .db-day:first-child { margin-top: 0; }
 
   /* Wrapping chip row (Data tab type selector) — all options always visible */
-  .chip-row {
-    display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; padding: 2px;
-  }
-  .chip-row button {
-    appearance: none; border: none; cursor: pointer; font-family: inherit;
-    white-space: nowrap; flex: 0 0 auto; background: var(--card); color: var(--text);
-    font-size: var(--fs-body); font-weight: 600; padding: 13px 16px; border-radius: 999px;
-    min-height: 44px; box-shadow: var(--shadow); transition: background .15s ease, color .15s ease;
-  }
-  .chip-row button.on { background: var(--accent); color: #fff; }
   .db-dates[hidden] { display: none; }
 
   /* Version line — centred just above the tab bar on every tab */
@@ -260,13 +248,6 @@
   .tabbar button .tic svg * { stroke: currentColor; stroke-width: 1.15; }
   .tabbar button .tlabel { line-height: 1; white-space: nowrap; }
   .tabbar button.on { color: var(--accent); font-weight: 700; }
-  /* Entry keeps its accent pill because it is the primary action, but its LABEL
-     stays muted unless the tab is actually open — a permanently accented label read
-     as a second selected tab. */
-  .tabbar button.tab-entry .tic {
-    background: var(--accent); color: #fff; border-radius: 13px; padding: 2px 14px;
-    box-shadow: 0 2px 8px rgba(52,31,55,0.3);
-  }
 
   /* ---- Stores analytics ---- */
   .store-card { background: var(--card); border-radius: 16px; box-shadow: var(--shadow); padding: 16px; margin-bottom: 18px; }
@@ -322,14 +303,8 @@
   .cashrow { display: grid; grid-template-columns: 1fr auto; gap: 8px; font-size: var(--fs-caption); padding: 4px 0; border-top: 1px solid var(--sep); }
   .cashrow:first-child { border-top: none; }
   .cashrow .c-n { color: var(--muted); font-variant-numeric: tabular-nums; }
-  .home-stores { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 22px; }
-  .hstore { background: var(--card); border-radius: 14px; box-shadow: var(--shadow); padding: 12px; }
-  .hstore .hs-n { font-size: var(--fs-body); font-weight: 700; margin-bottom: 6px; }
-  .hstore .hs-big { font-size: var(--fs-title); font-weight: 800; letter-spacing: -0.3px; }
-  .hstore .hs-sub { font-size: var(--fs-caption); color: var(--muted); margin-top: 2px; }
 
   /* ---- Invoice (Data → Deliveries → Create invoice) ---- */
-  .inv-open { width: 100%; margin: 0 0 14px; }
   .inv-sheet { max-height: 92vh; overflow-y: auto; }
   .inv-field { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 11px 0; border-bottom: 1px solid var(--sep); font-size: var(--fs-body); }
   .inv-field:last-child { border-bottom: none; }
@@ -352,16 +327,10 @@
   .inv-empty { text-align: center; color: var(--muted); padding: 22px 0; font-size: var(--fs-body); }
   @page { size: letter; margin: .5in; }
   @media print {
-    body.printing-invoice .inv-pdf, body.printing-label .lbl-doc, body.printing-labels .lbl-doc, body.printing-bake .bs2-doc { width: 100% !important; max-width: 100% !important; box-sizing: border-box; overflow-wrap: anywhere; }
-    body.printing-invoice .inv-pdf { padding: 0; }
-    body.printing-invoice > *:not(#invScrim) { display: none !important; }
-    body.printing-invoice #invScrim { position: static; background: none; opacity: 1; display: block; }
-    body.printing-invoice .inv-sheet { transform: none; max-width: none; max-height: none; overflow: visible; padding: 0; border-radius: 0; }
-    body.printing-invoice .inv-noprint { display: none !important; }
+    body.printing-labels .lbl-doc, body.printing-bake .bs2-doc { width: 100% !important; max-width: 100% !important; box-sizing: border-box; overflow-wrap: anywhere; }
   }
 
   /* ---- Ingredient label ---- */
-  .rec-label-btn { width: 100%; margin-top: 14px; }
   .lbl-doc { background: #fffdf8; color: #000; border: 1.5px solid #000; padding: 14px 16px; font-family: Archivo, Arial, Helvetica, sans-serif; font-size: 13px; line-height: 1.4; }
   .lbl-doc p { margin: 0 0 8px; }
   .lbl-brand { color: #4d4d4d; font-weight: 700; font-size: 12px; }
@@ -373,11 +342,6 @@
   .lbl-page { background: #fff; padding: 12px; display: flex; flex-direction: column; gap: 14px; }
   .lbl-doc [contenteditable]:focus { outline: 1px dashed var(--accent); }
   @media print {
-    body.printing-label > *:not(#lblScrim) { display: none !important; }
-    body.printing-label #lblScrim { position: static; background: none; opacity: 1; display: block; }
-    body.printing-label .inv-sheet { transform: none; max-width: none; max-height: none; overflow: visible; padding: 0; border-radius: 0; background: none; }
-    body.printing-label .inv-noprint { display: none !important; }
-    body.printing-label .lbl-doc { font-size: 11pt; }
     body.printing-labels > *:not(#mlScrim) { display: none !important; }
     body.printing-labels #mlScrim { position: static; background: none; opacity: 1; display: block; }
     body.printing-labels .inv-sheet { transform: none; max-width: none; max-height: none; overflow: visible; padding: 0; border-radius: 0; background: none; }
@@ -396,8 +360,6 @@
   .cp-name { font-size: var(--fs-body); font-weight: 600; }
   .cp-name a { font-size: var(--fs-caption); font-weight: 500; color: var(--accent); margin-left: 6px; text-decoration: none; }
   .cp-meta { grid-column: 1 / -1; font-size: var(--fs-caption); color: var(--muted); }
-  .cp-ins { display: flex; align-items: center; gap: 6px; font-size: var(--fs-caption); color: var(--muted); }
-  .cp-ins input { width: 5em; font-family: inherit; font-size: var(--fs-body); color: var(--text); background: var(--field); border: 1px solid var(--sep); border-radius: 8px; padding: 6px 8px; text-align: right; }
   .cp-btn { font-family: inherit; font-size: var(--fs-caption); padding: 7px 12px; border: 1px solid var(--sep); background: transparent; color: var(--text); margin-right: 6px; }
   .cp-btn.pri { background: var(--accent); color: #fff; border-color: var(--accent); }
   .cp-fr { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
@@ -434,15 +396,6 @@
   .sea-row { display: flex; align-items: center; gap: 12px; padding: 9px 2px; border-bottom: 1px solid var(--sep); font-size: var(--fs-body); }
   .sea-row input { width: 20px; height: 20px; accent-color: var(--accent); }
   .bs-empty { padding: 10px 14px 4px; font-size: var(--fs-caption); color: var(--muted); border-top: 1px solid var(--sep); }
-  .bs-doc { background: #fff; color: #1a1a1a; font-family: Archivo, Arial, Helvetica, sans-serif; font-size: 13px; line-height: 1.4; padding: 4px 2px; }
-  .bs-doc h3 { margin: 0 0 2px; font-size: 20px; }
-  .bs-doc .d { color: #666; font-size: 12px; margin-bottom: 12px; }
-  .bs-doc h4 { margin: 14px 0 4px; font-size: 14px; padding-bottom: 3px; border-bottom: 1.5px solid #1a1a1a; display: flex; justify-content: space-between; gap: 8px; }
-  .bs-doc h4 span { font-weight: 400; color: #555; }
-  .bs-doc .r { display: flex; justify-content: space-between; gap: 12px; padding: 3px 0; border-bottom: 1px dotted #ccc; }
-  .bs-doc .r b { font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .bs-doc .r i { color: #777; font-size: 11px; font-style: normal; }
-  .bs-doc h4.tot { margin-top: 20px; font-size: 15px; border-bottom-width: 2px; }
   @media print {
     body.printing-bake > *:not(#bsScrim) { display: none !important; }
     body.printing-bake #bsScrim { position: static; background: none; opacity: 1; display: block; }
@@ -589,17 +542,12 @@
   .db-summary .ds-rows .proj-row .k { color: var(--text); font-weight: 600; }
   .db-summary .ds-loc { margin-top: 6px; color: var(--muted); }
   .db-summary .ds-loc b { color: var(--text); }
-  .beta-banner {
-    background: var(--orange); color: #fff; text-align: center;
-    font-size: var(--fs-caption); font-weight: 700; letter-spacing: 0.3px; padding: 7px 10px;
-  }
   .proj-card {
     background: var(--card); border-radius: 16px; box-shadow: var(--shadow);
     padding: 16px; margin-bottom: 14px;
   }
   .proj-card h3 { font-size: var(--fs-title); font-weight: 700; margin: 0 0 2px; }
   .proj-sub { font-size: var(--fs-caption); color: var(--muted); margin-bottom: 10px; }
-  .proj-stock-chips { margin-bottom: 10px; }
   .proj-runout { font-size: var(--fs-body); font-weight: 700; margin-bottom: 10px; }
   .proj-runout .big { font-size: var(--fs-figure); }
   /* Bake-days selector (Plan) */
@@ -647,15 +595,6 @@
   .split-vals b { color: var(--accent); font-size: var(--fs-body); font-weight: 800; margin-right: 3px; }
   .split-vals span:last-child { text-align: right; }
   /* ---- Recipes tab ---- */
-  .beta-pill {
-    display: inline-block; vertical-align: middle; margin-left: 9px;
-    background: var(--orange); color: #fff; font-size: var(--fs-micro); font-weight: 800;
-    letter-spacing: 0.06em; padding: 3px 9px; border-radius: 999px;
-  }
-  .rec-beta-note {
-    background: rgba(255,149,0,0.12); color: #000; border-radius: 12px;
-    padding: 10px 13px; margin-bottom: 14px; font-size: var(--fs-caption); font-weight: 600; line-height: 1.45;
-  }
   .rec-scale { display: flex; gap: 8px; margin: 2px 0 12px; flex-wrap: wrap; }
   .rec-scale button {
     appearance: none; border: none; cursor: pointer; font-family: inherit;
@@ -717,11 +656,7 @@
   .home-updated { color: var(--muted); font-size: var(--fs-caption); margin: 0 2px 14px; line-height: 1.5; }
   #projSub { margin: 0 2px 12px; }
   .proj-runout .pr-first { display: block; font-size: var(--fs-caption); font-weight: 600; color: var(--muted); margin-top: 3px; }
-  .home-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 14px; }
   .metric { background: var(--card); border-radius: 16px; box-shadow: var(--shadow); padding: 14px 16px; }
-  .metric .m-label { font-size: var(--fs-caption); color: var(--muted); font-weight: 600; }
-  .metric .m-val { font-size: var(--fs-figure); font-weight: 700; margin-top: 4px; }
-  .metric .m-sub { font-size: var(--fs-caption); color: var(--muted); }
   .db-sync.tagged { color: var(--red); background: rgba(255,59,48,0.1); }
   .db-entry.tagged { opacity: 0.6; }
   .db-entry.tagged .db-type { filter: grayscale(0.4); }
@@ -751,31 +686,26 @@
   }
   button, input, select { font-family: inherit; }
   /* raised */
-  .seg button, .pill, .amt .step, .chip-row button, .rec-scale button, .bakedays button,
-  .bakedate-add button, .db-date-clear, .bs-step button, .btn-ghost {
+  .seg button, .pill, .amt .step, .rec-scale button, .bakedays button, .bakedate-add button, .db-date-clear, .bs-step button, .btn-ghost {
     background: var(--bg); box-shadow: var(--neu-sm); border-color: transparent;
     transition: box-shadow .12s ease, background .12s ease;
   }
-  .btn-ghost, .em-close { color: var(--text); }
-  .em-close { background: var(--bg); box-shadow: var(--neu-sm); }
+  .btn-ghost { color: var(--text); }
   .btn-ghost { border-radius: 14px; padding: 11px; }
   .filter-bar select { background-color: var(--bg); box-shadow: var(--neu-sm); }
   /* selected, non-accent → pressed in */
   .seg button.on, .seg button.on[data-type] { box-shadow: var(--neu-in); border-color: transparent; }
   /* selected, accent-filled → raised in the accent colour */
-  .pill.on, .chip-row button.on, .rec-scale button.on, .bakedays button.on { background: var(--accent); color: #fff; box-shadow: var(--neu-acc); }
+  .pill.on, .rec-scale button.on, .bakedays button.on { background: var(--accent); color: #fff; box-shadow: var(--neu-acc); }
   .btn-primary, .submit { background: var(--accent); box-shadow: var(--neu-acc); }
-  .tabbar button.tab-entry .tic { box-shadow: var(--neu-acc); }
   /* pressing sinks any button */
-  .seg button:active, .pill:active, .amt .step:active, .chip-row button:active, .rec-scale button:active,
-  .bakedays button:active, .bakedate-add button:active, .bs-step button:active, .btn-ghost:active { box-shadow: var(--neu-in); transform: none; }
-  .pill.on:active, .chip-row button.on:active, .rec-scale button.on:active, .bakedays button.on:active,
-  .btn-primary:active, .submit:active { box-shadow: var(--neu-acc-in); transform: none; }
+  .seg button:active, .pill:active, .amt .step:active, .rec-scale button:active, .bakedays button:active, .bakedate-add button:active, .bs-step button:active, .btn-ghost:active { box-shadow: var(--neu-in); transform: none; }
+  .pill.on:active, .rec-scale button.on:active, .bakedays button.on:active, .btn-primary:active, .submit:active { box-shadow: var(--neu-acc-in); transform: none; }
   /* segmented control: a sunken track with a raised thumb */
   .db-filter { background: var(--field); box-shadow: var(--neu-in); padding: 3px; margin-bottom: 8px; }
   .db-filter button.on, .db-filter select.on { background: var(--bg); box-shadow: var(--neu-sm); color: var(--accent); }
   /* text fields sit in a shallow well */
-  input[type="date"], .inv-field input, .inv-field select, .cp-ins input {
+  input[type="date"], .inv-field input, .inv-field select {
     background: var(--field); box-shadow: var(--neu-in); border: none; border-radius: 10px;
   }
   /* quantity inputs: no dotted underline; a soft well appears only while editing */
@@ -802,9 +732,6 @@
   .proj-sub { margin-bottom: 6px; }
   .proj-row { padding: 7px 0; }
   .store-card { padding: 12px 14px; margin-bottom: 10px; }
-  .home-stores { gap: 8px; margin-bottom: 12px; }
-  .chip-row { gap: 6px; margin-bottom: 8px; }
-  .chip-row button { padding: 9px 14px; min-height: 38px; }
   .db-filter button { padding: 10px 6px; }
   .db-filter select { padding: 10px 22px 10px 6px; }
   .filter-bar { gap: 6px; margin-bottom: 8px; }
@@ -813,7 +740,6 @@
   .rec-scale { gap: 6px; margin: 0 0 8px; }
   .rec-scale button { padding: 6px 12px; }
   .rec-box { padding: 8px 10px; margin-top: 8px; }
-  .rec-beta-note { padding: 8px 11px; margin-bottom: 8px; }
   .bs-item { padding: 8px 12px; }
   .bs-step button { width: 28px; height: 28px; }
   .cp-row { padding: 8px 12px; margin-bottom: 6px; }
@@ -825,7 +751,6 @@
   #view-entry { padding: calc(var(--safe-top) + 4px) 0 16px; }
   body[data-tab="entry"] #secNav { display: none !important; }
   .em-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
-  .em-close { width: 38px; height: 38px; border-radius: 50%; border: none; cursor: pointer; font-size: var(--fs-lg); color: var(--text); flex: none; }
   .db-head-row { position: relative; padding-right: 96px; }
   .db-new { position: absolute; top: 4px; right: 2px; border: none; cursor: pointer; border-radius: 999px; padding: 9px 16px;
     background: var(--accent); color: #fff; font-size: var(--fs-body); font-weight: 700; box-shadow: var(--neu-acc); }
@@ -833,8 +758,6 @@
   .row-text { flex: 1; min-width: 0; border: none; background: transparent; color: var(--text); font-size: var(--fs-lg); text-align: right; padding: 6px 8px; border-radius: 8px; }
   .row-text:focus { outline: none; background: var(--field); box-shadow: var(--neu-in); }
   .db-note { font-size: var(--fs-caption); color: var(--muted); font-style: italic; margin: -6px 0 6px; }
-  .home-season { position: absolute; top: 6px; right: 2px; border: none; cursor: pointer; border-radius: 999px; padding: 6px 12px; background: var(--bg); box-shadow: var(--neu-sm); color: var(--accent); font-size: var(--fs-caption); font-weight: 700; }
-  .home-season:active { box-shadow: var(--neu-in); }
   #seaScrim .actions { position: sticky; bottom: calc(-1 * var(--safe-bottom)); background: var(--bg); padding: 10px 0 4px; margin-top: 6px; }
   /* ================= Home in the Chick-fil-A app's layout, in the Kairos palette =================
      Apricot hero with a big plum headline and the madeleine, one white card with underline tabs,
@@ -847,28 +770,18 @@
     --fs-hero: 40px;
     --tabbar-h: 80px;
   }
-  .btn-primary, .submit, .db-new, .pill.on, .chip-row button.on, .rec-scale button.on, .bakedays button.on { background: var(--grad); }
+  .btn-primary, .submit, .db-new, .pill.on, .rec-scale button.on, .bakedays button.on { background: var(--grad); }
   .home-hero { position: relative; margin: calc(-1 * (var(--safe-top) + 4px)) -16px 0; padding: calc(var(--safe-top) + 16px) 20px 0;
     background: linear-gradient(180deg, var(--apricot) 0%, #f6c6a0 62%, var(--bg) 100%); text-align: left; overflow: hidden; }
   .hero-kicker { font-size: var(--fs-body); font-weight: 700; color: var(--plum); opacity: .8; padding-right: 96px; }
   .hero-title { font-size: var(--fs-hero); line-height: 1.02; letter-spacing: -1px; font-weight: 800; color: var(--plum); margin: 6px 0 4px; }
   .hero-tag { font-size: var(--fs-body); font-weight: 600; color: var(--plum); opacity: .75; }
-  .hero-img { display: block; height: 210px; width: auto; margin: 4px auto 14px; transform: rotate(-8deg);
-    filter: drop-shadow(0 16px 14px rgba(52,31,55,0.38)); position: relative; z-index: 1; }
-  .home-season { top: calc(var(--safe-top) + 14px); background: rgba(255,248,240,0.9); }
   .home-card { position: relative; z-index: 2; background: #fff8f1; border-radius: 22px; box-shadow: 0 10px 28px rgba(90,50,60,0.20);
     margin: 0 0 14px; overflow: hidden; }
-  .hc-tabs { display: flex; border-bottom: 1px solid var(--sep); }
-  .hc-tabs button { flex: 1; border: none; background: none; cursor: pointer; padding: 15px 4px 13px; font-size: var(--fs-lg); font-weight: 700;
-    color: var(--muted); border-bottom: 3px solid transparent; margin-bottom: -1px; }
-  .hc-tabs button.on { color: var(--accent); border-bottom-color: var(--accent); }
   .hc-body { padding: 12px; }
-  .hc-foot { text-align: center; padding: 12px 12px 14px; border-top: 1px solid var(--sep); color: var(--muted); font-size: var(--fs-body); }
-  .hc-foot button { border: none; background: none; cursor: pointer; padding: 0; font-size: var(--fs-body); font-weight: 700; color: var(--accent); }
   .home-card .card, .home-card .proj-card, .home-card .store-card { box-shadow: none; background: transparent; padding-left: 0; padding-right: 0; }
   .home-card .proj-card, .home-card .store-card { border-bottom: 1px solid var(--sep); border-radius: 0; }
   .home-card .filter-bar select { background-color: #fff8f1; }
-  .mini-mad { height: 20px; width: auto; vertical-align: -5px; }
 
   /* floating rounded nav */
   .tabbar { display: block; height: calc(var(--tabbar-h) + var(--safe-bottom)); padding: 8px 14px calc(var(--safe-bottom) + 10px);
@@ -893,25 +806,22 @@
     --key-r: 12px;
   }
   /* light keys */
-  .seg button, .pill, .amt .step, .chip-row button, .rec-scale button, .bakedays button, .bakedate-add button,
-  .db-date-clear, .bs-step button, .btn-ghost, .em-close, .filter-bar select {
+  .seg button, .pill, .amt .step, .rec-scale button, .bakedays button, .bakedate-add button, .db-date-clear, .bs-step button, .btn-ghost, .filter-bar select {
     background: var(--key-light); color: var(--plum); border: none; border-radius: var(--key-r);
     box-shadow: var(--key-light-shadow); transition: transform .08s ease, box-shadow .08s ease;
   }
   .filter-bar select { background-color: #f6e8da; }
-  .chip-row button, .pill, .bakedays button { border-radius: 10px; }
+  .pill, .bakedays button { border-radius: 10px; }
   .btn-ghost { border-radius: 14px; }
   /* dark keys: selected + primary */
-  .seg button.on, .seg button.on[data-type], .pill.on, .chip-row button.on, .rec-scale button.on, .bakedays button.on,
-  .btn-primary, .submit, .db-new {
+  .seg button.on, .seg button.on[data-type], .pill.on, .rec-scale button.on, .bakedays button.on, .btn-primary, .submit, .db-new {
     background: var(--key-dark); color: #fff; text-shadow: var(--glow); box-shadow: var(--key-dark-shadow); border-color: transparent;
   }
   .btn-primary, .submit { border-radius: 14px; letter-spacing: .2px; }
   .db-new { border-radius: 12px; }
   .seg button.on .ic svg { filter: drop-shadow(0 0 4px rgba(255,255,255,0.75)); }
   /* pressed */
-  .seg button:active, .pill:active, .amt .step:active, .chip-row button:active, .rec-scale button:active, .bakedays button:active,
-  .bakedate-add button:active, .bs-step button:active, .btn-ghost:active, .btn-primary:active, .submit:active, .db-new:active, .em-close:active {
+  .seg button:active, .pill:active, .amt .step:active, .rec-scale button:active, .bakedays button:active, .bakedate-add button:active, .bs-step button:active, .btn-ghost:active, .btn-primary:active, .submit:active, .db-new:active {
     transform: translateY(1px); box-shadow: var(--key-pressed);
   }
   /* segmented control: a dark panel with a lit light key */
@@ -921,14 +831,12 @@
   .db-filter select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23ecdccb' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
   .db-filter select.on { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23341f37' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
   /* fields */
-  input[type="date"], .inv-field input, .inv-field select, .cp-ins input {
+  input[type="date"], .inv-field input, .inv-field select {
     background: var(--field); border: 1px solid var(--sep); box-shadow: inset 0 1px 2px rgba(52,31,55,0.12); border-radius: 10px;
   }
   .rec-qty:focus, .cost-in:focus, .bs-step input:focus, .amt .val:focus, .row-text:focus { background: var(--field); box-shadow: inset 0 1px 3px rgba(52,31,55,0.2); }
   .tok { border-radius: 8px; }
   /* Home tabs + card */
-  .hc-tabs button.on { color: var(--plum); border-bottom-color: var(--plum); }
-  .hc-foot button { color: var(--plum); text-decoration: underline; text-underline-offset: 3px; }
   .home-card .filter-bar select { background-color: #f6e8da; }
   /* floating nav: a dark panel, the current tab is a lit key */
   .tab-pill { background: linear-gradient(180deg, #402746 0%, #26152a 100%); border-radius: 24px;
@@ -940,10 +848,8 @@
     background: linear-gradient(180deg, rgba(22,12,26,0.62) 0%, rgba(22,12,26,0.10) 48%, rgba(22,12,26,0) 100%), url("hero.jpg") 50% 46% / cover no-repeat; }
   .hero-kicker { color: #fff6ee; opacity: .85; }
   .hero-name { display: flex; align-items: center; gap: 10px; margin: 8px 0 4px; }
-  .hero-logo { height: 52px; width: auto; flex: none; transform: rotate(-8deg); filter: drop-shadow(0 4px 5px rgba(0,0,0,0.45)); }
   .hero-title { color: #fff6ee; margin: 0; text-shadow: 0 2px 12px rgba(0,0,0,0.35); }
   .hero-tag { color: #fff6ee; opacity: .9; }
-  .home-season { background: rgba(38,21,42,0.72); color: #fff6ee; box-shadow: inset 0 1px 0 rgba(255,255,255,0.18); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); border-radius: 10px; }
   .home-card { margin-top: -34px; }
   /* ================= Flat gradient (final block — wins over everything above) =================
      Simple, flat components in the style of a UI kit: no shadows anywhere, soft rounded shapes,
@@ -958,21 +864,18 @@
   *, *::before, *::after { box-shadow: none !important; text-shadow: none !important; }
   .seg button.on .ic svg { filter: none; }
   /* unselected controls: a flat tint */
-  .seg button, .pill, .amt .step, .chip-row button, .rec-scale button, .bakedays button, .bakedate-add button,
-  .db-date-clear, .bs-step button, .btn-ghost, .em-close {
+  .seg button, .pill, .amt .step, .rec-scale button, .bakedays button, .bakedate-add button, .db-date-clear, .bs-step button, .btn-ghost {
     background: var(--tint); color: var(--plum); border: none; border-radius: var(--r); transform: none;
   }
-  .chip-row button, .pill, .bakedays button, .rec-scale button { border-radius: 999px; }
+  .pill, .bakedays button, .rec-scale button { border-radius: 999px; }
   .amt .step, .bs-step button { border-radius: 10px; }
   /* selected + primary: gradient */
-  .seg button.on, .seg button.on[data-type], .pill.on, .chip-row button.on, .rec-scale button.on, .bakedays button.on,
-  .btn-primary, .submit, .db-new {
+  .seg button.on, .seg button.on[data-type], .pill.on, .rec-scale button.on, .bakedays button.on, .btn-primary, .submit, .db-new {
     background: var(--grad); color: #fff; border: none;
   }
   .btn-primary, .submit { border-radius: 14px; }
   .db-new { border-radius: 12px; }
-  .seg button:active, .pill:active, .amt .step:active, .chip-row button:active, .rec-scale button:active, .bakedays button:active,
-  .bakedate-add button:active, .bs-step button:active, .btn-ghost:active, .btn-primary:active, .submit:active, .db-new:active, .em-close:active {
+  .seg button:active, .pill:active, .amt .step:active, .rec-scale button:active, .bakedays button:active, .bakedate-add button:active, .bs-step button:active, .btn-ghost:active, .btn-primary:active, .submit:active, .db-new:active {
     transform: none; opacity: 0.8;
   }
   /* dropdowns */
@@ -983,16 +886,15 @@
   .db-filter button.on, .db-filter select.on { background-color: transparent; background-image: var(--grad); color: #fff; }
   .db-filter select.on { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23ffffff' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"), var(--grad); background-repeat: no-repeat, no-repeat; background-position: right 10px center, 0 0; background-size: 10px 6px, 100% 100%; }
   /* fields */
-  input[type="date"], .inv-field input, .inv-field select, .cp-ins input {
+  input[type="date"], .inv-field input, .inv-field select {
     background: var(--tint); border: none; border-radius: 10px;
   }
   /* surfaces */
-  .card, .proj-card, .db-entry, .store-card, .hstore { border-radius: 16px; }
+  .card, .proj-card, .db-entry, .store-card { border-radius: 16px; }
   .rec-box, .store-note, .smetric { border-radius: 12px; }
   .home-card { border-radius: 18px; }
   .sheet { border-radius: 12px 12px 0 0; }
   .tok { border-radius: 8px; }
-  .home-season { background: rgba(38,21,42,0.66); color: #fff6ee; border-radius: 12px; }
   /* nav: a gradient bar, the current tab is a soft white pill */
   .tab-pill { background: var(--grad); border-radius: 22px; }
   .tabbar button { color: rgba(255,255,255,0.68); border-radius: 16px; }
@@ -1014,8 +916,6 @@
   .home-menu button { display: block; width: 100%; height: 58px; cursor: pointer; font-size: var(--fs-lg); font-weight: 500; letter-spacing: 0.6px; color: #fff6ee;
     background: rgba(255,255,255,0.08); border: 1.5px solid rgba(255,246,238,0.85); -webkit-backdrop-filter: blur(1.5px); backdrop-filter: blur(1.5px); }
   .home-menu button:active { background: rgba(255,255,255,0.22); }
-  .home-ver { text-align: center; color: #fff6ee; opacity: .85; font-size: var(--fs-micro); font-weight: 500; letter-spacing: .4px; margin: 14px 0 6px; }
-  .home-ver[hidden] { display: none; }
   body.home-landing .ver-badge { display: none; }
   body.home-landing .tabbar { background: none; }
   .tabbar { background: var(--bg); }
@@ -1032,8 +932,6 @@
   h1 { font-size: 36px; }
   .sheet h2 { font-size: 26px; }
   #hpTitle { font-size: 26px; }
-  .home-season { top: calc(var(--safe-top) + 10px); right: 12px; z-index: 5; min-width: 128px; height: 46px; padding: 0 20px; font-size: var(--fs-body); font-weight: 700;
-    background: #f8e2d0; color: #000; border: none; }
   .hero-kicker { padding-right: 150px; }
   .home-hero { padding-top: calc(var(--safe-top) + 64px); }
   .hero-kicker { position: absolute; top: calc(var(--safe-top) + 24px); left: 20px; }
@@ -1045,7 +943,6 @@
   .tabbar button { border-radius: 0; }
   .tabbar button.on { background: rgba(52,31,55,0.16); color: #000; }
   .tabbar button:focus, .tabbar button:focus-visible, .tabbar button:active { outline: none; }
-  .home-season { min-width: 0; height: 36px; padding: 0 14px; font-size: var(--fs-caption); top: calc(var(--safe-top) + 12px); right: 14px; }
   .hero-kicker { padding-right: 110px; }
 
   /* ---- Bake sheet (printed prep sheet: plain, two columns in the PDF) ---- */
@@ -1065,9 +962,6 @@
   @media print { body.printing-bake .bs2-doc { font-size: 11pt; } }
 
   /* ---- Home: booking link + kitchen times ---- */
-  .home-menu a.hm-link { display: flex; align-items: center; justify-content: center; width: 100%; height: 58px; text-decoration: none; font-size: var(--fs-lg); font-weight: 500; letter-spacing: 0.6px; color: #fff6ee;
-    background: rgba(255,255,255,0.08); border: 1.5px solid rgba(255,246,238,0.85); -webkit-backdrop-filter: blur(1.5px); backdrop-filter: blur(1.5px); }
-  .home-menu a.hm-link:active { background: rgba(255,255,255,0.22); }
   .kt { margin: 0 0 10px; border-bottom: 1px solid var(--sep); }
   .kt summary { cursor: pointer; padding: 10px 2px; font-weight: 700; font-size: var(--fs-body); color: var(--accent); }
   .kt-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; padding: 4px 0 12px; }
@@ -1088,8 +982,7 @@
   input, select, textarea { color: var(--text); }
   .home-card { background: var(--card); }
   /* selected + primary: caramel with white text */
-  .seg button.on, .seg button.on[data-type], .pill.on, .chip-row button.on, .rec-scale button.on, .bakedays button.on,
-  .btn-primary, .submit, .db-new, .db-filter button.on, .db-filter select.on { color: #fff; }
+  .seg button.on, .seg button.on[data-type], .pill.on, .rec-scale button.on, .bakedays button.on, .btn-primary, .submit, .db-new, .db-filter button.on, .db-filter select.on { color: #fff; }
   .seg button.on .ic svg { stroke: #fff; }
   /* nav: one light bar, the current tab in caramel */
   .tabbar, body.home-landing .tabbar { background: #fbf9f5; border-top: 1px solid var(--sep); }
@@ -1099,18 +992,15 @@
   .filter-bar select, .home-card .filter-bar select { background-color: var(--tint); background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23232a33' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); color: var(--text); }
   .db-filter select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23232a33' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
   .db-filter select.on { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23ffffff' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"), var(--grad); }
-  .rec-beta-note { color: #000; background: rgba(255,149,0,0.12); }
   .hp-head, .hp-back { color: var(--text); }
   .db-day { background: var(--bg); }
   .ver-badge { background: var(--bg); color: var(--muted); }
-  .home-season { background: #fbf9f5; color: #000; }
 
   /* ---- Home landing: the buttons sit in the middle of the screen, the version at the bottom ---- */
   #view-home:not(.paged) .wrap { display: flex; flex-direction: column;
     min-height: calc(100vh - var(--safe-top) - 4px - var(--safe-bottom) - var(--footer-h) - var(--tabbar-h) - 12px); }
   #view-home:not(.paged) .home-hero { min-height: 0; padding-bottom: 8px; flex: none; }
   #view-home:not(.paged) .home-menu { margin: auto 0; }
-  #view-home:not(.paged) .home-ver { margin: 0 0 8px; }
 
   /* ---- Version line: part of the page (at the end of the content), not a strip fixed over it ---- */
   :root { --footer-h: 0px; }
@@ -1120,13 +1010,12 @@
   /* ================= Glass buttons + dropdowns (final block) =================
      Same idea as the Home buttons: a see-through fill, a thin outline and a touch of blur, instead of solid
      fills. Selected = caramel-tinted glass with a caramel outline; primary = slightly stronger caramel. */
-  .seg button, .pill, .amt .step, .chip-row button, .rec-scale button, .bakedays button, .bakedate-add button,
-  .db-date-clear, .bs-step button, .btn-ghost, .em-close, .filter-bar select, .home-card .filter-bar select {
+  .seg button, .pill, .amt .step, .rec-scale button, .bakedays button, .bakedate-add button, .db-date-clear, .bs-step button, .btn-ghost, .filter-bar select, .home-card .filter-bar select {
     background-color: rgba(255,255,255,0.30); background-image: none; border: 1px solid rgba(35,42,51,0.30); color: var(--text);
     -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
   }
   .filter-bar select, .home-card .filter-bar select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23232a33' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
-  .seg button.on, .seg button.on[data-type], .pill.on, .chip-row button.on, .rec-scale button.on, .bakedays button.on {
+  .seg button.on, .seg button.on[data-type], .pill.on, .rec-scale button.on, .bakedays button.on {
     background: rgba(53,70,92,0.16); border: 1px solid var(--accent); color: var(--accent);
   }
   .seg button.on .ic svg { stroke: var(--accent); }
@@ -1140,7 +1029,7 @@
   .db-filter select.on { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%2335465c' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
 
   /* ---- × − + need no border; goodwill's place is a dropdown ---- */
-  .em-close, .amt .step, .bs-step button { background: transparent; border: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
+  .amt .step, .bs-step button { background: transparent; border: none; -webkit-backdrop-filter: none; backdrop-filter: none; }
   .row-select { appearance: none; -webkit-appearance: none; cursor: pointer; min-width: 150px; font-size: var(--fs-body); font-weight: 600; text-align: left;
     padding: 9px 32px 9px 12px; color: var(--text); background-color: rgba(255,255,255,0.30); border: 1px solid rgba(35,42,51,0.30);
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23232a33' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-size: 10px 6px;
@@ -1186,8 +1075,6 @@
   .sp-item .ic2 { width: 20px; height: 20px; }
   .sea-row .ic2, .card h3 .ic2, .proj-card h3 .ic2 { width: 24px; height: 24px; vertical-align: -5px; margin-right: 4px; }
   .sea-row .ic2 { width: 20px; height: 20px; margin-right: 6px; vertical-align: -4px; }
-  #recSection button { display: flex; align-items: center; justify-content: center; gap: 6px; white-space: nowrap; }
-  #recSection [data-ic] { display: inline-flex; }
   /* Product marks are icons now, not monogram squares */
   .tok { background: none !important; width: 26px; flex-basis: 26px; height: 26px; margin-right: 8px; }
   .tok .ic2 { width: 26px !important; height: 26px !important; vertical-align: middle; }
@@ -1224,7 +1111,6 @@
   /* Bottom bar hugs its labels: only a sliver of the home-indicator area is kept */
   .tabbar, body.home-landing .tabbar { height: calc(var(--tabbar-h) + min(var(--safe-bottom), 8px)); }
   body { padding-bottom: calc(var(--tabbar-h) + min(var(--safe-bottom), 8px) + 12px); }
-  .home-ver { display: none !important; }
   /* Data summaries: two compact columns instead of one long list */
   .db-summary .ds-rows, .db-amts { display: grid; grid-template-columns: 1fr 1fr; column-gap: 18px; }
   .db-summary .ds-rows .proj-row, .db-amts .proj-row { padding: 5px 0; min-height: 0; font-size: var(--fs-caption); gap: 6px; }
@@ -1253,8 +1139,6 @@
   .db-fold > summary .db-daylabel::before { content: "›"; display: inline-block; margin-right: 8px; color: var(--muted); transition: transform .15s; }
   .db-fold[open] > summary .db-daylabel::before { transform: rotate(90deg); }
   /* Timers */
-  .tm-form { margin: 0 12px; padding-bottom: 12px; } .tm-form .btn-primary { margin-top: 10px; }
-  .tm-form input[type=text] { flex: 1; min-width: 0; text-align: right; }
   .tm-list { margin: 0 12px; padding: 4px 0 10px; }
   .tm-run { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--sep); }
   .tm-clock { font-size: var(--fs-figure); font-weight: 700; color: var(--accent); min-width: 92px; font-variant-numeric: tabular-nums lining-nums; }
@@ -1381,15 +1265,14 @@
   .inv-store button.on { color: var(--accent); border-color: var(--accent); background: rgba(53,70,92,.14); font-weight: 700; }
   /* Home buttons: frosted glass rows with an icon and chevron */
   .home-menu { gap: 10px; }
-  .home-menu button, .home-menu a.hm-link { border-radius: 18px !important; height: 60px; display: flex; align-items: center; gap: 14px; padding: 0 18px; text-align: left;
+  .home-menu button { border-radius: 18px !important; height: 60px; display: flex; align-items: center; gap: 14px; padding: 0 18px; text-align: left;
     background: linear-gradient(180deg, rgba(255,255,255,0.20), rgba(255,255,255,0.09)); border: 1px solid rgba(255,246,238,0.55);
     -webkit-backdrop-filter: blur(14px) saturate(1.2); backdrop-filter: blur(14px) saturate(1.2); letter-spacing: 0.4px; }
-  .home-menu button:active, .home-menu a.hm-link:active { background: rgba(255,255,255,0.30); transform: scale(0.985); }
+  .home-menu button:active { background: rgba(255,255,255,0.30); transform: scale(0.985); }
   .home-menu .hm-ic { display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; flex: none; border-radius: 12px !important; background: rgba(255,246,238,0.92); }
   .home-menu .hm-ic svg { width: 24px; height: 24px; }
   .home-menu .hm-t { flex: 1; }
   .home-menu .hm-go { font-size: 26px; line-height: 1; opacity: .8; }
-  .home-menu a.hm-link { justify-content: center; height: 48px; margin-top: 4px; font-size: var(--fs-body); background: transparent; border-color: rgba(255,246,238,0.4); }
   /* Bake plan grid: flavors down, stores across */
   .pg-row { display: grid; grid-template-columns: minmax(0, 1fr) repeat(var(--n, 2), var(--w, 64px)); align-items: center; gap: 6px; padding: 9px 0; border-bottom: 1px solid var(--sep); }
   .pg-row .k { display: flex; align-items: center; gap: 8px; min-width: 0; }
@@ -1407,16 +1290,14 @@
   .home-menu button .hm-t { flex: none; font-size: var(--fs-lg); }
   .home-menu button .hm-go { display: none; }
   .home-menu button[data-hpage="invoice"] { grid-column: 1 / -1; flex-direction: row; height: 64px; gap: 14px; }
-  .home-menu a.hm-link { grid-column: 1 / -1; margin-top: 26px; }
   /* Home menu: a plain, spaced-out text list (no boxes) */
   .home-menu { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
-  .home-menu button, .home-menu a.hm-link { width: auto; height: auto; flex-direction: row; justify-content: flex-start; gap: 0; padding: 14px 0 8px; text-shadow: 0 1px 8px rgba(20,24,30,.75) !important; border: 0 !important; border-bottom: 1.5px solid transparent !important; border-radius: 0 !important;
+  .home-menu button { width: auto; height: auto; flex-direction: row; justify-content: flex-start; gap: 0; padding: 14px 0 8px; text-shadow: 0 1px 8px rgba(20,24,30,.75) !important; border: 0 !important; border-bottom: 1.5px solid transparent !important; border-radius: 0 !important;
     background: none !important; -webkit-backdrop-filter: none; backdrop-filter: none; text-transform: uppercase; letter-spacing: 0.32em; font-size: var(--fs-body); font-weight: 500; color: #fff6ee; transform: none; margin: 0; grid-column: auto; }
   .home-menu button[data-hpage="invoice"] { grid-column: auto; height: auto; }
   .home-menu button .hm-ic, .home-menu button .hm-go { display: none; }
   .home-menu button .hm-t { flex: none; font-size: inherit; }
-  .home-menu button:active, .home-menu a.hm-link:active { background: none !important; border-bottom-color: #fff6ee !important; transform: none; }
-  .home-menu a.hm-link { margin-top: 30px; font-size: var(--fs-caption); letter-spacing: 0.28em; opacity: .8; }
+  .home-menu button:active { background: none !important; border-bottom-color: #fff6ee !important; transform: none; }
 
   /* ================= Photo outline, bright (final block) =================
      The Home photo's palette on a bright ground: warm white page #f8f5ef, cream cards, shadow-navy ink #000,
@@ -1430,17 +1311,16 @@
     --line: rgba(35,42,51,0.30);
   }
   html, body { background: var(--bg); color: var(--text); }
-  .card, .proj-card, .db-entry, .db-summary, .split-card, .rec-box, .ds-card { background: var(--card); border: 1px solid var(--line); border-radius: 10px !important; }
+  .card, .proj-card, .db-entry, .db-summary, .split-card, .rec-box { background: var(--card); border: 1px solid var(--line); border-radius: 10px !important; }
   .home-card { background: transparent; border: 0; }
-  .sheet, .entry-modal { background: var(--card); color: var(--text); }
+  .sheet { background: var(--card); color: var(--text); }
   .scrim { background: rgba(35,42,51,0.45); }
   input, select, textarea { color: var(--text); background-color: var(--field); border-color: var(--line); }
-  .seg button, .pill, .amt .step, .chip-row button, .rec-scale button, .bakedays button, .bakedate-add button,
-  .db-date-clear, .bs-step button, .btn-ghost, .em-close, .filter-bar select, .home-card .filter-bar select, .db-filter button, .db-filter select {
+  .seg button, .pill, .amt .step, .rec-scale button, .bakedays button, .bakedate-add button, .db-date-clear, .bs-step button, .btn-ghost, .filter-bar select, .home-card .filter-bar select, .db-filter button, .db-filter select {
     background-color: rgba(255,255,255,0.55); border: 1px solid var(--line); color: var(--text); border-radius: 8px !important;
   }
   .filter-bar select, .home-card .filter-bar select, .db-filter select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23232a33' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
-  .seg button.on, .seg button.on[data-type], .pill.on, .chip-row button.on, .rec-scale button.on, .bakedays button.on, .db-filter button.on, .db-filter select.on {
+  .seg button.on, .seg button.on[data-type], .pill.on, .rec-scale button.on, .bakedays button.on, .db-filter button.on, .db-filter select.on {
     background-color: rgba(53,70,92,0.14); border-color: var(--accent); color: var(--accent);
   }
   .db-filter select.on { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%2335465c' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
@@ -1450,7 +1330,6 @@
   body.home-landing .tabbar { background: rgba(255,246,238,0.12); border-top-color: rgba(255,246,238,0.5); }
   .tabbar button { color: var(--muted); }
   .tabbar button.on { background: rgba(53,70,92,0.12); color: var(--accent); }
-  .home-season { background: #ffffff; color: #000; }
   .db-day, .ver-badge { background: none; color: var(--muted); }
   .sp-pop { background: #ffffff; border: 1px solid var(--line); color: var(--text); border-radius: 8px !important; overflow-x: hidden; }
   .sp-pop { padding: 2px 0; }
@@ -1494,10 +1373,9 @@
   #view-db .db-filter button.on, #view-plan .db-filter button.on, #view-db .db-filter select.on, #view-plan .db-filter select.on {
     background: var(--bg) !important; color: var(--accent); font-weight: 700; }
   /* chips, steppers, dropdowns: flat fields */
-  #view-db .pill, #view-plan .pill, #view-plan .chip-row button, #view-plan .rec-scale button, #view-plan .bakedays button, #view-plan .bakedate-add button,
-  #view-plan .bs-step button, #view-plan .btn-ghost, #view-db .db-date-clear, #view-db .filter-bar select, #view-plan .filter-bar select, #view-plan select, #view-db select {
+  #view-db .pill, #view-plan .pill, #view-plan .rec-scale button, #view-plan .bakedays button, #view-plan .bakedate-add button, #view-plan .bs-step button, #view-plan .btn-ghost, #view-db .db-date-clear, #view-db .filter-bar select, #view-plan .filter-bar select, #view-plan select, #view-db select {
     background-color: var(--field); border: 0; color: var(--text); box-shadow: none; -webkit-backdrop-filter: none; backdrop-filter: none; font-weight: 600; }
-  #view-plan .chip-row button.on, #view-plan .rec-scale button.on, #view-plan .bakedays button.on, #view-db .pill.on, #view-plan .pill.on {
+  #view-plan .rec-scale button.on, #view-plan .bakedays button.on, #view-db .pill.on, #view-plan .pill.on {
     background-color: var(--accent); color: #fff; border: 0; }
   #view-db .btn-primary, #view-plan .btn-primary, #view-db .db-new, #view-plan .submit { background: var(--accent); color: #fff; border: 0; font-weight: 700; }
   #view-db input, #view-plan input, #view-plan textarea { background: var(--field); border: 0; color: var(--text); }
@@ -1508,7 +1386,7 @@
   #view-db .db-filter button .ic2, #view-plan .db-filter button .ic2, #view-db .db-filter button svg, #view-plan .db-filter button svg { width: 15px !important; height: 15px !important; }
   #view-db .filter-bar select, #view-plan .filter-bar select, #view-plan select, #view-db select { padding: 6px 28px 6px 9px !important; min-height: 0 !important; height: 32px !important; font-size: var(--fs-caption) !important; background-size: 9px !important; background-position: right 9px center !important; }
   #view-db .db-new, #view-db .btn-primary, #view-plan .btn-primary { padding: 7px 14px !important; min-height: 0 !important; height: auto !important; font-size: var(--fs-caption) !important; }
-  #view-plan .chip-row button, #view-plan .rec-scale button, #view-plan .bakedays button, #view-plan .bakedate-add button, #view-plan .btn-ghost, #view-db .pill, #view-plan .pill { padding: 4px 9px !important; min-height: 0 !important; font-size: var(--fs-caption) !important; }
+  #view-plan .rec-scale button, #view-plan .bakedays button, #view-plan .bakedate-add button, #view-plan .btn-ghost, #view-db .pill, #view-plan .pill { padding: 4px 9px !important; min-height: 0 !important; font-size: var(--fs-caption) !important; }
   #view-plan .bakedays button { width: 28px !important; height: 28px !important; padding: 0 !important; }
   #view-plan .bs-step button, #view-plan .amt .step { width: 28px !important; height: 28px !important; min-height: 0 !important; padding: 0 !important; }
   #view-db .db-filter, #view-plan .db-filter { margin-bottom: 8px; }
@@ -1521,15 +1399,10 @@
   /* Home landing: the text list and the kitchen booking link sit together mid-screen (a fixed gap, not pinned to the bottom,
      so it stays clear of the nav on a real iPhone where the viewport is shorter) */
   #view-home:not(.paged) .home-menu { flex: none; margin: auto 0; }
-  #view-home:not(.paged) .home-menu a.hm-link { margin-top: 34px; margin-bottom: 0; }
   .rec-h { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
   .rec-ver { display: inline-flex; gap: 4px; margin-left: 2px; }
   .rec-ver button { padding: 2px 9px; font: inherit; font-size: var(--fs-caption); font-weight: 600; cursor: pointer; background: var(--field); border: 1px solid transparent; color: var(--text); border-radius: 8px; }
   .rec-ver button.on { background: rgba(53,70,92,.12); border-color: var(--accent); color: var(--accent); }
-  .cost-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 10px 0 4px; }
-  .cost-stat { border: 1px solid var(--sep); border-radius: 10px; padding: 8px 10px; background: var(--field); display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-  .cost-stat span { font-size: var(--fs-micro); color: var(--muted); text-transform: uppercase; letter-spacing: .5px; font-weight: 700; }
-  .cost-stat b { font-size: var(--fs-lg); color: var(--text); }
   .cost-sec { margin-top: 16px; padding-top: 4px; border-top: 1px solid var(--sep); }
   .cost-sec .cost-sub { font-size: var(--fs-micro); color: var(--muted); text-transform: uppercase; letter-spacing: .6px; font-weight: 700; margin: 8px 0 2px; }
   /* long labels wrap instead of pushing the value out of the card */
@@ -1564,22 +1437,17 @@
   .submit { margin-top: 8px; }
   .seg { gap: 4px; margin-bottom: 8px; }
   .seg button { padding: 6px 2px 5px !important; gap: 2px; }
-  .db-filter, .chip-row, .pills, .fc-locs, .inv-store, .rec-scale, .rec-ver, .bakedays { gap: 4px !important; }
-  .db-filter, .fc-locs, .chip-row, .rec-scale { margin-bottom: 6px !important; }
-  .pill, .chip-row button, .rec-scale button, .fc-locs button, .inv-store button, .rec-ver button, .bakedate-add button { padding: 4px 9px !important; min-height: 0 !important; font-size: var(--fs-caption) !important; }
+  .db-filter, .pills, .fc-locs, .inv-store, .rec-scale, .rec-ver, .bakedays { gap: 4px !important; }
+  .db-filter, .fc-locs, .rec-scale { margin-bottom: 6px !important; }
+  .pill, .rec-scale button, .fc-locs button, .inv-store button, .rec-ver button, .bakedate-add button { padding: 4px 9px !important; min-height: 0 !important; font-size: var(--fs-caption) !important; }
   .amt .step, .bs-step button { width: 30px !important; height: 30px !important; min-height: 0 !important; padding: 0 !important; }
   .amt { gap: 2px; }
   .row { min-height: 0 !important; padding-top: 7px !important; padding-bottom: 7px !important; }
-  #invGenBtn, #lblOpenBtn, .inv-actions button { padding: 9px 14px !important; }
+  #invGenBtn, .inv-actions button { padding: 9px 14px !important; }
   .inv-actions { gap: 6px !important; margin: 10px 0 4px !important; }
   .home-menu { gap: 0 !important; }
-  .home-menu button, .home-menu a.hm-link { padding-top: 10px !important; padding-bottom: 6px !important; }
-  .home-menu a.hm-link { margin-top: 22px !important; }
+  .home-menu button { padding-top: 10px !important; padding-bottom: 6px !important; }
   .tabbar button { gap: 2px !important; }
-  /* five recipe tabs (Mads / Fillings / Scones / Other / Test) must fit a narrow phone */
-  #recSection { display: flex !important; }
-  #recSection button { flex: 1 1 0; min-width: 0; padding: 5px 3px !important; gap: 3px; justify-content: center; white-space: nowrap; }
-  @media (max-width: 400px) { #recSection button [data-ic], #recSection button .ic2 { display: none; } }
   /* nav: solid light caramel, flush, only while Data / Baking is open */
   body[data-tab="db"] .tabbar, body[data-tab="plan"] .tabbar, body[data-tab="fin"] .tabbar { background: #f3f1ed; border-top: 1px solid #e2dfda; }
   body[data-tab="db"] .tabbar button, body[data-tab="plan"] .tabbar button, body[data-tab="fin"] .tabbar button { color: #000; opacity: .75; }
@@ -1608,7 +1476,6 @@
 
     /* Baking > Recipes: section tabs and picker on one line; card content in two columns */
     #view-plan #bakingRecipes:not([hidden]) { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0 20px; align-items: start; }
-    #view-plan #bakingRecipes > #recSection { grid-column: 1; margin-bottom: 12px; }
     #view-plan #bakingRecipes > .filter-bar { grid-column: 2; margin-bottom: 12px; }
     #view-plan #bakingRecipes > #recCard { grid-column: 1 / -1; }
     #recCard > .proj-card { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0 40px; align-items: start; }
@@ -1711,8 +1578,8 @@
       #finBody > .fin-wic, #finBody > .fin-scen { grid-column: 3; order: 4; }
       #finBody > .fin-scen { order: 5; }
     }
-    #costCard > .proj-card, #costCard > .cost-card { max-width: 720px; }
-    #projList > .proj-sub, #projList > .proj-empty, #finBody > .sub, #finBody > .db-filter, #finBody > .filter-bar { grid-column: 1 / -1; }
+    #costCard > .proj-card { max-width: 720px; }
+    #projList > .proj-sub, #finBody > .sub, #finBody > .db-filter, #finBody > .filter-bar { grid-column: 1 / -1; }
     /* Data entries in columns, month/day headers span the row */
     #dbList { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 8px 20px; align-items: start; }
     #dbList > * { min-width: 0; }
@@ -1721,14 +1588,13 @@
     .scrim { align-items: center; }
     .sheet { max-width: 560px; border-radius: 18px; padding: 28px 28px 28px; transform: translateY(24px); max-height: 90vh; overflow-y: auto; }
     .scrim.show .sheet { transform: translateY(0); }
-    .inv-sheet, #lblScrim .sheet, #bsScrim .sheet, #mlScrim .sheet { max-width: 760px; }
+    .inv-sheet, #bsScrim .sheet, #mlScrim .sheet { max-width: 760px; }
     #seaScrim .sheet, #buyScrim .sheet { max-width: 640px; max-height: 88vh; }
     .scrim.alert .alert-box { max-width: 420px; }
     #view-entry .wrap { max-width: 720px; margin: 0 auto; padding: 0 28px 24px; }
     /* Home landing: photo fills the screen, buttons centred and roomy */
     #view-home:not(.paged) .home-menu { width: 100%; max-width: 440px; margin: auto auto auto 0; align-items: flex-start; }
-    #view-home:not(.paged) .home-menu button, #view-home:not(.paged) .home-menu a.hm-link { justify-content: flex-start; }
-    #view-home:not(.paged) .home-ver { text-align: left; }
+    #view-home:not(.paged) .home-menu button { justify-content: flex-start; }
     /* Home sub-pages read as one comfortable column in a card */
     #view-home.paged .wrap { max-width: 1040px; }
     .home-card { border-radius: 18px; }
@@ -1738,69 +1604,9 @@
   body.home-landing .ver-badge { color: #fff6ee !important; }
   body { padding-top: calc(var(--safe-top) + 22px) !important; }
   .db-new { top: 20px !important; }
-  .home-season { top: calc(var(--safe-top) + 30px) !important; }
 
-  /* ---- Kairos Logs (Home page) ---- */
-  .lg-tabs { display: flex; gap: 6px; overflow-x: auto; margin-bottom: 12px; }
-  .lg-tabs button { flex: 1 0 auto; font-size: var(--fs-caption); font-weight: 600; padding: 9px 12px; border-radius: 999px; border: 1px solid var(--sep); background: rgba(255,255,255,.30); color: var(--text); font-family: inherit; cursor: pointer; white-space: nowrap; }
-  .lg-tabs button.on { border-color: var(--accent); color: var(--accent); background: rgba(164,90,34,.10); }
   .inv-hact { display: flex; gap: 6px; margin-left: 10px; }
   .inv-hact button { padding: 6px 10px !important; font-size: var(--fs-caption); }
-  .lg-note { font-size: var(--fs-caption); color: var(--muted); margin-bottom: 10px; }
-  label .lg-note { display: block; margin: 6px 0 0; font-weight: 400; }
-  .lg-form { display: grid; gap: 10px; margin-bottom: 14px; }
-  .lg-form label { display: grid; gap: 4px; font-size: var(--fs-caption); font-weight: 600; color: var(--muted); }
-  .lg-form input, .lg-form select, .lg-form textarea { width: 100%; font: inherit; font-size: var(--fs-body); color: var(--text); background: rgba(255,255,255,.30); border: 1px solid var(--sep); border-radius: 12px; padding: 10px 12px; min-width: 0; box-sizing: border-box; }
-  .lg-form textarea { min-height: 64px; resize: vertical; }
-  .lg-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-  .lg-calc { font-size: var(--fs-body); padding: 10px 12px; border: 1px dashed var(--sep); border-radius: 12px; }
-  .lg-day { font-size: var(--fs-caption); font-weight: 700; color: var(--muted); border-bottom: 1px solid var(--sep); padding: 10px 0 4px; display: flex; justify-content: space-between; }
-  .lg-entry { padding: 10px 0; border-bottom: 1px solid var(--sep); display: grid; gap: 4px; }
-  .lg-entry .t { font-weight: 700; font-size: var(--fs-body); }
-  .lg-entry .kv { font-size: var(--fs-caption); color: var(--muted); display: grid; grid-template-columns: auto 1fr; gap: 2px 10px; }
-  .lg-entry .kv span:nth-child(even) { color: var(--text); overflow-wrap: anywhere; }
-  .lg-badge { font-size: var(--fs-micro); font-weight: 700; justify-self: start; border: 1px solid var(--sep); padding: 1px 8px; border-radius: 999px; }
-  .lg-badge.done { color: var(--green); border-color: var(--green); }
-  .lg-badge.open { color: var(--red); border-color: var(--red); }
-  .lg-day.tg { cursor: pointer; align-items: center; background: none; border-left: 0; border-right: 0; border-top: 0; width: 100%; font: inherit; font-size: var(--fs-caption); font-weight: 700; color: var(--muted); text-align: left; }
-  .lg-day.tg .chev { display: inline-block; width: 14px; transition: transform .15s; }
-  .lg-day.tg.open .chev { transform: rotate(90deg); }
-  .lg-edit { display: grid; gap: 10px; margin-top: 8px; }
-  .lg-edit label { display: grid; gap: 4px; font-size: var(--fs-caption); color: var(--muted); font-weight: 600; }
-  .lg-edit input, .lg-edit select, .lg-edit textarea { font: inherit; font-size: var(--fs-body); padding: 10px 12px; border: 1px solid var(--sep); background: rgba(255,255,255,.30); border-radius: 12px; width: 100%; box-sizing: border-box; color: var(--text); }
-  .lg-acts { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
-  .lg-acts button, .lg-btn { font: inherit; font-size: var(--fs-caption); font-weight: 600; padding: 8px 12px; border-radius: 12px; border: 1px solid var(--sep); background: rgba(255,255,255,.30); color: var(--text); cursor: pointer; }
-  .lg-acts button.danger { color: var(--red); border-color: var(--red); }
-  .lg-btn.pri { background: var(--accent); color: #fff; border-color: var(--accent); font-size: var(--fs-body); padding: 12px; }
-  .lg-finish { display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: end; }
-  .lg-empty { text-align: center; color: var(--muted); padding: 22px 8px; font-size: var(--fs-caption); }
-  /* Logs: no overlap, tighter entries */
-  .lg-2 { grid-template-columns: minmax(0,1fr) minmax(0,1fr); align-items: start; }
-  .lg-form label, .lg-edit label, .lg-2 > * { min-width: 0; }
-  .lg-form input, .lg-form select, .lg-edit input, .lg-edit select { display: block; max-width: 100%; height: 44px; -webkit-appearance: none; appearance: none; }
-  .lg-form input[type=date], .lg-form input[type=time], .lg-edit input[type=date], .lg-edit input[type=time] { text-align: left; }
-  .lg-form input::-webkit-date-and-time-value, .lg-edit input::-webkit-date-and-time-value { text-align: left; min-height: 1.2em; }
-  .lg-form select, .lg-edit select { padding-right: 30px; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%236d6660' stroke-width='1.5'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; }
-  .lg-form { gap: 8px; margin-bottom: 8px; }
-  .lg-day { padding: 6px 0 3px; }
-  .lg-entry { padding: 6px 0; gap: 2px; grid-template-columns: 1fr auto; align-items: center; column-gap: 8px; }
-  .lg-entry > * { grid-column: 1 / -1; }
-  .lg-entry > .t { grid-column: 1; }
-  .lg-entry > .lg-badge { grid-column: 2; grid-row: 1; }
-  .lg-entry .kv { grid-template-columns: auto 1fr auto 1fr; gap: 0 10px; line-height: 1.35; }
-  .lg-acts { gap: 6px; }
-  .lg-acts button { padding: 5px 10px; }
-    .lg-rep { overflow-x: auto; background: #fff; color: #111; border: 1px solid var(--sep); padding: 12px; margin-top: 12px; }
-  .lg-rep h2 { font-size: var(--fs-lg); margin: 0 0 2px; color: #111; }
-  .lg-rep h4 { font-size: var(--fs-caption); margin: 14px 0 6px; color: #111; }
-  .lg-rep table { border-collapse: collapse; width: 100%; font-size: var(--fs-micro); min-width: 460px; }
-  .lg-rep th, .lg-rep td { border: 1px solid #999; padding: 4px 6px; text-align: left; vertical-align: top; }
-  .lg-rep th { background: #eee8da; }
-  .lg-rep td.dt { background: #f6f2e8; font-weight: 700; }
-  .lg-rep .s { color: #555; font-size: var(--fs-micro); }
-  /* Recipes tab: eight view buttons wrap to two rows of four (2026-10-25) */
-  #recSection { flex-wrap: wrap; }
-  #recSection button { flex: 1 0 22%; padding: 10px 4px; font-size: var(--fs-caption); }
 /* Bake Day (2026-11-17) */
 .bk-sum { color: var(--muted); font-size: var(--fs-caption); margin: 4px 0 10px; }
 .bk-rc { margin-top: 16px; } .bk-rc summary { font-weight: 700; padding: 8px 2px; cursor: pointer; }
@@ -1822,24 +1628,13 @@
 .pn-form .pn-bar input { flex: 1 1 0; width: auto; min-width: 0; } .pn-form .pn-bar select { flex: 0 0 96px; width: 96px; }
 .pn-r b { white-space: nowrap; }
 .pn-note { color: var(--muted); font-size: var(--fs-caption); margin: 10px 0; }
-.rc-text { width: 100%; box-sizing: border-box; min-height: 160px; font-family: inherit; font-size: var(--fs-body); }
-.rc-bad { color: var(--text); font-weight: 700; border-left: 3px solid var(--accent); padding: 2px 0 2px 8px; margin: 8px 0; font-size: var(--fs-body); }
-.rc-ok { color: var(--green); font-weight: 700; margin: 8px 0; }
-.rx-file { flex: 1 1 100%; min-width: 0; color: var(--muted); font-size: var(--fs-caption); overflow-wrap: anywhere; }
 .rx-sec h3 { margin: 4px 0 8px; }
-.rc-paste { margin-top: 16px; }
-.rc-paste > summary { cursor: pointer; padding: 10px 2px; font-weight: 700; font-size: var(--fs-body); color: var(--accent); }
 /* Trends (2026-11-18) */
 .tr-bar { display: flex; gap: 8px; margin: 4px 0 12px; }
 .tr-bar select { flex: 1 1 0; min-width: 0; }
-.tr-seg { display: flex; gap: 8px; margin: 0 0 12px; }
-.tr-seg button { flex: 1 1 0; padding: 8px 0; }
-.tr-seg button.on { border-color: var(--accent); color: var(--accent); font-weight: 700; }
 .tr-chart { width: 100%; height: auto; display: block; }
 .tr-chart text { font-family: inherit; fill: var(--muted); font-size: 10px; }
 .tr-chart .tr-tot { fill: var(--text); font-weight: 700; }
-.tr-leg { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: var(--fs-caption); color: var(--muted); margin: 6px 0 10px; }
-.tr-leg i { display: inline-block; width: 10px; height: 10px; margin-right: 5px; vertical-align: -1px; }
 .tr-tbl { width: 100%; border-collapse: collapse; font-size: var(--fs-caption); margin: 4px 0 4px; }
 .tr-tbl th, .tr-tbl td { padding: 7px 3px; border-bottom: 1px solid var(--sep); text-align: right; font-weight: 400; white-space: nowrap; }
 .tr-tbl th:first-child, .tr-tbl td:first-child { text-align: left; }
@@ -1848,12 +1643,6 @@
 .tr-tbl .tr-part td { color: var(--muted); }
 .tr-d { display: block; font-size: var(--fs-micro); color: var(--muted); }
 .tr-up { color: var(--green); } .tr-dn { color: var(--accent); }
-.tr-day { padding: 9px 2px; border-bottom: 1px solid var(--sep); }
-.tr-day > div:first-child { display: flex; justify-content: space-between; gap: 8px; }
-.tr-day small { color: var(--muted); font-size: var(--fs-caption); }
-.tr-day .tr-ch { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 4px; font-size: var(--fs-caption); }
-.tr-day .tr-ch span { color: var(--muted); } .tr-day .tr-ch b { color: var(--text); }
-.tr-day mark { background: none; color: var(--accent); font-size: var(--fs-micro); text-transform: uppercase; border: 1px solid var(--accent); padding: 0 4px; margin-left: 6px; }
 /* Home menu: calm panel, plain readable text, big tap rows, grouped (2026-11-18) */
 #view-home:not(.paged) .home-menu { width: 100%; max-width: 440px; margin: auto 0 12px !important; padding: 6px 18px 10px; box-sizing: border-box; border-radius: 22px; background: rgba(20,24,30,0.50); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); border: 1px solid rgba(255,246,238,0.22); }
 #view-home:not(.paged) .home-menu .hm-grp { align-self: stretch; width: auto; margin: 14px 0 0; padding: 0 0 6px; font-size: var(--fs-caption); font-weight: 600; letter-spacing: 0.04em; text-transform: none; color: rgba(255,246,238,0.78); border-bottom: 1px solid rgba(255,246,238,0.22); text-shadow: none; }
@@ -1874,16 +1663,14 @@ body:not(.home-landing) .tabbar button.on svg * { stroke: #fff; }
 body[data-tab="home"]:not(.home-landing) .tabbar button { color: #000; }
 body[data-tab="home"]:not(.home-landing) .tabbar button.on { background: #000; color: #fff; }
 .home-bg { filter: grayscale(1) contrast(1.05); }
-.tok, .ic svg, .hm-ic svg, .tic svg, [data-ic] svg, .rec-ic svg { filter: grayscale(1); }
+.tok, .ic svg, .hm-ic svg, .tic svg, [data-ic] svg { filter: grayscale(1); }
 .tok { background: #f1f1f1 !important; }
-.card, .proj-card, .db-entry, .db-summary, .split-card, .rec-box, .ds-card { border-color: #000; box-shadow: none; }
-.seg button.on, .pill.on, .chip-row button.on, .rec-scale button.on, .bakedays button.on, .btn-primary, .submit, .db-new, .db-filter button.on, .db-filter select.on, .tr-seg button.on { background: #000 !important; color: #fff !important; border-color: #000 !important; }
+.card, .proj-card, .db-entry, .db-summary, .split-card, .rec-box { border-color: #000; box-shadow: none; }
+.seg button.on, .pill.on, .rec-scale button.on, .bakedays button.on, .btn-primary, .submit, .db-new, .db-filter button.on, .db-filter select.on { background: #000 !important; color: #fff !important; border-color: #000 !important; }
 .seg button.on .ic svg { stroke: #fff; }
-.tr-chart .trc-LP { fill: #111; } .tr-chart .trc-SS { fill: #737373; } .tr-chart .trc-MP { fill: #b8b8b8; } .tr-chart .trc-X { fill: #e2e2e2; }
 .tr-chart rect[class^="trc-"] { stroke: #fff; stroke-width: 1; }
-.tr-leg i.trc-LP { background: #111 !important; } .tr-leg i.trc-SS { background: #737373 !important; } .tr-leg i.trc-MP { background: #b8b8b8 !important; } .tr-leg i.trc-X { background: #e2e2e2 !important; }
 .tr-up, .tr-dn { color: #000; }
-#view-db .db-filter button.on, #view-plan .db-filter button.on, #view-db .db-filter select.on, #view-plan .db-filter select.on, #view-plan .chip-row button.on, #view-plan .rec-scale button.on, #view-plan .bakedays button.on, #view-db .pill.on, #view-plan .pill.on { background: #000 !important; color: #fff !important; border-color: #000 !important; box-shadow: none !important; }
+#view-db .db-filter button.on, #view-plan .db-filter button.on, #view-db .db-filter select.on, #view-plan .db-filter select.on, #view-plan .rec-scale button.on, #view-plan .bakedays button.on, #view-db .pill.on, #view-plan .pill.on { background: #000 !important; color: #fff !important; border-color: #000 !important; box-shadow: none !important; }
 body[data-tab="home"] .tabbar button.on, body:not(.home-landing) .tabbar button.on { background: #000 !important; color: #fff !important; opacity: 1 !important; }
 /* One plain, readable font everywhere (the iPhone system font); printed documents keep Archivo. */
 html, body, button, input, select, textarea { font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif !important; }
@@ -2023,9 +1810,6 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
   .up-box .upMsg { font-size: var(--fs-body); color: var(--muted); margin: 12px 2px; line-height: 1.4; }
 
   /* ---- Trends: every item, share-of-sales donut ---- */
-  .tr-chips { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 10px; }
-  .tr-chips button { min-height: 40px; padding: 0 14px; border-radius: 999px; font-size: var(--fs-caption); }
-  .tr-chips button.on { background: #000 !important; color: #fff !important; border-color: #000 !important; }
   .tr-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -2px; }
   .tr-pie { display: flex; align-items: center; gap: 10px; margin: 4px 0 14px; }
   .tr-pie svg { width: 128px; height: 128px; flex: none; }
@@ -2059,16 +1843,12 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
    2. Selected and unselected chips share one border width, height and padding; only colour and fill change. */
 button { color: var(--text, #000); }
 #homeTrends .tr-bar select { min-height: 44px !important; font-size: var(--fs-body) !important; }
-#homeTrends .tr-chips button { box-sizing: border-box !important; min-height: 40px !important; padding: 0 14px !important; border: 1px solid transparent !important; }
-#homeTrends .tr-chips button.on { border-color: #000 !important; }
 
 /* Boxes card (v1.147.00): end of the Bake plan, step 3 only */
 #bakingPlan:not([data-step="3"]) #pwBoxes { display: none; }
 #pwBoxes { padding: 16px; margin: 12px 0 0; }
 #pwBoxes h3 { margin: 0 0 4px; }
 .bx-total { font-size: var(--fs-caption); color: var(--muted); margin-bottom: 10px; }
-.bx-loc { display: flex; justify-content: space-between; align-items: baseline; background: #000; color: #fff; padding: 10px 12px; font-size: var(--fs-body); font-weight: 700; margin-top: 10px; }
-.bx-loc span { font-size: var(--fs-caption); font-weight: 500; }
 .bx-row { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; padding: 10px 2px; border-bottom: 1px solid var(--sep, #ddd); font-size: var(--fs-body); }
 .bx-row small { display: block; color: var(--muted); font-size: var(--fs-caption); }
 .bx-row b { font-size: var(--fs-lg); white-space: nowrap; }
@@ -2179,7 +1959,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   #homeForecast > #homeUpdated, #homeForecast > .group-label, #homeForecast > #projSub { grid-column: 1 / -1; }
   #homeForecast > .filter-bar { grid-column: 1 / -1; max-width: 360px; }
   #homeForecast > #projList { display: contents; }
-  #projList > .fc-locs, #projList > .proj-sub, #projList > .proj-empty { grid-column: 1 / -1; grid-row: 5; }
+  #projList > .fc-locs, #projList > .proj-sub { grid-column: 1 / -1; grid-row: 5; }
   #projList > .pg-card { grid-column: 1; grid-row: 6; }
   #homeForecast > #homeContent { grid-column: 2; grid-row: 6; }
   #homeForecast .pg-card { max-width: none !important; }
@@ -2357,6 +2137,11 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
 .sc-opts summary::-webkit-details-marker { display: none; }
 .sc-opts summary::after { content: ''; width: 8px; height: 8px; border-right: 2px solid #000; border-bottom: 2px solid #000; transform: rotate(45deg); margin: -4px 6px 0 0; }
 .sc-opts[open] summary::after { transform: rotate(-135deg); margin-top: 4px; }
+  /* New-version banner (checkUpdate): black bar above the tab bar, tap Refresh to reload. */
+  #updBar { position: fixed; left: 16px; right: 16px; bottom: calc(var(--safe-bottom) + var(--tabbar-h) + 10px); z-index: 60; display: none; align-items: center; gap: 12px; padding: 10px 10px 10px 16px; border-radius: 14px; background: #000; color: #fff; font-size: var(--fs-body); box-shadow: 0 4px 16px rgba(0,0,0,.25); }
+  #updBar.show { display: flex; }
+  #updBar span { flex: 1; }
+  #updBar button { min-height: 44px; padding: 0 18px; border: 0; border-radius: 10px; background: #fff; color: #000; font-weight: 600; font-size: var(--fs-body); }
 </style>
 </head>
 <body>
@@ -2737,7 +2522,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.181.03 · Nov 18, 9:03 PM PST</div>
+<div class="ver-badge">v1.182.00 · Nov 18, 9:30 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -2810,25 +2595,6 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
         <button class="btn-ghost" id="invCopyBtn">Copy as text</button>
         <button class="btn-ghost" id="invBackBtn">Close</button>
       </div>
-    </div>
-  </div>
-</div>
-
-<!-- ===== Ingredient label ===== -->
-<div class="scrim" id="lblScrim">
-  <div class="sheet inv-sheet" role="dialog" aria-modal="true" aria-labelledby="lblTitleH">
-    <h2 id="lblTitleH" class="inv-noprint">Ingredient Label</h2>
-    <div class="sum inv-noprint">
-      <div class="inv-field"><span>Manufactured</span><input type="date" id="lblMfg" /></div>
-      <div class="inv-field"><span>Net weight</span><input type="text" id="lblNet" /></div>
-    </div>
-    <div class="warn inv-noprint">Best-by dates fill in from the manufactured date: frozen 3 weeks, thawed 7 days in the fridge, room temperature 2 days. Tap any text on the label to edit it before printing.</div>
-    <div class="inv-noprint" id="lblVers"></div>
-    <div class="lbl-doc" id="lblDoc"></div>
-    <div class="actions inv-noprint" style="margin-top:16px">
-      <button class="btn-primary" id="lblPdfBtn">Download PDF</button>
-      <button class="btn-ghost" id="lblPrintBtn">Print label</button>
-      <button class="btn-ghost" id="lblCloseBtn">Close</button>
     </div>
   </div>
 </div>
@@ -3411,15 +3177,6 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       tagInFlight.delete(id);
       renderDB();
     }
-  }
-
-  function tagForDeletion(rec) {
-    const id = keyOf(rec);
-    patchEntry(id, { taggedForDeletion: true });
-    renderDB();
-    const updated = loadEntries().find(x => keyOf(x) === id);
-    if (updated && updated.notionId) pushTag(updated);
-    // If not synced yet, the tag is pushed automatically once syncEntry completes.
   }
 
   function retryUnsynced() {
@@ -4096,10 +3853,9 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   // Billing schedule (Andrew, 2026-11-18): an invoice per store is due on the 2nd and 4th Sunday of every month. It covers the Sunday of the previous due date
   // through the Saturday before this one (so back to back, nothing is missed or billed twice), and is prepared on the Friday or Saturday before the due Sunday.
   const nthSunday = (y, m, n) => { const d = new Date(y, m, 1); d.setDate(1 + ((7 - d.getDay()) % 7) + 7 * (n - 1)); return d.toLocaleDateString('en-CA'); };
-  const invDues = (y, m) => [nthSunday(y, m, 2), nthSunday(y, m, 4)];
   function invNextDues(today) {
     const [y, m] = today.split('-').map(Number), all = [];
-    for (let k = -1; k <= 2; k++) { const d = new Date(y, m - 1 + k, 1); all.push(...invDues(d.getFullYear(), d.getMonth())); }
+    for (let k = -1; k <= 2; k++) { const d = new Date(y, m - 1 + k, 1); all.push(nthSunday(d.getFullYear(), d.getMonth(), 2), nthSunday(d.getFullYear(), d.getMonth(), 4)); }
     all.sort();
     const i = all.findIndex(d => d >= today);
     return i < 1 ? [] : [{ due: all[i], from: all[i - 1], to: addDays(all[i], -1) }, all[i + 1] ? { due: all[i + 1], from: all[i], to: addDays(all[i + 1], -1) } : null].filter(Boolean);
@@ -4828,7 +4584,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
 
   // ===== Shared projection math (used by Home + Projections) =====
   let fcLoc = 'all';   // Forecast store filter: 'all' | 'La Mirada' | 'Stanton'
-  let projLoc = 'La Mirada', homeLoc = 'La Mirada', planLoc = 'La Mirada';   // Stanton paused — La Mirada only (historical Stanton still in Data)
+  let homeLoc = 'La Mirada', planLoc = 'La Mirada';   // Stanton paused — La Mirada only (historical Stanton still in Data)
   // Stores shown on Forecast and Baking Plan: La Mirada always; Stanton appears on its own once it has an entry in the last 3 weeks.
   function activeLocs(entries) {
     const cut = addDays(nowPST().slice(0, 10), -21);
@@ -5030,13 +4786,6 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       if (base < firstD) { firstD = base; firstP = p; firstLo = lo[p]; firstHi = hi[p]; }
     }
     return { days, lo, hi, firstP, firstD, firstLo, firstHi };
-  }
-  function soldLastDays(loc, sales, n) {
-    const from = ymdMinus(n - 1);
-    let t = 0;
-    for (const s of sales) if (s.location === loc && s.date >= from)
-      t += (typeof s.total === 'number' ? s.total : PRODUCTS.reduce((x, p) => x + (s.amounts[p] || 0), 0));
-    return t;
   }
   // Sales momentum: geometric-mean week-over-week growth of this store's madeleine
   // totals over the last 4 complete weeks. Damped 50% (trends fade) and clamped to
@@ -5423,7 +5172,6 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   let tmTick = null;
   function stopTick() { if (tmTick) { clearInterval(tmTick); tmTick = null; } }
   const tmClock = ms => { const t = Math.max(0, Math.floor(ms / 1000)); const h = Math.floor(t / 3600), m = Math.floor(t % 3600 / 60), sec = t % 60; const p = n => String(n).padStart(2, '0'); return (h ? h + ':' : '') + p(m) + ':' + p(sec); };
-  const tmMin = ms => Math.round(ms / 6000) / 10;   // minutes, 1 decimal
   function tmStart(task, note, qty, plan) {
     if (!TM_TASKS[task]) task = 'Other';
     TM.running.push({ id: Date.now() + '-' + Math.random().toString(36).slice(2, 6), task, note: (note || '').slice(0, 120), qty: parseFloat(qty) > 0 ? parseFloat(qty) : 0, start: Date.now(), plan: plan > 0 ? plan : 0 });
@@ -5602,16 +5350,6 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   }
   const batchLabel = b => `${b} batch${b === 1 ? '' : 'es'}`;
 
-  // Merge several stores' bake-date schedules into one combined schedule (sum each
-  // date's per-flavor amounts) — so "All" shows the total she bakes, then splits.
-  function mergeEvents(eventArrays) {
-    const byDate = {};
-    for (const events of eventArrays) for (const ev of events) {
-      const s = byDate[ev.ymd] || (byDate[ev.ymd] = { ymd: ev.ymd, bake: ZERO(), total: 0, coverUntil: ev.coverUntil });
-      for (const p of PRODUCTS) { s.bake[p] += ev.bake[p]; s.total += ev.bake[p]; }
-    }
-    return Object.values(byDate).sort((a, b) => a.ymd.localeCompare(b.ymd)).map(s => ({ ...s, any: s.total > 0 }));
-  }
   // A per-bake-date schedule card (used for a single store OR the combined view).
   function scheduleCardHtml(title, subLine, events, target) {
     const perFlavor = ZERO(), perFlavorB = ZERO();
@@ -5784,7 +5522,6 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     let agg1 = 0, agg2 = 0;
     const dateTotals = {};
     const planTotals = ZERO();   // pieces to bake per product across the whole plan — feeds the bake sheet's batch defaults
-    const tally = evs => { for (const ev of evs) { for (const p of PRODUCTS) planTotals[p] += (ev.bake && ev.bake[p]) || 0; if (ev.ymd === activeDates[0]) agg1 += ev.total; else if (ev.ymd === activeDates[1]) agg2 += ev.total; } };
 
     // One entry per store: a store with set delivery days is planned on those dates, the others on the plan's bake days (or a lump sum).
     syncDelivUI();
@@ -5888,7 +5625,6 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   // ----- Boxes: how many boxes the plan needs and which storage each goes to (end of Plan step 3) -----
   // Pieces to bake per item come from planBakeTotals. BP Storage and Fullerton Storage get the pieces Andrew sets aside there;
   // the rest is split between the two store storages by each store's recent sales rate. Box size defaults to 12 (one batch).
-  const BOX_LOCS = ['BP Storage', 'Fullerton Storage', 'La Mirada Storage', 'Stanton Storage'];
   let boxCfg = { size: {}, hold: { bp: {}, fu: {} } };
   try { const c = JSON.parse(localStorage.getItem('boxCfg.v1') || 'null'); if (c && c.size && c.hold) boxCfg = c; } catch {}
   // Pans on hand (Andrew, 2026-11-18: 4 + 23 full 4", 6 half 4", 8 half 2.5"). Editable under Pan sizes (saved on this device). Only full 4" pans are compared with the plan: the per-pan sizes are for the full pan.
@@ -6664,14 +6400,12 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   const recNm = it => it.title || it.name;
   const byName = (a, b) => recNm(a).localeCompare(recNm(b));
   const activeFirst = (sec, arr) => [...arr].sort((a, b) => (isActive(sec, a) ? 0 : 1) - (isActive(sec, b) ? 0 : 1) || byName(a, b));   // active first, each group A–Z
-  const seasonalFirst = (sec, arr) => [...arr].sort((a, b) => seasonRank(sec, a) - seasonRank(sec, b));   // stable: the rest keep their order
   // Recipes-tab views (2026-10-25). The real sections (mad / fill / scone / other / test) stay as they are, because Costs, the bake sheet,
   // labels and saved plans key off them; these views only decide which recipes each button shows. Everything but Mads is A–Z.
   const REC_CATMAP = { nycheesecake: 'cake', pumpkinmuffin: 'muffin', blueberrymuffin: 'muffin', glutenfree: 'cake', saltbread: 'cake', apricotricotta: 'cake', earlgreyfigcake: 'cake', pumpkinbundt: 'cake', earlgreymini: 'cake' };   // the rest of REC_OTHER is Sweets
   const REC_UNDER_PLAIN = ['strawberrycc', 'blueberrycc'];   // shown as sections under Plain Scone, not in the list
   const recCatOf = it => it.cat || REC_CATMAP[it.key] || 'sweet';
   const recRealSec = it => Object.keys(REC_ARR).find(s => REC_ARR[s].includes(it)) || 'other';
-  const recAct = it => isActive(recRealSec(it), it);
   function recList(v = recState.sec) {
     if (v === 'mad') return activeFirst('mad', REC_MADS);
     const all = v === 'season' ? Object.keys(REC_ARR).flatMap(s => REC_ARR[s].filter(it => isSeasonal(s, it)))
@@ -6953,7 +6687,6 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     else if (d.rsableflav != null) recState.sableFlav = Number(d.rsableflav);
     else if (d.rmacscale != null) { recState.macScale = Number(d.rmacscale); recState.macCustom = null; }
     else if (d.rgfsize != null) recState.gfSize = Number(d.rgfsize);
-    else if (d.rlabel != null) { openLabel(recList()[recState.idx]); return; }
     else return;
     renderRecipes();
   });
@@ -7699,9 +7432,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       ${row('Ingredients (incl. waste)', pcv(a.ing, a.rev))}${row('Baking labor', pcv(a.bl, a.rev))}${row('Delivery labor', pcv(a.dv, a.rev))}${extra && extra.rows || ''}
       ${row('Profit', ppct(pf, a.rev), 'cost-total')}</div>`; };
     let itemHtml = ''; const gt = zero();
-    const kA = kAlloc(r.rows, r), kSum = kA.amts.reduce((t, v) => t + v, 0);
-    r.rows.forEach((x, i) => { const a = mk(x); addTo(gt, a); const kc = kA.amts[i]; itemHtml += itemBlock(esc(x.p), pace(a), a, { rows: '', pf: a.pf }); });
-    const kUnused = (r.recurring || 0) - kSum;
+    r.rows.forEach((x, i) => { const a = mk(x); addTo(gt, a); itemHtml += itemBlock(esc(x.p), pace(a), a, { rows: '', pf: a.pf }); });
     const totExtra = r.recurring > 0 ? { rows: row('Kitchen and other costs (month)', pcv(r.recurring, gt.rev)), pf: gt.pf - r.recurring } : { rows: '', pf: gt.pf };
     if (r.rows.length) itemHtml += itemBlock('Total', pace(gt) + (r.partial ? ' · full month of fixed costs' : ''), gt, totExtra);
     const itemView = (itemHtml || noRows) + (scItems.length ? `<div class="proj-sub">What-if added items are not in these blocks. See the Summary view.</div>` : '');
@@ -8415,99 +8146,6 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   }
   const buyFmt = (n, u) => n >= 1000 ? `${(Math.round(n / 10) / 100).toLocaleString()} ${u === 'ml' ? 'L' : 'kg'}` : `${Math.round(n).toLocaleString()} ${u}`;
 
-  // ----- Receipts (Home → Receipts): paste the text of a receipt photo (iPhone Live Text → Copy All), read it, review, and post
-  // the lines to the Ledger as UNAPPROVED. No OCR in the app. Costco only. -----
-  // RECEIPTS-PARSER-START
-  // Mirrors scripts/receipts/costco_items.json: Costco item number -> ledger item; size = one package, in g (or ml).
-  const COSTCO_ITEMS = {
-    '1752247': { item: 'Cornstarch', size: 1360.8, unit: 'g' },
-    '1593426': { item: 'Salt', size: 1502.5, unit: 'g' },
-    '801465': { item: 'Brown Sugar', size: 11339.8, unit: 'g' },
-    '737675': { item: 'Powdered Sugar', size: 3175.2, unit: 'g' }
-  };
-  const COSTCO_PLACES = ['WESTMINSTER', 'FULLERTON', 'BUENA PARK', 'LA HABRA', 'ANAHEIM', 'TUSTIN', 'IRVINE', 'GARDEN GROVE', 'COSTA MESA'];
-  // Returns { ok:false, error } when the text is not a receipt we read, else { ok:true, receipt, date, place, vendor, entries, lines, tax, total,
-  // itemsSum, match, blocks:[why posting is blocked] }. Two layouts: one item per line, or item lines first and price lines later.
-  function parseReceipt(text) {
-    const raw = String(text || '');
-    if (!/costco/i.test(raw)) return { ok: false, error: 'Only Costco receipts are read so far' };
-    const rows = raw.split(/\r?\n/).map(l => l.replace(/\s+/g, ' ').trim()).filter(Boolean);
-    const blocks = [];
-    const dm = /(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(raw);
-    const date = dm ? `${dm[3]}-${dm[1].padStart(2, '0')}-${dm[2].padStart(2, '0')}` : '';
-    if (!date) blocks.push("Couldn't find the date");
-    const up = raw.toUpperCase();
-    const pl = COSTCO_PLACES.find(p => new RegExp('\\b' + p + '\\b').test(up));
-    const place = pl ? pl.toLowerCase().replace(/\b[a-z]/g, c => c.toUpperCase()) : '';
-    const receipt = 'Costco ' + (place ? place + ' ' : '') + date;
-    const PRICE = '(\\d{1,4}\\.\\d{2})';
-    const reTotalLbl = /^[*\s]*(SUBTOTAL|TAX|TOTAL)\b/i;
-    const reCoupon = /^\d{3,8}\s*\/\s*\d{3,8}\b|\d+\.\d{2}\s*-\s*[A-Za-z]?$/;
-    const reA = new RegExp('^(?:[A-Za-z] )?(\\d{4,8}) (.+?) ' + PRICE + '(?: ?[A-Za-z])?$');          // E 1752247 CORN STARCH 4.99 N
-    const reB = /^(?:([A-Za-z]) )?(\d{4,8})(?: ([A-Za-z].*))?$/;                                            // E 1752247 CORN STARCH
-    const rePriceOnly = new RegExp('^' + PRICE + '(?: ?[A-Za-z])?$');                                   // 4.99 N
-    const moneyIn = s => { const m = /(\d{1,5}\.\d{2})\s*[A-Za-z]?$/.exec(s); return m ? parseFloat(m[1]) : null; };
-    const reQty = /^(\d{1,3}) ?@ ?(\d{1,4}\.\d{2})$/;                                                  // 3 @ 4.99 (the next item row prints the line total)
-    const entries = [], pending = [], standalone = [];       // standalone: {i, price}
-    let firstLbl = -1, tax = null, total = null, qty = null;
-    const coupons = [];
-    rows.forEach((l, i) => {
-      if (l === '#consumed') return;
-      const qm = reQty.exec(l);
-      if (qm) { qty = { n: parseInt(qm[1], 10), p: parseFloat(qm[2]) }; return; }
-      if (reCoupon.test(l)) { coupons.push(l); return; }
-      const lm = reTotalLbl.exec(l);
-      if (lm) {
-        if (firstLbl < 0) firstLbl = i;
-        const kind = lm[1].toUpperCase();
-        let v = moneyIn(l);
-        if (v == null && rows[i + 1] && rePriceOnly.test(rows[i + 1])) { v = moneyIn(rows[i + 1]); rows[i + 1] = '#consumed'; }
-        if (kind === 'TOTAL' && /ITEMS|TOTAL\s+TAX/i.test(l)) return;
-        if (kind === 'TAX' && tax == null) tax = v;
-        else if (kind === 'TOTAL' && total == null) total = v;
-        return;
-      }
-      let m = reA.exec(l);
-      if (m) { entries.push({ num: m[1], label: m[2], price: parseFloat(m[3]), qty }); qty = null; return; }
-      m = reB.exec(l);
-      if (m && (m[1] || COSTCO_ITEMS[m[2]])) { const e = { num: m[2], label: m[3] || '', price: null, qty }; qty = null; entries.push(e); pending.push(e); return; }
-      if (rePriceOnly.test(l)) standalone.push({ i, price: moneyIn(l) });
-    });
-    coupons.forEach(c => blocks.push('Not handled (discount or coupon line): ' + c));
-    if (pending.length) {
-      const before = standalone.filter(p => firstLbl < 0 || p.i < firstLbl);
-      const use = before.length === pending.length ? before : standalone.length === pending.length ? standalone : null;
-      if (entries.some(e => e.price != null) || !use) blocks.push("Couldn't pair items with prices, paste one item per line");
-      else pending.forEach((e, k) => { e.price = use[k].price; });
-    }
-    if (!entries.length) blocks.push("Couldn't find any item lines");
-    // A "N @ P" line means the item row's price is N x P: record N packages at P each.
-    const all = [];
-    entries.forEach(e => {
-      if (e.qty && e.price != null) {
-        if (Math.abs(e.qty.n * e.qty.p - e.price) <= 0.015) { for (let k = 0; k < e.qty.n; k++) all.push({ num: e.num, label: e.label, price: e.qty.p }); return; }
-        blocks.push(`Quantity ${e.qty.n} @ ${e.qty.p.toFixed(2)} doesn't match the line total ${e.price.toFixed(2)} for #${e.num}`);
-      }
-      all.push(e);
-    });
-    const lines = [];
-    all.forEach(e => {
-      const k = COSTCO_ITEMS[e.num];
-      if (!k) { blocks.push(`Unknown item #${e.num} (${e.label}), tell Claude to add it`); return; }
-      if (e.price == null) return;
-      lines.push({ receipt, date, vendor: 'Costco', kind: 'item', item: k.item, amt: k.size, unit: k.unit, price: e.price, note: `item #${e.num} ${e.label}` });
-    });
-    const itemsSum = Math.round(all.reduce((t, e) => t + (e.price || 0), 0) * 100) / 100;
-    const taxV = tax || 0;
-    if (taxV > 0) lines.push({ receipt, date, vendor: 'Costco', kind: 'tax', price: taxV, note: 'tax' });
-    let match = '';
-    if (total == null) blocks.push("Couldn't find the total");
-    else if (Math.abs(itemsSum + taxV - total) <= 0.015) match = 'Total matches';
-    else { match = `Total does not match (items+tax ${(itemsSum + taxV).toFixed(2)} vs receipt ${total.toFixed(2)})`; blocks.push(match); }
-    if (lines.length > 80) blocks.push(`${lines.length} lines is more than the 80 the ledger takes in one go`);
-    return { ok: true, receipt, date, place, vendor: 'Costco', entries: all, lines, tax: taxV, total, itemsSum, match, blocks: blocks.filter((b, i) => blocks.indexOf(b) === i) };
-  }
-  // RECEIPTS-PARSER-END
   // Upload page: sends receipt photos and sales videos straight from the phone to Vercel Blob (a short waiting room).
   // The Mac job (scripts/uploads/upload_poll.py) downloads each file into a permanent folder, checks the size, then deletes it from Blob.
   let upFiles = [], upBusy = false;
@@ -8886,10 +8524,6 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   }
   // ----- Trends (Home → Trends): weekly sales as a stacked chart plus a table, and a raw day-by-day list. Reads the same /api/sales rows as the Data tab. -----
   let trLoc = 'La Mirada', trItem = 'All', trSpan = 4, trMetric = 'usd';   // trMetric: share of sales by 'usd' or 'qty'
-  const TR_MAD = ['Lemon Poppy', 'Sea Salt', 'Maple Pecan'];
-  const TR_OTHER = ['Blueberry Muffin', 'Cake Pop', 'Pumpkin Bundt', 'Chookie'];
-  const TR_MAD_ALL = [...TR_MAD, 'Ube', 'Dot', 'Earl Grey', 'Matcha', 'Chocolate', 'Unknown'];   // every madeleine flavor, retired and unread ones included (the sheet's total also counts muffins, cookies and the rest)
-  const trMad = a => TR_MAD_ALL.reduce((n, p) => n + ((a && a[p]) || 0), 0);
   const trAll = a => Object.values(a || {}).reduce((n, v) => n + (v || 0), 0);   // every item sold, madeleines or not
   const TR_RAMP = ['#111', '#2e2e2e', '#4a4a4a', '#666', '#808080', '#999', '#b0b0b0', '#c4c4c4', '#d6d6d6', '#e8e8e8'];   // one grey per item, biggest first; the donut lists every item
   function trWeeks(rows) {
@@ -9045,13 +8679,6 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   }
   // Shopping rows shared by Bake Day and the Pantry page's "What to buy".
   const bkPart = r => { const i = r.i, n = i.pkAmt > 0 ? Math.max(1, Math.ceil(r.short / i.pkAmt - 1e-9)) : null, per = i.pk ? i.cost / i.pk : null; return { n, cost: n && per != null ? n * per : null }; };
-  const bkSub = r => {
-    const i = r.i, q = bkPart(r), pk = q.n ? ` · ${q.n} × ${buyFmt(i.pkAmt, i.unit)} pack${q.n === 1 ? '' : 's'}` : ' · no price yet';
-    if (r.st === 'none') return `need ${buyFmt(i.qty, i.unit)} · not counted, so the full amount is listed${pk}`;
-    if (r.st === 'unit') return `need ${buyFmt(i.qty, i.unit)} · counted in ${esc(r.s.unit)}, can't compare, so the full amount is listed${pk}`;
-    return `need ${buyFmt(i.qty, i.unit)} · have ${buyFmt(r.s.onHand, i.unit)}${r.s.uncounted ? ' (purchases only, not counted)' : ''} · buy ${buyFmt(r.short, i.unit)}${pk}`;
-  };
-  const bkTag = r => (r.st === 'none' || (r.s && r.s.uncounted)) ? '<i class="pn-flag">Not counted</i> ' : r.st === 'unit' ? '<i class="pn-flag">Unit</i> ' : '';
   // Shopping rows: grouped by vendor, each row leads with how many packs to buy (what you need at the shelf).
   const packFmt = (amt, unit) => unit === 'pcs' ? `${Math.round(amt)} pcs` : amt >= 454 ? `${Math.round(amt / 453.592 * 10) / 10} lb (${buyFmt(amt, unit)})` : buyFmt(amt, unit);
   // Non-Amazon items: the ledger's product link opens the store's own page (only Amazon can fill a cart from a link).
@@ -9149,7 +8776,6 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     const part = bkPart, buyRow = bkBuyRow;
     const total = buy.reduce((a, r) => a + (part(r).cost || 0), 0), unpriced = buy.filter(r => part(r).cost == null).length;
     const next = [...planBakeDates].sort().find(d => d >= todayISO());
-    const okRow = r => `<div class="pn-row"><span class="pn-main"><b>${esc(r.i.name)}</b><small>need ${buyFmt(r.i.qty, r.i.unit)}${r.s.mixed ? ' · some purchases use another unit and are not added' : ''}</small></span><span class="pn-r">have ${buyFmt(r.s.onHand, r.i.unit)}</span></div>`;
     const tm = (() => { try { const ms = (TM.log || []).filter(l => l.end && new Date(l.start).toLocaleDateString('en-CA') === vDate).reduce((a, l) => a + (l.end - l.start), 0); return ms > 0 ? Math.round(ms / 60000) : ''; } catch { return ''; } })();
     // Yield: one row per recipe in this bake. Planned pieces = batches x pieces per batch; the ingredients used scale by made / planned.
     const bdRec = (single && !done ? (bakeList() || []) : []).map(x => { const f = bsFind(x.key), prod = BS_PRODUCT[x.key], plan = Math.round(x.b * (PRODUCT_YIELD[prod] || BATCH_YIELD)); return { x, plan, name: f ? costItemName(f.sec, f.it) : x.key }; });
@@ -9408,17 +9034,11 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   }
   const lblDate = ymd => { const [y, m, d] = ymd.split('-'); return `${m}.${d}.${y}`; };
   const lblCap = s => s.charAt(0).toUpperCase() + s.slice(1);
-  let lblItem = null;
   // Ingredient groups + per-piece weight for one madeleine (ver = which recipe version's rows to use).
   // Labels always start from the newest recipe version (item.latest, default 0). Older ones need an explicit OK.
   const verLatest = item => (item.versions && item.latest) || 0;
   const verName = (item, v) => (item.versions && item.versions[v] && item.versions[v].label) || '';
   const verYield = (item, v) => (item.versions && item.versions[v] && item.versions[v].yield) || item.yield || BATCH_YIELD;
-  // Last check before anything is printed or saved: which version, how many pieces.
-  function lblConfirm(item, v, title) {
-    const old = v !== verLatest(item);
-    return confirm(`${old ? '⚠️ OLDER VERSION — this is not the latest recipe.\n\n' : ''}${title}\nVersion: ${verName(item, v) || 'only version'}${old ? ' (older; latest is ' + verName(item, verLatest(item)) + ')' : ' (latest)'}\nOne batch makes ${verYield(item, v)} pieces.\n\nIs this the latest version of the recipe, with the right count?`);
-  }
   function lblCalc(item, ver) {
     const batter = [...recMadSort(recMadRowsV(item, ver)), ...((item.versions && item.versions[ver || 0].skipNote) ? [] : lblNoteRows(item.note))].map(r => [r[0], lblGrams(r[1])]);
     const vy = (item.versions && item.versions[ver || 0].yield) || item.yield || BATCH_YIELD;
@@ -9469,26 +9089,6 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       ${perishable ? '<p class="lbl-note">Note: Product must be refrigerated or discarded after 4 hours of sitting at room temperature.</p>' : ''}
       <p class="lbl-note">Made in a facility where nuts are used.</p>`;
   }
-  let lblVer = 0;
-  function paintLblVers() {
-    const el = document.getElementById('lblVers'), it = lblItem;
-    if (!it.versions || it.versions.length < 2) { el.innerHTML = ''; return; }
-    el.innerHTML = '<span>Recipe version</span><span class="rec-ver">' + it.versions.map((v, i) => `<button data-lblver="${i}" class="${i === lblVer ? 'on' : ''}">${esc(v.label)}${v.star ? ' ★' : ''}${i === verLatest(it) ? ' · latest' : ''}</button>`).join('') + '</span>' + (lblVer !== verLatest(it) ? '<div class="warn">⚠️ Older version. The latest is ' + esc(verName(it, verLatest(it))) + '.</div>' : '');
-  }
-  function openLabel(item) {
-    lblItem = item;
-    lblVer = verLatest(item);   // not whatever version is open in Recipes: labels default to the latest
-    item.calc = lblCalc(item, lblVer);
-    paintLblVers();
-    document.getElementById('lblMfg').value = nowPST().slice(0, 10);
-    document.getElementById('lblNet').value = lblNetText(item.calc);
-    paintLabel();
-    document.getElementById('lblScrim').classList.add('show');
-  }
-  function paintLabel() {
-    const mfg = document.getElementById('lblMfg').value || nowPST().slice(0, 10);
-    document.getElementById('lblDoc').innerHTML = lblMarkup(lblItem, lblItem.calc, mfg, document.getElementById('lblNet').value);
-  }
   // ---- Generate labels: tick several madeleines → one page of labels, printed or saved as one image ----
   let mlSel = new Set(SEASONAL.filter(k => !k.startsWith('fill:')));   // item keys like 'mad:Classic'
   try { const v = JSON.parse(localStorage.getItem('labelSel.v1')); if (Array.isArray(v)) mlSel = new Set(v.map(k => k.includes(':') ? k : 'mad:' + k)); } catch {}   // older saves held bare madeleine names
@@ -9528,7 +9128,6 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   document.getElementById('mlClose').addEventListener('click', () => document.getElementById('mlScrim').classList.remove('show'));
   document.getElementById('mlScrim').addEventListener('click', e => { if (e.target.id === 'mlScrim') e.target.classList.remove('show'); });
   document.getElementById('mlPdf').addEventListener('click', () => mlCheck() && downloadPdf(document.getElementById('mlPdf'), [...document.querySelectorAll('#mlDoc .lbl-doc')], `kairos-labels-${document.getElementById('mlMfg').value || nowPST().slice(0, 10)}.pdf`, '.lbl-', { width: LBL_PDF_W, cols: 2, rows: 2 }));   // 2 across × 2 down = 4 labels a page
-  document.getElementById('lblPdfBtn').addEventListener('click', () => lblConfirm(lblItem, lblVer, lblItem.title || lblItem.name) && downloadPdf(document.getElementById('lblPdfBtn'), [document.getElementById('lblDoc')], `kairos-label-${(lblItem.name || 'label').toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${document.getElementById('lblMfg').value}.pdf`));
   const mlCheck = () => { const items = mlCands().filter(c => mlSel.has(c.key)); return confirm(`Before you print or save ${items.length} label${items.length === 1 ? '' : 's'}, check each recipe version and count:\n\n` + items.map(c => { const v = verLatest(c.it); return `• ${c.title}: ${verName(c.it, v) || 'only version'}, ${verYield(c.it, v)} pieces`; }).join('\n') + '\n\nAll use the latest version. Is this the latest version of the recipes, with the right counts?'); };
   document.getElementById('mlPrint').addEventListener('click', () => {
     if (!mlCheck()) return;
@@ -9536,16 +9135,6 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     window.addEventListener('afterprint', () => document.body.classList.remove('printing-labels'), { once: true });
     window.print();
   });
-  document.getElementById('lblVers').addEventListener('click', e => {
-    const b = e.target.closest('[data-lblver]'); if (!b) return;
-    const v = Number(b.dataset.lblver);
-    if (v !== verLatest(lblItem) && !confirm(`${verName(lblItem, v)} is an older version, not the latest (${verName(lblItem, verLatest(lblItem))}). Are you sure you want to use it?`)) return;
-    lblVer = v; lblItem.calc = lblCalc(lblItem, v); document.getElementById('lblNet').value = lblNetText(lblItem.calc); paintLblVers(); paintLabel();
-  });
-  document.getElementById('lblMfg').addEventListener('input', paintLabel);
-  document.getElementById('lblNet').addEventListener('input', paintLabel);
-  document.getElementById('lblCloseBtn').addEventListener('click', () => document.getElementById('lblScrim').classList.remove('show'));
-  document.getElementById('lblScrim').addEventListener('click', e => { if (e.target.id === 'lblScrim') e.target.classList.remove('show'); });
   // Render the label to a PNG: SVG <foreignObject> → canvas, so no library is needed.
   // The SVG render can't reach web fonts, so Archivo is fetched once and embedded as base64 @font-face (latin + latin-ext, one variable file each).
   let archivoCssP = null;
@@ -9597,13 +9186,6 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = name;
     document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
   }
-  document.getElementById('lblPrintBtn').addEventListener('click', () => {
-    if (!lblConfirm(lblItem, lblVer, lblItem.title || lblItem.name)) return;
-    track('label_print', { name: lblItem && lblItem.name });
-    document.body.classList.add('printing-label');
-    window.addEventListener('afterprint', () => document.body.classList.remove('printing-label'), { once: true });
-    window.print();
-  });
   document.getElementById('recCard').addEventListener('change', e => {
     const inp = e.target.closest('input[data-rbatchin]'); if (!inp) return;
     const n = parseFloat(inp.value);
@@ -9662,6 +9244,26 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       y0 = null; dy = 0;
     }, { passive: true });
     document.addEventListener('touchcancel', () => { y0 = null; dy = 0; hideInd(); }, { passive: true });
+    // New-version banner: ask the server which version is live (no cache) and, when it differs from this page's, offer a refresh.
+    // Never reloads by itself, so nothing half-typed is lost. Checked on launch, on return to the app, and every 5 minutes.
+    const upd = document.createElement('div'); upd.id = 'updBar';
+    upd.innerHTML = '<span>A new version is out.</span><button type="button">Refresh</button>';
+    document.body.appendChild(upd);
+    upd.querySelector('button').addEventListener('click', () => { if (upBusy) return; keepEntry(); try { sessionStorage.setItem('lastScroll.v1', String(window.scrollY)); } catch {} location.reload(); });
+    const verOf = t => { const m = /ver-badge">\s*(v[\d.]+)/.exec(t || ''); return m ? m[1] : ''; };
+    const mine = verOf(document.documentElement.outerHTML);
+    let updLast = 0;
+    async function checkUpdate() {
+      if (!mine || Date.now() - updLast < 60000) return; updLast = Date.now();
+      try {
+        const r = await fetch('/?v=' + Date.now(), { cache: 'no-store' }); if (!r.ok) return;
+        const live = verOf(await r.text());
+        if (live && live !== mine) upd.classList.add('show');
+      } catch {}
+    }
+    setTimeout(checkUpdate, 8000);
+    setInterval(() => { if (document.visibilityState === 'visible') checkUpdate(); }, 300000);
+    document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') checkUpdate(); });
     try { document.getElementById('refreshBtn').innerHTML = ic('refresh', 18) + ' Refresh'; } catch {}
     document.addEventListener('click', e => { if (e.target.closest('.ver-badge, #refreshBtn') && !upBusy) { keepEntry(); try { sessionStorage.setItem('lastScroll.v1', String(window.scrollY)); } catch {} ind.textContent = 'Refreshing…'; location.reload(); } });
   })();

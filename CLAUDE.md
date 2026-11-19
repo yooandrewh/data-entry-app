@@ -8,10 +8,10 @@ Single static `index.html` + Vercel serverless functions in `api/`. No build ste
 
 ## Products
 
-Active (`PRODUCTS`, used by Entry / Forecast / Plan): **Lemon Poppy, Sea Salt, Maple Pecan, Pumpkin Muffin**. `ENTRY_PRODUCTS` adds **Dubai Ball**, shown only when the entry's store is Stanton (zeroed when hidden; no forecast).
-Retired but kept so history still shows in Data and on invoices: Ube, Dot, Earl Grey, Earl Grey Mini. They stay in `HIST_PRODUCTS`, `SALES_FLAVORS` (where applicable), `UNIT_PRICE`, the token maps and the API maps. Never delete their data.
+Active (`PRODUCTS`, used by Entry / Forecast / Plan): **Lemon Poppy, Sea Salt, Maple Pecan, Blueberry Muffin, Pumpkin Bundt, Cake Pop, Chookie**. `ENTRY_PRODUCTS` adds **Dubai Ball**.
+Retired but kept so history still shows in Data and on invoices: Ube, Dot, Earl Grey, Earl Grey Mini, Pumpkin Muffin (still in `HIST_PRODUCTS`). They stay in the token maps, `UNIT_PRICE` and the API maps. Never delete their data.
 Recipes keep every flavor, discontinued ones included. Never filter the Recipes list by `PRODUCTS`.
-Pumpkin Muffin, Dubai Ball and the cookie (**Chookie**, in `SALES_FLAVORS` and `EXTRA_SOLD`) are not madeleines and stay out of the madeleine flavor mix and forecast. Maple Pecan is a madeleine flavor and has a sales source.
+Blueberry Muffin, Pumpkin Bundt, Cake Pop and Chookie (the cookie) are not madeleines and stay out of the madeleine flavor mix. Maple Pecan is a madeleine flavor. Per-batch yields live in `PRODUCT_YIELD`; a new product whose yield is not 12 needs an entry there.
 
 **Adding a product touches all of:** `PRODUCTS`, `HIST_PRODUCTS`, `PRODUCT_TOKEN`, `PRODUCT_COLOR`, an Entry stepper row, the sheet's Deliveries **and** Inventory columns (add the name to `AUTO_COLUMNS` in `api/_sheets.js`, which adds the header on first write; `appendRow` maps by header name and silently drops a value with no column), and the maps in `api/sync.js`, `api/entries.js`, `api/sales.js`, `api/update-entry.js`.
 App "Sea Salt" maps to the sheet column **"Sea Salt Butter"**.
@@ -305,6 +305,8 @@ Ingredients: **Dark Chocolate 70% and Dark Chocolate Couverture are retired into
 
 **v1.181.02: audit fixes (2026-11-18).** (1) `addExtraSales` no longer double counts: sales the sheet already holds between two counts are taken off the count-derived amount (La Mirada Chookie rate 11.7 -> 4.9 weekday, Cake Pop 7.6 -> 3.1, Bundt 4.6 -> 2.1), and goodwill / transfers (signed) count like deliveries. (2) The "This week" card's "through" date comes only from days with sales; Trends' "-> ~N" is the cell's own number plus the projected days. (3) `estLeftNow` starts taking days off the day after the count, and `wizCompute` uses it, so the Plan's stock is as of today (demand starts tomorrow). (4) `api/sync.js` ids come from the entry's `submittedAt` (a retry never writes a transfer leg or an entry twice). (5) `getRows(tab, { cache: true })` (8 s, per server instance, cleared by every write) on the open GET endpoints, and Sheets errors no longer return Google's text (it names the project). (6) `api/upload.js` counts links issued in the last 15 minutes against the waiting-room cap. (7) `backup.py` keeps a snapshot that lost over 30% of its rows as `.suspect`, never prunes after a bad run. (8) `.gitignore` covers `exports/`, `__pycache__`, `*.bak*`, `.DS_Store`, `.claude/worktrees/`. The xlsx in `wholesale/` is untracked now but stays in git history.
 
+**v1.181.03 / v1.182.00 (2026-11-18).** Trends' Share of sales span is now This week so far / Last full week / Last 4 / Last 8 (the old "Last week" showed the part-way current week). Dead code removed (about 35 KB: parseReceipt, the single-label sheet, 180 CSS rules; the old palette CSS blocks were tried and every one changes pixels, so they stay). **Update banner (`#updBar`, `checkUpdate` in the pull-to-refresh block):** on launch (8 s), on return to the app and every 5 minutes it fetches `/` with `no-store`, reads the live `ver-badge` version, and when it differs from the page's own shows a black bar above the tab bar, "A new version is out. Refresh". It never reloads by itself. **The badge text must keep the form `ver-badge">vX.YY.ZZ`** or the check stays silent. Open from the label audit (not fixed): Trends pie Last 4 / 8 weeks include the part-week; Stock "N left" is as of the last count, not today; Finance "Total Madeleines" includes Bundt / Cake Pop / Chookie; Plan step 1 expected-sales text says "both stores" and the longest span; Stock "x/day" is a flat 14-day average; `todayISO()` uses device time, not Pacific.
+
 ## Design pass (v1.149.00)
 
 Last CSS block: **every `<select>` has one style** (white, 1px #c9c9c9, 12px radius, 44px, black chevron; `.row-select` and `[data-labi]` excluded); the Forecast store toggle (`.fc-locs`) uses the pill style. On desktop (>=900px) all pages share a 1120px column, page chips sit centered at natural width, the Trends donut is 220px. On phones the 5 Inventory chips shrink (11px padding) to fit. Counts' total says "pieces", not "madeleines". Still open: coloured snowflake/flame/arrow icons in Forecast misses (breaks the B/W rule), today's half-finished day shows as a 0.0x miss, Stock's section headers use the old grey band style.
@@ -325,7 +327,7 @@ The headless check at 390px misses what iOS does. Apply these to every new or ch
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.181.02**; the next feature is v1.182.00, a fix v1.181.03. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.182.00**; the next feature is v1.183.00, a fix v1.182.01 Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 
