@@ -2732,7 +2732,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.179.00 · Nov 18, 8:24 PM PST</div>
+<div class="ver-badge">v1.180.00 · Nov 18, 8:29 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -3601,7 +3601,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   // A page is an existing screen: a Data view, a Home page, a Baking mode or Finance.
   const SECTIONS = {
     sales:     { first: 'sales',  pages: ['sales', 'trends', 'invoice'] },
-    inventory: { first: 'pantry', pages: ['pantry', 'storage', 'stock', 'counts', 'receipts'] },
+    inventory: { first: 'pantry', pages: ['pantry', 'stock', 'counts', 'receipts'] },
     plan:      { first: 'plan',   pages: ['plan', 'bake', 'sched', 'recipes'] },
     other:     { first: 'fin',    pages: ['fin', 'costs', 'labels', 'timers', 'upload'] },
   };
@@ -3978,7 +3978,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     document.getElementById('homeInvoice').hidden = homeTab !== 'invoice';
     document.getElementById('homeTimers').hidden = homeTab !== 'timers';
     document.getElementById('homePantry').hidden = homeTab !== 'pantry';
-    document.getElementById('homeStorage').hidden = homeTab !== 'storage';
+    document.getElementById('homeStorage').hidden = !stShown();
     document.getElementById('homeBake').hidden = homeTab !== 'bake';
     document.getElementById('homeSched').hidden = homeTab !== 'sched';
     document.getElementById('homeReceipts').hidden = homeTab !== 'receipts';
@@ -3988,7 +3988,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     if (homeTab === 'plan') { renderBakeSheet(); renderPlan(); }
     if (homeTab === 'invoice') initInvoiceForm();
     if (homeTab === 'pantry') { renderPantry(); renderPlan().then(() => { if (homeTab === 'pantry') renderPantry(); }).catch(() => {}); }   // the plan fills in what "plan needs" compares against
-    if (homeTab === 'storage') renderStorage();
+    if (stShown()) renderStorage();
     if (homeTab === 'bake') bakeOpen();
     if (homeTab === 'sched') schedOpen();
     if (homeTab === 'receipts') renderReceipts();
@@ -8687,13 +8687,15 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   // also writes the normal delivery entry, so it is only typed once. -----
   const STORAGES = ['BP Storage', 'Fullerton Storage', 'La Mirada Storage', 'Stanton Storage'];
   const ST_STORE = { 'La Mirada delivery': 'La Mirada', 'Stanton delivery': 'Stanton' };
+  // Storage now sits under Stock (Andrew, 2026-11-18): one page for stock in the stores and in BP / Fullerton Storage.
+  const stShown = () => homeTab === 'storage' || homeTab === 'forecast';
   let STORAGE = null, storageBusy = false, storageErr = '', stSaving = false;
   async function fetchStorage() {
     storageBusy = true;
     try { const r = await fetch('/api/storage', { cache: 'no-store' }); if (!r.ok) throw new Error(r.status); STORAGE = (await r.json()).rows || []; storageErr = ''; }
     catch (e) { storageErr = 'Storage offline: numbers not loaded.'; if (STORAGE === null) STORAGE = []; }
     storageBusy = false;
-    if (homeTab === 'storage') renderStorage();
+    if (stShown()) renderStorage();
   }
   // La Mirada Storage and Stanton Storage are those stores' inventory (Andrew, 2026-11-18): the Storage page shows each store's inventory level
   // (latest count + deliveries - sales, same as Stock) instead of keeping a second record. Only BP and Fullerton Storage take counts and moves.
@@ -8707,7 +8709,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       for (const loc of Object.values(STORE_ST)) { const st = locStats(loc, sales, entries); STORE_INV[loc] = st.hasInv ? { stock: st.stock, asOf: st.invDate } : null; }
     } catch { STORE_INV = {}; }
     storeInvBusy = false;
-    if (homeTab === 'storage') renderStorage();
+    if (stShown()) renderStorage();
   }
   const stNorm = d => (String(d || '') + 'T00:00').slice(0, 16);
   // { storage: { item: pieces } } replaying counts and moves oldest first.
@@ -8764,7 +8766,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       document.getElementById('entryNote').value = ''; document.getElementById('stTo').value = '';
       dt.value = nowPST(); syncDubai();
       closeEntry(); renderDB();
-      if (homeTab === 'storage') renderStorage();
+      if (stShown()) renderStorage();
     } finally { stSaving = false; btn.disabled = false; }
   }
   function renderStorage() {
@@ -8791,9 +8793,9 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     const histHtml = hist.map(g => `<div class="pn-row"><span class="pn-main"><b>${g.kind === 'count' ? 'Count · ' + esc(g.storage) : esc(g.from || '?') + ' → ' + esc(g.to || '?')}</b><small>${esc(Object.entries(g.items).map(([k, v]) => v + ' ' + pdisp(k)).join(', '))} · ${esc(fmtWhen(g.date))}${g.note ? ' · ' + esc(g.note) : ''}</small></span><span class="pn-r"><button class="pn-x" data-stx="${esc(g.id)}" aria-label="Remove this entry">✕</button></span></div>`).join('');
     const opt = (list, sel) => list.map(v => `<option value="${esc(v)}"${v === sel ? ' selected' : ''}>${esc(pdisp(v))}</option>`).join('');
     box.innerHTML = (storageErr ? `<div class="pn-note">${esc(storageErr)}</div>` : '') +
-      `<div class="pn-bar"><button type="button" class="primary" id="stMove">Log a move</button></div>` +
-      `<div class="st-grid">${card('All pieces (stores + storage)', total, 'Nothing logged yet. Log a move from the kitchen into a storage.')}${STORAGES.map(cardFor).join('')}</div>` +
-      `<div class="pn-note">BP and Fullerton: every move in and out. La Mirada and Stanton show the store's inventory. Deliveries are written as normal delivery entries too.</div>` +
+      `<h3>Storage</h3><div class="pn-bar"><button type="button" class="primary" id="stMove">Log a move</button></div>` +
+      `<div class="st-grid">${card('All pieces (stores + storage)', total, 'Nothing logged yet. Log a move from the kitchen into a storage.')}${STORAGES.filter(s => !STORE_ST[s]).map(cardFor).join('')}</div>` +
+      `<div class="pn-note">BP and Fullerton: every move in and out. The stores' own stock is above. Deliveries are written as normal delivery entries too.</div>` +
       `<h3>Recent moves</h3>` + (histHtml || '<div class="pn-note">No moves yet.</div>');
     box.querySelector('#stMove').onclick = () => { const b = document.querySelector('#view-entry .seg [data-type="storage"]'); if (b) b.click(); openEntry(); };
     box.querySelectorAll('[data-stx]').forEach(btn => btn.onclick = async () => {
