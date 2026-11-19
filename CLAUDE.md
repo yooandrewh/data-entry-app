@@ -225,6 +225,8 @@ Ingredients: **Dark Chocolate 70% and Dark Chocolate Couverture are retired into
 
 **Target receipts are read too (2026-11-18, Mac scripts only, no app change).** `scripts/receipts/receipt_parse.py` `parse_target()` + `target_items.json` (9-digit item number as printed -> ledger item/size). Rows: `261050498 GG MILK NF $14.07`, then `3 @ $4.69 ea` (comes after its item); `Bag Fee` and `5% off Birthday ... -` become fee lines (the discount negative), `NO TAX` = tax 0; the total check includes fees. Receipt id `Target <place> <date> <HHMM>`. `orient()` tries the four photo turns (iPhone photos reach Vision sideways) and keeps the one that looks most like a receipt; Costco parsing unchanged (synthetic test). First real Target receipt (Anaheim Hills 11/18, 35 items, total checks to $78.24) is in the Ledger unapproved. **Sizes in `target_items.json` marked confirm (Milk 1 gal, Pumpkin 15 oz) were inferred from the price: check them when approving.** Unknown item numbers hold the receipt, same as Costco.
 
+**v1.170.06: upload file names.** `api/upload.js` `safeName` now keeps plain ASCII only and swaps `# ? % & + = ; : @ " ' < > | *` for `-`. macOS screenshot names have a narrow no-break space (U+202F) before PM that made Blob refuse the signed link ("Blob path does not match the signed token scope"), so desktop uploads of screenshots failed. Reproduced on the live endpoint, then fixed.
+
 ## Design pass (v1.149.00)
 
 Last CSS block: **every `<select>` has one style** (white, 1px #c9c9c9, 12px radius, 44px, black chevron; `.row-select` and `[data-labi]` excluded); the Forecast store toggle (`.fc-locs`) uses the pill style. On desktop (>=900px) all pages share a 1120px column, page chips sit centered at natural width, the Trends donut is 220px. On phones the 5 Inventory chips shrink (11px padding) to fit. Counts' total says "pieces", not "madeleines". Still open: coloured snowflake/flame/arrow icons in Forecast misses (breaks the B/W rule), today's half-finished day shows as a 0.0x miss, Stock's section headers use the old grey band style.
@@ -245,7 +247,7 @@ The headless check at 390px misses what iOS does. Apply these to every new or ch
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.170.05**; the next feature is v1.171.00, a fix v1.170.06. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.170.06**; the next feature is v1.171.00, a fix v1.170.07. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 
