@@ -2522,7 +2522,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.182.01 · Nov 18, 10:05 PM PST</div>
+<div class="ver-badge">v1.182.02 · Nov 18, 10:20 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -4257,51 +4257,67 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const d = await r.json();
     const rows = Array.isArray(d.sales) ? d.sales : [];
-    try { const ents = await fetchRemoteEntries(); addExtraSales(rows, ents); addMissingDays(rows, ents); } catch (e) { /* extras are optional */ }
+    try { const ents = await fetchRemoteEntries(); addMissingDays(rows, ents); addExtraSales(rows, ents); } catch (e) { /* extras are optional */ }
     salesCache = rows;
     return salesCache;
   }
-  // Pumpkin Bundt and Cake Pop: OCR sales on the sheet win. Where a date has none, sold is worked out from stock:
-  // previous count + deliveries since (goodwill/transfers are signed) - new count, per store,
-  // booked on the date of the newer count, after taking off sales the sheet already holds between the two counts (v1.181.02: they used
-  // to be counted twice, which inflated the Bundt / Cake Pop / Chookie rates). Rows get `extra` (not added to `total`, so the madeleine forecast is untouched).
+  // Pumpkin Bundt, Cake Pop and Chookie: counts beat sales rows (Andrew). For two counts of a store, implied sold = previous count +
+  // deliveries since (goodwill/transfers are signed) - new count. Each window covers the days after the older count through the newer
+  // count's day, so windows never share a day. Sales the sheet already holds in the window are taken off; the rest (v1.182.02, it used to be
+  // dropped when the count day already had a sale) is spread evenly over the window's days with no real sales row for that store, at most
+  // 1.5x the store's own average per recorded day for that item, and whatever is left goes on the newer count's date. Booked amounts never
+  // exceed what the counts imply. Added amounts go to `extra` (not `total`, so the madeleine forecast is untouched) and are marked `derived`
+  // (`*`); the count-date part is also kept in `lump` so "this week" can leave it out (noLump).
   const EXTRA_SOLD = ['Pumpkin Bundt', 'Cake Pop', 'Chookie'];
   function addExtraSales(rows, entries) {
     const live = entries.filter(e => !e.taggedForDeletion && e.datetime);
-    const by = new Map();
+    const dayAdd = (ymd, n) => { const [y, m, d] = ymd.split('-').map(Number); return new Date(Date.UTC(y, m - 1, d + n)).toISOString().slice(0, 10); };
+    const real = rows.filter(r => !r.estimated);   // rows from the sheet (addMissingDays' day estimates do not count as a sales day)
+    const rowFor = (date, location) => {
+      let row = rows.find(r => r.date === date && r.location === location);
+      if (!row) { row = { date, location, amounts: {}, total: 0, flights: 0, estimated: true }; rows.push(row); }
+      return row;
+    };
+    const book = (row, p, v, lump) => {
+      row.amounts[p] = (row.amounts[p] || 0) + v; row.extra = (row.extra || 0) + v;
+      if (!(row.derived = row.derived || []).includes(p)) row.derived.push(p);   // derived from stock counts, not read from a receipt
+      if (lump) (row.lump = row.lump || {})[p] = (row.lump[p] || 0) + v;
+    };
     for (const loc of new Set(live.map(e => e.location))) {
       const allInv = live.filter(e => e.type === 'inventory' && e.location === loc).sort((a, b) => a.datetime.localeCompare(b.datetime));
       const dlv = live.filter(e => (e.type === 'delivery' || e.type === 'goodwill' || e.type === 'transfer') && e.location === loc);   // goodwill and transfers are signed
+      const mine = real.filter(r => r.location === loc);
+      const recDays = new Set(mine.map(r => r.date));
       for (const p of EXTRA_SOLD) {
         const cnt = (e) => e.amounts && e.amounts[p];
         const between = (x, y) => dlv.some(e => e.datetime > x.datetime && e.datetime <= y.datetime && ((e.amounts && e.amounts[p]) || 0) > 0);
         // a 0 count followed by a higher count with no delivery between is an unfilled field, not an empty shelf
         const inv = allInv.filter((e, i) => !(cnt(e) === 0 && i + 1 < allInv.length && cnt(allInv[i + 1]) > 0 && !between(e, allInv[i + 1])));
+        // the store's own average per recorded day for this item, from its first recorded sale on
+        const first = mine.filter(r => (r.amounts[p] || 0) > 0).reduce((m, r) => !m || r.date < m ? r.date : m, '');
+        const recRows = first ? mine.filter(r => r.date >= first) : [];
+        const recN = new Set(recRows.map(r => r.date)).size;
+        const avg = recN ? recRows.reduce((t, r) => t + (r.amounts[p] || 0), 0) / recN : 0;
         for (let i = 1; i < inv.length; i++) {
-          const a = inv[i - 1].amounts && inv[i - 1].amounts[p], b = inv[i].amounts && inv[i].amounts[p];
+          const a = cnt(inv[i - 1]), b = cnt(inv[i]);
           if (typeof a !== 'number' || typeof b !== 'number') continue;
           let sold = a - b;
           for (const e of dlv) if (e.datetime > inv[i - 1].datetime && e.datetime <= inv[i].datetime) sold += (e.amounts && e.amounts[p]) || 0;
-          // Sales the sheet already holds for this stretch (count day to count day) are not booked a second time.
           const da = inv[i - 1].datetime.slice(0, 10), db = inv[i].datetime.slice(0, 10);
-          for (const r of rows) if (r.location === loc && r.date >= da && r.date <= db) sold -= (r.amounts && r.amounts[p]) || 0;
+          if (db <= da) continue;   // two counts on one day: the next window covers it
+          // Sales the sheet already holds for this window (day after the older count through the newer count's day) are not booked again.
+          for (const r of mine) if (r.date > da && r.date <= db) sold -= r.amounts[p] || 0;
           if (sold <= 0) continue;   // a count that rose with no delivery is a miscount, not negative sales
-          const key = inv[i].datetime.slice(0, 10) + '|' + loc;
-          if (!by.has(key)) by.set(key, {});
-          by.get(key)[p] = (by.get(key)[p] || 0) + sold;
+          const empty = [];
+          for (let d = dayAdd(da, 1); d < db; d = dayAdd(d, 1)) if (!recDays.has(d)) empty.push(d);
+          let spread = 0;
+          if (empty.length && avg > 0) {
+            spread = Math.min(sold, Math.ceil(1.5 * avg) * empty.length);
+            const base = Math.floor(spread / empty.length), rem = spread - base * empty.length;
+            empty.forEach((d, j) => { const v = base + (j >= empty.length - rem ? 1 : 0); if (v > 0) book(rowFor(d, loc), p, v, false); });
+          }
+          if (sold - spread > 0) book(rowFor(db, loc), p, sold - spread, true);
         }
-      }
-    }
-    for (const [key, add] of by) {
-      const [date, location] = key.split('|');
-      let row = rows.find(r => r.date === date && r.location === location);
-      if (!row) { row = { date, location, amounts: {}, total: 0, flights: 0 }; rows.push(row); }
-      row.extra = row.extra || 0;
-      for (const p of EXTRA_SOLD) {
-        if ((row.amounts[p] || 0) > 0) continue;   // OCR sales already on the sheet win; stock only fills gaps
-        if (!add[p]) continue;
-        row.amounts[p] = add[p]; row.extra += add[p];
-        (row.derived = row.derived || []).push(p);   // derived from stock counts, not read from a receipt
       }
     }
   }
@@ -4310,7 +4326,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   // sheet already holds for the days in between (and on the two count days) is taken off, and the rest goes to the days in between
   // that have no row at all, split evenly, capped at 1.5x the store's own average per recorded day so one bad count cannot invent a
   // huge day. Shown like the other derived numbers (`*`), never written to the sheet. Pumpkin Bundt, Cake Pop and Chookie are handled
-  // by addExtraSales (booked on the count date), so they are left out here.
+  // by addExtraSales (runs after this one), so they are left out here.
   const GAP_PRODUCTS = ['Lemon Poppy', 'Sea Salt', 'Maple Pecan', 'Pumpkin Muffin', 'Blueberry Muffin'];
   const GAP_ALL = ['Lemon Poppy', 'Sea Salt', 'Maple Pecan', 'Pumpkin Muffin', 'Blueberry Muffin', 'Pumpkin Bundt', 'Cake Pop', 'Chookie'];
   function addMissingDays(rows, entries) {
@@ -4524,10 +4540,15 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     }
     return out;
   }
-  // Bundt / Cake Pop / Chookie worked out from stock counts are booked as one lump on the newer count's date, covering every day since the
-  // previous count (addExtraSales). For "this week" that puts a whole window's sales on one day, so the week's numbers drop those lumps
-  // (day-by-day estimates from addMissingDays stay). The Data list and the forecast still use them.
-  const noLump = s => { if (!s.derived || s.estimated) return s; const a = Object.assign({}, s.amounts); s.derived.forEach(p => { a[p] = 0; }); return Object.assign({}, s, { amounts: a, extra: 0, derived: null }); };
+  // Bundt / Cake Pop / Chookie worked out from stock counts: what addExtraSales could not spread over empty days sits as one lump on the
+  // newer count's date (`lump`), covering the whole window. For "this week" that puts a window's sales on one day, so the week's numbers take
+  // the lump off (day-by-day estimates stay). The Data list and the forecast still use it.
+  const noLump = s => {
+    if (!s.lump) return s;
+    const a = Object.assign({}, s.amounts); let off = 0;
+    for (const p in s.lump) { a[p] = Math.max(0, (a[p] || 0) - s.lump[p]); off += s.lump[p]; }
+    return Object.assign({}, s, { amounts: a, extra: Math.max(0, (s.extra || 0) - off), lump: null });
+  };
   async function salesHomeHtml(sales) {
     const raw = sales; sales = sales.map(noLump);
     const today = nowPST().slice(0, 10), wk = weekStart(today), prevWk = addDays(wk, -7), prevSame = addDays(today, -7);
