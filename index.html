@@ -2653,7 +2653,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.170.07 · Nov 18, 5:30 PM PST</div>
+<div class="ver-badge">v1.171.00 · Nov 18, 6:10 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -5668,6 +5668,26 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   // Frozen: madeleines, Pumpkin Bundt and Cake Pops stack two layers in a pan, so a pan holds double (Andrew, 2026-11-18). Muffins and cookies do not stack.
   const FROZEN_STACK = ['Lemon Poppy', 'Sea Salt', 'Maple Pecan', 'Pumpkin Bundt', 'Cake Pop'];
   const boxCap = p => boxSize(p) * (boxCfg.frozen && FROZEN_STACK.includes(p) ? 2 : 1);
+  // Baking steps: oven rounds and minutes per item. Madeleines use Kitchen times (pans x per pan, bake minutes, cooling between rounds); every other
+  // item uses its recipe's oven fields (cap = pieces one round holds, hi = bake minutes). One item per round, since the temperatures and times differ.
+  function ovenSteps(bake) {
+    const rows = []; let rounds = 0, min = 0;
+    for (const p of PRODUCTS) {
+      const n = Math.round((bake && bake[p]) || 0); if (n <= 0) continue;
+      let cap = KT.pans * KT.perPan, bk = KT.bakeMin, cool = KT.coolMin;
+      try {
+        const key = Object.keys(BS_PRODUCT).find(k => BS_PRODUCT[k] === p), f = key && bsFind(key), ov = f && f.it && f.it.oven;
+        if (f && f.sec !== 'mad' && ov && ov.cap > 0) { cap = ov.cap; bk = ov.hi || ov.lo || bk; cool = 0; }
+      } catch (e) {}
+      const r = Math.ceil(n / cap);
+      rows.push({ p, n, cap, rounds: r, bk, cool, from: rounds + 1, min: r * (bk + cool) }); rounds += r; min += r * (bk + cool);
+    }
+    return { rows, rounds, min };
+  }
+  function ovenHtml(bake, cls) {
+    const o = ovenSteps(bake); if (!o.rows.length) return '';
+    return `<div class="${cls || 'pw-pans'}"><b>${o.rounds}</b> oven round${o.rounds === 1 ? '' : 's'} · <b>${fmtDur(o.min)}</b> baking<div class="pw-dest">${o.rows.map(x => `<div><b>${esc(pdisp(x.p))}</b> · round${x.rounds === 1 ? '' : 's'} ${x.rounds === 1 ? x.from : x.from + '–' + (x.from + x.rounds - 1)} · ${x.rounds} × ${x.bk} min${x.cool ? ' + ' + x.cool + ' cool' : ''} = ${fmtDur(x.min)}<small>${x.n} pieces, ${x.cap} fit per round</small></div>`).join('')}</div><small>One item per round, back to back. Oven time only: setup, batch prep, glazing and cleaning are in Kitchen time. Madeleines use ${KT.pans} pans × ${KT.perPan} and ${KT.bakeMin} min (Kitchen times); the rest use the recipe's own oven capacity and time.</small></div>`;
+  }
   function boxPlan() {
     const items = [], byItem = ZERO(); let trays = 0;
     for (const p of PRODUCTS) {
@@ -5688,6 +5708,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     if (!any) { el.innerHTML = h + '<div class="bx-none">Nothing to box yet. Pick a span for at least one item in step 1.</div>'; return; }
     h += `<div class="bx-total"><b>${bx.total}</b> pan${bx.total === 1 ? '' : 's'} in all (a pan is one Cambro full-size 4" deep food pan, 14PP190). Only for the pieces you bake, not the stock already on hand. One item per pan, rounded up per item; not split by location.<br>${panLine(bx.total)}</div>`;
     h += bx.items.map(x => `<div class="bx-row"><span>${esc(pdisp(x.p))}<small>${x.pcs} pieces · ${boxCap(x.p)} per pan${boxCfg.frozen && FROZEN_STACK.includes(x.p) ? ' (frozen, 2 layers)' : ''}${x.dest && x.dest.length ? '<br>Goes to ' + destLine(x) : ''}</small></span><b>${x.boxes} pan${x.boxes === 1 ? '' : 's'}</b></div>`).join('');
+    h += ovenHtml(planBakeTotals, 'bx-oven');
     h += `<details><summary>Pan sizes</summary><div class="bx-set hd"><span>Item</span><span>Per pan</span></div>`
       + PRODUCTS.map(p => `<div class="bx-set"><span>${esc(pdisp(p))}</span><input type="number" inputmode="numeric" min="1" data-bx="size" data-p="${esc(p)}" value="${boxSize(p)}"></div>`).join('')
       + `<div class="bx-set hd"><span>Pans on hand</span><span>Count</span></div>`
@@ -5734,7 +5755,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     const top = `<div class="pw-head"><b>What do you want to bake?</b><span>Drag the slider or pick how long each item should last. Each store's goal is ${STOCK_TARGET}x its expected sales for that time. You bake the gap between the goal and what it has now.</span></div>`
       + `<div class="pw-label">Make everything last</div><div class="pw-slide"><div class="pw-slide-val" id="pwAllVal">${dayLbl(all)}</div><input type="range" id="pwAll" min="1" max="90" step="1" value="${all}" aria-label="Days everything should last"><div class="pw-slide-ticks"><span>1 day</span><span>1 month</span><span>2 months</span><span>3 months</span></div></div>`
       + `<div class="pw-chips">${[[1, '1 day'], [7, '1 week'], [30, '1 month'], [45, '1.5 months']].map(([d, l]) => `<button type="button" data-wall="${d}" class="${PRODUCTS.every(q => wizSpan[q] === d) ? 'on' : ''}">${l}</button>`).join('')}</div>`;
-    return { all, top, rows: grossHtml + pans + `<div class="pw-label">Or set each item</div>` + rows + `<div class="pw-note">Sales are assumed to grow 1.2% a week on top of the recent daily rate (counted for up to 4 weeks).</div>` };
+    return { all, top, rows: grossHtml + pans + ovenHtml(planBakeTotals) + `<div class="pw-label">Or set each item</div>` + rows + `<div class="pw-note">Sales are assumed to grow 1.2% a week on top of the recent daily rate (counted for up to 4 weeks).</div>` };
   }
   function wizPaint() {
     const box = document.getElementById('planWiz'), root = document.getElementById('bakingPlan');
@@ -9057,6 +9078,12 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     clone.removeAttribute('id'); clone.style.cssText = `box-sizing:border-box;width:${w}px;`;
     clone.querySelectorAll('[contenteditable]').forEach(e => e.removeAttribute('contenteditable'));
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}"><foreignObject width="100%" height="100%"><div xmlns="http://www.w3.org/1999/xhtml"><style>${fontCss}${css}
+/* Baking steps (oven rounds) card on Plan step 3, same look as the pans card */
+.bx-oven { margin: 14px 0 4px; padding: 14px 16px; border: 1px solid #c9c9c9; border-radius: 12px; font-size: var(--fs-body); }
+.bx-oven b { font-size: var(--fs-title); }
+.bx-oven small { display: block; margin-top: 4px; font-size: var(--fs-caption); color: #6b6b6b; }
+.bx-oven .pw-dest > div { margin-top: 8px; font-size: var(--fs-body); }
+.bx-oven .pw-dest b { font-size: var(--fs-body); }
 </style>${new XMLSerializer().serializeToString(clone)}</div></foreignObject></svg>`;
     const img = new Image();
     img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg);
