@@ -15,6 +15,19 @@ import { appendRows, ensureTab } from './_sheets.js';
 const EVENTS_TAB = process.env.SHEET_EVENTS_TAB || 'Events';
 const HEADER = ['Timestamp', 'Date', 'Session', 'Device', 'Event', 'Props'];
 const MAX_EVENTS = 40;          // per request — the client batches, it doesn't stream
+// Rate limit (this endpoint is open): per session and per server instance, per 10 minutes. Over the limit the call still answers 200
+// (the client never retries), it just drops the events, so spam cannot fill the workbook toward its cell limit and break every write.
+const WINDOW_MS = 10 * 60 * 1000, MAX_PER_SESSION = 150, MAX_PER_INSTANCE = 1500;
+let seen = [];   // [{ t, session, n }]
+function allow(session, n) {
+  const now = Date.now();
+  seen = seen.filter((x) => now - x.t < WINDOW_MS);
+  const bySession = seen.filter((x) => x.session === session).reduce((a, x) => a + x.n, 0);
+  const all = seen.reduce((a, x) => a + x.n, 0);
+  if (bySession + n > MAX_PER_SESSION || all + n > MAX_PER_INSTANCE) return false;
+  seen.push({ t: now, session, n });
+  return true;
+}
 const clip = (v, n) => String(v == null ? '' : v).slice(0, n);
 const ymdPT = (d) => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Los_Angeles' }).format(d);
 
@@ -58,6 +71,7 @@ export default async function handler(req, res) {
     }
     if (!rows.length) return res.status(200).json({ written: 0 });
 
+    if (!allow(session, rows.length)) return res.status(200).json({ written: 0, limited: true });
     await ensureTab(EVENTS_TAB, HEADER);
     await appendRows(EVENTS_TAB, rows);
     return res.status(200).json({ written: rows.length });

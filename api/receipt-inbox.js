@@ -49,11 +49,9 @@ export default async function handler(req, res) {
   try {
     const wantsPending = req.method === 'GET' && String((req.query && req.query.pending) || '') === '1';
 
-    // The pending read (which carries photos) and every POST except `add` (the phone's upload) need the code.
-    // `add` is open on purpose (internal tool, no login on the phone); it is capped by size and by the pending count,
-    // and nothing it stores reaches the ledger unless the Mac parses it as a valid receipt, and lines land unapproved.
-    const openAdd = req.method === 'POST' && req.body && (typeof req.body === 'string' ? /"action"\s*:\s*"add"/.test(req.body) : req.body.action === 'add');
-    if ((req.method === 'POST' && !openAdd) || wantsPending) {
+    // The pending read (which carries photos) and every POST need the code. `add` used to be open for the phone's photo upload, but the
+    // app no longer calls it (Upload is the one intake path since v1.154.00), so it is closed: nothing open can fill the inbox.
+    if (req.method === 'POST' || wantsPending) {
       const code = process.env.LEDGER_CODE;
       if (!code) return res.status(503).json({ error: 'Set LEDGER_CODE in Vercel to enable the receipt inbox' });
       if (!codeEq(req.headers['x-ledger-code'], code)) return res.status(401).json({ error: 'Wrong code' });
