@@ -162,6 +162,17 @@ def api(path, body=None):
         return json.load(r)
 
 
+COLLECTED = {"video": 0, "receipt": 0}
+
+
+def notify(event, **fields):
+    """Best-effort phone push through api/notify.js (the ntfy topic stays on the server). Never raises."""
+    try:
+        api("/api/notify", dict(fields, event=event))
+    except Exception as e:
+        log(f"notify {event}: not sent ({type(e).__name__})", quiet=True)
+
+
 def download(url, dest, size):
     """Stream url to dest (a tmp path). Returns True when the byte count equals size."""
     if not str(url).startswith("https://"):
@@ -274,6 +285,7 @@ def process_file(f, dry):
     try:
         r = api("/api/uploads", {"action": "remove", "pathnames": [pathname]})
         log(f"{kind} {final.name}: removed from inbox ({r.get('removed')})")
+        COLLECTED[kind] += 1
     except Exception as e:
         log(f"{kind} {final.name}: remove failed ({type(e).__name__}), will retry")
         return False
@@ -332,6 +344,17 @@ def start_ocr():
     return True
 
 
+def ocr_headline():
+    """One short line from inbox_summary.md: how many videos it read and whether any need a manual split."""
+    try:
+        t = (OCR_DIR / "inbox_summary.md").read_text()
+    except OSError:
+        return ""
+    n = len(re.findall(r"^- `", t, re.M))
+    bad = len(re.findall(r"needs a manual|MIXED|failed|error", t, re.I))
+    return f"{n} video(s) read" + (", some need a look." if bad else ".")
+
+
 def run_ocr():
     """The --ocr mode: frames -> Apple Vision -> parse with KAIROS_NO_PUSH=1. The watcher moves queued videos to videos/done/
     and writes ~/kairos-ocr/inbox_summary.md for Andrew to review before running the push scripts with --write."""
@@ -348,6 +371,8 @@ def run_ocr():
         log(f"ocr: finished (exit {r.returncode}); summary at {OCR_DIR / 'inbox_summary.md'}", quiet=True)
         if r.returncode:
             log("ocr: " + (r.stderr or r.stdout or "")[-300:].replace("\n", " "), quiet=True)
+        else:
+            notify("ocr", detail=ocr_headline())
         return r.returncode
     except Exception as e:
         log(f"ocr: failed ({type(e).__name__})", quiet=True)
@@ -394,6 +419,8 @@ def main(argv=None):
         except Exception as e:
             failed += 1
             log(f"{f.get('pathname')}: unexpected {type(e).__name__}, will retry")
+    if not dry and (COLLECTED["video"] or COLLECTED["receipt"]):
+        notify("upload", videos=COLLECTED["video"], receipts=COLLECTED["receipt"])
     sent = sync_air(dry)
     if not dry and start_ocr():
         print("sales video OCR started in the background")

@@ -29,3 +29,6 @@ Prints `nothing waiting` when the inbox is empty. Exit codes: 0 ok / nothing wai
 python3 -I -m unittest discover -s scripts/uploads
 ```
 Covers the name sanitiser, collision renamer, size check, archive-reuse check and Air sync state. Not tested against live data: HEIC photos through `vision_ocr`, and a real Blob download.
+
+## Phone notification
+After a run that collected files, and again when the sales OCR finishes, the collector POSTs to `/api/notify` (needs the ledger code; the ntfy topic stays in the Vercel env `NTFY_TOPIC`, same push as entries). Best effort: a failed push is logged and never stops collection.
