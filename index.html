@@ -2710,7 +2710,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.177.04 · Nov 18, 11:05 PM PST</div>
+<div class="ver-badge">v1.177.05 · Nov 18, 11:30 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -5783,11 +5783,14 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
         T.push({ id: pid(i), name: shared ? SCHED_COMBO.map(pdisp).join(' + ') + ' prep' : pdisp(p) + ' prep ' + i + '/' + nPrep, p, min: shared ? Math.round(pmin * SCHED_COMBO_X) : pmin, who: true, deps: ['setup'], ix: shared ? Math.min(...SCHED_COMBO.map(q => SCHED_ORDER.indexOf(q))) : ix, rk: 99 });
       }
       let last = null;
+      const madOrder = CAMBRO_MIX.filter(q => Math.round(bake[q] || 0) > 0).sort((a, b) => SCHED_ORDER.indexOf(a) - SCHED_ORDER.indexOf(b)), madQ = madOrder.indexOf(p) > 0 ? madOrder[madOrder.indexOf(p) - 1] : null;
+      const madPrevLast = madQ ? madQ + ':bake:' + ovenSteps({ [madQ]: Math.round(bake[madQ]) }).rows[0].rounds : null;
       for (let k = 1; k <= o.rounds; k++) {
         const need = Math.min(nPrep, Math.max(1, Math.ceil(k * o.cap / perPrep))), pd = []; for (let i = 1; i <= need; i++) pd.push(SCHED_PREDONE.includes(p) ? 'setup' : pid(i));
         for (let i = 1; i <= need; i++) { const pt = T.find(t => t.id === pid(i)); if (pt && pt.rk > k) pt.rk = k; }
         // Andrew 2026-11-18: there are only enough pans for one round of an item at a time, so an item's rounds run one after another (never in both ovens at once); different items can still bake side by side. The pans are refilled after the previous round comes out (plus the cooling time for madeleines).
-        const prev = k > 1 ? p + ':bake:' + (k - 1) : null, lg = prev ? { [prev]: o.cool || 0 } : null;
+        // Madeleine flavors share the same oven pans, so Maple Pecan, Lemon Poppy and Sea Salt also run one after another (Andrew 2026-11-18): the first round of a flavor waits for the last round of the flavor before it.
+        const prev = k > 1 ? p + ':bake:' + (k - 1) : madPrevLast, lg = prev ? { [prev]: o.cool || 0 } : null;
         if (prev) pd.push(prev);
         if (schedCfg.fill > 0) T.push({ id: p + ':fill:' + k, name: pdisp(p) + ' fill ' + k, p, min: schedCfg.fill, who: true, deps: pd, ix, rk: k, lag: lg || undefined });
         T.push({ id: p + ':bake:' + k, name: pdisp(p) + ' bake ' + k + '/' + o.rounds, p, min: o.bk, oven: true, deps: schedCfg.fill > 0 ? [p + ':fill:' + k] : pd, ix, rk: k, lag: schedCfg.fill > 0 ? undefined : lg || undefined });

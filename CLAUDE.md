@@ -271,6 +271,8 @@ Ingredients: **Dark Chocolate 70% and Dark Chocolate Couverture are retired into
 
 **v1.177.04: cookies first in the schedule** (Andrew: use the oven time). `SCHED_ORDER` now starts with Chookie (reverses "cookies last" from v1.176.04). Cookie's 6 rounds run one after another, so starting them last stretched the ovens. 40-day plan: ovens run 45-275 (was 25-310), 355 oven-minutes busy either way (77% of both ovens over their span, was 62%), day still 6h20; Cookie + Muffin 60 qt prep is now first, 20-60.
 
+**v1.177.05: madeleine flavors share oven pans** (Andrew: Lemon Poppy and Sea Salt can't overlap, limited pans). The first round of a madeleine flavor waits for the last round of the flavor before it (`CAMBRO_MIX` in `SCHED_ORDER` order: Maple Pecan, Lemon Poppy, Sea Salt), plus the 5 min cooling. v1.177.03 only stopped the same flavor overlapping itself; LP and SS had overlapped by 7 min. 40-day plan: no madeleine overlaps, ovens 45-260, 355 oven-minutes (83% of both ovens), day 6h20. Assumes Maple Pecan also uses the same pans.
+
 ## Design pass (v1.149.00)
 
 Last CSS block: **every `<select>` has one style** (white, 1px #c9c9c9, 12px radius, 44px, black chevron; `.row-select` and `[data-labi]` excluded); the Forecast store toggle (`.fc-locs`) uses the pill style. On desktop (>=900px) all pages share a 1120px column, page chips sit centered at natural width, the Trends donut is 220px. On phones the 5 Inventory chips shrink (11px padding) to fit. Counts' total says "pieces", not "madeleines". Still open: coloured snowflake/flame/arrow icons in Forecast misses (breaks the B/W rule), today's half-finished day shows as a 0.0x miss, Stock's section headers use the old grey band style.
