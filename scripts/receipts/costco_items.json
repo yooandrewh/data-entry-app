@@ -95,5 +95,11 @@
     "size": 20,
     "unit": "g",
     "what": "Kirkland Signature Organic Madagascar Vanilla Beans, 20 count (counted in pieces; looked up 2026-11-18, receipt price $9.79)"
+  },
+  "label:WHOLE MILK": {
+    "item": "Milk",
+    "size": 3785.4,
+    "unit": "ml",
+    "what": "Kirkland Signature Whole Milk, 1 gallon (receipt prints \"2 WHOLE MILK\" = 2 gallons, no item number; matched by the printed name)"
   }
 }

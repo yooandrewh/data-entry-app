@@ -118,7 +118,7 @@ def parse_costco(rs, text, res):
                 else: res["unhandled"].append(f"quantity {qty[0]} @ {qty[1]} does not match line total {line} for #{num}")
                 qty = None
             elif mult > 1 and abs(round(line / mult, 2) * mult - line) < 0.015: n, price = mult, round(line / mult, 2)   # '2 WHOLE MILK 8.18'
-            it = ITEMS.get(num) if num else None
+            it = ITEMS.get(num) if num else ITEMS.get("label:" + re.sub(r"\s+", " ", label.upper()).strip())
             for _ in range(n):
                 if it: res["items"].append({"num": num, "label": label, "price": price, **it})
                 else: res["unknown"].append({"num": num, "label": label, "price": price})
