@@ -2650,7 +2650,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
   </div>
 </div>
 
-<div class="ver-badge">v1.186.00 · Nov 19, 11:30 AM PST</div>
+<div class="ver-badge">v1.186.01 · Nov 19, 12:20 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -8816,7 +8816,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
   const pantryDate = d => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(d || ''); return m ? new Date(+m[1], +m[2] - 1, +m[3]).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : (d || ''); };
   // Cold storage vs shelf: butter, eggs, milk, cream, cheese, yeast, frozen items and fresh jalapeno are Fridge & freezer; everything else is Shelf.
   // Shelf exceptions that look cold by name (cocoa butter, coconut / condensed milk, milk powder, cream of tartar) are listed first. Edit here when an item moves.
-  const SHELF_RE = /cocoa butter|pistachio butter|coconut milk|condensed milk|milk powder|cream of tartar/i, COLD_RE = /butter|\beggs?\b|milk|cream|cheese|ricotta|mascarpone|yeast|frozen|kataifi|jalape/i;
+  const SHELF_RE = /cocoa butter|pistachio butter|coconut milk|condensed milk|milk powder|cream of tartar/i, COLD_RE = /butter|\beggs?\b|milk|cream|cheese|ricotta|mascarpone|yeast|frozen|kataifi|jalape|blueberr/i;
   const isCold = name => !SHELF_RE.test(name) && COLD_RE.test(name);
   // Two labelled groups (Fridge & freezer, Shelf) from [{cold, html}]; no label when everything is in one group.
   const coldSplit = arr => {
