@@ -1760,6 +1760,7 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
 .pw-chips { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
 .pw-chips button { min-height: 44px; border: 1px solid #c9c9c9; background: #fff; color: #000; border-radius: 22px; font-family: inherit; font-size: var(--fs-caption); font-weight: 600; padding: 0 4px; }
 .pw-chips button.on { background: #000; color: #fff; border-color: #000; }
+.pw-frz.pw-gwb { margin: 0 0 16px; }
 .pw-nav { display: flex; justify-content: space-between; gap: 12px; margin: 20px 0 24px; position: sticky; bottom: calc(60px + var(--safe-bottom)); background: #fff; padding: 12px 0; border-top: 1px solid #e6e6e6; z-index: 5; }
 #homePage { overflow: visible !important; }
 .pw-nav button { min-height: 48px; padding: 0 20px; flex: 1; }
@@ -2155,6 +2156,15 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
 #view-entry .pills { gap: 8px; }
 .pn-bar button, .pn-form button, .cp-btn, .inv-forgot, .bk-rc > summary, .up-box button { min-height: 44px !important; padding-top: 0 !important; padding-bottom: 0 !important; }
 .pn-x { min-width: 44px; min-height: 44px; }
+.pn-item { border-bottom: 1px solid var(--sep); }
+.pn-item > summary { list-style: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 56px; padding: 8px 2px; cursor: pointer; }
+.pn-item > summary::-webkit-details-marker { display: none; }
+.pn-item > summary::after { content: '\203A'; color: var(--muted); font-size: var(--fs-lg); margin-left: 4px; transition: transform .15s; }
+.pn-item[open] > summary::after { transform: rotate(90deg); }
+.pn-item .pn-name { flex: 1; min-width: 0; font-size: var(--fs-body); }
+.pn-more { padding: 0 2px 12px; color: var(--muted); font-size: var(--fs-caption); }
+.pn-more > div { padding: 2px 0; }
+.pn-rm { margin-top: 8px; min-height: 44px; padding: 0 14px; background: none; border: 1px solid #c9c9c9; border-radius: 12px; color: var(--text); font-size: var(--fs-caption); }
 .info-btn { position: relative; }
 .info-btn::after { content: ""; position: absolute; inset: -10px; }
 .db-line .db-edit, .db-line .db-del, .db-edit, .db-del { width: 44px !important; height: 44px !important; margin: 0 !important; background: transparent !important; color: var(--text) !important; }
@@ -2573,7 +2583,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
   </div>
 </div>
 
-<div class="ver-badge">v1.183.01 · Nov 18, 9:57 PM PST</div>
+<div class="ver-badge">v1.184.00 · Nov 19, 8:35 AM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -5685,6 +5695,12 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
   const STOCK_TARGET = 1.2;
   // Minimum stock (Andrew, 2026-11-18): Lemon Poppy is always stocked to at least 30 days of expected sales per store, however short the span. Add an item here to extend the rule.
   const MIN_STOCK_DAYS = { 'Lemon Poppy': 30 };
+  // Goodwill (Andrew, 2026-11-19, Plan only): a toggle button on Plan step 1, like Frozen. When on, every item that needs a bake gets GOODWILL_PIECES extra on top,
+  // for giveaways to customers. Added to the bake before batches are counted, so batches always round up, never down. On/off is saved on this device.
+  const GOODWILL_PIECES = 6;
+  let goodwillOn = true;
+  try { if (localStorage.getItem('planGoodwill.v2') === '0') goodwillOn = false; } catch {}
+  const gwN = () => goodwillOn ? GOODWILL_PIECES : 0;
   function wizCompute(usable, today) {
     const out = {};
     for (const p of PRODUCTS) {
@@ -5702,6 +5718,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
         r.rate += need / hz; r.need += n; r.have += hv; r.bake += b; r.loc[c.loc] = { need: n, have: hv, bake: b };
       }
       if (days > 0) { const pool = storedPool(p); if (pool > 0) { r.have += pool; r.bake = Math.max(0, r.bake - pool); } }
+      if (days > 0 && r.bake > 0 && gwN() > 0) { r.bake += gwN(); r.gw = gwN(); }   // goodwill: only where something is baked anyway
       out[p] = r;
     }
     return out;
@@ -6050,7 +6067,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
       if (r.days > 0) {
         const pans = bx && bx.byItem[p] ? bx.byItem[p] : 0;
         const locLine = Object.keys(r.loc).map(l => `${esc(l)}: have ${Math.round(r.loc[l].have)}, goal ${Math.round(r.loc[l].need)}`).join('<br>');
-        const minNote = r.hz > r.days ? `<br><i>Minimum stock: ${r.hz} days of sales per store</i>` : '';
+        const minNote = (r.hz > r.days ? `<br><i>Minimum stock: ${r.hz} days of sales per store</i>` : '') + (r.gw ? `<br><i>Includes ${r.gw} extra for goodwill</i>` : '');
         sub = !(r.rate > 0) ? 'No recent sales to forecast from'
           : r.bake > 0 ? `Bake <b>${r.bake}</b> · ${flavorBatches(r.bake, p)} batch${flavorBatches(r.bake, p) === 1 ? '' : 'es'}${pans ? ` · <b>${pans}</b> Cambro pan${pans === 1 ? '' : 's'}${CAMBRO_MIX.includes(p) ? ' (shared)' : ''}` : ''}<br>${locLine}${minNote}`
           : `Enough on hand<br>${locLine}${minNote}`;
@@ -6066,6 +6083,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
     }
     const top = `<div class="pw-head"><b>What do you want to bake?</b><span>Drag the slider or pick how long each item should last. Each store's goal is ${STOCK_TARGET}x its expected sales for that time. You bake the gap between the goal and what it has now.</span></div>`
       + `<div class="pw-label">Make everything last</div><div class="pw-slide"><div class="pw-slide-val" id="pwAllVal">${dayLbl(all)}</div><input type="range" id="pwAll" min="1" max="90" step="1" value="${all}" aria-label="Days everything should last"><div class="pw-slide-ticks"><span>1 day</span><span>1 month</span><span>2 months</span><span>3 months</span></div></div>`
+      + `<button type="button" class="pw-frz pw-gwb${goodwillOn ? ' on' : ''}" data-gw aria-pressed="${goodwillOn}">Goodwill: ${GOODWILL_PIECES} extra per item</button>`
       + `<div class="pw-chips">${[[1, '1 day'], [7, '1 week'], [30, '1 month'], [45, '1.5 months']].map(([d, l]) => `<button type="button" data-wall="${d}" class="${PRODUCTS.every(q => wizSpan[q] === d) ? 'on' : ''}">${l}</button>`).join('')}</div>`;
     return { all, top, rows: grossHtml + pans + `<div class="pw-label">Or set each item</div>` + rows + `<div class="pw-note">Sales are assumed to grow 1.2% a week on top of the recent daily rate (counted for up to 4 weeks).</div>` };
   }
@@ -6110,6 +6128,8 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
     }
   }
   document.getElementById('planWiz').addEventListener('click', e => {
+    const gwBtn = e.target.closest('[data-gw]');
+    if (gwBtn) { goodwillOn = !goodwillOn; gwBtn.classList.toggle('on', goodwillOn); gwBtn.setAttribute('aria-pressed', String(goodwillOn)); try { localStorage.setItem('planGoodwill.v2', goodwillOn ? '1' : '0'); } catch {} if (lastPlanSales) paintPlan(false); else wizPaint(); return; }
     if (e.target.closest('[data-frz]')) { boxCfg.frozen = !boxCfg.frozen; boxSave(); wizPaint(); return; }
     const ch = e.target.closest('button[data-wall]');
     if (ch) { for (const p of PRODUCTS) wizSpan[p] = Number(ch.dataset.wall); wizSave(); if (lastPlanSales) paintPlan(false); else wizPaint(); return; }
@@ -8430,7 +8450,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
     const n = Math.round(s.onHand / pk * 10) / 10;
     const hit = PACK_WORD.find(x => x[0].test(s.name)), word = hit ? hit[1] : 'pack';
     if (!word) return `<b>${w}</b>`;
-    return `<b>${n.toLocaleString()} ${word}${n === 1 ? '' : 's'}</b><small class="pn-w">${w}</small>`;
+    return `<b>${n.toLocaleString()} ${n === 1 ? word : word + (/(x|s|ch|sh)$/.test(word) ? 'es' : 's')}</b><small class="pn-w">${w}</small>`;
   }
   function renderPantry() {
     const box = document.getElementById('homePantry'); if (!box) return;
@@ -8443,8 +8463,14 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
     let need = {}; try { buyItems().forEach(i => { need[i.name] = { qty: i.qty, unit: i.unit }; }); } catch {}
     const rowArr = stock.map(s => {
       const pl = need[s.name], same = pl && pl.unit === s.unit, nd = pl ? pl.qty : null, low = same && s.onHand + 1e-9 < nd;
-      const sub = (s.uncounted ? `Not counted · only purchases since ${esc(pantryDate(s.date))}` : `Counted ${s.was ? esc(s.was) + ' (about ' + buyFmt(s.count, s.unit) + ')' : buyFmt(s.count, s.unit)} on ${esc(pantryDate(s.date))}`) + (s.bought && !s.uncounted ? ` · +${esc(buyFmt(s.bought, s.unit))} bought since` : '') + (s.mixed ? ' · some purchases use another unit and are not added' : '') + (pl ? ` · plan needs ${esc(buyFmt(nd, pl.unit))}${same ? '' : ` (counted in ${esc(s.unit)}, not compared)`}` : '') + (s.note ? ` · ${esc(s.note)}` : '');
-      return { cold: isCold(s.name), html: `<div class="pn-row"><span class="pn-main"><b>${esc(s.name)}</b><small>${sub}</small></span><span class="pn-r">${low ? '<i class="pn-flag">Low</i>' : ''}${pnQty(s)}${s.id ? `<button class="pn-x" data-pnx="${esc(s.id)}" aria-label="Remove this count">✕</button>` : ''}</span></div>` };
+      // Short row: name, Low tag, quantity. Everything else opens under it (tap the row).
+      const bits = [s.uncounted ? `Not counted. Only purchases since ${esc(pantryDate(s.date))}.` : `Counted ${s.was ? esc(s.was) + ' (about ' + buyFmt(s.count, s.unit) + ')' : buyFmt(s.count, s.unit)} on ${esc(pantryDate(s.date))}.`];
+      if (s.bought && !s.uncounted) bits.push(`+${esc(buyFmt(s.bought, s.unit))} bought since.`);
+      if (s.mixed) bits.push('Some purchases use another unit and are not added.');
+      if (pl) bits.push(`Plan needs ${esc(buyFmt(nd, pl.unit))}${same ? '' : ` (counted in ${esc(s.unit)}, not compared)`}.`);
+      if (s.note) bits.push(esc(s.note));
+      const body = bits.map(b => `<div>${b}</div>`).join('') + (s.id ? `<button type="button" class="pn-rm" data-pnx="${esc(s.id)}">Remove this count</button>` : '');
+      return { cold: isCold(s.name), html: `<details class="pn-item"><summary><b class="pn-name">${esc(s.name)}</b><span class="pn-r">${low ? '<i class="pn-flag">Low</i>' : ''}${pnQty(s)}</span></summary><div class="pn-more">${body}</div></details>` };
     });
     const rows = coldSplit(rowArr);
     const names = (typeof costAllNames === 'function' ? costAllNames() : []).sort((a, b) => a.localeCompare(b));

@@ -311,6 +311,8 @@ Ingredients: **Dark Chocolate 70% and Dark Chocolate Couverture are retired into
 
 **v1.183.01 (2026-11-18).** `bakeEffort()` / `bsEffort` now use the Schedule model (`schedTasks` / `schedRun`), so Finance "Kitchen time used" counts start to finish including cake pop rests (about 16 h this month, was 5.8 h); the Kitchen times settings for muffin prep, setup and cleaning no longer feed the plan's hours. Bake Day per-date amounts and "Pieces made" still come from the date-driven plan, not step-1 spans (the views say which basis they use). Receipt parser (Mac scripts, separate commit): Costco warehouse receipts with coupons and `N @ price` lines, held messages name unknown item numbers; upload push says whether receipts were read or held.
 
+**v1.184.00 (2026-11-19).** **Goodwill** button on Plan step 1 (styled like Frozen; `goodwillOn`, `GOODWILL_PIECES = 6`, `planGoodwill.v2` in localStorage, on by default): in `wizCompute`, every item that needs a bake gets 6 extra pieces added before batches are counted, so batches only ever round up (Andrew: a couple extra for customer giveaways; round down was dropped). Plan only: Stock, run-out, Trends and the forecast are untouched. Items with nothing to bake stay at 0, and the date-driven plan (items with no span) does not get it. The row says "Includes 6 extra for goodwill". **Ingredients On hand rows are short** (`details.pn-item`): name, Low tag, packs and weight; tap a row for the count, purchases since, plan need, note and a Remove this count button. "5 boxs" fixed to "5 boxes".
+
 ## Design pass (v1.149.00)
 
 Last CSS block: **every `<select>` has one style** (white, 1px #c9c9c9, 12px radius, 44px, black chevron; `.row-select` and `[data-labi]` excluded); the Forecast store toggle (`.fc-locs`) uses the pill style. On desktop (>=900px) all pages share a 1120px column, page chips sit centered at natural width, the Trends donut is 220px. On phones the 5 Inventory chips shrink (11px padding) to fit. Counts' total says "pieces", not "madeleines". Still open: coloured snowflake/flame/arrow icons in Forecast misses (breaks the B/W rule), today's half-finished day shows as a 0.0x miss, Stock's section headers use the old grey band style.
@@ -331,7 +333,7 @@ The headless check at 390px misses what iOS does. Apply these to every new or ch
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.183.01**; the next feature is v1.184.00, a fix v1.183.02 Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.184.00**; the next feature is v1.185.00, a fix v1.184.01 Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 
