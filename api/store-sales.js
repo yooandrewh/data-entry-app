@@ -25,7 +25,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { rows } = await getRows(TAB);
+    const { rows } = await getRows(TAB, { cache: true });
     const sales = [];
     for (const r of rows) {
       const date = String(r.Date || '').slice(0, 10);

@@ -12,7 +12,7 @@
 
 import crypto from 'node:crypto';
 import { requireCode } from './_auth.js';
-import { appendRow, sheetId } from './_sheets.js';
+import { appendRow, getRows, sheetId } from './_sheets.js';
 
 const DELIVERIES_TAB = process.env.SHEET_DELIVERIES_TAB || 'Deliveries';
 const TAB_BY_TYPE = {
@@ -124,6 +124,19 @@ export default async function handler(req, res) {
     if (!startIso) return res.status(400).json({ error: `Invalid datetime: ${datetime}` });
     const dateOnly = String(datetime).split('T')[0]; // for the short push text
 
+    // Same entry (same submittedAt, type, store, time) always gets the same id; without a submittedAt the id is random.
+    const submittedAt = String((req.body && req.body.submittedAt) || '').slice(0, 40);
+    const stableId = (part) => {
+      if (!submittedAt) return crypto.randomUUID();
+      const h = crypto.createHash('sha256').update([submittedAt, type, location, datetime, part].join('|')).digest('hex');
+      return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20, 32)}`;
+    };
+    const existingIds = async (tabName, ids) => {
+      if (!submittedAt) return new Set();
+      const { rows } = await getRows(tabName);
+      const want = new Set(ids);
+      return new Set(rows.map((r) => String(r.id)).filter((x) => want.has(x)));
+    };
     const cap = (s) => String(s).charAt(0).toUpperCase() + String(s).slice(1);
     const a = (amounts && typeof amounts === 'object') ? amounts : {};
     const isGoodwill = String(type).toLowerCase() === 'goodwill';
@@ -141,15 +154,21 @@ export default async function handler(req, res) {
         }
         return r;
       };
-      const srcId = crypto.randomUUID(), dstId = crypto.randomUUID();
-      await appendRow(DELIVERIES_TAB, mkRow(srcId, location, `Transfer → ${to}${memo ? ' · ' + memo : ''}`, -1));
-      await appendRow(DELIVERIES_TAB, mkRow(dstId, to, `Transfer ← ${location}${memo ? ' · ' + memo : ''}`, +1));
-      await sendNotification({ type, location, to, dateOnly, amounts: a }).catch(() => {});
+      // Ids come from the entry's own submittedAt, so a retry (the second write failed, or the answer was lost) never writes a leg twice.
+      const srcId = stableId('src'), dstId = stableId('dst');
+      const have = await existingIds(DELIVERIES_TAB, [srcId, dstId]);
+      let wrote = 0;
+      if (!have.has(srcId)) { await appendRow(DELIVERIES_TAB, mkRow(srcId, location, `Transfer → ${to}${memo ? ' · ' + memo : ''}`, -1)); wrote++; }
+      if (!have.has(dstId)) { await appendRow(DELIVERIES_TAB, mkRow(dstId, to, `Transfer ← ${location}${memo ? ' · ' + memo : ''}`, +1)); wrote++; }
+      if (wrote) await sendNotification({ type, location, to, dateOnly, amounts: a }).catch(() => {});
       const url = `https://docs.google.com/spreadsheets/d/${sheetId()}/edit`;
       return res.status(200).json({ ok: true, id: srcId, ids: [srcId, dstId], url });
     }
 
-    const id = crypto.randomUUID();
+    const id = stableId('row');
+    if ((await existingIds(tab, [id])).has(id)) {   // this entry was already written (a retry after a lost answer): do not write it again
+      return res.status(200).json({ ok: true, id, url: `https://docs.google.com/spreadsheets/d/${sheetId()}/edit` });
+    }
 
     // Build the row object; appendRow() orders it to match the tab's header.
     const row = {

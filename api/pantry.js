@@ -39,7 +39,7 @@ export default async function handler(req, res) {
   try {
     if (req.method === 'GET') {
       await ensureTab(TAB, HEADER);
-      const { rows } = await getRows(TAB);
+      const { rows } = await getRows(TAB, { cache: true });
       return res.status(200).json({
         rows: rows.filter((r) => r.Id && !isTrue(r.Deleted)).map((r) => ({
           id: String(r.Id), item: String(r.Item), amt: num(r.Amount), unit: r.Unit === 'ml' ? 'ml' : r.Unit === 'pcs' ? 'pcs' : 'g',

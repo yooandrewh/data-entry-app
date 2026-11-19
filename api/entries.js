@@ -16,7 +16,7 @@ const num = (v) => { const n = Number(v); return Number.isFinite(n) ? n : 0; };
 const truthy = (v) => /^(true|yes|1|__yes__)$/i.test(String(v || '').trim());
 
 async function readTab({ type, tab }) {
-  const { rows } = await getRows(tab);
+  const { rows } = await getRows(tab, { cache: true });
   return rows
     .filter((r) => (r.id || r.Date))                 // skip fully-empty rows
     .map((r) => {

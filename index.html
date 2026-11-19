@@ -2737,7 +2737,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.181.01 · Nov 18, 8:45 PM PST</div>
+<div class="ver-badge">v1.181.02 · Nov 18, 8:48 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -4507,14 +4507,15 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   }
   // Pumpkin Bundt and Cake Pop: OCR sales on the sheet win. Where a date has none, sold is worked out from stock:
   // previous count + deliveries since (goodwill/transfers are signed) - new count, per store,
-  // booked on the date of the newer count. Rows get `extra` (not added to `total`, so the madeleine forecast is untouched).
+  // booked on the date of the newer count, after taking off sales the sheet already holds between the two counts (v1.181.02: they used
+  // to be counted twice, which inflated the Bundt / Cake Pop / Chookie rates). Rows get `extra` (not added to `total`, so the madeleine forecast is untouched).
   const EXTRA_SOLD = ['Pumpkin Bundt', 'Cake Pop', 'Chookie'];
   function addExtraSales(rows, entries) {
     const live = entries.filter(e => !e.taggedForDeletion && e.datetime);
     const by = new Map();
     for (const loc of new Set(live.map(e => e.location))) {
       const allInv = live.filter(e => e.type === 'inventory' && e.location === loc).sort((a, b) => a.datetime.localeCompare(b.datetime));
-      const dlv = live.filter(e => e.type === 'delivery' && e.location === loc);
+      const dlv = live.filter(e => (e.type === 'delivery' || e.type === 'goodwill' || e.type === 'transfer') && e.location === loc);   // goodwill and transfers are signed
       for (const p of EXTRA_SOLD) {
         const cnt = (e) => e.amounts && e.amounts[p];
         const between = (x, y) => dlv.some(e => e.datetime > x.datetime && e.datetime <= y.datetime && ((e.amounts && e.amounts[p]) || 0) > 0);
@@ -4525,6 +4526,9 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
           if (typeof a !== 'number' || typeof b !== 'number') continue;
           let sold = a - b;
           for (const e of dlv) if (e.datetime > inv[i - 1].datetime && e.datetime <= inv[i].datetime) sold += (e.amounts && e.amounts[p]) || 0;
+          // Sales the sheet already holds for this stretch (count day to count day) are not booked a second time.
+          const da = inv[i - 1].datetime.slice(0, 10), db = inv[i].datetime.slice(0, 10);
+          for (const r of rows) if (r.location === loc && r.date >= da && r.date <= db) sold -= (r.amounts && r.amounts[p]) || 0;
           if (sold <= 0) continue;   // a count that rose with no delivery is a miscount, not negative sales
           const key = inv[i].datetime.slice(0, 10) + '|' + loc;
           if (!by.has(key)) by.set(key, {});
@@ -4720,8 +4724,8 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     if (!elapsed) return { left: stock, est: false };
     let rem = stock; const d = parseEntryDate(st.asOf);
     for (let i = 0; i < elapsed && rem > 0; i++) {
+      d.setDate(d.getDate() + 1);   // the stock is as of the end of asOf, so the first day taken off is the day after
       rem -= ([0, 6].includes(d.getDay()) ? st.dowRate[p].we : st.dowRate[p].wd);
-      d.setDate(d.getDate() + 1);
     }
     return { left: Math.max(0, Math.round(rem)), est: true };
   }
@@ -4765,7 +4769,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     const cnt = s => (typeof s.total === 'number' ? s.total : SALES_FLAVORS.reduce((t, f) => t + (s.amounts[f] || 0), 0)) + (s.extra || 0);
     const rev = rows => rows.reduce((a, s) => a + cnt(s), 0) * PRICE_PER_UNIT + salesAdj(rows);
     const thisRows = sales.filter(s => s.date >= wk && s.date <= today);
-    const through = thisRows.reduce((m, s) => s.date > m ? s.date : m, '');
+    const through = thisRows.reduce((m, s) => cnt(s) > 0 && s.date > m ? s.date : m, '');
     const prevRows = sales.filter(s => s.date >= prevWk && s.date <= addDays(through || today, -7));   // same days last week as the days logged this week
     const sold = thisRows.reduce((a, s) => a + cnt(s), 0), r1 = rev(thisRows), r0 = rev(prevRows);
     const pct = r0 > 0 ? Math.round((r1 / r0 - 1) * 100) : null;
@@ -5872,7 +5876,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
           need += dayN; if (i <= days) r.sales += dayN;   // r.sales: expected pieces sold over the chosen span only (the Lemon Poppy minimum stock reaches further)
         }
         const m = Math.min(0.6, FCAST_Z * (c.st.dailyCV || 0) / Math.sqrt(hz)), n = need * Math.max(STOCK_TARGET, 1 + m);
-        const hv = c.st.stock[p] || 0, b = Math.max(0, Math.ceil(n - hv));
+        const hv = estLeftNow(c.st, p).left, b = Math.max(0, Math.ceil(n - hv));   // stock today: demand below starts tomorrow, so the days since the last count are already taken off
         r.rate += need / hz; r.need += n; r.have += hv; r.bake += b; r.loc[c.loc] = { need: n, have: hv, bake: b };
       }
       if (days > 0) { const pool = storedPool(p); if (pool > 0) { r.have += pool; r.bake = Math.max(0, r.bake - pool); } }
@@ -8964,9 +8968,10 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     try { wp = weekProjection(rows.map(noLump), await fetchRemoteEntries(), nowPST().slice(0, 10)); } catch (e) { wp = null; }
     const projTag = (w, p) => {
       if (!wp || w.start !== curWk || !wp.projDays.size) return '';
-      let n = 0;
-      for (const s of wp.stores) if (trLoc === 'Both' || s.loc === trLoc) for (const q of PRODUCTS) if (!p || p === q) n += s.items[q].actual + s.items[q].proj;
-      return n >= 0.5 ? `<span class="tr-d">→ ~${Math.round(n)}</span>` : '';
+      let add = 0;   // only the days still to come; what is already sold is the number in the cell, so the tag can never read lower
+      for (const s of wp.stores) if (trLoc === 'Both' || s.loc === trLoc) for (const q of PRODUCTS) if (!p || p === q) add += s.items[q].proj;
+      const shown = p ? (w.amounts[p] || 0) : w.total;
+      return add >= 0.5 ? `<span class="tr-d">→ ~${Math.round(shown + add)}</span>` : '';
     };
     const { days, weeks } = trWeeks(rows);
     const head = `<div class="tr-bar"><select id="trLoc" data-native>${['La Mirada', 'Stanton', 'Both'].map(l => `<option${l === trLoc ? ' selected' : ''}>${l}</option>`).join('')}</select></div>`;

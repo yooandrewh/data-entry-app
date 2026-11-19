@@ -85,7 +85,10 @@ async function api(path, opts = {}) {
     },
   });
   const data = await r.json().catch(() => ({}));
-  if (!r.ok) throw new Error('Sheets API error: ' + JSON.stringify(data));
+  if (!r.ok) {
+    console.error('Sheets API error', r.status, JSON.stringify(data));   // full text stays in the server log (it names the Google project)
+    throw new Error(r.status === 429 ? 'The sheet is busy, try again in a minute' : 'Sheets API error ' + r.status);
+  }
   return data;
 }
 
@@ -96,7 +99,19 @@ const RENDER = 'valueRenderOption=UNFORMATTED_VALUE';
 
 // Read a whole tab. Returns { header: [...], rows: [{...cells, _row}] } where
 // _row is the 1-based sheet row number (data starts at row 2, after the header).
-export async function getRows(tab) {
+// Short read cache for the open GET endpoints only (pass { cache: true }). It keeps a burst of page loads (or a flood of requests)
+// from using up the Sheets read quota, which would take the whole app down. Writers never use it, and every write in this process
+// clears it. Other server instances can be up to CACHE_MS behind.
+const CACHE_MS = 8000;
+const readCache = new Map();
+export async function getRows(tab, opts) {
+  if (opts && opts.cache) {
+    const hit = readCache.get(tab);
+    if (hit && Date.now() - hit.t < CACHE_MS) return hit.data;
+    const data = await getRows(tab);
+    readCache.set(tab, { t: Date.now(), data });
+    return data;
+  }
   const data = await api(`/values/${encodeURIComponent(tab)}?${RENDER}`);
   const values = data.values || [];
   const header = values[0] || [];
@@ -137,6 +152,7 @@ async function addMissingColumns(tab, header, wanted) {
 
 // Append one row built from an object, ordered to match the tab's header.
 export async function appendRow(tab, obj) {
+  readCache.clear();
   const header = await getHeader(tab);
   await addMissingColumns(tab, header, Object.keys(obj));
   const row = header.map((h) => (obj[h] !== undefined && obj[h] !== null ? obj[h] : ''));
@@ -149,6 +165,7 @@ export async function appendRow(tab, obj) {
 
 // Append several rows in one API call, each ordered to match the tab's header.
 export async function appendRows(tab, objs) {
+  readCache.clear();
   if (!objs.length) return 0;
   const header = await getHeader(tab);
   await addMissingColumns(tab, header, objs.flatMap((o) => Object.keys(o)));
@@ -179,6 +196,7 @@ export async function ensureTab(tab, header) {
 // Rewrite a whole tab: create it if missing, clear A:Z, then write the 2-D array from A1.
 // RAW keeps numbers as numbers.
 export async function replaceTab(tab, header, rows2d, opts = {}) {
+  readCache.clear();
   await ensureTab(tab, header);
   await api(`/values/${encodeURIComponent(tab + '!A:Z')}:clear`, { method: 'POST', body: '{}' });
   await api(
@@ -196,6 +214,7 @@ export function colLetter(n) {
 
 // Set a single cell by header name on a given sheet row number.
 export async function updateCell(tab, header, rowNumber, colName, value) {
+  readCache.clear();
   await addMissingColumns(tab, header, [colName]);
   const idx = header.indexOf(colName);
   if (idx < 0) throw new Error(`Column "${colName}" not found in ${tab}`);
@@ -219,6 +238,7 @@ async function tabGid(tab) {
 
 // Permanently delete a row (1-based sheet row number) from a tab. Rows below shift up.
 export async function deleteRow(tab, rowNumber) {
+  readCache.clear();
   const gid = await tabGid(tab);
   if (gid == null) throw new Error(`Unknown tab: ${tab}`);
   await api(':batchUpdate', {

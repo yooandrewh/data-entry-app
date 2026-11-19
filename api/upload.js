@@ -21,6 +21,10 @@ const MAX_PENDING_FILES = 40;
 const MAX_PENDING_BYTES = 1.5 * 1024 * 1024 * 1024;
 const LINK_MS = 15 * 60 * 1000;
 
+// Links handed out in the last LINK_MS by this server instance. A burst of parallel requests all sees an empty waiting room (nothing has
+// been uploaded yet), so each issued link is counted here until it expires. Bursts mostly land on one warm instance.
+let issued = [];
+
 function safeName(name) {
   // Plain ASCII only: macOS screenshot names carry a narrow no-break space (U+202F) before PM that the signed link cannot match.
   const s = String(name || '').replace(/[\\/]/g, '-').replace(/[^\x20-\x7e]/g, ' ').replace(/[#?%&+=;:@"'<>|*]/g, '-').replace(/\s+/g, ' ').replace(/^\.+/, '').trim().slice(0, 120);
@@ -51,8 +55,10 @@ export default async function handler(req, res) {
 
     // Cap what can sit in the waiting room.
     const { blobs } = await list({ prefix: 'inbox/', limit: 1000 });
-    const bytes = blobs.reduce((s, x) => s + (x.size || 0), 0);
-    if (blobs.length >= MAX_PENDING_FILES || bytes + size > MAX_PENDING_BYTES) {
+    const nowMs = Date.now();
+    issued = issued.filter((x) => x.until > nowMs);
+    const bytes = blobs.reduce((s, x) => s + (x.size || 0), 0) + issued.reduce((s, x) => s + x.size, 0);
+    if (blobs.length + issued.length >= MAX_PENDING_FILES || bytes + size > MAX_PENDING_BYTES) {
       return res.status(429).json({ error: 'Too many files are waiting. Try again once the Mac has collected them.' });
     }
 
@@ -62,6 +68,7 @@ export default async function handler(req, res) {
     const pathname = `inbox/${kind}/${stem}-${randomBytes(5).toString('hex')}${ext}`;
 
     const validUntil = Date.now() + LINK_MS;
+    issued.push({ until: validUntil, size });
     const tok = await issueSignedToken({ pathname, operations: ['put'], validUntil, allowedContentTypes: [type], maximumSizeInBytes: size });
     const { presignedUrl } = await presignUrl(tok, {
       operation: 'put', pathname, validUntil, allowedContentTypes: [type], maximumSizeInBytes: size,
