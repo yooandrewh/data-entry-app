@@ -2710,7 +2710,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.176.07 · Nov 18, 8:05 PM PST</div>
+<div class="ver-badge">v1.176.08 · Nov 18, 8:40 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -5721,7 +5721,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   // Pans on hand (Andrew, 2026-11-18: 4 + 23 full 4", 6 half 4", 8 half 2.5"). Editable under Pan sizes (saved on this device). Only full 4" pans are compared with the plan: the per-pan sizes are for the full pan.
   const PAN_HAVE = { full4: 27, half4: 6, half25: 8 };
   const panHave = k => (boxCfg.have && boxCfg.have[k] != null) ? Math.max(0, Math.floor(Number(boxCfg.have[k]) || 0)) : PAN_HAVE[k];
-  const panLine = total => { const h = panHave('full4'), left = h - total; return `You have <b>${h}</b> full-size 4" pans (plus ${panHave('half4')} half 4" and ${panHave('half25')} half 2.5", not counted). ` + (left >= 0 ? `Enough, ${left} spare.` : `<b>${-left}</b> more needed.`); };
+  const panLine = total => { const h = panHave('full4'), left = h - total; return `You have <b>${h}</b> full-size 4" Cambro pans (plus ${panHave('half4')} half 4" and ${panHave('half25')} half 2.5", not counted). ` + (left >= 0 ? `Enough, ${left} spare.` : `<b>${-left}</b> more needed.`); };
   const boxSave = () => { try { localStorage.setItem('boxCfg.v1', JSON.stringify(boxCfg)); } catch {} };
   // Pieces that fit in one full-size Cambro pan (Andrew, 2026-11-18). Madeleines can double to 72 and cake pops to 100 once frozen (stacked): not used yet, kept in mind.
   const BOX_FIT = { 'Lemon Poppy': 36, 'Sea Salt': 36, 'Maple Pecan': 36, 'Pumpkin Muffin': 18, 'Blueberry Muffin': 18, 'Pumpkin Bundt': 22, 'Cookie': 40, 'Chookie': 40, 'Cake Pop': 50 };
@@ -5752,7 +5752,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   }
   function ovenHtml(bake, cls) {
     const o = ovenSteps(bake); if (!o.rows.length) return '';
-    return `<div class="${cls || 'pw-pans'}"><b>${o.rounds}</b> oven round${o.rounds === 1 ? '' : 's'} · <b>${fmtDur(o.min)}</b> baking<div class="pw-dest">${o.rows.map(x => `<div><b>${esc(pdisp(x.p))}</b> · round${x.rounds === 1 ? '' : 's'} ${x.rounds === 1 ? x.from : x.from + '–' + (x.from + x.rounds - 1)} · ${x.rounds} × ${x.bk} min${x.cool ? ' + ' + x.cool + ' cool' : ''} = ${fmtDur(x.min)}<small>${x.n} pieces · ${x.op ? x.op.pans + ' pans × ' + x.op.per + ' = ' + x.cap + ' per round' + (x.op.max > x.op.pans ? ' (room for ' + (x.op.max - x.op.pans) + ' more pans)' : ' (oven full)') : x.cap + ' fit per round'}</small></div>`).join('')}</div><small>One item per round, back to back. Oven time only: setup, batch prep, glazing and cleaning are in Kitchen time. Pans per round are the ones you gave (one oven). Madeleines bake ${KT.bakeMin} min plus ${KT.coolMin} cooling (Kitchen times); the others use the recipe's bake time.</small></div>`;
+    return `<div class="${cls || 'pw-pans'}"><b>${o.rounds}</b> oven round${o.rounds === 1 ? '' : 's'} · <b>${fmtDur(o.min)}</b> baking<div class="pw-dest">${o.rows.map(x => `<div><b>${esc(pdisp(x.p))}</b> · round${x.rounds === 1 ? '' : 's'} ${x.rounds === 1 ? x.from : x.from + '–' + (x.from + x.rounds - 1)} · ${x.rounds} × ${x.bk} min${x.cool ? ' + ' + x.cool + ' cool' : ''} = ${fmtDur(x.min)}<small>${x.n} pieces · ${x.op ? x.op.pans + ' oven pans × ' + x.op.per + ' = ' + x.cap + ' per round' + (x.op.max > x.op.pans ? ' (room for ' + (x.op.max - x.op.pans) + ' more oven pans)' : ' (oven full)') : x.cap + ' fit per round'}</small></div>`).join('')}</div><small>One item per round, back to back. Oven time only: setup, batch prep, glazing and cleaning are in Kitchen time. Pans per round are the ones you gave (one oven). Madeleines bake ${KT.bakeMin} min plus ${KT.coolMin} cooling (Kitchen times); the others use the recipe's bake time.</small></div>`;
   }
   // ---- Schedule: who does what, and when. Tasks come from the plan (planBakeTotals); drag a block along its row to move it in time, or to another person / oven. ----
   // Setup -> batch prep -> fill the pans -> oven round -> (cool) -> glaze -> cleaning. People do everything but the oven and the cooling; one oven round at a time per oven.
@@ -5760,6 +5760,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   try { Object.assign(schedCfg, JSON.parse(localStorage.getItem('sched.v2') || '{}')); const m = JSON.parse(localStorage.getItem('schedMap.v2') || '{}') || {}; schedPin = m.pin || {}; schedOv = m.ov || {}; schedAt = m.at || {}; schedDur = m.dur || {}; schedZoom = m.zoom || 2; } catch (e) {}
   const schedSave = () => { try { localStorage.setItem('sched.v2', JSON.stringify(schedCfg)); localStorage.setItem('schedMap.v2', JSON.stringify({ pin: schedPin, ov: schedOv, at: schedAt, dur: schedDur, zoom: schedZoom })); } catch (e) {} };
   const schedStrip = t => String(t || '').replace(/<br\s*\/?>/g, '\n').replace(/<\/?(b|i|small|p|div|span)[^>]*>/g, '').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+  const SCHED_COMBO = ['Lemon Poppy', 'Sea Salt'], SCHED_COMBO_X = 1.5;   // Andrew 2026-11-18: these two can be prepped together; both at once takes 1.5x one prep (45 min instead of 30)
   let SCHED_ORDER = ['Maple Pecan', 'Lemon Poppy', 'Sea Salt', 'Pumpkin Bundt', 'Blueberry Muffin', 'Chookie'];   // work order after cake pops (they need long rests): Maple Pecan, Lemon Poppy, Sea Salt, then bundt, muffin, cookie last (Andrew 2026-11-18). 40-day plan 6h32; cookie-first was 6h25 with the ovens fuller
   const SCHED_PREP_MIN = 30, SCHED_OWN_PREP = ['Pumpkin Muffin', 'Blueberry Muffin', 'Chookie', 'Cake Pop'];
   function schedTasks() {
@@ -5771,11 +5772,15 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       try { const key = Object.keys(BS_PRODUCT).find(k => BS_PRODUCT[k] === p), f = key && bsFind(key); if (f && f.sec !== 'mad') { group = 1; pmin = (f.it && f.it.prep) || 20; } } catch (e) {}
       if (!SCHED_OWN_PREP.includes(p)) pmin = SCHED_PREP_MIN;   // Andrew 2026-11-18: every prep block is 30 min except muffins, cookies and cake pops (they keep their recipe's own prep time)
       const nPrep = 1, perPrep = n;   // Andrew 2026-11-18: prep is one block per item for the whole amount, not per batch
-      for (let i = 1; i <= nPrep; i++) T.push({ id: p + ':prep:' + i, name: pdisp(p) + ' prep ' + i + '/' + nPrep, p, min: pmin, who: true, deps: ['setup'], ix, rk: 99 });
+      const shared = SCHED_COMBO.includes(p) && SCHED_COMBO.every(q => Math.round(bake[q] || 0) > 0), pid = i => (shared ? SCHED_COMBO[0] : p) + ':prep:' + i;   // Sea Salt and Lemon Poppy are mixed together: one prep block for both
+      for (let i = 1; i <= nPrep; i++) {
+        if (shared && p !== SCHED_COMBO[0]) continue;
+        T.push({ id: pid(i), name: shared ? SCHED_COMBO.map(pdisp).join(' + ') + ' prep' : pdisp(p) + ' prep ' + i + '/' + nPrep, p, min: shared ? Math.round(pmin * SCHED_COMBO_X) : pmin, who: true, deps: ['setup'], ix: shared ? Math.min(...SCHED_COMBO.map(q => SCHED_ORDER.indexOf(q))) : ix, rk: 99 });
+      }
       let last = null;
       for (let k = 1; k <= o.rounds; k++) {
-        const need = Math.min(nPrep, Math.max(1, Math.ceil(k * o.cap / perPrep))), pd = []; for (let i = 1; i <= need; i++) pd.push(p + ':prep:' + i);
-        for (let i = 1; i <= need; i++) { const pt = T.find(t => t.id === p + ':prep:' + i); if (pt && pt.rk > k) pt.rk = k; }
+        const need = Math.min(nPrep, Math.max(1, Math.ceil(k * o.cap / perPrep))), pd = []; for (let i = 1; i <= need; i++) pd.push(pid(i));
+        for (let i = 1; i <= need; i++) { const pt = T.find(t => t.id === pid(i)); if (pt && pt.rk > k) pt.rk = k; }
         if (schedCfg.fill > 0) T.push({ id: p + ':fill:' + k, name: pdisp(p) + ' fill ' + k, p, min: schedCfg.fill, who: true, deps: pd, ix, rk: k });
         T.push({ id: p + ':bake:' + k, name: pdisp(p) + ' bake ' + k + '/' + o.rounds, p, min: o.bk, oven: true, deps: schedCfg.fill > 0 ? [p + ':fill:' + k] : pd, ix, rk: k });
         last = p + ':bake:' + k;
@@ -5837,7 +5842,8 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       const mine = T.filter(t => t.p === p), preps = mine.filter(t => /:prep:/.test(t.id)), fills = mine.filter(t => /:fill:/.test(t.id)), bakes = mine.filter(t => t.oven), gl = mine.find(t => /:glaze/.test(t.id));
       const o = ovenSteps({ [p]: n }).rows[0]; let method = '';
       try { const key = Object.keys(BS_PRODUCT).find(k => BS_PRODUCT[k] === p), f = key && bsFind(key); method = schedStrip(f && f.sec === 'mad' ? REC_MAD_NOTES : (f && f.it && (f.it.notes || (f.it.versions && f.it.versions[0] && f.it.versions[0].notes))) || ''); } catch (e) {}
-      const steps = [`Prep: ${preps.length} × ${preps[0] ? preps[0].min : 0} min (${flavorBatches(n, p)} batch${flavorBatches(n, p) === 1 ? '' : 'es'}, ${n} pieces). Mix by the method below.`];
+      const sharedPrep = !preps.length && T.find(t => /:prep:/.test(t.id) && t.p !== p && SCHED_COMBO.includes(t.p) && SCHED_COMBO.includes(p));
+      const steps = sharedPrep ? [`Prep: made together with ${pdisp(sharedPrep.p)}, one ${sharedPrep.min} min block (${flavorBatches(n, p)} batch${flavorBatches(n, p) === 1 ? '' : 'es'}, ${n} pieces). Mix by the method below.`] : [`Prep: ${preps.length} × ${preps[0] ? preps[0].min : 0} min (${flavorBatches(n, p)} batch${flavorBatches(n, p) === 1 ? '' : 'es'}, ${n} pieces). Mix by the method below.`];
       if (fills.length) steps.push(`Fill the pans: ${fills.length} round${fills.length === 1 ? '' : 's'} × ${schedCfg.fill} min, ${o.op ? o.op.pans + ' pans × ' + o.op.per : o.cap + ' per round'}.`);
       steps.push(`Bake: ${bakes.length} round${bakes.length === 1 ? '' : 's'} × ${o.bk} min in the oven.`);
       if (o.cool) steps.push(`Cool: ${o.cool} min on the rack after each round.`);
@@ -5926,18 +5932,18 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     }
     return { items, byItem, trays, total: items.reduce((a, x) => a + x.boxes, 0) };
   }
-  const destLine = x => (x.dest || []).map(d => `${esc(d.loc)} ${d.pcs} pcs (${(Math.round(d.pans * 10) / 10)} pan${Math.round(d.pans * 10) / 10 === 1 ? '' : 's'})`).join(' · ');
+  const destLine = x => (x.dest || []).map(d => `${esc(d.loc)} ${d.pcs} pcs (${(Math.round(d.pans * 10) / 10)} Cambro pan${Math.round(d.pans * 10) / 10 === 1 ? '' : 's'})`).join(' · ');
   function boxPaint() {
     const el = document.getElementById('pwBoxes'); if (!el) return;
     const bx = boxPlan(), any = PRODUCTS.some(p => (planBakeTotals[p] || 0) > 0);
     let h = `<h3>Boxes</h3>`;
     if (!any) { el.innerHTML = h + '<div class="bx-none">Nothing to box yet. Pick a span for at least one item in step 1.</div>'; return; }
-    h += `<div class="bx-total"><b>${bx.total}</b> pan${bx.total === 1 ? '' : 's'} in all (a pan is one Cambro full-size 4" deep food pan, 14PP190). Only for the pieces you bake, not the stock already on hand. One item per pan, rounded up per item; not split by location.<br>${panLine(bx.total)}</div>`;
-    h += bx.items.map(x => `<div class="bx-row"><span>${esc(pdisp(x.p))}<small>${x.pcs} pieces · ${boxCap(x.p)} per pan${boxCfg.frozen && FROZEN_STACK.includes(x.p) ? ' (frozen, 2 layers)' : ''}${x.dest && x.dest.length ? '<br>Goes to ' + destLine(x) : ''}</small></span><b>${x.boxes} pan${x.boxes === 1 ? '' : 's'}</b></div>`).join('');
+    h += `<div class="bx-total"><b>${bx.total}</b> Cambro pan${bx.total === 1 ? '' : 's'} in all (full-size, 4" deep, 14PP190). Only for the pieces you bake, not the stock already on hand. One item per Cambro pan, rounded up per item; not split by location.<br>${panLine(bx.total)}</div>`;
+    h += bx.items.map(x => `<div class="bx-row"><span>${esc(pdisp(x.p))}<small>${x.pcs} pieces · ${boxCap(x.p)} per Cambro pan${boxCfg.frozen && FROZEN_STACK.includes(x.p) ? ' (frozen, 2 layers)' : ''}${x.dest && x.dest.length ? '<br>Goes to ' + destLine(x) : ''}</small></span><b>${x.boxes} Cambro pan${x.boxes === 1 ? '' : 's'}</b></div>`).join('');
     h += ovenHtml(planBakeTotals, 'bx-oven');
-    h += `<details><summary>Pan sizes</summary><div class="bx-set hd"><span>Item</span><span>Per pan</span></div>`
+    h += `<details><summary>Cambro pan sizes</summary><div class="bx-set hd"><span>Item</span><span>Per Cambro pan</span></div>`
       + PRODUCTS.map(p => `<div class="bx-set"><span>${esc(pdisp(p))}</span><input type="number" inputmode="numeric" min="1" data-bx="size" data-p="${esc(p)}" value="${boxSize(p)}"></div>`).join('')
-      + `<div class="bx-set hd"><span>Pans on hand</span><span>Count</span></div>`
+      + `<div class="bx-set hd"><span>Cambro pans on hand</span><span>Count</span></div>`
       + [['full4', 'Full 4" deep'], ['half4', 'Half 4" deep'], ['half25', 'Half 2.5" deep']].map(([k, l]) => `<div class="bx-set"><span>${l}</span><input type="number" inputmode="numeric" min="0" data-bx="have" data-k="${k}" value="${panHave(k)}"></div>`).join('')
       + `</details>`;
     el.innerHTML = h;
@@ -5976,7 +5982,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     const grossHtml = gross > 0 ? `<div class="pw-gross"><b>${money0(gross)}</b> expected gross sales<small>${Math.round(grossPcs)} pieces over ${grossDays === 1 ? '1 day' : grossDays + ' days'} at your retail prices, both stores. Moves as you change the days.</small></div>` : '';
     let pans = '';
     if (bx && bx.total > 0) {
-      pans = `<div class="pw-pans"><b>${bx.total}</b> Cambro pan${bx.total === 1 ? '' : 's'} needed<button type="button" class="pw-frz${boxCfg.frozen ? ' on' : ''}" data-frz aria-pressed="${!!boxCfg.frozen}">Frozen: 2 layers (madeleines, bundt, cake pops)</button>${bx.items.length ? '<div class="pw-dest">' + bx.items.map(x => `<div><b>${esc(pdisp(x.p))}</b> · ${x.boxes} pan${x.boxes === 1 ? '' : 's'}${x.dest && x.dest.length ? `<small>Goes to ${destLine(x)}</small>` : ''}</div>`).join('') + '</div>' : ''}<small>${panLine(bx.total)}<br>Only for the pieces you bake, not the stock already on hand. Full-size, 4" deep. One item per pan; the pan count is not split by location, the lines above say where the pieces go.</small></div>`;
+      pans = `<div class="pw-pans"><b>${bx.total}</b> Cambro pan${bx.total === 1 ? '' : 's'} needed<button type="button" class="pw-frz${boxCfg.frozen ? ' on' : ''}" data-frz aria-pressed="${!!boxCfg.frozen}">Frozen: 2 layers (madeleines, bundt, cake pops)</button>${bx.items.length ? '<div class="pw-dest">' + bx.items.map(x => `<div><b>${esc(pdisp(x.p))}</b> · ${x.boxes} Cambro pan${x.boxes === 1 ? '' : 's'}${x.dest && x.dest.length ? `<small>Goes to ${destLine(x)}</small>` : ''}</div>`).join('') + '</div>' : ''}<small>${panLine(bx.total)}<br>Only for the pieces you bake, not the stock already on hand. Full-size, 4" deep. One item per Cambro pan; the count is not split by location, the lines above say where the pieces go.</small></div>`;
     }
     const top = `<div class="pw-head"><b>What do you want to bake?</b><span>Drag the slider or pick how long each item should last. Each store's goal is ${STOCK_TARGET}x its expected sales for that time. You bake the gap between the goal and what it has now.</span></div>`
       + `<div class="pw-label">Make everything last</div><div class="pw-slide"><div class="pw-slide-val" id="pwAllVal">${dayLbl(all)}</div><input type="range" id="pwAll" min="1" max="90" step="1" value="${all}" aria-label="Days everything should last"><div class="pw-slide-ticks"><span>1 day</span><span>1 month</span><span>2 months</span><span>3 months</span></div></div>`

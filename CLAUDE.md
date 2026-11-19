@@ -257,6 +257,8 @@ Ingredients: **Dark Chocolate 70% and Dark Chocolate Couverture are retired into
 
 **v1.176.06: glaze goes last** (Andrew: fill idle oven time). Glaze (`ix: 500`) now waits behind every prep and fill, so it no longer holds up the next item's bake: 40-day plan 6h32 (was 6h37), oven idle 75 min (was 85). Remaining idle is because 2 people limit prep; with 3 people it would be 6h20 and 27 idle min (tested, not applied).
 
+**v1.176.08: Lemon Poppy and Sea Salt are prepped together** (Andrew: they can be consolidated, 1.5x one prep = 45 min, `SCHED_COMBO`, `SCHED_COMBO_X`): one shared prep block "Lemon Poppy + Sea Salt prep", each keeps its own fills and bakes. When only one of the two is in the plan it keeps its own 30 min prep. 40-day plan 6h20 (was 6h32), oven idle 61 min (was 75). Not confirmed: whether the shared mix really takes 45 min. **Names (Andrew): storage pans are always "Cambro pans"; oven pans say "oven pans"; `Pan sizes` is "Cambro pan sizes".**
+
 ## Design pass (v1.149.00)
 
 Last CSS block: **every `<select>` has one style** (white, 1px #c9c9c9, 12px radius, 44px, black chevron; `.row-select` and `[data-labi]` excluded); the Forecast store toggle (`.fc-locs`) uses the pill style. On desktop (>=900px) all pages share a 1120px column, page chips sit centered at natural width, the Trends donut is 220px. On phones the 5 Inventory chips shrink (11px padding) to fit. Counts' total says "pieces", not "madeleines". Still open: coloured snowflake/flame/arrow icons in Forecast misses (breaks the B/W rule), today's half-finished day shows as a 0.0x miss, Stock's section headers use the old grey band style.
