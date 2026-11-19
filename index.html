@@ -2710,7 +2710,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.177.06 · Nov 18, 11:55 PM PST</div>
+<div class="ver-badge">v1.177.07 · Nov 18, 6:20 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -5792,7 +5792,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
         // Madeleine flavors share the same oven pans, so Maple Pecan, Lemon Poppy and Sea Salt also run one after another (Andrew 2026-11-18): the first round of a flavor waits for the last round of the flavor before it.
         const prev = k > 1 ? p + ':bake:' + (k - 1) : madPrevLast, lg = prev ? { [prev]: o.cool || 0 } : null;
         if (prev) pd.push(prev);
-        if (schedCfg.fill > 0) T.push({ id: p + ':fill:' + k, name: pdisp(p) + ' fill ' + k, p, min: schedCfg.fill, who: true, deps: pd, ix, rk: k, lag: lg || undefined });
+        if (schedCfg.fill > 0) T.push({ id: p + ':fill:' + k, name: pdisp(p) + ' fill ' + k, p, min: schedCfg.fill, who: true, deps: pd, ix: SCHED_PREDONE.includes(p) && k === 1 ? -0.8 : ix, rk: k, lag: lg || undefined });   // a made-ahead batter has nothing to wait for, so its fills take a free person before any prep starts (Andrew 2026-11-18: Maple Pecan is ready from minute 20)
         T.push({ id: p + ':bake:' + k, name: pdisp(p) + ' bake ' + k + '/' + o.rounds, p, min: o.bk, oven: true, deps: schedCfg.fill > 0 ? [p + ':fill:' + k] : pd, ix, rk: k, lag: schedCfg.fill > 0 ? undefined : lg || undefined });
         last = p + ':bake:' + k;
       }
