@@ -2203,6 +2203,36 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
 .ds-earlier > summary::after, .tm-siri > summary::after { content: "\203A"; margin-left: auto; font-size: var(--fs-lg); transform: rotate(90deg); }
 .ds-earlier[open] > summary::after, .tm-siri[open] > summary::after { transform: rotate(-90deg); }
 #finViewTog button { white-space: nowrap; }
+/* Orders (CRM): Sales > Orders. Phone first; the list opens one day or customer at a time. */
+#homeOrders .od-bar { display: flex; gap: 8px; margin: 0 0 8px; align-items: stretch; }
+#homeOrders #ordTog button { flex: 1 1 0; min-height: 44px; border: 1px solid #c9c9c9; border-radius: 999px; background: #fff; color: #000; font: inherit; font-size: var(--fs-body); font-weight: 600; cursor: pointer; }
+#homeOrders #ordTog button.on { background: #000; border-color: #000; color: #fff; }
+#homeOrders .od-bar select { flex: 1 1 0; min-width: 0; }
+#homeOrders .od-bar select[hidden] { display: none !important; }
+#homeOrders .od-ref, #homeOrders .od-big { min-height: 44px; padding: 0 14px; white-space: nowrap; flex: none; width: auto; }
+#homeOrders .od-big { width: 100%; margin: 8px 0; }
+#homeOrders #ordQ { width: 100%; box-sizing: border-box; min-height: 44px; border: 1px solid #c9c9c9; border-radius: 12px; padding: 0 14px; font-family: inherit; font-size: var(--fs-body); background: #fff; color: #000; -webkit-appearance: none; appearance: none; }
+#homeOrders .od-row { display: flex; width: 100%; justify-content: space-between; align-items: flex-start; gap: 12px; min-height: 44px; padding: 10px 0; background: none; border: 0; border-bottom: 1px solid var(--sep); border-radius: 0; text-align: left; font: inherit; font-size: var(--fs-body); color: var(--text); cursor: pointer; }
+#homeOrders .od-row.open { border-bottom-color: #000; }
+#homeOrders .od-main, #homeOrders .od-side { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+#homeOrders .od-main b { overflow-wrap: anywhere; }
+#homeOrders .od-side { align-items: flex-end; flex: none; text-align: right; }
+#homeOrders .od-sub { color: var(--muted); font-size: var(--fs-caption); font-weight: 400; }
+#homeOrders .od-wk { margin: 16px 0 2px; color: var(--muted); font-size: var(--fs-micro); text-transform: uppercase; letter-spacing: .03em; }
+#homeOrders .od-open { padding: 0 0 8px 12px; border-left: 2px solid #000; margin: 0 0 8px; }
+#homeOrders .od-fact { font-size: var(--fs-caption); padding: 8px 0 0; }
+#homeOrders .od-ord { border-bottom: 1px solid var(--sep); }
+#homeOrders .od-ord > summary { list-style: none; cursor: pointer; min-height: 44px; padding: 10px 0; display: flex; flex-direction: column; gap: 2px; }
+#homeOrders .od-ord > summary::-webkit-details-marker { display: none; }
+#homeOrders .od-l1 { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+#homeOrders .od-nm { font-size: var(--fs-body); font-weight: 600; overflow-wrap: anywhere; }
+#homeOrders .od-body { padding: 0 0 10px; }
+#homeOrders .od-irow, #homeOrders .od-kv { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; font-size: var(--fs-caption); }
+#homeOrders .od-iname { min-width: 0; overflow-wrap: anywhere; }
+#homeOrders .od-iname em { display: block; font-style: normal; color: var(--muted); font-size: var(--fs-micro); }
+#homeOrders .od-kv { border-top: 1px solid var(--sep); }
+#homeOrders .od-kv span { color: var(--muted); }
+#homeOrders .od-kv b { font-weight: 600; text-align: right; overflow-wrap: anywhere; }
 @media (min-width: 900px) { .fin-export .btn-ghost { max-width: 320px; } }
 </style>
 </head>
@@ -2322,6 +2352,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
     <div id="homeReceipts" hidden></div>
     <div id="homeUpload" class="up-box" hidden></div>
     <div id="homeTrends" hidden></div>
+    <div id="homeOrders" hidden></div>
 
     <!-- Invoice -->
     <div id="homeInvoice" hidden>
@@ -2583,7 +2614,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
   </div>
 </div>
 
-<div class="ver-badge">v1.184.00 · Nov 19, 8:35 AM PST</div>
+<div class="ver-badge">v1.185.00 · Nov 19, 8:44 AM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -2878,6 +2909,218 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
   }
   const kHead = () => ({ 'Content-Type': 'application/json', 'x-ledger-code': kCodeGet() });
   const kBad = r => { if (r && r.status === 401) { try { localStorage.removeItem('ledgerCode'); } catch {} } };
+  // ---- Orders (CRM): each day's orders and everything about them. Private data (names, phones): behind the access code,
+  // kept in memory only (never localStorage / sessionStorage / track() / a URL). Fetched once when the page opens; Refresh reloads.
+  const ORD = { data: null, err: '', busy: false, view: 'days', store: 'Both', sort: 'last', q: '', openDay: null, openCust: null, limit: 200, custs: [] };
+  const ORD_ABBR = { 'La Mirada': 'LM', 'Stanton': 'STN' };
+  const ORD_MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], ORD_WD = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const ordAbbr = s => ORD_ABBR[s] || s || '?';
+  const ordMoney = n => usd(Number(n) || 0);
+  const ordPlural = (n, w) => n + ' ' + w + (n === 1 ? '' : 's');
+  function ordDate(d) {
+    const m = /^(\d{4})-(\d\d)-(\d\d)$/.exec(d || ''); if (!m) return null;
+    return { wd: ORD_WD[new Date(+m[1], +m[2] - 1, +m[3]).getDay()], md: ORD_MON[+m[2] - 1] + ' ' + +m[3], y: m[1] };
+  }
+  const ordDateText = d => { const o = ordDate(d); return o ? o.md + (o.y !== nowPST().slice(0, 4) ? ', ' + o.y : '') : 'No date'; };
+  function ordTime(t) {
+    const m = /^(\d{1,2}):(\d\d)/.exec(t || ''); if (!m) return '';
+    const h = +m[1]; return ((h + 11) % 12 + 1) + ':' + m[2] + (h < 12 ? ' AM' : ' PM');
+  }
+  function ordPrep(o) {
+    const items = Array.isArray(o.items) ? o.items : (o.items = []);
+    const digits = String(o.phone || '').replace(/\D/g, '');
+    const ph = digits.length === 11 && digits[0] === '1' ? digits.slice(1) : digits;
+    const name = String(o.customer || '').trim();
+    if (!/^\d{4}-\d\d-\d\d$/.test(o.date || '')) o.date = '';
+    o._ph = ph.length >= 7 ? ph : '';
+    o._name = name;
+    o._key = o._ph ? 'p' + o._ph : (name ? 'n' + name.toLowerCase() : '');
+    o._sort = (o.date || '') + ' ' + (o.time || '');
+    o._total = Number(o.total) || 0;
+    o._hay = (name + ' ' + digits + ' ' + items.map(i => (i.item || '') + ' ' + (i.modifiers || '')).join(' ')).toLowerCase();
+  }
+  async function ordLoad() {
+    const code = kCodeGet();
+    if (!code) { ORD.err = 'nocode'; ORD.data = null; ordPaintAll(); return; }
+    ORD.busy = true; ORD.err = ''; ordPaintAll();
+    try {
+      const r = await fetch('/api/orders', { cache: 'no-store', headers: kHead() });
+      if (r.status === 401) { kBad(r); ORD.err = 'bad'; ORD.data = null; }
+      else if (r.status === 503) { ORD.err = 'unset'; ORD.data = null; }
+      else if (!r.ok) ORD.err = 'fail';
+      else {
+        const j = await r.json(), a = Array.isArray(j && j.orders) ? j.orders : [];
+        a.forEach(ordPrep); ORD.data = a; ORD.err = ''; ORD.openDay = null; ORD.openCust = null; ORD.limit = 200;
+      }
+    } catch { ORD.err = 'fail'; }
+    ORD.busy = false; ordPaintAll();
+  }
+  function ordAskCode() { if (kCodeAsk()) ordLoad(); }
+  function renderOrders() {
+    const box = document.getElementById('homeOrders'); if (!box) return;
+    if (!box.dataset.bound) {
+      box.dataset.bound = '1';
+      box.addEventListener('click', ordClick);
+      box.addEventListener('change', e => {
+        if (e.target.id === 'ordStore') ORD.store = e.target.value;
+        else if (e.target.id === 'ordSort') ORD.sort = e.target.value;
+        else return;
+        ORD.openDay = null; ORD.openCust = null; ORD.limit = 200; ordPaint();
+      });
+      let tm = null;
+      box.addEventListener('input', e => {
+        if (e.target.id !== 'ordQ') return;
+        clearTimeout(tm); const v = e.target.value; tm = setTimeout(() => { ORD.q = v; ORD.limit = 200; ordPaint(); }, 200);
+      });
+    }
+    if (!ORD.data && !ORD.busy) ordLoad(); else ordPaintAll();
+  }
+  function ordPaintAll() {
+    const box = document.getElementById('homeOrders'); if (!box || homeTab !== 'orders') return;
+    if (!ORD.data) {
+      const msg = {
+        nocode: 'Orders are private. Enter the access code to see them.',
+        bad: 'That access code was wrong, so it was forgotten. Enter it again.',
+        unset: 'Orders are not set up on the server yet.',
+        fail: 'Could not load orders. Check your connection and try again.'
+      }[ORD.err];
+      box.innerHTML = ORD.busy || !msg ? '<div class="pn-note">Loading orders…</div>'
+        : `<div class="pn-note">${esc(msg)}</div>` + (ORD.err === 'unset' ? '' : ORD.err === 'fail' ? '<button type="button" class="btn-ghost od-big" data-od="refresh">Try again</button>' : '<button type="button" class="btn-ghost od-big" data-od="code">Enter access code</button>');
+      return;
+    }
+    if (!box.querySelector('#ordList')) {
+      box.innerHTML =
+        `<div class="od-bar" id="ordTog"><button type="button" data-ov="days">Days</button><button type="button" data-ov="custs">Customers</button></div>` +
+        `<div class="od-bar"><select id="ordStore">${['Both', 'La Mirada', 'Stanton'].map(l => `<option${l === ORD.store ? ' selected' : ''}>${l}</option>`).join('')}</select>` +
+        `<select id="ordSort">${[['last', 'Last visit'], ['visits', 'Most visits'], ['spent', 'Most spent']].map(([v, t]) => `<option value="${v}"${v === ORD.sort ? ' selected' : ''}>${t}</option>`).join('')}</select><button type="button" class="btn-ghost od-ref" data-od="refresh">Refresh</button></div>` +
+        `<input id="ordQ" type="search" placeholder="Search name, phone or item" autocomplete="off" autocapitalize="off" spellcheck="false" value="${esc(ORD.q)}"><div id="ordSum" class="pn-note"></div><div id="ordList"></div>`;
+    }
+    const rf = box.querySelector('.od-ref'); if (rf) { rf.textContent = ORD.busy ? 'Refreshing…' : 'Refresh'; rf.disabled = ORD.busy; }
+    ordPaint();
+  }
+  function ordMatches() {
+    let a = ORD.data || [];
+    if (ORD.store !== 'Both') a = a.filter(o => o.store === ORD.store);
+    const toks = ORD.q.toLowerCase().split(/\s+/).filter(Boolean).map(t => /^[\d()\-.+]+$/.test(t) ? t.replace(/\D/g, '') : t).filter(Boolean);
+    if (toks.length) a = a.filter(o => toks.every(t => o._hay.includes(t)));
+    return { list: a, searching: toks.length > 0 };
+  }
+  function ordItemsLine(o) {
+    const names = []; for (const i of o.items) { const n = String(i.item || '').trim(); if (n && !names.includes(n)) names.push(n); }
+    return names.length ? names.slice(0, 2).join(', ') + (names.length > 2 ? ' +' + (names.length - 2) : '') : 'No items';
+  }
+  function ordFlavors(f) {
+    if (!f) return '';
+    const rev = {}; for (const [k, v] of Object.entries(PRODUCT_TOKEN)) rev[v] = k;
+    const out = []; String(f).replace(/([A-Z?]{1,3}):(\d+)/g, (m, t, n) => { out.push((rev[t] || t) + ' ' + n); return m; });
+    return out.length ? out.join(', ') : String(f);
+  }
+  function ordCard(o, showDate) {
+    const when = [showDate ? ordDateText(o.date) : '', ordTime(o.time), ordAbbr(o.store)].filter(Boolean).join(' · ');
+    const kv = (k, v) => v === '' || v == null ? '' : `<div class="od-kv"><span>${k}</span><b>${esc(v)}</b></div>`;
+    const rows = o.items.map(i => `<div class="od-irow"><span class="od-iname">${esc(i.qty != null && i.qty !== '' ? i.qty : 1)}× ${esc(i.item || 'Item')}${i.modifiers ? `<em>${esc(i.modifiers)}</em>` : ''}</span><span>${ordMoney(i.price)}</span></div>`).join('');
+    const fee = o.fee === '' || o.fee == null || isNaN(Number(o.fee)) ? '' : ordMoney(o.fee);
+    const mad = o.madeleines ? [String(o.madeleines), ordFlavors(o.flavors)].filter(Boolean).join(' · ') : ordFlavors(o.flavors);
+    return `<details class="od-ord"><summary><div class="od-l1"><span class="od-sub">${esc(when)}</span><b>${ordMoney(o._total)}</b></div>` +
+      `<div class="od-nm">${o._name ? esc(o._name) : '<span class="od-sub">No name</span>'}</div><div class="od-sub">${esc(ordItemsLine(o))}</div></summary>` +
+      `<div class="od-body">${rows || '<div class="od-sub">No items recorded.</div>'}` +
+      kv('Payment', o.payment) + kv('Fee', fee) + kv('Cashier', o.cashier) + kv('Phone', o.phone) + kv('Madeleines', mad) + kv('Items in order', o.basket) + kv('Order', o.id) + `</div></details>`;
+  }
+  function ordDays(list) {
+    const m = new Map();
+    for (const o of list) {
+      let g = m.get(o.date); if (!g) m.set(o.date, g = { date: o.date, orders: [], rev: 0, by: {} });
+      g.orders.push(o); g.rev += o._total; g.by[o.store] = (g.by[o.store] || 0) + 1;
+    }
+    const arr = [...m.values()].sort((a, b) => a.date === '' ? 1 : b.date === '' ? -1 : b.date.localeCompare(a.date));
+    for (const g of arr) g.orders.sort((a, b) => b._sort.localeCompare(a._sort));
+    return arr;
+  }
+  function ordCusts(list) {
+    const m = new Map();
+    for (const o of list) {
+      if (!o._key) continue;
+      let c = m.get(o._key); if (!c) m.set(o._key, c = { key: o._key, orders: [], spent: 0, first: '', last: '' });
+      c.orders.push(o); c.spent += o._total;
+      if (o.date) { if (!c.first || o.date < c.first) c.first = o.date; if (!c.last || o.date > c.last) c.last = o.date; }
+    }
+    const arr = [...m.values()];
+    for (const c of arr) {
+      c.orders.sort((a, b) => b._sort.localeCompare(a._sort));
+      c.name = (c.orders.find(o => o._name) || {})._name || ''; c.phone = (c.orders.find(o => o.phone) || {}).phone || '';
+    }
+    const last = (a, b) => b.orders[0]._sort.localeCompare(a.orders[0]._sort);
+    arr.sort(ORD.sort === 'visits' ? (a, b) => b.orders.length - a.orders.length || last(a, b) : ORD.sort === 'spent' ? (a, b) => b.spent - a.spent || last(a, b) : last);
+    return arr;
+  }
+  function ordCardList(orders, showDate, cap) {
+    return orders.slice(0, cap).map(o => ordCard(o, showDate)).join('') + (orders.length > cap ? `<div class="pn-note">Showing ${cap} of ${orders.length} orders.</div>` : '');
+  }
+  function ordPaint() {
+    const box = document.getElementById('homeOrders'), list = box && box.querySelector('#ordList'); if (!list || !ORD.data) return;
+    box.querySelectorAll('#ordTog button').forEach(b => b.classList.toggle('on', b.dataset.ov === ORD.view));
+    const sortSel = box.querySelector('#ordSort'); sortSel.hidden = ORD.view !== 'custs' || ORD.q.trim() !== '';
+    const { list: orders, searching } = ordMatches();
+    const sum = box.querySelector('#ordSum'), rev = orders.reduce((t, o) => t + o._total, 0);
+    const errNote = ORD.err === 'fail' ? ' Could not refresh, showing the last load.' : '';
+    if (!ORD.data.length) { sum.textContent = 'No orders yet.'; list.innerHTML = ''; return; }
+    if (searching) {
+      sum.textContent = `${ordPlural(orders.length, 'order')} found · ${ordMoney(rev)}` + (orders.length > 100 ? ' · showing 100 of ' + orders.length : '') + errNote;
+      orders.sort((a, b) => b._sort.localeCompare(a._sort));
+      list.innerHTML = orders.length ? orders.slice(0, 100).map(o => ordCard(o, true)).join('') : '<div class="pn-note">No orders match that search.</div>';
+      return;
+    }
+    if (!orders.length) { sum.textContent = 'No orders for this store.' + errNote; list.innerHTML = ''; return; }
+    if (ORD.view === 'days') {
+      const days = ordDays(orders), dated = days.filter(g => g.date);
+      sum.textContent = `${ordPlural(orders.length, 'order')} · ${ordMoney(rev)}` + (dated.length ? ` · ${ordDateText(dated[dated.length - 1].date)} to ${ordDateText(dated[0].date)}` : '') + errNote;
+      const wk = {}; for (const g of dated) { const k = weekStart(g.date), w = wk[k] || (wk[k] = { n: 0, rev: 0 }); w.n += g.orders.length; w.rev += g.rev; }
+      let html = '', curWk = null;
+      for (const g of days) {
+        if (g.date) { const k = weekStart(g.date); if (k !== curWk) { curWk = k; html += `<div class="od-wk">Week of ${esc(ordDateText(k))} · ${ordPlural(wk[k].n, 'order')} · ${ordMoney(wk[k].rev)}</div>`; } }
+        else if (curWk !== '') { curWk = ''; html += '<div class="od-wk">&nbsp;</div>'; }
+        const dd = ordDate(g.date), open = ORD.openDay === g.date;
+        const stores = Object.keys(g.by); const split = ORD.store === 'Both' && stores.length > 1 ? stores.sort().map(s => `${ordAbbr(s)} ${g.by[s]}`).join(' · ') : '';
+        html += `<div class="od-day"><button type="button" class="od-row${open ? ' open' : ''}" data-od="day" data-k="${esc(g.date)}" aria-expanded="${open}"><span class="od-main"><b>${dd ? dd.wd + ', ' + esc(ordDateText(g.date)) : 'No date'}</b>${split ? `<span class="od-sub">${esc(split)}</span>` : ''}</span><span class="od-side"><b>${ordMoney(g.rev)}</b><span class="od-sub">${ordPlural(g.orders.length, 'order')}</span></span></button>` +
+          (open ? `<div class="od-open">${ordCardList(g.orders, false, 300)}</div>` : '') + '</div>';
+      }
+      list.innerHTML = html;
+    } else {
+      ORD.custs = ordCusts(orders);
+      const skipped = orders.filter(o => !o._key).length;
+      sum.textContent = `${ordPlural(ORD.custs.length, 'customer')}` + (skipped ? ` · ${ordPlural(skipped, 'order')} with no name or phone left out` : '') + errNote;
+      let html = '';
+      ORD.custs.slice(0, ORD.limit).forEach((c, i) => {
+        const open = ORD.openCust === c.key;
+        html += `<div class="od-day"><button type="button" class="od-row${open ? ' open' : ''}" data-od="cust" data-i="${i}" aria-expanded="${open}"><span class="od-main"><b>${c.name ? esc(c.name) : 'No name'}</b><span class="od-sub">${esc([c.phone, ordPlural(c.orders.length, 'visit'), c.last ? 'last ' + ordDateText(c.last) : ''].filter(Boolean).join(' · '))}</span></span><span class="od-side"><b>${ordMoney(c.spent)}</b><span class="od-sub">spent</span></span></button>`;
+        if (open) {
+          const cnt = {}; for (const o of c.orders) for (const it of o.items) { const n = String(it.item || '').trim(); if (n) cnt[n] = (cnt[n] || 0) + (Number(it.qty) || 1); }
+          const top = Object.entries(cnt).sort((a, b) => b[1] - a[1]).slice(0, 3).map(x => x[0]);
+          html += `<div class="od-open"><div class="od-fact">${top.length ? 'Usually orders: ' + esc(top.join(', ')) : 'No items recorded.'}</div>` +
+            `<div class="od-fact">${c.first ? 'First seen ' + esc(ordDateText(c.first)) + ' · last seen ' + esc(ordDateText(c.last)) : 'No dates recorded.'}</div>` + ordCardList(c.orders, true, 50) + '</div>';
+        }
+        html += '</div>';
+      });
+      if (ORD.custs.length > ORD.limit) html += `<button type="button" class="btn-ghost od-big" data-od="more">Show more customers</button>`;
+      list.innerHTML = html;
+    }
+  }
+  function ordClick(e) {
+    const t = e.target.closest('[data-od],[data-ov]'); if (!t) return;
+    if (t.dataset.ov) { ORD.view = t.dataset.ov; ORD.openDay = null; ORD.openCust = null; ORD.limit = 200; ordPaint(); return; }
+    const a = t.dataset.od;
+    if (a === 'code') ordAskCode();
+    else if (a === 'refresh') ordLoad();
+    else if (a === 'more') { ORD.limit += 200; ordPaint(); }
+    else if (a === 'day' || a === 'cust') {
+      const k = a === 'day' ? t.dataset.k : (ORD.custs[+t.dataset.i] || {}).key;
+      if (a === 'day') ORD.openDay = ORD.openDay === k ? null : k; else ORD.openCust = ORD.openCust === k ? null : k;
+      ordPaint();
+      const b = a === 'day' ? document.querySelector(`#homeOrders [data-od="day"][data-k="${CSS.escape(t.dataset.k)}"]`) : document.querySelector(`#homeOrders [data-od="cust"][data-i="${t.dataset.i}"]`);
+      if (b) { const top = b.getBoundingClientRect().top; if (top < 110) window.scrollBy(0, top - 120); }
+    }
+  }
+
   const ENTRIES_ENDPOINT = '/api/entries';   // shared read: all entries from Notion
 
   // ---- PST default datetime ----
@@ -3435,7 +3678,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
   // Bottom bar: Sales, Inventory, Entry (opens the popup), Plan, Other. Each section has a row of pages under the top edge.
   // A page is an existing screen: a Data view, a Home page, a Baking mode or Finance.
   const SECTIONS = {
-    sales:     { first: 'sales',  pages: ['sales', 'trends', 'invoice'] },
+    sales:     { first: 'sales',  pages: ['sales', 'trends', 'orders', 'invoice'] },
     inventory: { first: 'pantry', pages: ['pantry', 'stock', 'counts', 'receipts'] },
     plan:      { first: 'plan',   pages: ['plan', 'bake', 'sched', 'recipes'] },
     other:     { first: 'fin',    pages: ['fin', 'costs', 'labels', 'timers', 'upload'] },
@@ -3443,6 +3686,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
   const PAGES = {
     sales:    { t: 'Sales',       view: 'db', db: 'sales' },
     trends:   { t: 'Trends',      view: 'home', home: 'trends' },
+    orders:   { t: 'Orders',      view: 'home', home: 'orders' },
     invoice:  { t: 'Invoice',     view: 'home', home: 'invoice' },
     pantry:   { t: 'Ingredients', view: 'home', home: 'pantry' },
     storage:  { t: 'Storage',     view: 'home', home: 'storage' },
@@ -3796,7 +4040,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
 
   // ---- Home: a landing screen with three buttons; each opens its own page ----
   let homeTab = null;   // null = landing | 'forecast' | 'plan' | 'invoice'
-  const HOME_TITLES = { forecast: 'Forecast', plan: 'Baking Plan', invoice: 'Invoice / Labels', timers: 'Timers', pantry: 'Pantry', storage: 'Storage', bake: 'Bake Day', sched: 'Schedule', receipts: 'Receipts', trends: 'Trends', upload: 'Upload' };
+  const HOME_TITLES = { forecast: 'Forecast', plan: 'Baking Plan', invoice: 'Invoice / Labels', timers: 'Timers', pantry: 'Pantry', storage: 'Storage', bake: 'Bake Day', sched: 'Schedule', receipts: 'Receipts', trends: 'Trends', orders: 'Orders', upload: 'Upload' };
   // The version line lives over the photo on Home's landing; everywhere else it is the fixed strip.
   function syncVer() {
     const onHome = (document.querySelector('.tabbar button.on') || {}).dataset?.tab === 'home';
@@ -3818,6 +4062,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
     document.getElementById('homeSched').hidden = homeTab !== 'sched';
     document.getElementById('homeReceipts').hidden = homeTab !== 'receipts';
     document.getElementById('homeTrends').hidden = homeTab !== 'trends';
+    document.getElementById('homeOrders').hidden = homeTab !== 'orders';
     document.getElementById('homeUpload').hidden = homeTab !== 'upload';
     document.getElementById('hpTitle').textContent = HOME_TITLES[homeTab] || '';
     if (homeTab === 'plan') { renderBakeSheet(); renderPlan(); }
@@ -3829,6 +4074,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
     if (homeTab === 'receipts') renderReceipts();
     if (homeTab === 'upload') renderUpload();
     if (homeTab === 'trends') renderTrends();
+    if (homeTab === 'orders') renderOrders();
     if (homeTab === 'timers') renderTimers(); else stopTick();
     syncVer(); window.scrollTo(0, 0);
   }
