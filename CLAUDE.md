@@ -263,6 +263,8 @@ Ingredients: **Dark Chocolate 70% and Dark Chocolate Couverture are retired into
 
 **v1.177.00: mixing bowl size** in Schedule > Steps for each item (`bowlLine()`, `batterGrams()`, `BOWLS` 5/20/30/60 qt, `BOWL_SKIP` leaves glaze / topping / frosting out of the batter weight). Smallest bowl that stays under 65% full (dough, i.e. Chookie, 55%); over 60 qt splits into equal 60 qt mixes. Lemon Poppy + Sea Salt show one combined line (they are prepped together). Estimate from recipe grams x batches, ~1 g/ml; Andrew's mixer type not confirmed.
 
+**v1.177.01: 60 qt preps back to back** (Andrew: the 60 qt bowl costs extra). `schedTasks()` finds items whose bowl is 60 qt (`bowlQt()`, today Blueberry Muffin and Cookie) and merges their prep into one block on one person ("... prep (60 qt)", minutes = sum of each item's own prep, `back` list on the task). Cookie therefore preps right after muffin instead of last. 40-day plan 6h25 (was 6h20). Only applies when 2+ items need 60 qt.
+
 ## Design pass (v1.149.00)
 
 Last CSS block: **every `<select>` has one style** (white, 1px #c9c9c9, 12px radius, 44px, black chevron; `.row-select` and `[data-labi]` excluded); the Forecast store toggle (`.fc-locs`) uses the pill style. On desktop (>=900px) all pages share a 1120px column, page chips sit centered at natural width, the Trends donut is 220px. On phones the 5 Inventory chips shrink (11px padding) to fit. Counts' total says "pieces", not "madeleines". Still open: coloured snowflake/flame/arrow icons in Forecast misses (breaks the B/W rule), today's half-finished day shows as a 0.0x miss, Stock's section headers use the old grey band style.

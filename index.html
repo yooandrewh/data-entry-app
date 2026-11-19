@@ -2710,7 +2710,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.177.00 · Nov 18, 9:30 PM PST</div>
+<div class="ver-badge">v1.177.01 · Nov 18, 9:50 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -5765,6 +5765,8 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   const SCHED_PREP_MIN = 30, SCHED_OWN_PREP = ['Pumpkin Muffin', 'Blueberry Muffin', 'Chookie', 'Cake Pop'];
   function schedTasks() {
     const T = [{ id: 'setup', name: 'Setup', p: '', min: KT.setupMin, who: true, deps: [], ix: -1, rk: 0 }], bake = planBakeTotals || {};
+    const prepOf = q => { let pm = KT.prepMin; try { const key = Object.keys(BS_PRODUCT).find(k => BS_PRODUCT[k] === q), f = key && bsFind(key); if (f && f.sec !== 'mad') pm = (f.it && f.it.prep) || 20; } catch (e) {} return SCHED_OWN_PREP.includes(q) ? pm : SCHED_PREP_MIN; };
+    const big = PRODUCTS.filter(q => Math.round(bake[q] || 0) > 0 && bowlQt(q) === 60 && !SCHED_COMBO.includes(q)).sort((a, b) => SCHED_ORDER.indexOf(a) - SCHED_ORDER.indexOf(b));   // 60 qt bowls cost extra: their preps run back to back as one block
     for (const p of PRODUCTS) {
       const n = Math.round(bake[p] || 0); if (n <= 0) continue;
       const ix = p === 'Cake Pop' ? -0.5 : SCHED_ORDER.indexOf(p), o = ovenSteps({ [p]: n }).rows[0], batches = flavorBatches(n, p);   // cake pops go first: they need hours of resting after the oven
@@ -5772,9 +5774,10 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       try { const key = Object.keys(BS_PRODUCT).find(k => BS_PRODUCT[k] === p), f = key && bsFind(key); if (f && f.sec !== 'mad') { group = 1; pmin = (f.it && f.it.prep) || 20; } } catch (e) {}
       if (!SCHED_OWN_PREP.includes(p)) pmin = SCHED_PREP_MIN;   // Andrew 2026-11-18: every prep block is 30 min except muffins, cookies and cake pops (they keep their recipe's own prep time)
       const nPrep = 1, perPrep = n;   // Andrew 2026-11-18: prep is one block per item for the whole amount, not per batch
-      const shared = SCHED_COMBO.includes(p) && SCHED_COMBO.every(q => Math.round(bake[q] || 0) > 0), pid = i => (shared ? SCHED_COMBO[0] : p) + ':prep:' + i;   // Sea Salt and Lemon Poppy are mixed together: one prep block for both
+      const shared = SCHED_COMBO.includes(p) && SCHED_COMBO.every(q => Math.round(bake[q] || 0) > 0), backTo = big.length > 1 && big.includes(p), pid = i => (shared ? SCHED_COMBO[0] : backTo ? big[0] : p) + ':prep:' + i;   // Sea Salt and Lemon Poppy are mixed together: one prep block for both
       for (let i = 1; i <= nPrep; i++) {
         if (shared && p !== SCHED_COMBO[0]) continue;
+        if (backTo) { if (p !== big[0]) continue; T.push({ id: pid(i), name: big.map(pdisp).join(' + ') + ' prep (60 qt)', p, min: big.reduce((a, q) => a + prepOf(q), 0), who: true, deps: ['setup'], ix: Math.min(...big.map(q => SCHED_ORDER.indexOf(q))), rk: 99, back: big.slice() }); continue; }
         T.push({ id: pid(i), name: shared ? SCHED_COMBO.map(pdisp).join(' + ') + ' prep' : pdisp(p) + ' prep ' + i + '/' + nPrep, p, min: shared ? Math.round(pmin * SCHED_COMBO_X) : pmin, who: true, deps: ['setup'], ix: shared ? Math.min(...SCHED_COMBO.map(q => SCHED_ORDER.indexOf(q))) : ix, rk: 99 });
       }
       let last = null;
@@ -5844,6 +5847,10 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       return rows.reduce((a, r) => a + (skip && skip.test(String(r[0])) ? 0 : (Number(r[1]) || 0)), 0);
     } catch (e) { return 0; }
   }
+  function bowlQt(p) {
+    const n = Math.round((planBakeTotals || {})[p] || 0), g = n > 0 ? flavorBatches(n, p) * batterGrams(p) : 0, lim = DOUGH_ITEMS.includes(p) ? DOUGH_FILL : BOWL_FILL;
+    if (!(g > 0)) return 0; return BOWLS.find(b => g <= b * 946 * lim) || 60;
+  }
   function bowlLine(grams, dough) {
     if (!(grams > 0)) return '';
     const lim = dough ? DOUGH_FILL : BOWL_FILL, cap = q => q * 0.946 * 1000, q = BOWLS.find(b => grams <= cap(b) * lim);
@@ -5860,8 +5867,8 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       const mine = T.filter(t => t.p === p), preps = mine.filter(t => /:prep:/.test(t.id)), fills = mine.filter(t => /:fill:/.test(t.id)), bakes = mine.filter(t => t.oven), gl = mine.find(t => /:glaze/.test(t.id));
       const o = ovenSteps({ [p]: n }).rows[0]; let method = '';
       try { const key = Object.keys(BS_PRODUCT).find(k => BS_PRODUCT[k] === p), f = key && bsFind(key); method = schedStrip(f && f.sec === 'mad' ? REC_MAD_NOTES : (f && f.it && (f.it.notes || (f.it.versions && f.it.versions[0] && f.it.versions[0].notes))) || ''); } catch (e) {}
-      const sharedPrep = !preps.length && T.find(t => /:prep:/.test(t.id) && t.p !== p && SCHED_COMBO.includes(t.p) && SCHED_COMBO.includes(p));
-      const steps = sharedPrep ? [`Prep: made together with ${pdisp(sharedPrep.p)}, one ${sharedPrep.min} min block (${flavorBatches(n, p)} batch${flavorBatches(n, p) === 1 ? '' : 'es'}, ${n} pieces). Mix by the method below.`] : [`Prep: ${preps.length} × ${preps[0] ? preps[0].min : 0} min (${flavorBatches(n, p)} batch${flavorBatches(n, p) === 1 ? '' : 'es'}, ${n} pieces). Mix by the method below.`];
+      const sharedPrep = !preps.length && T.find(t => /:prep:/.test(t.id) && t.p !== p && ((SCHED_COMBO.includes(t.p) && SCHED_COMBO.includes(p)) || (t.back && t.back.includes(p))));
+      const steps = sharedPrep && sharedPrep.back ? [`Prep: done back to back with ${pdisp(sharedPrep.p)} in one ${sharedPrep.min} min block, so the 60 qt bowl is used in one stretch. Mix by the method below.`] : preps[0] && preps[0].back ? [`Prep: one ${preps[0].min} min block, back to back with ${preps[0].back.filter(q => q !== p).map(pdisp).join(', ')}, so the 60 qt bowl is used in one stretch. Mix by the method below.`] : sharedPrep ? [`Prep: made together with ${pdisp(sharedPrep.p)}, one ${sharedPrep.min} min block (${flavorBatches(n, p)} batch${flavorBatches(n, p) === 1 ? '' : 'es'}, ${n} pieces). Mix by the method below.`] : [`Prep: ${preps.length} × ${preps[0] ? preps[0].min : 0} min (${flavorBatches(n, p)} batch${flavorBatches(n, p) === 1 ? '' : 'es'}, ${n} pieces). Mix by the method below.`];
       { const combo = (preps.length || sharedPrep) && SCHED_COMBO.includes(p) && SCHED_COMBO.every(q => Math.round(bake[q] || 0) > 0);
         const g = combo ? SCHED_COMBO.reduce((a, q) => a + flavorBatches(Math.round(bake[q]), q) * batterGrams(q), 0) : flavorBatches(n, p) * batterGrams(p);
         const bl = bowlLine(g, DOUGH_ITEMS.includes(p));
