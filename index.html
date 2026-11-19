@@ -2654,7 +2654,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.174.00 · Nov 18, 9:05 PM PST</div>
+<div class="ver-badge">v1.174.01 · Nov 18, 9:25 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -5704,6 +5704,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   try { Object.assign(schedCfg, JSON.parse(localStorage.getItem('sched.v2') || '{}')); const m = JSON.parse(localStorage.getItem('schedMap.v2') || '{}') || {}; schedPin = m.pin || {}; schedOv = m.ov || {}; schedAt = m.at || {}; schedDur = m.dur || {}; schedZoom = m.zoom || 1; } catch (e) {}
   const schedSave = () => { try { localStorage.setItem('sched.v2', JSON.stringify(schedCfg)); localStorage.setItem('schedMap.v2', JSON.stringify({ pin: schedPin, ov: schedOv, at: schedAt, dur: schedDur, zoom: schedZoom })); } catch (e) {} };
   const schedStrip = t => String(t || '').replace(/<br\s*\/?>/g, '\n').replace(/<\/?(b|i|small|p|div|span)[^>]*>/g, '').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+  const SCHED_PREP_MIN = 30, SCHED_OWN_PREP = ['Pumpkin Muffin', 'Blueberry Muffin', 'Chookie', 'Cake Pop'];
   function schedTasks() {
     const T = [{ id: 'setup', name: 'Setup', p: '', min: KT.setupMin, who: true, deps: [] }], bake = planBakeTotals || {};
     for (const p of PRODUCTS) {
@@ -5711,6 +5712,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       const o = ovenSteps({ [p]: n }).rows[0], batches = flavorBatches(n, p);
       let group = KT.prepGroup, pmin = KT.prepMin;
       try { const key = Object.keys(BS_PRODUCT).find(k => BS_PRODUCT[k] === p), f = key && bsFind(key); if (f && f.sec !== 'mad') { group = 1; pmin = (f.it && f.it.prep) || 20; } } catch (e) {}
+      if (!SCHED_OWN_PREP.includes(p)) pmin = SCHED_PREP_MIN;   // Andrew 2026-11-18: every prep block is 30 min except muffins, cookies and cake pops (they keep their recipe's own prep time)
       const nPrep = Math.ceil(batches / group), perPrep = group * (PRODUCT_YIELD[p] || BATCH_YIELD);
       for (let i = 1; i <= nPrep; i++) T.push({ id: p + ':prep:' + i, name: pdisp(p) + ' prep ' + i + '/' + nPrep, p, min: pmin, who: true, deps: ['setup'] });
       let last = null;
