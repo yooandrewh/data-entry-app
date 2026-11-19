@@ -34,7 +34,7 @@ def process(jpeg, existing):
     lines = ocr(jpeg)
     if not lines: return "failed", "No text found. Retake the photo flat, in good light, whole receipt.", []
     res = parse(lines)
-    if not res["vendor"]: return "held", "Only Costco receipts are read so far. Enter this one by hand.", []
+    if not res["vendor"]: return "held", "Only Costco and Target receipts are read so far. Enter this one by hand.", []
     if res["receipt"] in existing: return "done", f"Already in the ledger: {res['receipt']}. Nothing added.", []
     why = []
     for u in res["unknown"]: why.append(f"unknown item #{u['num']} {u['label']} (tell Claude to add it)")
