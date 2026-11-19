@@ -2614,7 +2614,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
   </div>
 </div>
 
-<div class="ver-badge">v1.185.03 · Nov 19, 9:32 AM PST</div>
+<div class="ver-badge">v1.185.04 · Nov 19, 9:39 AM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -6020,10 +6020,11 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
   const SCHED_MERGE_60QT = false;   // v1.177.01 merged the 60 qt preps (Cookie + Muffin) into one block; Andrew 2026-11-18: they should be separate blocks, so off
   const SCHED_NOPANS = ['Chookie'];   // Andrew 2026-11-18: cookies need no pans, so their oven rounds don't wait for the previous round and can bake in both ovens at once
   const SCHED_GLAZE_WAIT = 10;   // Andrew 2026-11-18: Lemon Poppy and Maple Pecan can be glazed / topped any time after 10 minutes of cooling
+  const SCHED_SHARE_OVEN = ['Cake Pop', 'Blueberry Muffin'];   // set to null to bake them one after the other again (v1.185.03 behaviour)
   const SCHED_TOPPED = ['Maple Pecan'];   // Andrew 2026-11-18: Maple Pecan's pecan and maple syrup topping was missing from the schedule. ASSUMED, not confirmed: it goes on after cooling, same 15 s per piece as a glaze
   const SCHED_PREDONE = ['Maple Pecan'];   // Andrew 2026-11-18: Maple Pecan batter is made ahead, so it has no prep block and its first fill can start right after setup
   const SCHED_COMBO = ['Lemon Poppy', 'Sea Salt'], SCHED_COMBO_X = 1.5;   // Andrew 2026-11-18: these two can be prepped together; both at once takes 1.5x one prep (45 min instead of 30)
-  let SCHED_ORDER = ['Cake Pop', 'Lemon Poppy', 'Sea Salt', 'Maple Pecan', 'Blueberry Muffin', 'Chookie', 'Pumpkin Bundt'];   // Andrew 2026-11-19: Maple Pecan is the LAST madeleine baked (searched all 1,680 orders that keep it after Lemon Poppy and Sea Salt; v1.185.02 order searched again with the split topping and cleaning: cleaning ends 3h54 with setup split too, ovens 0:35-3:43; Maple Pecan first would be about 3h32). Older note follows.   // work order, found by trying all 5,040 orders (2026-11-18): both Maple Pecan rounds bake in the early free oven time (done by 1:03), Lemon Poppy's glaze is done before the cake pop melt and dip, shortest day (6h20)
+  let SCHED_ORDER = ['Cake Pop', 'Lemon Poppy', 'Blueberry Muffin', 'Sea Salt', 'Maple Pecan', 'Pumpkin Bundt', 'Chookie'];   // Andrew 2026-11-19: Maple Pecan is the LAST madeleine baked (searched all 1,680 orders that keep it after Lemon Poppy and Sea Salt; v1.185.04 order searched again with Cake Pop and the first muffin round sharing an oven (day 3h56, 305 oven-minutes vs 3h54 and 335 without sharing); v1.185.02 order searched again with the split topping and cleaning: cleaning ends 3h54 with setup split too, ovens 0:35-3:43; Maple Pecan first would be about 3h32). Older note follows.   // work order, found by trying all 5,040 orders (2026-11-18): both Maple Pecan rounds bake in the early free oven time (done by 1:03), Lemon Poppy's glaze is done before the cake pop melt and dip, shortest day (6h20)
   const SCHED_PREP_MIN = 30, SCHED_OWN_PREP = ['Pumpkin Muffin', 'Blueberry Muffin', 'Chookie', 'Cake Pop'];
   // bk: pieces per item (default: the Plan's bake). raw: ignore the hand edits made on the Schedule page (they belong to the Plan's bake only).
   function schedTasks(bk, raw) {
@@ -6073,6 +6074,9 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
           T.push({ id: p + ':glaze2', name: gn + ' 2/2', p, min: h, who: true, deps: [last], delay: SCHED_GLAZE_WAIT, ix: 500, rk: 98 }); }
         else T.push({ id: p + ':glaze', name: gn, p, min: gm, who: true, deps: [last], delay: SCHED_GLAZE_WAIT, ix: 500, rk: 98 }); }   // glaze waits behind every oven-feeding step (prep, fill) so it never delays the next bake
     }
+    if (SCHED_SHARE_OVEN) { const a = T.find(t => t.id === SCHED_SHARE_OVEN[0] + ':bake:1'), b = T.find(t => t.id === SCHED_SHARE_OVEN[1] + ':bake:1');   // Andrew 2026-11-19: a Cake Pop sheet pan takes 1 of the oven's 5 slots and a muffin round takes 3 (72), so the first round of each bakes in the same oven at the same time (both 30 min, same temperature ASSUMED)
+      if (a && b) { const id = 'share:bake:1', c = Object.assign({}, a, { id, name: pdisp(a.p) + ' + ' + pdisp(b.p) + ' bake 1/' + b.name.split('/').pop(), min: Math.max(a.min, b.min), deps: [...new Set(a.deps.concat(b.deps))], also: b.p });
+        T.splice(T.indexOf(a), 1, c); T.splice(T.indexOf(b), 1); T.forEach(t => { if (t.deps) t.deps = [...new Set(t.deps.map(d => d === a.id || d === b.id ? id : d))]; }); } }
     if (T.length > 1 && KT.setupMin >= 10) { const su = T[0], sh = Math.ceil(KT.setupMin / 2 / 5) * 5; su.min = sh; su.name = 'Setup 1/2'; T.push(Object.assign({}, su, { id: 'setup2', name: 'Setup 2/2' })); T.forEach(t => { if (t.deps && t.deps.includes('setup')) t.deps = t.deps.concat('setup2'); }); }   // Andrew 2026-11-19: both people set up at once, half the time each (ovens start at 0:35 instead of 0:45)
     if (T.length > 1) { const cd = T.filter(t => !t.rest).map(t => t.id), ch = KT.cleanMin >= 10 ? Math.ceil(KT.cleanMin / 2 / 5) * 5 : 0;   // Andrew 2026-11-19: both people clean at once (Andrew confirmed: half the time each)
       if (ch) { T.push({ id: 'clean', name: 'Cleaning 1/2', p: '', min: ch, who: true, deps: cd, ix: 999, rk: 0 }); T.push({ id: 'clean2', name: 'Cleaning 2/2', p: '', min: ch, who: true, deps: cd.slice(), ix: 999, rk: 0 }); }
@@ -6140,7 +6144,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
     const bake = planBakeTotals || {}, out = [];
     for (const p of PRODUCTS) {
       const n = Math.round(bake[p] || 0); if (n <= 0) continue;
-      const mine = T.filter(t => t.p === p), preps = mine.filter(t => /:prep:/.test(t.id)), fills = mine.filter(t => /:fill:/.test(t.id)), bakes = mine.filter(t => t.oven), gls = mine.filter(t => /:glaze/.test(t.id)), gl = gls[0];
+      const mine = T.filter(t => t.p === p), preps = mine.filter(t => /:prep:/.test(t.id)), fills = mine.filter(t => /:fill:/.test(t.id)), bakes = T.filter(t => t.oven && (t.p === p || t.also === p)), gls = mine.filter(t => /:glaze/.test(t.id)), gl = gls[0];
       const o = ovenSteps({ [p]: n }).rows[0]; let method = '';
       try { const key = Object.keys(BS_PRODUCT).find(k => BS_PRODUCT[k] === p), f = key && bsFind(key); method = schedStrip(f && f.sec === 'mad' ? REC_MAD_NOTES : (f && f.it && (f.it.notes || (f.it.versions && f.it.versions[0] && f.it.versions[0].notes))) || ''); } catch (e) {}
       const sharedPrep = !preps.length && T.find(t => /:prep:/.test(t.id) && t.p !== p && ((SCHED_COMBO.includes(t.p) && SCHED_COMBO.includes(p)) || (t.back && t.back.includes(p))));
