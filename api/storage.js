@@ -15,6 +15,7 @@
 // Required env vars: GOOGLE_SA_JSON, SHEET_ID, LEDGER_CODE   (optional: APP_KEY)
 
 import { getRows, appendRows, ensureTab, updateCell } from './_sheets.js';
+import { codeEq } from './_auth.js';
 
 const TAB = 'Storage';
 const HEADER = ['Id', 'Group', 'Date', 'Storage', 'Item', 'Amount', 'Kind', 'From', 'To', 'Note', 'Deleted'];
@@ -53,7 +54,7 @@ export default async function handler(req, res) {
     // Writes: deny by default.
     const code = process.env.LEDGER_CODE;
     if (!code) return res.status(503).json({ error: 'Set LEDGER_CODE in Vercel to enable storage writes' });
-    if (req.headers['x-ledger-code'] !== code) return res.status(401).json({ error: 'Wrong code' });
+    if (!codeEq(req.headers['x-ledger-code'], code)) return res.status(401).json({ error: 'Wrong code' });
 
     let body = req.body;
     if (typeof body === 'string') body = JSON.parse(body || '{}');

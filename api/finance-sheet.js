@@ -6,6 +6,7 @@
 // Required env vars: GOOGLE_SA_JSON, SHEET_ID, LEDGER_CODE   (optional: APP_KEY)
 
 import { replaceTab } from './_sheets.js';
+import { codeEq } from './_auth.js';
 
 const MAX_ROWS = 200, MAX_COLS = 12, MAX_STR = 120, MODEL_STR = 200;
 // Plain strings are written as-is; strings starting with '=' must use only these characters.
@@ -24,7 +25,7 @@ export default async function handler(req, res) {
   }
   const code = process.env.LEDGER_CODE;
   if (!code) return res.status(503).json({ error: 'Set LEDGER_CODE in Vercel to enable this' });
-  if (req.headers['x-ledger-code'] !== code) return res.status(401).json({ error: 'Wrong code' });
+  if (!codeEq(req.headers['x-ledger-code'], code)) return res.status(401).json({ error: 'Wrong code' });
 
   try {
     let body = req.body;

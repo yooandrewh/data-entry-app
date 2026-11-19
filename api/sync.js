@@ -11,6 +11,7 @@
 //   NTFY_TOPIC      - ntfy.sh topic for phone push notifications
 
 import crypto from 'node:crypto';
+import { requireCode } from './_auth.js';
 import { appendRow, sheetId } from './_sheets.js';
 
 const DELIVERIES_TAB = process.env.SHEET_DELIVERIES_TAB || 'Deliveries';
@@ -91,7 +92,7 @@ async function sendNotification({ type, location, to, dateOnly, amounts, recipie
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-app-key');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-app-key, x-ledger-code');
 
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -99,6 +100,7 @@ export default async function handler(req, res) {
   if (process.env.APP_KEY && req.headers['x-app-key'] !== process.env.APP_KEY) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
+  if (!requireCode(req, res)) return;
 
   try {
     const { type, datetime, location, amounts } = req.body || {};

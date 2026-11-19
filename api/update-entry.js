@@ -8,6 +8,7 @@
 // transfer rows are refused here (they're signed / two-legged — delete + re-add).
 
 import { getRows, updateCell } from './_sheets.js';
+import { requireCode } from './_auth.js';
 
 const TABS = [
   process.env.SHEET_DELIVERIES_TAB || 'Deliveries',
@@ -53,7 +54,7 @@ function laDateTime(local) {
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-app-key');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-app-key, x-ledger-code');
 
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
@@ -61,6 +62,7 @@ export default async function handler(req, res) {
   if (process.env.APP_KEY && req.headers['x-app-key'] !== process.env.APP_KEY) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
+  if (!requireCode(req, res)) return;
 
   try {
     const { pageId, datetime, location, amounts } = req.body || {};

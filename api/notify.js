@@ -7,6 +7,7 @@
 // Cost cap: free service, one message per call, body clipped to 300 chars.
 // Required env vars: LEDGER_CODE, NTFY_TOPIC
 
+import { codeEq } from './_auth.js';
 const clip = (v, n) => String(v == null ? '' : v).replace(/[\u0000-\u001f\u007f]+/g, ' ').trim().slice(0, n);
 const count = (v) => Math.max(0, Math.min(99, Math.floor(Number(v) || 0)));
 
@@ -14,7 +15,7 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   const code = process.env.LEDGER_CODE;
   if (!code) return res.status(503).json({ error: 'Set LEDGER_CODE in Vercel' });
-  if (req.headers['x-ledger-code'] !== code) return res.status(401).json({ error: 'Wrong code' });
+  if (!codeEq(req.headers['x-ledger-code'], code)) return res.status(401).json({ error: 'Wrong code' });
   const topic = process.env.NTFY_TOPIC;
   if (!topic) return res.status(503).json({ error: 'NTFY_TOPIC not set' });
 

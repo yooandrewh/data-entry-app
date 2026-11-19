@@ -34,7 +34,7 @@ Notion is dead: nothing writes to it, and the `NOTION_*` Vercel env vars can be 
 | Transfer | **Two linked rows**: negative at source (`Transfer → X`), positive at dest (`Transfer ← Y`) |
 
 - Deleting one leg of a transfer silently imbalances both stores. Delete both.
-- **Soft delete only**: 🗑️ (password `kairos`, a client-side deterrent) sets "Tagged for deletion" = TRUE via `api/tag-delete.js`. Nothing is hard-deleted.
+- **Soft delete only**: 🗑️ (password `kairos`, a client-side deterrent) sets "Tagged for deletion" = TRUE via `api/tag-delete.js`. Nothing is hard-deleted (the old `api/delete-entry.js`, which erased rows with no server check, was removed in v1.181.01).
 - **Edit** (✏️) works on delivery/inventory only. Goodwill and transfers are signed/paired, so the button is hidden *and* `api/update-entry.js` refuses them. Keep both guards.
 - Goodwill has one Location dropdown (`#goodwillLoc`: La Mirada / Stanton / Church). Church records `recipient: 'Church'` and takes stock from La Mirada. Every entry type has an optional Note (≤200 chars, `·` stripped).
 - **Entry is a page** (v1.160.00, `#view-entry` is a `.view` in `VIEWS`, `openEntry()` shows it, `closeEntry()` / `go()` leave it; no popup, no X), opened by the Entry tab, **+ Entry** on Data and Forgot an entry. Submit goes through the confirm sheet (`#scrim`) and then returns to the page you came from.
@@ -301,6 +301,8 @@ Ingredients: **Dark Chocolate 70% and Dark Chocolate Couverture are retired into
 
 **v1.181.00: week projection** (Andrew 2026-11-18: where the week is missing data, project it from each store's per-item daily average and how the day has played out). `weekProjection(sales, entries, today)` (above `salesHomeHtml`): per store, pace = actual / expected so far this week (clamped 0.6-1.5, needs 2+ data days); days with no data (today onward and gaps) = `dowRate` weekday/weekend rate x pace x growth. The Sales **This week** card shows the projected week total (pieces and $) with the pace note and a details fold; Trends' current-week row shows "-> ~N" under All and each item. `noLump()` drops count-derived lump sales (Bundt / Cake Pop / Chookie booked on one date by `addExtraSales`) from the This week card and the projection, so the headline fell from about $440 to about $130; last week is compared over the same days as logged. **The Data list and the forecast still include those lumps** (open: spread them over their window days). Headless 390px only, not on a phone.
 
+**v1.181.01: entry writes need the access code** (audit 2026-11-18). `api/sync.js`, `update-entry.js`, `tag-delete.js` now call `requireCode()` from `api/_auth.js` (deny by default: 503 if `LEDGER_CODE` unset, 401 if wrong; constant-time `codeEq`, now used by every other write endpoint too). The client (`kCodeAsk` / `kHead` / `kBad`, next to `SYNC_ENDPOINT`) asks for the code once per device at Entry submit, edit and delete, keeps it in `localStorage.ledgerCode`, and forgets it on a 401. An entry saved while the device has no code stays unsynced and retries on the next load. **A staff phone needs the code typed once.** The trash button now soft-deletes through `tag-delete`.
+
 ## Design pass (v1.149.00)
 
 Last CSS block: **every `<select>` has one style** (white, 1px #c9c9c9, 12px radius, 44px, black chevron; `.row-select` and `[data-labi]` excluded); the Forecast store toggle (`.fc-locs`) uses the pill style. On desktop (>=900px) all pages share a 1120px column, page chips sit centered at natural width, the Trends donut is 220px. On phones the 5 Inventory chips shrink (11px padding) to fit. Counts' total says "pieces", not "madeleines". Still open: coloured snowflake/flame/arrow icons in Forecast misses (breaks the B/W rule), today's half-finished day shows as a 0.0x miss, Stock's section headers use the old grey band style.
@@ -321,7 +323,7 @@ The headless check at 390px misses what iOS does. Apply these to every new or ch
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.181.00**; the next feature is v1.182.00, a fix v1.181.01. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.181.01**; the next feature is v1.182.00, a fix v1.181.02. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 

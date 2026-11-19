@@ -2737,7 +2737,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.181.00 · Nov 18, 8:36 PM PST</div>
+<div class="ver-badge">v1.181.01 · Nov 18, 8:45 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -3041,7 +3041,16 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   // Leave '' to disable syncing (entries stay only on this device).
   const SYNC_ENDPOINT = '/api/sync';
   const TAG_DELETE_ENDPOINT = '/api/tag-delete';   // legacy soft-delete (offline retry of old tags)
-  const DELETE_ENDPOINT = '/api/delete-entry';     // hard delete: removes the row
+  // Entry writes (create, edit, delete) need the access code (server checks x-ledger-code). It is asked for once per
+  // device and kept in localStorage 'ledgerCode'; a 401 forgets it so the next write asks again.
+  const kCodeGet = () => { try { return localStorage.getItem('ledgerCode') || ''; } catch { return ''; } };
+  function kCodeAsk() {
+    let c = kCodeGet();
+    if (!c) { c = (prompt('Access code (needed once on this device)') || '').trim(); if (c) { try { localStorage.setItem('ledgerCode', c); } catch {} } }
+    return c;
+  }
+  const kHead = () => ({ 'Content-Type': 'application/json', 'x-ledger-code': kCodeGet() });
+  const kBad = r => { if (r && r.status === 401) { try { localStorage.removeItem('ledgerCode'); } catch {} } };
   const ENTRIES_ENDPOINT = '/api/entries';   // shared read: all entries from Notion
 
   // ---- PST default datetime ----
@@ -3303,7 +3312,8 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     all.push(record);
     localStorage.setItem(STORE_KEY, JSON.stringify(all));
 
-    // Fire-and-forget sync to Notion (entry is already saved locally).
+    // Fire-and-forget sync (entry is already saved locally). Ask for the access code once per device first.
+    kCodeAsk();
     syncEntry(record);
     track('entry_submit', { type: record.type, loc: record.location,
       total: Object.values(record.amounts || {}).reduce((s, v) => s + (Number(v) || 0), 0) });
@@ -3361,9 +3371,10 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     try {
       const r = await fetch(SYNC_ENDPOINT, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: kHead(),
         body: JSON.stringify(current),
       });
+      kBad(r);
       if (!r.ok) throw new Error('HTTP ' + r.status);
       const data = await r.json().catch(() => ({}));
       patchEntry(id, { synced: true, notionId: data.id || rec.notionId, notionUrl: data.url || rec.notionUrl });
@@ -3388,9 +3399,10 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     try {
       const r = await fetch(TAG_DELETE_ENDPOINT, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: kHead(),
         body: JSON.stringify({ pageId: rec.notionId, tagged: true }),
       });
+      kBad(r);
       if (!r.ok) throw new Error('HTTP ' + r.status);
       patchEntry(id, { tagPushed: true });
     } catch (err) {
@@ -4369,15 +4381,18 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       return;
     }
     const notionId = pendingDeleteId;
+    if (!kCodeAsk()) { delErr.textContent = 'The access code is needed to delete.'; return; }
     const btn = document.getElementById('delConfirmBtn');
     btn.disabled = true; btn.textContent = 'Deleting…';
     const toast = document.getElementById('toast');
     try {
-      const r = await fetch(DELETE_ENDPOINT, {
+      // Soft delete: the row stays in the sheet with "Tagged for deletion" = TRUE (nothing is erased).
+      const r = await fetch(TAG_DELETE_ENDPOINT, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pageId: notionId }),
+        headers: kHead(),
+        body: JSON.stringify({ pageId: notionId, tagged: true }),
       });
+      kBad(r);
       const data = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(data.error || ('HTTP ' + r.status));
       // Drop the local copy too, if this device created it.
@@ -4455,9 +4470,11 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     const saveBtn = document.getElementById('editSaveBtn');
     saveBtn.disabled = true; saveBtn.textContent = 'Saving…'; editErr.textContent = '';
     try {
+      if (!kCodeAsk()) throw new Error('The access code is needed to save.');
       const r = await fetch('/api/update-entry', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload),
+        method: 'POST', headers: kHead(), body: JSON.stringify(payload),
       });
+      kBad(r);
       const data = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(data.error || ('HTTP ' + r.status));
       closeEdit();
