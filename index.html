@@ -2710,7 +2710,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.177.12 · Nov 18, 8:10 PM PST</div>
+<div class="ver-badge">v1.177.13 · Nov 18, 6:35 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -5762,10 +5762,11 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   const schedStrip = t => String(t || '').replace(/<br\s*\/?>/g, '\n').replace(/<\/?(b|i|small|p|div|span)[^>]*>/g, '').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
   const SCHED_MERGE_60QT = false;   // v1.177.01 merged the 60 qt preps (Cookie + Muffin) into one block; Andrew 2026-11-18: they should be separate blocks, so off
   const SCHED_NOPANS = ['Chookie'];   // Andrew 2026-11-18: cookies need no pans, so their oven rounds don't wait for the previous round and can bake in both ovens at once
+  const SCHED_GLAZE_WAIT = 10;   // Andrew 2026-11-18: Lemon Poppy and Maple Pecan can be glazed / topped any time after 10 minutes of cooling
   const SCHED_TOPPED = ['Maple Pecan'];   // Andrew 2026-11-18: Maple Pecan's pecan and maple syrup topping was missing from the schedule. ASSUMED, not confirmed: it goes on after cooling, same 15 s per piece as a glaze
   const SCHED_PREDONE = ['Maple Pecan'];   // Andrew 2026-11-18: Maple Pecan batter is made ahead, so it has no prep block and its first fill can start right after setup
   const SCHED_COMBO = ['Lemon Poppy', 'Sea Salt'], SCHED_COMBO_X = 1.5;   // Andrew 2026-11-18: these two can be prepped together; both at once takes 1.5x one prep (45 min instead of 30)
-  let SCHED_ORDER = ['Cake Pop', 'Blueberry Muffin', 'Maple Pecan', 'Pumpkin Bundt', 'Lemon Poppy', 'Sea Salt', 'Chookie'];   // work order, found by trying all 5,040 orders (2026-11-18): Maple Pecan bakes first at 0:25, Lemon Poppy's glaze is done before the cake pop melt and dip, shortest oven time with the Maple Pecan topping in
+  let SCHED_ORDER = ['Cake Pop', 'Maple Pecan', 'Blueberry Muffin', 'Chookie', 'Lemon Poppy', 'Pumpkin Bundt', 'Sea Salt'];   // work order, found by trying all 5,040 orders (2026-11-18): both Maple Pecan rounds bake in the early free oven time (done by 1:03), Lemon Poppy's glaze is done before the cake pop melt and dip, shortest day (6h20)
   const SCHED_PREP_MIN = 30, SCHED_OWN_PREP = ['Pumpkin Muffin', 'Blueberry Muffin', 'Chookie', 'Cake Pop'];
   function schedTasks() {
     const T = [{ id: 'setup', name: 'Setup', p: '', min: KT.setupMin, who: true, deps: [], ix: -1, rk: 0 }], bake = planBakeTotals || {};
@@ -5810,7 +5811,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
         T.push(Object.assign({ id: p + ':dip1', name: 'Cake pops dip 1/2', min: half(30), who: true, deps: [p + ':chill', p + ':melt'], lag: { [p + ':melt']: 5 } }, fin));
         T.push(Object.assign({ id: p + ':dip2', name: 'Cake pops dip 2/2', min: half(30), who: true, deps: [p + ':chill', p + ':melt'], lag: { [p + ':melt']: 5 } }, fin));
       }
-      if ((GLAZED.includes(p) || SCHED_TOPPED.includes(p)) && last) T.push({ id: p + ':glaze', name: pdisp(p) + (SCHED_TOPPED.includes(p) ? ' topping' : ' glaze'), p, min: Math.max(1, Math.round(n * KT.glazeSec / 60)), who: true, deps: [last], delay: KT.coolMin, ix: 500, rk: 98 });   // glaze waits behind every oven-feeding step (prep, fill) so it never delays the next bake
+      if ((GLAZED.includes(p) || SCHED_TOPPED.includes(p)) && last) T.push({ id: p + ':glaze', name: pdisp(p) + (SCHED_TOPPED.includes(p) ? ' topping' : ' glaze'), p, min: Math.max(1, Math.round(n * KT.glazeSec / 60)), who: true, deps: [last], delay: SCHED_GLAZE_WAIT, ix: 500, rk: 98 });   // glaze waits behind every oven-feeding step (prep, fill) so it never delays the next bake
     }
     if (T.length > 1) T.push({ id: 'clean', name: 'Cleaning', p: '', min: KT.cleanMin, who: true, deps: T.map(t => t.id), ix: 999, rk: 0 });
     T.forEach(t => { if (schedDur[t.id]) t.min = schedDur[t.id]; });

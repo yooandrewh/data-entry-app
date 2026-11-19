@@ -287,6 +287,8 @@ Ingredients: **Dark Chocolate 70% and Dark Chocolate Couverture are retired into
 
 **v1.177.12: Maple Pecan topping is in the schedule** (Andrew: it was lost). `SCHED_TOPPED = ['Maple Pecan']` adds a `Maple Pecan topping` block like a glaze: **ASSUMED, not confirmed**, it goes on after cooling at 15 s per piece (`KT.glazeSec`), one person, no oven. Pecans and maple syrup are the recipe's `topping`. The topping added about 30 person-minutes, so `SCHED_ORDER` was searched again (all 5,040): Cake Pop, Muffin, Maple Pecan, Bundt, Lemon Poppy, Sea Salt, Cookie. 40-day plan: ovens 25-224 (span 199), Maple Pecan bakes at 0:25, Lemon Poppy glaze done before the melt, day 6h21 (the v1.177.11 order would have been 6h31 with the topping). Ask Andrew when the topping goes on (before or after the bake) and how long per piece.
 
+**v1.177.13: glaze wait 10 min, Maple Pecan in the early oven gap** (Andrew 2026-11-18). Lemon Poppy glaze and Maple Pecan topping can start any time 10 minutes after the bake (`SCHED_GLAZE_WAIT`, was the 5 min cooling). Maple Pecan's second round now fits oven 2's idle time at the start: `SCHED_ORDER` = Cake Pop, Maple Pecan, Muffin, Cookie, Lemon Poppy, Bundt, Sea Salt (all 5,040 searched). 40-day plan: Maple Pecan baked by 1:03 (was 1:28), ovens 25-231 (span 206, was 199), day 6h20 (was 6h21), Lemon Poppy glaze ends 4:05 before the melt at 4:50.
+
 ## Design pass (v1.149.00)
 
 Last CSS block: **every `<select>` has one style** (white, 1px #c9c9c9, 12px radius, 44px, black chevron; `.row-select` and `[data-labi]` excluded); the Forecast store toggle (`.fc-locs`) uses the pill style. On desktop (>=900px) all pages share a 1120px column, page chips sit centered at natural width, the Trends donut is 220px. On phones the 5 Inventory chips shrink (11px padding) to fit. Counts' total says "pieces", not "madeleines". Still open: coloured snowflake/flame/arrow icons in Forecast misses (breaks the B/W rule), today's half-finished day shows as a 0.0x miss, Stock's section headers use the old grey band style.
@@ -307,7 +309,7 @@ The headless check at 390px misses what iOS does. Apply these to every new or ch
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.177.12**; the next feature is v1.178.00, a fix v1.177.13. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.177.13**; the next feature is v1.178.00, a fix v1.177.14. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 
