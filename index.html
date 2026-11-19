@@ -1609,6 +1609,7 @@
   .inv-hact button { padding: 6px 10px !important; font-size: var(--fs-caption); }
 /* Bake Day (2026-11-17) */
 .bk-sum { color: var(--muted); font-size: var(--fs-caption); margin: 4px 0 10px; }
+.bk-basis { display: block; margin-top: 4px; color: var(--text); font-weight: 600; }
 .bk-rc { margin-top: 16px; } .bk-rc summary { font-weight: 700; padding: 8px 2px; cursor: pointer; }
 .bk-rc-row { display: flex; align-items: center; gap: 10px; padding: 6px 2px; border-bottom: 1px solid var(--sep); }
 .bk-rc-row span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
@@ -2572,7 +2573,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
   </div>
 </div>
 
-<div class="ver-badge">v1.183.00 · Nov 18, 9:52 PM PST</div>
+<div class="ver-badge">v1.183.01 · Nov 18, 9:57 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -5197,28 +5198,31 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
     for (const k of Object.keys(KT_DEFAULT)) if (saved[k] != null && Number.isFinite(Number(saved[k])) && Number(saved[k]) >= 0) KT[k] = Number(saved[k]);
   } catch {}
   for (const k of ['prepGroup', 'pans', 'perPan', 'muPrepGroup']) if (!(KT[k] >= 1)) KT[k] = KT_DEFAULT[k];   // these are divisors: never 0
-  // Effort for a bake session given a {flavor: qty} map.
+  // Effort for a bake session given a {flavor: qty} map. Same model as the Schedule page (schedTasks / schedRun with its people and ovens):
+  //  min = start to finish (what to book), hands = person-minutes of work, prep = prep blocks, rounds / bakeCool = oven rounds and minutes (ovenSteps).
+  //  The Schedule page's hand edits (moved or stretched blocks) only count for the Plan's own bake (planBakeTotals), like on that page.
   function bakeEffort(bake) {
-    let batches = 0, pieces = 0, glazed = 0;
-    for (const p of PRODUCTS) { const n = bake[p] || 0; batches += flavorBatches(n, p); pieces += n; if (GLAZED.includes(p)) glazed += n; }
-    const rounds = pieces ? Math.ceil(Math.ceil(pieces / KT.perPan) / KT.pans) : 0;
-    const prep = batches ? KT.prepMin : 0;   // prep is one fixed block per session, it doesn't grow with batches (Andrew, 2026-10-13)
-    const bakeCool = rounds * (KT.bakeMin + KT.coolMin);
-    const glaze = Math.round(glazed * KT.glazeSec / 60);
-    const baking = pieces ? bakeCool + glaze + KT.cleanMin : 0;          // after the batter rests, cleaning included
-    const setup = pieces ? KT.setupMin : 0;
-    return { batches, pieces, rounds, prep, bakeCool, glaze, baking, setup, min: setup + prep + baking };
+    let batches = 0, pieces = 0;
+    for (const p of PRODUCTS) { const n = Math.round(bake[p] || 0); if (n > 0) { batches += flavorBatches(n, p); pieces += n; } }
+    const z = { batches, pieces, rounds: 0, prep: 0, bakeCool: 0, glaze: 0, finish: 0, fill: 0, clean: 0, baking: 0, setup: 0, hands: 0, min: 0, people: 0, ovens: 0 };
+    if (!pieces) return z;
+    try {
+      const raw = bake !== planBakeTotals, R = schedRun(schedTasks(bake, raw), raw); if (!R.length) return z;
+      const o = ovenSteps(bake), sum = f => R.filter(f).reduce((a, x) => a + x.min, 0);
+      const setup = sum(x => x.id === 'setup'), prep = sum(x => /:prep:/.test(x.id)), fill = sum(x => /:fill:/.test(x.id)), glaze = sum(x => /:glaze$/.test(x.id)), clean = sum(x => x.id === 'clean');
+      const finish = sum(x => x.fin && x.who >= 0), hands = sum(x => x.who >= 0), min = Math.round(Math.max(...R.map(x => x.end)));
+      return Object.assign(z, { rounds: o.rounds, bakeCool: o.min, prep, fill, glaze, finish, clean, setup, hands: Math.round(hands), min, baking: Math.max(0, min - setup), people: schedCfg.people, ovens: schedCfg.ovens });
+    } catch (e) { console.error(e); return z; }
   }
   const sumEff = list => list.reduce((a, e) => { for (const k of Object.keys(e)) a[k] = (a[k] || 0) + e[k]; return a; }, {});
-  // The kitchen-time rows shown on a plan card.
+  // The kitchen-time rows shown on a plan card (same numbers as the Schedule page).
   function kitchenRows(e) {
     if (!e || !e.pieces) return '';
     return `<div class="be-section-label">Kitchen time</div>
-      <div class="proj-row"><span class="k">Setup</span><span><b>${fmtDur(e.setup)}</b></span></div>
-      <div class="proj-row"><span class="k">Batch prep</span><span><b>${fmtDur(e.prep)}</b></span></div>
-      <div class="proj-row"><span class="k">Baking, after the batter rests</span><span><b>${fmtDur(e.baking)}</b></span></div>
-      <div class="proj-row"><span class="k">Total to book</span><span><b>${fmtDur(e.min)}</b></span></div>
-      <div class="be-effort">Baking = ${e.rounds} round${e.rounds === 1 ? '' : 's'} × ${KT.bakeMin + KT.coolMin} min${e.glaze ? ` + ${fmtDur(e.glaze)} glazing` : ''} + ${KT.cleanMin} min cleaning.</div>`;
+      <div class="proj-row"><span class="k">Start to finish (to book)</span><span><b>${fmtDur(e.min)}</b></span></div>
+      <div class="proj-row"><span class="k">Hands-on work, all people</span><span><b>${fmtDur(e.hands)}</b></span></div>
+      <div class="proj-row"><span class="k">Oven</span><span><b>${e.rounds} round${e.rounds === 1 ? '' : 's'} · ${fmtDur(e.bakeCool)}</b></span></div>
+      <div class="be-effort">As the Schedule page lays it out with ${e.people} ${e.people === 1 ? 'person' : 'people'} and ${e.ovens} oven${e.ovens === 1 ? '' : 's'}: setup ${fmtDur(e.setup)}, prep ${fmtDur(e.prep)}, filling pans ${fmtDur(e.fill)}${e.glaze ? `, glaze and topping ${fmtDur(e.glaze)}` : ''}${e.finish ? `, cake pop finishing ${fmtDur(e.finish)}` : ''}, cleaning ${fmtDur(e.clean)}.</div>`;
   }
   // ---- Kitchen times: editable assumptions behind the plan's hours ----
   function paintKitchenTimes() {
@@ -5452,7 +5456,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
       const chips = ev.any
         ? `<div class="be-chips">${PRODUCTS.filter(p => ev.bake[p] > 0).map(p =>
              kvRow(tok(p), pdisp(p), ev.bake[p], ` · ${batchLabel(flavorBatches(ev.bake[p], p))}`)).join('')}</div>
-             <div class="be-effort">${batchLabel(eff.batches)} · prep ${fmtDur(eff.prep)} · baking ${fmtDur(eff.baking)}</div>`
+             <div class="be-effort">${batchLabel(eff.batches)} · ${fmtDur(eff.min)} start to finish · ${fmtDur(eff.hands)} hands-on</div>`
         : `<div class="be-enough">enough on hand — no bake needed</div>`;
       return `<div class="bake-event">
           <div class="be-head">${wkShort(ev.ymd)} ${fmtWhen(ev.ymd)} <span class="be-cover">covers thru ${wkShort(ev.coverUntil)} ${fmtWhen(ev.coverUntil)}</span>${ev.any ? `<span class="be-total">${ev.total}</span>` : ''}</div>
@@ -5758,8 +5762,9 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
   const SCHED_COMBO = ['Lemon Poppy', 'Sea Salt'], SCHED_COMBO_X = 1.5;   // Andrew 2026-11-18: these two can be prepped together; both at once takes 1.5x one prep (45 min instead of 30)
   let SCHED_ORDER = ['Cake Pop', 'Maple Pecan', 'Blueberry Muffin', 'Chookie', 'Lemon Poppy', 'Pumpkin Bundt', 'Sea Salt'];   // work order, found by trying all 5,040 orders (2026-11-18): both Maple Pecan rounds bake in the early free oven time (done by 1:03), Lemon Poppy's glaze is done before the cake pop melt and dip, shortest day (6h20)
   const SCHED_PREP_MIN = 30, SCHED_OWN_PREP = ['Pumpkin Muffin', 'Blueberry Muffin', 'Chookie', 'Cake Pop'];
-  function schedTasks() {
-    const T = [{ id: 'setup', name: 'Setup', p: '', min: KT.setupMin, who: true, deps: [], ix: -1, rk: 0 }], bake = planBakeTotals || {};
+  // bk: pieces per item (default: the Plan's bake). raw: ignore the hand edits made on the Schedule page (they belong to the Plan's bake only).
+  function schedTasks(bk, raw) {
+    const T = [{ id: 'setup', name: 'Setup', p: '', min: KT.setupMin, who: true, deps: [], ix: -1, rk: 0 }], bake = bk || planBakeTotals || {};
     const prepOf = q => { let pm = KT.prepMin; try { const key = Object.keys(BS_PRODUCT).find(k => BS_PRODUCT[k] === q), f = key && bsFind(key); if (f && f.sec !== 'mad') pm = (f.it && f.it.prep) || 20; } catch (e) {} return SCHED_OWN_PREP.includes(q) ? pm : SCHED_PREP_MIN; };
     const big = !SCHED_MERGE_60QT ? [] : PRODUCTS.filter(q => Math.round(bake[q] || 0) > 0 && bowlQt(q) === 60 && !SCHED_COMBO.includes(q)).sort((a, b) => SCHED_ORDER.indexOf(a) - SCHED_ORDER.indexOf(b));   // 60 qt bowls cost extra: their preps run back to back as one block
     for (const p of PRODUCTS) {
@@ -5804,27 +5809,28 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
       if ((GLAZED.includes(p) || SCHED_TOPPED.includes(p)) && last) T.push({ id: p + ':glaze', name: pdisp(p) + (SCHED_TOPPED.includes(p) ? ' topping' : ' glaze'), p, min: Math.max(1, Math.round(n * KT.glazeSec / 60)), who: true, deps: [last], delay: SCHED_GLAZE_WAIT, ix: 500, rk: 98 });   // glaze waits behind every oven-feeding step (prep, fill) so it never delays the next bake
     }
     if (T.length > 1) T.push({ id: 'clean', name: 'Cleaning', p: '', min: KT.cleanMin, who: true, deps: T.map(t => t.id), ix: 999, rk: 0 });
-    T.forEach(t => { if (schedDur[t.id]) t.min = schedDur[t.id]; });
+    if (!raw) T.forEach(t => { if (schedDur[t.id]) t.min = schedDur[t.id]; });
     return T.length > 1 ? T : [];
   }
   // First time >= ready where `dur` minutes are free on a resource (slots = [[start, end], ...]).
   function schedGap(slots, ready, dur) {
     let t = ready; for (const [a, b] of slots.slice().sort((x, y) => x[0] - y[0])) { if (t + dur <= a) break; if (b > t) t = b; } return t;
   }
-  function schedRun(T) {
+  function schedRun(T, raw) {
+    const at = raw ? {} : schedAt, pinP = raw ? {} : schedPin, pinO = raw ? {} : schedOv;
     const ps = Array.from({ length: schedCfg.people }, () => []), os = Array.from({ length: schedCfg.ovens }, () => []), end = new Map(), left = T.slice(), out = [];
     while (left.length) {
       let best = null; const cands = [];
       for (const t of left) {
         if (!t.deps.every(d => end.has(d))) continue;
-        const ready = Math.max(schedAt[t.id] || 0, ...t.deps.map(d => end.get(d) + (t.lag && t.lag[d] != null ? t.lag[d] : (t.delay || 0))));
+        const ready = Math.max(at[t.id] || 0, ...t.deps.map(d => end.get(d) + (t.lag && t.lag[d] != null ? t.lag[d] : (t.delay || 0))));
         let c = null;
         if (t.rest) c = { start: ready, who: -1, ov: -1 };   // resting (cooling, chilling) uses no person and no oven
         else if (t.who) {
-          const pin = schedPin[t.id], list = pin != null && pin < ps.length ? [pin] : ps.map((_, i) => i);
+          const pin = pinP[t.id], list = pin != null && pin < ps.length ? [pin] : ps.map((_, i) => i);
           list.forEach(i => { const st = schedGap(ps[i], ready, t.min); if (!c || st < c.start) c = { start: st, who: i, ov: -1 }; });
         } else {
-          const pin = schedOv[t.id], list = pin != null && pin < os.length ? [pin] : os.map((_, i) => i);
+          const pin = pinO[t.id], list = pin != null && pin < os.length ? [pin] : os.map((_, i) => i);
           list.forEach(i => { const st = schedGap(os[i], ready, t.min); if (!c || st < c.start) c = { start: st, who: -1, ov: i }; });
         }
         cands.push(Object.assign({ t }, c));
@@ -7901,22 +7907,20 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
     document.getElementById('bsOpen').disabled = !bakeSheet.length;
     paintBsKitchen();
   }
-  // Kitchen time for what's on the bake plan: only the madeleines are timed (batches × 18 pieces each);
-  // fillings, scones and the rest aren't part of the kitchen-time model.
+  // Kitchen time for what's on the bake plan: every forecast item on the sheet (pieces = batches x pieces per batch), timed by bakeEffort (the Schedule page's model).
+  // Hand-added recipes with no product (fillings, tests) are not timed.
   function bsEffort() {
-    let batches = 0, pieces = 0, glazed = 0; const names = [];
+    const bake = {}, names = [];
     for (const b of bakeSheet) {
-      const f = bsFind(b.key); if (!f || f.sec !== 'mad') continue;
-      const n = b.b * (f.it.yield || BATCH_YIELD); batches += b.b; pieces += n; names.push(`${f.it.name} ×${rFmt(b.b)}`);
-      if (GLAZED.includes(f.it.name.replace(/\s*madeleines?$/i, '').trim())) glazed += n;
+      const p = BS_PRODUCT[b.key], f = bsFind(b.key); if (!p || !f || !(b.b > 0)) continue;
+      bake[p] = (bake[p] || 0) + Math.round(b.b * (PRODUCT_YIELD[p] || (f.it && f.it.yield) || BATCH_YIELD)); names.push(`${costItemName(f.sec, f.it)} ×${rFmt(b.b)}`);
     }
-    if (!pieces) return null;
-    const rounds = Math.ceil(Math.ceil(pieces / KT.perPan) / KT.pans);
-    const prep = KT.prepMin;
-    const glaze = Math.round(glazed * KT.glazeSec / 60);
-    const baking = rounds * (KT.bakeMin + KT.coolMin) + glaze + KT.cleanMin;
-    const setup = KT.setupMin;
-    return { batches, pieces, glazed, rounds, prep, glaze, baking, setup, min: setup + prep + baking, names, oven: rounds * KT.bakeMin, cool: rounds * KT.coolMin };
+    // A sheet filled from the Plan holds whole batches; when every item's batches match the Plan's, time the Plan's own pieces so this equals the Schedule page.
+    const pb = planBakeTotals || {}, keys = Object.keys(bake), pk = PRODUCTS.filter(p => Math.round(pb[p] || 0) > 0);
+    const same = keys.length && keys.length === pk.length && keys.every(p => pk.includes(p) && Math.abs(bakeSheet.filter(b => BS_PRODUCT[b.key] === p).reduce((a, b) => a + (b.b || 0), 0) - flavorBatches(Math.round(pb[p]), p)) < 1e-9);
+    const e = bakeEffort(same ? pb : bake); if (!e.pieces) return null;
+    const glazed = GLAZED.concat(SCHED_TOPPED).reduce((a, p) => a + (bake[p] || 0), 0), o = ovenSteps(bake);
+    return Object.assign(e, { batches: bakeSheet.filter(b => BS_PRODUCT[b.key]).reduce((a, b) => a + (b.b || 0), 0), names, glazed, oven: o.rows.reduce((a, r) => a + r.rounds * r.bk, 0), cool: o.rows.reduce((a, r) => a + r.rounds * r.cool, 0) });
   }
   function paintBsKitchen() {
     const el = document.getElementById('bsKitchen'); if (!el) return;
@@ -8002,12 +8006,12 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
     const o = it.oven; if (o && o.lo) return `${o.lo === o.hi ? o.lo : o.lo + '–' + o.hi} min`;
     return '';
   }
-  const bsHeadHtml = () => { const [y, m, d] = (bsView ? bsView.day : nowPST().slice(0, 10)).split('-').map(Number); const eff = bsView ? bsView.eff : bsEffort(); const kt = eff ? `<div class="bs2-kt">Expected kitchen time: <b>${fmtDur(eff.min)}</b> · prep ${fmtDur(eff.prep)} · baking ${fmtDur(eff.baking)}</div>` : ''; return `<div class="bs2-title">Bake Plan</div><div class="bs2-date">${esc(new Date(y, m - 1, d).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }))} · amounts are for the base version of each recipe</div>${kt}`; };
+  const bsHeadHtml = () => { const [y, m, d] = (bsView ? bsView.day : nowPST().slice(0, 10)).split('-').map(Number); const eff = bsView ? bsView.eff : bsEffort(); const kt = eff ? `<div class="bs2-kt">Expected kitchen time: <b>${fmtDur(eff.min)}</b> ${eff.hands != null ? `start to finish · ${fmtDur(eff.hands)} hands-on` : `· prep ${fmtDur(eff.prep)} · baking ${fmtDur(eff.baking)}`}</div>` : ''; return `<div class="bs2-title">Bake Plan</div><div class="bs2-date">${esc(new Date(y, m - 1, d).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }))} · amounts are for the base version of each recipe</div>${kt}`; };
   function paintBakeSheetDoc() {
     // Summary first: which recipes and how many batches, and the kitchen time they add up to.
     const eff = bsView ? bsView.eff : bsEffort();
     const recs = bsView ? (bsView.recipes || []) : bakeSheet.map(b => { const f = bsFind(b.key); return f ? costItemName(f.sec, f.it) + (bsVers(f.it) && bsVers(f.it).length > 1 ? ` (${bsVers(f.it)[bsVerOf(f.it, b)].label})` : '') + ' × ' + rFmt(b.b) : ''; }).filter(Boolean);
-    const summary = recs.length ? `<div class="bs2-summary"><b>Summary</b>${recs.map(r => `<div>${esc(r)}</div>`).join('')}${eff ? `<div class="bs2-sum-t">${rFmt(eff.batches)} batches · ${eff.pieces} pcs · ${fmtDur(eff.min)} to book<br>Prep ${fmtDur(eff.prep)} · Baking ${fmtDur(eff.baking)}</div>` : ''}</div>` : '';
+    const summary = recs.length ? `<div class="bs2-summary"><b>Summary</b>${recs.map(r => `<div>${esc(r)}</div>`).join('')}${eff ? `<div class="bs2-sum-t">${rFmt(eff.batches)} batches · ${eff.pieces} pcs · ${fmtDur(eff.min)} to book<br>${eff.hands != null ? `Hands-on ${fmtDur(eff.hands)} · Oven ${eff.rounds} rounds` : `Prep ${fmtDur(eff.prep)} · Baking ${fmtDur(eff.baking)}`}</div>` : ''}</div>` : '';
     document.getElementById('bsEditBtn').hidden = !bsView;
     document.getElementById('bsDoc').innerHTML = `<div class="bs2-doc">${bsHeadHtml()}${summary}${bsModel().map(bsBlockHtml).join('')}</div>`;
   }
@@ -8867,7 +8871,13 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
     const rc = allRows.map(r => { const u = r.s ? r.s.unit : r.i.unit; return `<div class="bk-rc-row"><span>${esc(r.i.name)}</span><input type="number" inputmode="decimal" min="0" step="any" data-bk="${esc(r.i.name)}|${u}" value="${esc(keep[r.i.name + '|' + u] || '')}" aria-label="Left of ${esc(r.i.name)}"><em>${u}</em></div>`; }).join('');
     const opt = (v, t) => `<option value="${v}"${v === bakeView ? ' selected' : ''}>${t}</option>`, dl = d => `${esc(wkShort(d))} ${esc(pantryDate(d))}`;
     const pick = onlyDates.length ? `<div class="pn-bar"><select data-native id="bkThru" aria-label="Which bakes to shop for"><option value="">Whole plan (${thruDates.length} bake${thruDates.length === 1 ? '' : 's'})</option>${thruDates.length > 1 ? `<optgroup label="Through a date">${thruDates.map(d => opt('t:' + d, 'Through ' + dl(d))).join('')}</optgroup>` : ''}<optgroup label="One bake only">${onlyDates.map(d => opt('o:' + d, 'Only ' + dl(d) + ((BAKES || []).some(b => b.date === d) ? ' (done)' : ''))).join('')}</optgroup></select></div>` : '';
-    box.innerHTML = pick + `<div class="bk-sum">${bakeView ? (single ? `Only the ${esc(pantryDate(vDate))} bake` : `Bakes from today through ${esc(pantryDate(vDate))}`) + ' (forecast recipes only; hand-added recipes are left out)' : `Whole bake plan${next ? ` · next bake ${esc(pantryDate(next))}` : ''}`}. Need is the plan's ingredients; have is your latest count plus approved purchases since.</div>` +
+    // Which numbers drive this view: the whole plan is the step 3 bake sheet (step 1 spans included); a per-date view splits the plan by bake dates,
+    // and for an item with a step 1 span those date amounts are the bake-dates forecast, not the span amount, so they can differ from step 3.
+    const spanItems = PRODUCTS.filter(p => (wizLast && wizLast[p] && wizLast[p].days > 0) || wizSpan[p] === 0);
+    const basis = !bakeView ? 'Based on Plan step 1, same as the step 3 bake sheet.'
+      : spanItems.length ? `Based on bake dates (Plan step 1, Bake dates), not on the step 1 spans you set for ${esc(spanItems.map(pdisp).join(', '))}, so these amounts${single && !done ? ' and the planned pieces below' : ''} can differ from the step 3 bake sheet.`
+      : 'Based on bake dates (Plan step 1, Bake dates).';
+    box.innerHTML = pick + `<div class="bk-sum">${bakeView ? (single ? `Only the ${esc(pantryDate(vDate))} bake` : `Bakes from today through ${esc(pantryDate(vDate))}`) + ' (forecast recipes only; hand-added recipes are left out)' : `Whole bake plan${next ? ` · next bake ${esc(pantryDate(next))}` : ''}`}. Need is the plan's ingredients; have is your latest count plus approved purchases since.<span class="bk-basis">${basis}</span></div>` +
       (bakeView ? `<h3>To buy${buy.length ? ` (${buy.length})` : ''}</h3>` +
       (buy.length ? bkBuyList(buy, rows) + `<div class="buy-total"><span>Estimated total${unpriced ? `<small>${unpriced} item${unpriced === 1 ? '' : 's'} without a price</small>` : ''}</span><b>${money2(total)}</b></div>` : '<div class="pn-note">Everything the plan needs is on hand.</div>') +
       `<div class="pn-bar" style="margin-top:10px"><button type="button" class="btn-ghost" id="bkCopy">Copy list</button><button type="button" class="btn-ghost" id="bkClear">Clear ticks</button></div>`
