@@ -2614,7 +2614,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
   </div>
 </div>
 
-<div class="ver-badge">v1.185.06 · Nov 19, 10:45 AM PST</div>
+<div class="ver-badge">v1.185.07 · Nov 19, 10:55 AM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -5442,7 +5442,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
   //  Batch prep happens before the batter rests: `prepGroup` batches at a time, ~`prepMin` minutes per go.
   //  After resting: bake `pans` pans at once (`bakeMin` + `coolMin` per round, the pans need cooling before they're refilled),
   //  glaze the glazed flavours (`glazeSec` per madeleine), then clean (`cleanMin`). Setup (`setupMin`) is booked too.
-  const KT_DEFAULT = { prepGroup: 3, prepMin: 15, pans: 8, perPan: 12, bakeMin: 13, coolMin: 5, glazeSec: 15, setupMin: 20, cleanMin: 20,
+  const KT_DEFAULT = { prepGroup: 3, prepMin: 15, pans: 8, perPan: 12, bakeMin: 12, coolMin: 5, glazeSec: 15, setupMin: 20, cleanMin: 20,
     muPrepGroup: 3, muPrepMin: 20, muBakeLo: 30, muBakeHi: 40, muSetup: 15, muClean: 15, togetherClean: 30, hideMax: 30 };   // Andrew's timings, 2026-10-13 (mu* = muffins; together* / hideMax = a muffin + madeleine day)
   const KT_LABELS = { prepGroup: 'Batches prepped at once', prepMin: 'Minutes per prep', pans: 'Pans baked at once', perPan: 'Madeleines per pan', bakeMin: 'Bake minutes', coolMin: 'Cooling minutes', glazeSec: 'Glaze seconds each', setupMin: 'Setup minutes', cleanMin: 'Cleaning minutes',
     muPrepGroup: 'Muffin batches prepped at once', muPrepMin: 'Muffin minutes per prep', muBakeLo: 'Muffin bake minutes (low)', muBakeHi: 'Muffin bake minutes (high)', muSetup: 'Muffin setup minutes', muClean: 'Muffin cleaning minutes', togetherClean: 'Cleaning minutes, muffins + madeleines together', hideMax: 'Madeleine prep minutes hidden in the muffin bake' };
