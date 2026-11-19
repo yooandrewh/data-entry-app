@@ -299,6 +299,8 @@ Ingredients: **Dark Chocolate 70% and Dark Chocolate Couverture are retired into
 
 **v1.180.00: Storage is part of Stock** (Andrew, 2026-11-18: Stock and Storage overlapped). The Storage chip is gone from the Inventory row (now Ingredients, Stock, Counts, Receipts). The Stock page ends with a Storage section: Log a move, All pieces (stores + storage), BP and Fullerton cards, Recent moves (`stShown()` renders `#homeStorage` on both `forecast` and `storage` home tabs). La Mirada / Stanton cards were dropped there because Stock already shows them. Entry's Storage type and `api/storage.js` are unchanged. Counts (the entry log) stays.
 
+**v1.181.00: week projection** (Andrew 2026-11-18: where the week is missing data, project it from each store's per-item daily average and how the day has played out). `weekProjection(sales, entries, today)` (above `salesHomeHtml`): per store, pace = actual / expected so far this week (clamped 0.6-1.5, needs 2+ data days); days with no data (today onward and gaps) = `dowRate` weekday/weekend rate x pace x growth. The Sales **This week** card shows the projected week total (pieces and $) with the pace note and a details fold; Trends' current-week row shows "-> ~N" under All and each item. `noLump()` drops count-derived lump sales (Bundt / Cake Pop / Chookie booked on one date by `addExtraSales`) from the This week card and the projection, so the headline fell from about $440 to about $130; last week is compared over the same days as logged. **The Data list and the forecast still include those lumps** (open: spread them over their window days). Headless 390px only, not on a phone.
+
 ## Design pass (v1.149.00)
 
 Last CSS block: **every `<select>` has one style** (white, 1px #c9c9c9, 12px radius, 44px, black chevron; `.row-select` and `[data-labi]` excluded); the Forecast store toggle (`.fc-locs`) uses the pill style. On desktop (>=900px) all pages share a 1120px column, page chips sit centered at natural width, the Trends donut is 220px. On phones the 5 Inventory chips shrink (11px padding) to fit. Counts' total says "pieces", not "madeleines". Still open: coloured snowflake/flame/arrow icons in Forecast misses (breaks the B/W rule), today's half-finished day shows as a 0.0x miss, Stock's section headers use the old grey band style.
@@ -319,7 +321,7 @@ The headless check at 390px misses what iOS does. Apply these to every new or ch
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.180.00**; the next feature is v1.181.00, a fix v1.180.01. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.181.00**; the next feature is v1.182.00, a fix v1.181.01. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 

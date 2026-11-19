@@ -2000,6 +2000,11 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
 #bakingPlan:not([data-step="1"]) .pw-adv { display: none; }
 
 .sh-foot { margin-top: 8px; font-size: var(--fs-caption); }
+.sh-proj { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--sep); }
+.sh-proj > b { display: block; font-size: var(--fs-lg); }
+.sh-fold { margin-top: 4px; }
+.sh-fold summary { min-height: 44px; display: flex; align-items: center; font-size: var(--fs-caption); color: #6b6b6b; cursor: pointer; }
+.sh-fold h4 { margin: 10px 0 2px; font-size: var(--fs-caption); text-transform: uppercase; letter-spacing: .4px; color: #6b6b6b; }
 /* Upload page */
 #homeUpload .pn-bar { gap: 8px; }
 
@@ -2732,7 +2737,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.180.00 · Nov 18, 8:29 PM PST</div>
+<div class="ver-badge">v1.181.00 · Nov 18, 8:36 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -4703,24 +4708,79 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     }
     return { left: Math.max(0, Math.round(rem)), est: true };
   }
+  // Week projection (Andrew, 2026-11-18): the week so far is what the sheet holds (real or count-estimated); every day of this week with no data
+  // (today, the rest of the week, and any gap) is projected per store per item = that store's usual weekday/weekend rate x the store's pace
+  // this week (actual / usual on the days that do have data, kept between 0.6 and 1.5) x the weekly trend. A forecast, not a promise.
+  function weekProjection(sales, entries, today) {
+    const wk = weekStart(today), days = Array.from({ length: 7 }, (_, i) => addDays(wk, i));
+    const isWe = d => [0, 6].includes(parseEntryDate(d).getDay());
+    const out = { stores: [], pieces: 0, money: 0, projDays: new Set(), pace: [] };
+    for (const loc of activeLocs(entries)) {
+      const st = locStats(loc, sales, entries); if (!st || !st.dowRate) continue;
+      const rows = sales.filter(r => r.location === loc && r.date >= wk && r.date <= days[6]);
+      const dayRow = d => rows.find(r => r.date === d && PRODUCTS.some(p => storeSale(loc, p, r) > 0));
+      let act = 0, exp = 0;
+      for (const d of days) { const r = dayRow(d); if (!r || d > today) continue; for (const p of PRODUCTS) { act += storeSale(loc, p, r); exp += st.dowRate[p][isWe(d) ? 'we' : 'wd']; } }
+      const have = days.filter(d => d <= today && dayRow(d)).length;
+      const pace = have >= 2 && exp > 0 ? Math.min(1.5, Math.max(0.6, act / exp)) : 1;
+      const latest = rows.reduce((m, r) => r.date > m ? r.date : m, wk), g = st.growth || 1;
+      const items = {};
+      for (const p of PRODUCTS) items[p] = { actual: 0, proj: 0 };
+      for (const d of days) {
+        const r = dayRow(d);
+        if (r && d <= today) { for (const p of PRODUCTS) items[p].actual += storeSale(loc, p, r); continue; }
+        out.projDays.add(d);
+        const ahead = Math.max(0, Math.round((parseEntryDate(d) - parseEntryDate(latest)) / 86400000));
+        for (const p of PRODUCTS) { const v = st.dowRate[p][isWe(d) ? 'we' : 'wd'] * pace * Math.pow(g, ahead / 7); items[p].proj += v; out.pieces += v; out.money += v * unitPriceOn(p, d); }
+      }
+      out.stores.push({ loc, items, pace, have });
+      if (have >= 2) out.pace.push(pace);
+    }
+    return out;
+  }
+  // Bundt / Cake Pop / Chookie worked out from stock counts are booked as one lump on the newer count's date, covering every day since the
+  // previous count (addExtraSales). For "this week" that puts a whole window's sales on one day, so the week's numbers drop those lumps
+  // (day-by-day estimates from addMissingDays stay). The Data list and the forecast still use them.
+  const noLump = s => { if (!s.derived || s.estimated) return s; const a = Object.assign({}, s.amounts); s.derived.forEach(p => { a[p] = 0; }); return Object.assign({}, s, { amounts: a, extra: 0, derived: null }); };
   async function salesHomeHtml(sales) {
+    const raw = sales; sales = sales.map(noLump);
     const today = nowPST().slice(0, 10), wk = weekStart(today), prevWk = addDays(wk, -7), prevSame = addDays(today, -7);
     const cnt = s => (typeof s.total === 'number' ? s.total : SALES_FLAVORS.reduce((t, f) => t + (s.amounts[f] || 0), 0)) + (s.extra || 0);
     const rev = rows => rows.reduce((a, s) => a + cnt(s), 0) * PRICE_PER_UNIT + salesAdj(rows);
-    const thisRows = sales.filter(s => s.date >= wk && s.date <= today), prevRows = sales.filter(s => s.date >= prevWk && s.date <= prevSame);
+    const thisRows = sales.filter(s => s.date >= wk && s.date <= today);
     const through = thisRows.reduce((m, s) => s.date > m ? s.date : m, '');
+    const prevRows = sales.filter(s => s.date >= prevWk && s.date <= addDays(through || today, -7));   // same days last week as the days logged this week
     const sold = thisRows.reduce((a, s) => a + cnt(s), 0), r1 = rev(thisRows), r0 = rev(prevRows);
     const pct = r0 > 0 ? Math.round((r1 / r0 - 1) * 100) : null;
     const cmp = r0 > 0 ? `Same days last week: ${'$' + Math.round(r0).toLocaleString('en-US')} (${pct >= 0 ? '+' : ''}${pct}%)` : '';
     let h = `<div class="sh-card"><div class="sh-lab">This week</div>`
       + (through ? `<div class="sh-big">About ${'$' + (Math.round(r1 / 10) * 10).toLocaleString('en-US')}</div><div class="sh-sub">${sold} sold, Monday through ${wkShort(through)} ${fmtWhen(through)}${cmp ? '<br>' + cmp : ''}</div>`
-        : `<div class="sh-big">No sales yet</div><div class="sh-sub">Nothing logged since Monday.</div>`) + `</div>`;
+        : `<div class="sh-big">No sales yet</div><div class="sh-sub">Nothing logged since Monday.</div>`);
+    try {
+      const pj = weekProjection(sales, await fetchRemoteEntries(), today);
+      if (pj.projDays.size && pj.stores.length) {
+        const days = [...pj.projDays].sort(), proj = Math.round(pj.pieces);
+        const missing = days.filter(d => d < today).length;
+        const avgPace = pj.pace.length ? pj.pace.reduce((a, b) => a + b, 0) / pj.pace.length : 1;
+        const paceTxt = pj.pace.length ? (Math.abs(avgPace - 1) < 0.03 ? 'on the usual pace' : `${Math.round(Math.abs(avgPace - 1) * 100)}% ${avgPace > 1 ? 'above' : 'below'} the usual pace`) : 'at the usual rates';
+        const wkSold = sold + proj, wkMoney = r1 + pj.money;
+        const span = days.length === 1 ? `${wkShort(days[0])} ${fmtWhen(days[0])}` : `${wkShort(days[0])} to ${wkShort(days[days.length - 1])}`;
+        const rows = pj.stores.map(s => `<h4>${esc(s.loc)}</h4>` + PRODUCTS.filter(p => s.items[p].actual + s.items[p].proj >= 0.5).map(p => {
+          const a = Math.round(s.items[p].actual), q = Math.round(s.items[p].proj);
+          return `<div class="sh-row"><span class="sh-nm">${tok(p)}<span><b>${esc(pdisp(p))}</b><small>${a} so far + ${q} to come</small></span></span><span class="sh-when">${a + q}</span></div>`;
+        }).join('')).join('');
+        h += `<div class="sh-proj"><b>Projected week: about ${wkSold} sold, ${'$' + (Math.round(wkMoney / 10) * 10).toLocaleString('en-US')}</b>`
+          + `<div class="sh-sub">${sold} so far + about ${proj} for ${span}${missing ? ` (${missing} day${missing === 1 ? '' : 's'} with no data)` : ''}. Each store's usual rate per item per day, ${paceTxt} this week.</div>`
+          + `<details class="sh-fold"><summary>By store and item</summary>${rows}</details></div>`;
+      }
+    } catch (e) { /* projection is optional */ }
+    h += `</div>`;
     // Running out: the expected run-out day for every flavor at every store with a count, soonest first.
     let run = '';
     try {
       const entries = await fetchRemoteEntries(), locs = activeLocs(entries), items = [];
       for (const loc of locs) {
-        const st = locStats(loc, sales, entries); if (!st.hasInv) continue;
+        const st = locStats(loc, raw, entries); if (!st.hasInv) continue;
         const ro = runoutBand(st);
         for (const p of PRODUCTS) if (ro.days[p] !== Infinity && ro.days[p] <= 14) { const e = estLeftNow(st, p); items.push({ loc, p, d: ro.days[p], left: e.left, est: e.est, asOf: st.asOf }); }
       }
@@ -8882,6 +8942,15 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     let rows;
     try { rows = await getSales(); } catch (e) { box.innerHTML = '<div class="pn-note">Could not load sales.</div>'; return; }
     if (homeTab !== 'trends') return;
+    // The current week also shows where it is heading ("→ ~N"): this week's data so far plus the week projection (weekProjection).
+    let wp = null; const curWk = weekStart(nowPST().slice(0, 10));
+    try { wp = weekProjection(rows.map(noLump), await fetchRemoteEntries(), nowPST().slice(0, 10)); } catch (e) { wp = null; }
+    const projTag = (w, p) => {
+      if (!wp || w.start !== curWk || !wp.projDays.size) return '';
+      let n = 0;
+      for (const s of wp.stores) if (trLoc === 'Both' || s.loc === trLoc) for (const q of PRODUCTS) if (!p || p === q) n += s.items[q].actual + s.items[q].proj;
+      return n >= 0.5 ? `<span class="tr-d">→ ~${Math.round(n)}</span>` : '';
+    };
     const { days, weeks } = trWeeks(rows);
     const head = `<div class="tr-bar"><select id="trLoc" data-native>${['La Mirada', 'Stanton', 'Both'].map(l => `<option${l === trLoc ? ' selected' : ''}>${l}</option>`).join('')}</select></div>`;
     let body = '';
@@ -8893,7 +8962,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       if (trItem !== 'All' && !cols.includes(trItem)) trItem = 'All';
       const val = trItem === 'All' ? (w => w.total) : (w => w.amounts[trItem] || 0);
       const firstSeen = {}; for (const p of cols) { const w = weeks.find(x => (x.amounts[p] || 0) > 0); firstSeen[p] = w ? w.start : null; }
-      const cell = (w, p) => (firstSeen[p] && w.start >= firstSeen[p]) ? (w.amounts[p] || 0) + (w.est.has(p) ? '~' : '') : '—';
+      const cell = (w, p) => (firstSeen[p] && w.start >= firstSeen[p]) ? (w.amounts[p] || 0) + (w.est.has(p) ? '~' : '') + projTag(w, PRODUCTS.includes(p) ? p : '\u0000') : '—';
       const rowsHtml = mk => tbl.map(w => { const prev = weeks.slice(0, weeks.indexOf(w)).reverse().find(x => x.days >= 7); return `<tr${w.days < 7 ? ' class="tr-part"' : ''}><td>${esc(trFmtDay(w.start))}${w.days < 7 ? `<span class="tr-d">${w.days} of 7 days</span>` : ''}</td>${mk(w, prev)}</tr>`; }).join('');
       const pieWeeks = trSpan === 1 ? shown.slice(-1) : shown.slice(-trSpan);
       const sel = (id, opts, cur) => `<select id="${id}" data-native>${opts.map(([v, t]) => `<option value="${esc(String(v))}"${String(v) === String(cur) ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select>`;
@@ -8901,7 +8970,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
         `<h3>By week</h3><div class="tr-bar">${sel('trItemSel', [['All', 'All items'], ...cols.map(p => [p, p])], trItem)}</div>` +
         trChartSvg(shown, val, trItem === 'All' ? 'All items' : trItem) +
         `<h3>Every item by week</h3><div class="tr-scroll"><table class="tr-tbl"><tr><th>Week of</th><th>All</th>${cols.map(p => `<th>${esc(PRODUCT_TOKEN[p])}</th>`).join('')}</tr>` +
-        rowsHtml((w, prev) => `<td><b>${w.total}</b>${trDelta(w, prev)}</td>${cols.map(p => `<td>${cell(w, p)}</td>`).join('')}`) + `</table></div>` +
+        rowsHtml((w, prev) => `<td><b>${w.total}</b>${trDelta(w, prev)}${projTag(w)}</td>${cols.map(p => `<td>${cell(w, p)}</td>`).join('')}`) + `</table></div>` +
         `<div class="pn-note">${cols.map(p => `${PRODUCT_TOKEN[p]} ${esc(p)}`).join(' · ')}. All counts every item sold. Hatched bars are weeks with fewer than 7 days of data, so they are not compared. Change arrows compare a full week with the last full week before it. A dash means the item was not tracked yet that week, not that it sold zero. A ~ means the number was worked out from stock counts, not read from receipts.</div>`;
     }
     box.innerHTML = head + body;
