@@ -22,7 +22,8 @@ const MAX_PENDING_BYTES = 1.5 * 1024 * 1024 * 1024;
 const LINK_MS = 15 * 60 * 1000;
 
 function safeName(name) {
-  const s = String(name || '').replace(/[\\/]/g, '-').replace(/[\x00-\x1f\x7f]/g, '').replace(/^\.+/, '').trim().slice(0, 120);
+  // Plain ASCII only: macOS screenshot names carry a narrow no-break space (U+202F) before PM that the signed link cannot match.
+  const s = String(name || '').replace(/[\\/]/g, '-').replace(/[^\x20-\x7e]/g, ' ').replace(/[#?%&+=;:@"'<>|*]/g, '-').replace(/\s+/g, ' ').replace(/^\.+/, '').trim().slice(0, 120);
   return s || 'file';
 }
 
