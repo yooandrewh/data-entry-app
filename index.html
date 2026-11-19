@@ -111,7 +111,7 @@
   .row .lbl { font-size: var(--fs-lg); flex-shrink: 0; }
   /* On a narrow phone the flavour name yields, never the stepper. */
   /* Slightly tighter token here — 'Pumpkin Muffin' is the longest name and needs the room. */
-  .row .lbl-flavor .tok { width: 24px; height: 24px; flex-basis: 24px; margin-right: 7px; font-size: 11px; }
+  .row .lbl-flavor .tok { width: 24px; height: 24px; flex-basis: 24px; margin-right: 7px; font-size: var(--fs-micro); }
   .row .lbl-flavor { flex-shrink: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .row .amt { flex-shrink: 0; }
   .row input[type="datetime-local"] {
@@ -930,8 +930,8 @@
   /* ================= Big titles in Italiana; a bigger "This season" button ================= */
   h1, .hero-title, .sheet h2, #hpTitle { font-family: "Pinyon Script", "Cormorant Garamond", Georgia, cursive; font-weight: 400; letter-spacing: 0; }
   h1 { font-size: 36px; }
-  .sheet h2 { font-size: 26px; }
-  #hpTitle { font-size: 26px; }
+  .sheet h2 { font-size: var(--fs-figure); }
+  #hpTitle { font-size: var(--fs-figure); }
   .hero-kicker { padding-right: 150px; }
   .home-hero { padding-top: calc(var(--safe-top) + 64px); }
   .hero-kicker { position: absolute; top: calc(var(--safe-top) + 24px); left: 20px; }
@@ -1097,7 +1097,7 @@
   body:not(.printing-bake) #bsScrim .bs2-grp > div:last-child { border-bottom: none; }
   /* Close sits at the top of the sheet */
   #bsScrim .bs-top { position: sticky; top: 6px; z-index: 3; height: 0; display: flex; justify-content: flex-end; padding: 0; margin: 0; background: none; overflow: visible; }
-  #bsScrim .bs-top button { width: 38px; height: 38px; min-width: 0; margin: 0; padding: 0; font-size: 20px; line-height: 1; background: #fbf9f5; border: 1px solid var(--text); color: var(--text); box-shadow: none; }
+  #bsScrim .bs-top button { width: 38px; height: 38px; min-width: 0; margin: 0; padding: 0; font-size: var(--fs-title); line-height: 1; background: #fbf9f5; border: 1px solid var(--text); color: var(--text); box-shadow: none; }
   /* Phones: iOS draws its status bar / home-indicator over the page (env() can read 0 in Safari),
      so keep at least this much clear at the top and bottom — nothing sits under them. */
   @media (pointer: coarse) {
@@ -1194,7 +1194,7 @@
   #projList .info-body .pr-fc .fc-v { flex-direction: column; align-items: flex-end; gap: 0; }
   #projList .info-body .pr-fc .fc-sub { display: block; }
   .info-sheet { max-height: 86vh; overflow-y: auto; position: relative; }
-  .info-x { position: sticky; top: 0; float: right; width: 38px; height: 38px; padding: 0; margin: 0 0 0 8px; font-size: 20px; line-height: 1; background: #fbf9f5; border: 1px solid var(--text); color: var(--text); cursor: pointer; z-index: 2; }
+  .info-x { position: sticky; top: 0; float: right; width: 38px; height: 38px; padding: 0; margin: 0 0 0 8px; font-size: var(--fs-title); line-height: 1; background: #fbf9f5; border: 1px solid var(--text); color: var(--text); cursor: pointer; z-index: 2; }
   .info-pop .proj-row { font-size: var(--fs-caption); }
   .db-month > summary .db-daylabel { font-weight: 800; }
   .db-month .db-mdays { margin-top: 8px; padding-top: 4px; border-top: 1px solid var(--sep); }
@@ -1214,7 +1214,7 @@
   #seaScrim .sheet { display: flex; flex-direction: column; max-height: 88vh; overflow: hidden; padding-bottom: calc(var(--safe-bottom) + 12px); }
   #seaScrim .sea-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex: none; }
   #seaScrim .sea-head h2 { margin: 0; }
-  #seaScrim .sea-x { width: 38px; height: 38px; padding: 0; font-size: 20px; line-height: 1; background: #fbf9f5; border: 1px solid var(--text); color: var(--text); cursor: pointer; flex: none; }
+  #seaScrim .sea-x { width: 38px; height: 38px; padding: 0; font-size: var(--fs-title); line-height: 1; background: #fbf9f5; border: 1px solid var(--text); color: var(--text); cursor: pointer; flex: none; }
   #seaScrim #seaList { flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; margin-top: 4px; }
   #seaScrim .sea-foot { flex: none; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--sep); background: #fbf9f5; }
   /* Date & time reads from the right edge, like every other value */
@@ -1223,7 +1223,7 @@
   input[type="datetime-local"]::-webkit-datetime-edit { text-align: right; padding: 0; }
   #buyScrim .sea-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex: none; }
   #buyScrim .sea-head h2 { margin: 0; }
-  #buyScrim .sea-x { width: 38px; height: 38px; padding: 0; font-size: 20px; line-height: 1; background: #fbf9f5; border: 1px solid var(--text); color: var(--text); cursor: pointer; flex: none; }
+  #buyScrim .sea-x { width: 38px; height: 38px; padding: 0; font-size: var(--fs-title); line-height: 1; background: #fbf9f5; border: 1px solid var(--text); color: var(--text); cursor: pointer; flex: none; }
   #buyScrim .sea-foot { flex: none; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--sep); background: #fbf9f5; }
   #buyScrim .sheet { display: flex; flex-direction: column; max-height: 88vh; overflow: hidden; padding-bottom: calc(var(--safe-bottom) + 12px); }
   #buyScrim #buyBody { flex: 1 1 auto; min-height: 0; overflow-y: auto; -webkit-overflow-scrolling: touch; }
@@ -1246,7 +1246,7 @@
   .buy-rec { display: flex; align-items: center; gap: 8px; padding: 6px 2px; border-top: 1px solid var(--sep); } .buy-rec > span:first-child { flex: 1; min-width: 0; font-weight: 600; }
   .inv-forgot { display: block; margin: 4px auto 14px; border: none; background: none; color: var(--accent); font-family: inherit; font-size: var(--fs-body); font-weight: 600; text-decoration: underline; cursor: pointer; padding: 8px; }
   .forgot-p { margin: 8px 0; line-height: 1.4; }
-  .pop-x { position: sticky; top: 0; float: right; z-index: 5; width: 38px; height: 38px; padding: 0; margin: 0 0 0 8px; font-size: 20px; line-height: 1; background: #fbf9f5; border: 1px solid var(--text); color: var(--text); cursor: pointer; }
+  .pop-x { position: sticky; top: 0; float: right; z-index: 5; width: 38px; height: 38px; padding: 0; margin: 0 0 0 8px; font-size: var(--fs-title); line-height: 1; background: #fbf9f5; border: 1px solid var(--text); color: var(--text); cursor: pointer; }
   .scrim .sheet, .scrim .alert-box { position: relative; }
   /* Invoice PDF page (fixed sizes — it is drawn outside the app's theme) */
   .inv-pdf { width: 640px; box-sizing: border-box; padding: 52px 48px; background: #fff; color: #111; font-family: Archivo, Arial, Helvetica, sans-serif; font-size: 14px; line-height: 1.45; }
@@ -1272,7 +1272,7 @@
   .home-menu .hm-ic { display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; flex: none; border-radius: 12px !important; background: rgba(255,246,238,0.92); }
   .home-menu .hm-ic svg { width: 24px; height: 24px; }
   .home-menu .hm-t { flex: 1; }
-  .home-menu .hm-go { font-size: 26px; line-height: 1; opacity: .8; }
+  .home-menu .hm-go { font-size: var(--fs-figure); line-height: 1; opacity: .8; }
   /* Bake plan grid: flavors down, stores across */
   .pg-row { display: grid; grid-template-columns: minmax(0, 1fr) repeat(var(--n, 2), var(--w, 64px)); align-items: center; gap: 6px; padding: 9px 0; border-bottom: 1px solid var(--sep); }
   .pg-row .k { display: flex; align-items: center; gap: 8px; min-width: 0; }
@@ -1429,9 +1429,9 @@
   .rec-ver button { font-family: "Archivo", -apple-system, system-ui, sans-serif; font-weight: 500; letter-spacing: 0; }
   h1 { font-size: 26px; }
   .hero-title { font-size: 34px; text-transform: uppercase; letter-spacing: 0.06em !important; }
-  #hpTitle { font-size: 22px; }
-  .sheet h2 { font-size: 26px; }
-  .proj-card h3, .card h3 { font-size: 18px; }
+  #hpTitle { font-size: var(--fs-title); }
+  .sheet h2 { font-size: var(--fs-figure); }
+  .proj-card h3, .card h3 { font-size: var(--fs-lg); }
   /* Compact buttons everywhere: tighter padding, tighter gaps between buttons and between button rows */
   .btn-primary, .submit, .btn-ghost, .db-new { padding: 9px 14px !important; min-height: 0 !important; font-size: var(--fs-body) !important; }
   .submit { margin-top: 8px; }
@@ -1633,7 +1633,7 @@
 .tr-bar { display: flex; gap: 8px; margin: 4px 0 12px; }
 .tr-bar select { flex: 1 1 0; min-width: 0; }
 .tr-chart { width: 100%; height: auto; display: block; }
-.tr-chart text { font-family: inherit; fill: var(--muted); font-size: 10px; }
+.tr-chart text { font-family: inherit; fill: var(--muted); font-size: var(--fs-micro); }
 .tr-chart .tr-tot { fill: var(--text); font-weight: 700; }
 .tr-tbl { width: 100%; border-collapse: collapse; font-size: var(--fs-caption); margin: 4px 0 4px; }
 .tr-tbl th, .tr-tbl td { padding: 7px 3px; border-bottom: 1px solid var(--sep); text-align: right; font-weight: 400; white-space: nowrap; }
@@ -1813,8 +1813,8 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
   .tr-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -2px; }
   .tr-pie { display: flex; align-items: center; gap: 10px; margin: 4px 0 14px; }
   .tr-pie svg { width: 128px; height: 128px; flex: none; }
-  .tr-pie-n { font-size: 26px; font-weight: 700; fill: var(--text); font-family: inherit; }
-  .tr-pie-s { font-size: 11px; fill: var(--muted); font-family: inherit; }
+  .tr-pie-n { font-size: var(--fs-figure); font-weight: 700; fill: var(--text); font-family: inherit; }
+  .tr-pie-s { font-size: var(--fs-micro); fill: var(--muted); font-family: inherit; }
   .tr-pie-list { flex: 1 1 auto; min-width: 0; }
   .tr-pie-row { display: flex; align-items: center; gap: 6px; padding: 5px 0; font-size: var(--fs-caption); border-bottom: 1px solid var(--sep); }
   .tr-pie-row i { width: 12px; height: 12px; border-radius: 3px; flex: none; border: 1px solid rgba(0,0,0,.15); }
@@ -1831,7 +1831,7 @@ body[data-page="counts"] .db-head-row .sub { display: none; }
   .buy-big .buy-r { font-size: var(--fs-body); font-weight: 600; }
 
   .buy-have { opacity: .6; cursor: default; }
-  .buy-have .buy-ok { width: 24px; height: 24px; flex: none; display: flex; align-items: center; justify-content: center; border-radius: 6px; background: #000; color: #fff; font-size: 15px; font-weight: 700; }
+  .buy-have .buy-ok { width: 24px; height: 24px; flex: none; display: flex; align-items: center; justify-content: center; border-radius: 6px; background: #000; color: #fff; font-size: var(--fs-body); font-weight: 700; }
   .buy-have .buy-tag { display: block; font-style: normal; font-size: var(--fs-micro); font-weight: 700; letter-spacing: .4px; text-transform: uppercase; color: var(--muted); margin-bottom: 2px; }
   .buy-have .buy-main b s { text-decoration: line-through; text-decoration-thickness: 1.5px; font-weight: 600; }
 
@@ -1911,7 +1911,7 @@ select:not(.row-select):not([data-labi]) { -webkit-appearance: none !important; 
 details.buy-use { margin: -2px 0 8px; padding: 0 0 0 44px; }
 details.buy-use > summary { min-height: 44px; display: flex; align-items: center; font-size: var(--fs-caption); font-weight: 700; color: var(--muted); cursor: pointer; list-style: none; }
 details.buy-use > summary::-webkit-details-marker { display: none; }
-details.buy-use > summary::after { content: "\203A"; margin-left: 8px; font-size: 18px; transition: transform .15s; }
+details.buy-use > summary::after { content: "\203A"; margin-left: 8px; font-size: var(--fs-lg); transition: transform .15s; }
 details.buy-use[open] > summary::after { transform: rotate(90deg); }
 .buy-use .use-h { margin: 8px 0 2px; font-size: var(--fs-caption); font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--muted); }
 .buy-use .use-row { display: flex; justify-content: space-between; gap: 12px; padding: 8px 0; border-bottom: 1px solid #e5e5e5; font-size: var(--fs-body); }
@@ -2142,6 +2142,57 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   #updBar.show { display: flex; }
   #updBar span { flex: 1; }
   #updBar button { min-height: 44px; padding: 0 18px; border: 0; border-radius: 10px; background: #fff; color: #000; font-weight: 600; font-size: var(--fs-body); }
+
+/* Design pass (v1.183): tap targets. Every button, stepper and select is at least 44px tall; selected and unselected share the same box. */
+.btn-primary, .submit, .btn-ghost, .db-new { min-height: 44px !important; }
+.pill, .rec-scale button, .fc-locs button, .inv-store button, .rec-ver button, .bakedate-add button { min-height: 44px !important; padding: 0 14px !important; }
+.amt .step, .bs-step button { width: 44px !important; height: 44px !important; min-height: 44px !important; }
+.amt .val { width: 44px; min-height: 44px; }
+.amt { gap: 4px; }
+#view-entry .card .row { min-height: 48px; }
+#view-entry .card .row input:not([type=checkbox]), #view-entry .card .row select { min-height: 44px; }
+#view-entry .pills { gap: 8px; }
+.pn-bar button, .pn-form button, .cp-btn, .inv-forgot, .bk-rc > summary, .up-box button { min-height: 44px !important; padding-top: 0 !important; padding-bottom: 0 !important; }
+.pn-x { min-width: 44px; min-height: 44px; }
+.info-btn { position: relative; }
+.info-btn::after { content: ""; position: absolute; inset: -10px; }
+.db-line .db-edit, .db-line .db-del, .db-edit, .db-del { width: 44px !important; height: 44px !important; margin: 0 !important; background: transparent !important; color: var(--text) !important; }
+.db-line .db-tools { gap: 0; }
+svg.ic2 { filter: grayscale(1); }
+select#recPick, select#costPick, select#dbRange, select#dbLoc, select#dbGroup, .filter-bar select, .db-filter select { min-height: 44px !important; }
+summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: border-box; display: flex; align-items: center; }
+#homeInvoice input:not([type=checkbox]), .pn-form input, .pn-form select { min-height: 44px; box-sizing: border-box; }
+#view-fin .seg button, #view-fin .db-filter button, #finSheetBtn { min-height: 44px !important; }
+#finBody > .fin-export { grid-column: 1 / -1; order: 9; }
+.inv-prev { display: flex; gap: 8px; width: 100%; }
+.inv-prev button { flex: 1 1 0; margin: 0; }
+#homeForecast .group-label, #homeTimers .group-label { margin: 22px 4px 8px; padding: 0; background: none; border-left: 0; color: var(--muted); font-size: var(--fs-micro); font-weight: 600; letter-spacing: 0.4px; text-transform: uppercase; }
+#homeForecast > .group-label:first-of-type, #homeTimers > .group-label:first-of-type { margin-top: 6px; }
+.bk-link { display: flex; flex-direction: column; gap: 8px; margin: 8px 0 12px; font-size: var(--fs-body); }
+.bk-link .btn-ghost { width: 100%; margin: 0; }
+.fin-fold { margin-top: 12px; border-top: 1px solid var(--sep, #ddd); padding-top: 4px; }
+.fin-fold > summary { min-height: 44px; display: flex; align-items: center; font-size: var(--fs-body); font-weight: 600; cursor: pointer; }
+.fin-export { margin: 12px 0 16px; }
+.fin-export .btn-ghost { width: 100%; margin: 0; }
+.sc-textfold { margin-top: 12px; }
+.sc-textfold > summary { min-height: 44px; display: flex; align-items: center; font-size: var(--fs-body); font-weight: 600; cursor: pointer; }
+.fin-fold > summary::after, .sc-textfold > summary::after { content: "\203A"; margin-left: auto; font-size: var(--fs-lg); transform: rotate(90deg); }
+.fin-fold[open] > summary::after, .sc-textfold[open] > summary::after { transform: rotate(-90deg); }
+#view-db .filter-bar select, #view-plan .filter-bar select, #view-plan select, #view-db select { height: 44px !important; min-height: 44px !important; }
+.ds-earlier > summary, .tm-siri > summary { min-height: 44px; display: flex; align-items: center; }
+#planDate, .bakedate-add input { min-height: 44px; box-sizing: border-box; }
+.bakedate-chip button { min-width: 44px; min-height: 44px; }
+.sc-reset { min-height: 44px; }
+.row-stack .bakedays { width: 100%; gap: 4px !important; margin-left: 0; }
+#view-plan .bakedays button, .row-stack .bakedays button { flex: 1 1 0; width: auto !important; height: 44px !important; min-height: 44px !important; }
+.db-line { flex-wrap: wrap !important; }
+.db-line .loc-name { flex: 1 1 0; }
+.db-line .db-when { order: 5; flex: 1 0 100% !important; margin-top: -6px; }
+.inv-actions { margin-bottom: 20px !important; }
+.ds-earlier > summary::after, .tm-siri > summary::after { content: "\203A"; margin-left: auto; font-size: var(--fs-lg); transform: rotate(90deg); }
+.ds-earlier[open] > summary::after, .tm-siri[open] > summary::after { transform: rotate(-90deg); }
+#finViewTog button { white-space: nowrap; }
+@media (min-width: 900px) { .fin-export .btn-ghost { max-width: 320px; } }
 </style>
 </head>
 <body>
@@ -2275,7 +2326,6 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       <div class="card" id="invPriceCard"><div class="sum" style="margin:0 12px" id="invPrices"></div></div>
       <div class="inv-actions">
         <button class="btn-primary" id="invGenBtn">Generate invoice</button>
-        <button type="button" class="btn-ghost" data-gen-labels>Generate Labels</button>
       </div>
       <div class="group-label" id="invHistLbl">Invoice History</div>
       <div class="card" id="invHistCard"><div class="sum" style="margin:0 12px" id="invHistory"></div></div>
@@ -2359,7 +2409,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
           <input type="text" id="entryNote" class="row-text" placeholder="Optional" maxlength="200" autocomplete="off" />
         </div>
       </div>
-      <div class="hint" id="xferHint" hidden style="color:#7c3aed;font-weight:600"></div>
+      <div class="hint" id="xferHint" hidden style="color:var(--text);font-weight:600"></div>
 
       <div class="group-label" id="amtLabel">Amount</div>
       <div class="card" id="amounts">
@@ -2412,7 +2462,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
           </div>
         </div>
         <div class="row">
-          <span class="lbl lbl-flavor"><span class="tok" data-tok="Chookie"></span>Cookie</span>
+          <span class="lbl lbl-flavor"><span class="tok" data-tok="Chookie"></span>Chookie</span>
           <div class="amt" data-product="Chookie">
             <button type="button" class="step minus">−</button>
             <input class="val" type="number" inputmode="numeric" value="0" min="0" />
@@ -2445,8 +2495,8 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     <div class="db-filter" id="dbFilter">
       <button class="on" data-filter="sales">Sales</button>
       <button data-filter="delivery">Deliveries</button>
-      <select id="dbMore" aria-label="More entry types">
-        <option value="" selected hidden>More</option>
+      <select id="dbMore" aria-label="Other entry types: inventory, goodwill, transfers">
+        <option value="" selected hidden>Other types</option>
         <option value="inventory">Inventory</option>
         <option value="goodwill">Goodwill</option>
         <option value="transfer">Transfers</option>
@@ -2522,7 +2572,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.182.02 · Nov 18, 10:20 PM PST</div>
+<div class="ver-badge">v1.183.00 · Nov 18, 9:52 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -2713,8 +2763,8 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     calendar: () => `<rect x="4" y="5.500" width="16" height="14.500" fill="#f3e6d0"/><path d="M4 10h16M8.500 3.500v4M15.500 3.500v4"/>`,
     box: () => `<path fill="#f3e6d0" d="M3.500 7.500h17V20h-17z"/><path d="M3.500 7.500 5 4.500h5l1.500 3M9 12.500h6"/>`,
     receipt: () => `<path fill="#f3e6d0" d="M6 3.500h12V21l-2-1.500-2 1.500-2-1.500-2 1.500-2-1.500-2 1.500z"/><path d="M9 8h6M9 11.500h6M9 15h3.500"/>`,
-    flame: () => `<path fill="#f59e0b" d="M12 3c1 3.500 5 5.500 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 .3 1.500 1 2 2 2.200C10.500 8.500 11 5.500 12 3z"/>`,
-    snow: () => `<g stroke="#4a86c5"><path d="M12 3v18M4.500 7.500l15 9M19.500 7.500l-15 9"/><path d="M9.500 4.500 12 6.500l2.500-2M9.500 19.500 12 17.500l2.500 2"/></g>`,
+    flame: () => `<path fill="#4d4d4d" d="M12 3c1 3.500 5 5.500 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 .3 1.500 1 2 2 2.200C10.500 8.500 11 5.500 12 3z"/>`,
+    snow: () => `<g stroke="#4d4d4d"><path d="M12 3v18M4.500 7.500l15 9M19.500 7.500l-15 9"/><path d="M9.500 4.500 12 6.500l2.500-2M9.500 19.500 12 17.500l2.500 2"/></g>`,
     trash: () => `<path d="M5 7h14M9.500 7V4.500h5V7M7 7l.8 13h8.400L17 7M10 11v5M14 11v5"/>`,
     pencil: () => `<path fill="#f6df6b" d="M4 20l1-4L16.500 4.500a2 2 0 0 1 3 3L8 19z"/><path d="M14.500 6.500l3 3"/>`,
     tag: () => `<path fill="#f6df6b" d="M3.500 12.500V4.500h8l9 9-8 8z"/><path d="M7.500 8.500h.01" stroke-width="2"/>`,
@@ -2746,7 +2796,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   const SALES_FLAVORS = ['Lemon Poppy', 'Sea Salt', 'Maple Pecan', 'Pumpkin Muffin', 'Blueberry Muffin', 'Ube', 'Dot', 'Earl Grey', 'Matcha', 'Chocolate', 'Dubai Ball', 'Pumpkin Bundt', 'Cake Pop', 'Chookie', 'Unknown'];
   const PRICE_PER_UNIT = 2.50;   // $/madeleine (from Financial Dashboard: $192.50 / 77 units)
   const UNIT_PRICE = { 'Pumpkin Muffin': 2.75, 'Blueberry Muffin': 3, 'Pumpkin Bundt': 3.35, 'Earl Grey Mini': 2.75, 'Cake Pop': 2.75, 'Chookie': 2.75, 'Dubai Ball': 3.50 };   // items that sell for something other than PRICE_PER_UNIT
-  const pdisp = p => p === 'Chookie' ? 'Cookie' : p;   // display name only; 'Chookie' stays the id and sheet column
+  const pdisp = p => p;   // display name; Chookie is the product name everywhere on screen (Andrew, design pass v1.183)
   // Extra revenue over PRICE_PER_UNIT for sales rows (assumes those units are already counted in each row's total).
   // A price that changed on a date: before it the item sold for `before`, from that day on for UNIT_PRICE (or the invoice price field).
   const PRICE_FROM = { 'Blueberry Muffin': { date: '2026-11-10', before: 2.75 } };
@@ -3619,7 +3669,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
         body += `<div class="ssec">Top cashiers</div>` + (s.cashiers || []).map(([n, c]) => `<div class="cashrow"><span>${esc(n)}</span><span class="c-n">${c}</span></div>`).join('');
       }
       if (!body) continue;
-      const peek = [ws ? `${usd(Math.round(ws.avgRev))}/day` : null, s ? `${s.madsPerDay}/day` : null].filter(Boolean).join(' · ');
+      const peek = [ws ? `${usd(Math.round(ws.avgRev))} a day` : null, s ? `${s.madsPerDay} madeleines a day` : null].filter(Boolean).join(' · ');
       html += wrap(`${esc(name)}`, body, peek);
     }
     return html;
@@ -3867,8 +3917,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     const when = today >= fri ? '<b>Ready to prepare now</b>' : `Prepare on ${day(fri)} or ${day(addDays(a.due, -1))}`;
     box.innerHTML = `<div class="group-label">Next invoices</div><div class="card"><div class="sum" style="margin:0 12px">` +
       `<div class="inv-field"><span>Due ${day(a.due)}<small style="display:block;color:var(--muted)">Covers ${day(a.from)} to ${day(a.to)} · ${when}</small></span></div>` +
-      `<div class="inv-field" id="invSchedBtns"><div class="inv-store"><button type="button" data-ist="La Mirada">Prepare La Mirada</button><button type="button" data-ist="Stanton">Prepare Stanton</button></div></div>` +
-      `<div class="inv-field"><div class="inv-store"><button type="button" data-ist="La Mirada" data-prev="1">Preview La Mirada</button><button type="button" data-ist="Stanton" data-prev="1">Preview Stanton</button></div></div>` +
+      `<div class="inv-field"><div class="inv-prev"><button type="button" class="btn-ghost" data-ist="La Mirada" data-prev="1">Preview La Mirada</button><button type="button" class="btn-ghost" data-ist="Stanton" data-prev="1">Preview Stanton</button></div></div>` +
       (b ? `<div class="inv-field"><span style="color:var(--muted)">Then ${day(b.due)}<small style="display:block">Covers ${day(b.from)} to ${day(b.to)}</small></span></div>` : '') +
       `</div></div>`;
     box.onclick = e => {
@@ -3878,7 +3927,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       document.getElementById('invDue').value = a.due; document.getElementById('invIssue').value = today > fri ? today : fri;
       document.querySelectorAll('#invStoreBtns button').forEach(x => x.classList.toggle('on', x.dataset.store === btn.dataset.ist));
       try { syncInvDubai(); } catch {}
-      if (btn.dataset.prev) buildInvoice(true); else document.getElementById('invGenBtn').scrollIntoView({ block: 'center' });
+      buildInvoice(true);
     };
   }
   function initInvoiceForm() {
@@ -4927,7 +4976,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       html += `<div class="group-label">Forecast misses · last 7 days</div><div class="card">` +
         allMisses.slice(0, 6).map(mi => {
           const up = mi.ratio > 1;
-          return `<div class="row"><span class="lbl">${up ? ic('flame', 18) : ic('snow', 18)} ${wkShort(mi.ymd)} ${fmtWhen(mi.ymd)} · ${esc(mi.loc)}</span><span class="db-when" style="font-weight:700;color:${up ? 'var(--green)' : 'var(--red)'}">${up ? '↑' : '↓'} ${mi.ratio.toFixed(1)}× <span style="color:var(--muted);font-weight:500">(${mi.act} vs ~${Math.round(mi.exp)})</span></span></div>`;
+          return `<div class="row"><span class="lbl">${up ? ic('flame', 18) : ic('snow', 18)} ${wkShort(mi.ymd)} ${fmtWhen(mi.ymd)} · ${esc(mi.loc)}</span><span class="db-when" style="font-weight:700;color:var(--text)">${up ? 'Above' : 'Below'} forecast ${mi.ratio.toFixed(1)}× <span style="color:var(--muted);font-weight:500">(${mi.act} vs ~${Math.round(mi.exp)})</span></span></div>`;
         }).join('') + `</div>
         <div class="hint">Ran way above/below that weekday's forecast — repeat whatever drove a ${ic('flame', 15)}, check a ${ic('snow', 15)} for missing data.</div>`;
     }
@@ -5425,7 +5474,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   }
   // A lump-sum card (no bake dates picked) — single store OR combined.
   // Two or more stores: one card — flavors down the side, stores (LM / ST) across.
-  const LOC_ABBR = { 'La Mirada': 'LM', 'Stanton': 'ST' };
+  const LOC_ABBR = {};   // full store names in the column heads (design pass v1.183); kept as a map so an abbreviation can come back
   function gridCardHtml(cols) {
     const cells = f => cols.map(f).join('');
     const rows = PRODUCTS.map(p => `<div class="pg-row"><span class="k">${tok(p)}${pdisp(p)}</span>${cells(c => {
@@ -5604,7 +5653,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     if (splitOn && (agg1 + agg2) > 0) {
       if (fullSlider) {
         wrap.innerHTML = `<div class="card split-card">
-            <div class="lbl">Split across the two days <span style="font-weight:400;color:var(--muted);font-size:12px">— drag to bake more upfront</span></div>
+            <div class="lbl">Split across the two days <span style="font-weight:400;color:var(--muted);font-size:var(--fs-nav)">— drag to bake more upfront</span></div>
             <input type="range" id="planSplitRange" min="0" max="100" step="5" value="${Math.round(planSplit * 100)}" />
             <div class="split-vals">
               <span><b id="splitVal1">${agg1}</b> · ${fmtWhen(activeDates[0])}</span>
@@ -5848,7 +5897,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     const R = schedRun(T), total = Math.max(...R.map(x => x.end)), ppm = schedPpm = 1.6 * schedZoom, H = Math.ceil(total * ppm) + 8;
     const lanes = [...Array(schedCfg.people).keys()].map(i => ({ label: 'Person ' + (i + 1), items: R.filter(x => x.who === i), kind: 'p', idx: i })).concat([...Array(schedCfg.ovens).keys()].map(i => ({ label: 'Oven ' + (i + 1), items: R.filter(x => x.ov === i), kind: 'o', idx: i })));
     const rests = R.filter(x => x.rest); if (rests.length) lanes.push({ label: 'Resting', items: rests, kind: 'r', idx: 0 });
-    const col = x => (x.p && PRODUCT_COLOR[x.p]) || '#6b6b6b';
+    const SC_GREYS = ['#000', '#2b2b2b', '#454545', '#5e5e5e', '#6b6b6b', '#1a1a1a', '#383838'], col = x => (x.p && SC_GREYS[Math.max(0, PRODUCTS.indexOf(x.p)) % SC_GREYS.length]) || '#6b6b6b';   // greys only (B/W rule); the block text names the item
     const moved = id => schedPin[id] != null || schedOv[id] != null || schedAt[id] != null || schedDur[id] != null;
     const dm = m => m < 90 ? m + ' min' : fmtDur(m);
     const blk = x => x.rest ? `<div class="sc-blk rest" data-id="${esc(x.id)}" style="top:${Math.round(x.start * ppm)}px;height:${Math.max(6, Math.round(x.min * ppm) - 1)}px;--c:${col(x)}" title="${esc(x.name)}"><span>${esc(x.name)}</span><em>${dm(x.min)}</em></div>` : `<div class="sc-blk${x.min * ppm < 30 ? ' sm' : ''}${x.oven ? ' oven' : ''}${schedSel === x.id ? ' sel' : ''}${moved(x.id) ? ' mv' : ''}" data-id="${esc(x.id)}" data-drag="1" style="top:${Math.round(x.start * ppm)}px;height:${Math.max(16, Math.round(x.min * ppm) - 1)}px;--c:${col(x)}" title="${esc(x.name)}"><span>${esc(x.name)}</span><em>${dm(x.min)}</em>${schedSel === x.id ? '<i class="sc-rz" data-rz="1"></i>' : ''}</div>`;
@@ -5885,7 +5934,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       + (view === 'list' ? listHtml() : chartHtml);
     const sel = R.find(x => x.id === schedSel);
     if (view === 'chart') h += `<div class="sc-detail">${sel ? `<b>${esc(sel.name)}</b> · ${clk(sel.start)} to ${clk(sel.end)} (${sel.min} min)${sel.who >= 0 ? ' · Person ' + (sel.who + 1) : sel.ov >= 0 ? ' · Oven ' + (sel.ov + 1) : ' · resting, nobody needed'}${schedDur[sel.id] ? ' · length set by you' : ''}${moved(sel.id) ? ' · edited by you <button type="button" data-sc="unpin">Put back</button>' : ''}` : 'Tap a block for its details.'}</div>`;
-    h += `<div class="sc-lists">${lanes.map(l => `<div class="sc-list"><b>${l.label}</b>${l.items.map(x => `<div><span>${clk(x.start)}</span> ${esc(x.name)} <small>${x.min} min</small></div>`).join('') || '<div><small>Nothing</small></div>'}</div>`).join('')}</div>`
+    h += `<details class="sc-textfold"><summary>Timeline as text, per person and oven</summary><div class="sc-lists">${lanes.map(l => `<div class="sc-list"><b>${l.label}</b>${l.items.map(x => `<div><span>${clk(x.start)}</span> ${esc(x.name)} <small>${x.min} min</small></div>`).join('') || '<div><small>Nothing</small></div>'}</div>`).join('')}</div></details>`
       + `<h3 style="margin-top:16px">Steps for each item</h3><div class="sc-help">The blocks you drag are the timed parts. Open an item for every step of its method.</div>${schedSteps(T)}<button type="button" class="sc-reset" data-sc="reset">Auto-arrange (clear my moves)</button></div>`;
     el.innerHTML = h;
   }
@@ -6012,7 +6061,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     const top = `<div class="pw-head"><b>What do you want to bake?</b><span>Drag the slider or pick how long each item should last. Each store's goal is ${STOCK_TARGET}x its expected sales for that time. You bake the gap between the goal and what it has now.</span></div>`
       + `<div class="pw-label">Make everything last</div><div class="pw-slide"><div class="pw-slide-val" id="pwAllVal">${dayLbl(all)}</div><input type="range" id="pwAll" min="1" max="90" step="1" value="${all}" aria-label="Days everything should last"><div class="pw-slide-ticks"><span>1 day</span><span>1 month</span><span>2 months</span><span>3 months</span></div></div>`
       + `<div class="pw-chips">${[[1, '1 day'], [7, '1 week'], [30, '1 month'], [45, '1.5 months']].map(([d, l]) => `<button type="button" data-wall="${d}" class="${PRODUCTS.every(q => wizSpan[q] === d) ? 'on' : ''}">${l}</button>`).join('')}</div>`;
-    return { all, top, rows: grossHtml + pans + ovenHtml(planBakeTotals) + `<div class="pw-label">Or set each item</div>` + rows + `<div class="pw-note">Sales are assumed to grow 1.2% a week on top of the recent daily rate (counted for up to 4 weeks).</div>` };
+    return { all, top, rows: grossHtml + pans + `<div class="pw-label">Or set each item</div>` + rows + `<div class="pw-note">Sales are assumed to grow 1.2% a week on top of the recent daily rate (counted for up to 4 weeks).</div>` };
   }
   function wizPaint() {
     const box = document.getElementById('planWiz'), root = document.getElementById('bakingPlan');
@@ -6279,10 +6328,10 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       link: 'https://lilluna.com/snickerdoodles/' },
     { key: 'pumpkinbundt', labFlat: 0.4, wholesale: 3.35, retail: 6.5, type: 'simple', name: 'Pumpkin Bundt Cake', yield: 21, oven: { lo: 25, hi: 25, cap: 120 }, prep: 20, bake: '350°F (175°C) · 25 min', glazeFixed: 5, glazeSec: 5, yieldText: 'makes 21 bundt cakes (80 g of batter each)',
       components: [
-        { title: 'Cake', rows: [['All-Purpose Flour', 384], ['Baking Powder', 8], ['Baking Soda', 5], ['Salt', 5], ['Ground Cinnamon', 6], ['Light Brown Sugar', 440], ['Butter', 114], ['Avocado Oil', 108], ['Eggs', 100], ['Pumpkin Puree', 425], ['Sour Cream', 120]], note: 'The batter comes to about 1,718 g, which is 21 cakes at 80 g each.' },
-        { title: 'Glaze', rows: [['Powdered Sugar', 275], ['Pumpkin Pie Spice', 9.33], ['Milk', 60]], note: 'The source glaze (200 g powdered sugar, 5 g spice, 8 g milk) tops 8 cakes. Sugar is scaled to 11; the spice is 28 g per 3 batches; the milk is set to 60 g per batch.' } ],
-      rows: [['All-Purpose Flour', 384], ['Baking Powder', 8], ['Baking Soda', 5], ['Salt', 5], ['Ground Cinnamon', 6], ['Brown Sugar', 440], ['Unsalted Butter', 114], ['Avocado Oil', 108], ['Eggs', 100], ['Pumpkin Puree', 425], ['Sour Cream', 120], ['Powdered Sugar', 275], ['Pumpkin Pie Spice', 9.33], ['Milk', 60]],
-      notes: '1) <b>Prep:</b> oven 350°F (175°C). Butter and flour the bundt pan. Batter prep about 20 minutes.<br>2) <b>Dry:</b> whisk flour, powder, soda, salt, cinnamon.<br>3) <b>Cream:</b> paddle sugar, butter, oil, medium-high 3 min until fluffy.<br>4) <b>Eggs:</b> one at a time, 20 s each.<br>5) <b>Wet:</b> add pumpkin and sour cream, mix, scrape bowl.<br>6) <b>Fold:</b> dry into wet by hand, scrape bottom and sides.<br>7) <b>Pan:</b> pour, smooth top, tap on counter to release air.<br>8) <b>Bake:</b> 25 minutes, until golden and a skewer comes out clean. The oven takes 24 cakes at once for now (more with more pans).<br>9) <b>Glaze:</b> whisk about 5 minutes, glaze each cake about 5 seconds.' },
+        { title: 'Cake', rows: [['All-Purpose Flour', 384], ['Baking Powder', 8], ['Baking Soda', 5], ['Salt', 5], ['Ground Cinnamon', 6], ['Pumpkin Pie Spice', 9], ['Light Brown Sugar', 440], ['Butter', 114], ['Avocado Oil', 108], ['Eggs', 100], ['Pumpkin Puree', 425], ['Sour Cream', 120]], note: 'The batter comes to about 1,727 g, which is 21 cakes at about 80 g each.' },
+        { title: 'Glaze', rows: [['Powdered Sugar', 275], ['Pumpkin Pie Spice', 9.33], ['Milk', 250]], note: 'The source glaze (200 g powdered sugar, 5 g spice, 8 g milk) tops 8 cakes. Sugar is scaled to 11; the spice is 28 g per 3 batches; the milk is set to 250 g per batch (Andrew).' } ],
+      rows: [['All-Purpose Flour', 384], ['Baking Powder', 8], ['Baking Soda', 5], ['Salt', 5], ['Ground Cinnamon', 6], ['Brown Sugar', 440], ['Unsalted Butter', 114], ['Avocado Oil', 108], ['Eggs', 100], ['Pumpkin Puree', 425], ['Sour Cream', 120], ['Powdered Sugar', 275], ['Pumpkin Pie Spice', 18.33], ['Milk', 250]],
+      notes: '1) <b>Prep:</b> oven 350°F (175°C). Butter and flour the bundt pan. Batter prep about 20 minutes.<br>2) <b>Dry:</b> whisk flour, powder, soda, salt, cinnamon, pumpkin pie spice.<br>3) <b>Cream:</b> paddle sugar, butter, oil, medium-high 3 min until fluffy.<br>4) <b>Eggs:</b> one at a time, 20 s each.<br>5) <b>Wet:</b> add pumpkin and sour cream, mix, scrape bowl.<br>6) <b>Fold:</b> dry into wet by hand, scrape bottom and sides.<br>7) <b>Pan:</b> pour, smooth top, tap on counter to release air.<br>8) <b>Bake:</b> 25 minutes, until golden and a skewer comes out clean. The oven takes 24 cakes at once for now (more with more pans).<br>9) <b>Glaze:</b> whisk about 5 minutes, glaze each cake about 5 seconds.' },
     { key: 'earlgreymini', labFlat: 0.4, wholesale: 2.75, retail: 5.5, type: 'simple', name: 'Earl Grey Mini Pound Cake', link: 'https://www.youtube.com/watch?v=z4JNf2-Bw8A', yield: 7, oven: { lo: 25, hi: 25, cap: 8 }, prep: 20, yieldText: 'makes 7 mini cakes (60 g each)',
       components: [
         { title: 'Earl Grey Sauce', rows: [['Heavy Cream', 50], ['Earl Grey Tea Leaves', 6]] },
@@ -6294,10 +6343,10 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     { key: 'cakepop', labFlat: 0.4, wholesale: 2.75, retail: 4.5, type: 'simple', name: 'Cake Pop', link: 'https://sallysbakingaddiction.com/homemade-cake-pops/', yield: 62, pans: [{ b: 1, label: 'quarter sheet pan' }, { b: 3.5, label: 'full sheet pan' }], oven: { lo: 30, hi: 30, cap: 1000 }, prep: 20, bake: '350°F (177°C) · 30 min', yieldText: 'makes about 62 cake pops from one quarter sheet pan (a full sheet pan is 4 batches, about 248 pops; coated with vanilla almond bark and cocoa butter, one mini waffle cone each)',
       components: [
         { title: 'Cake', rows: [['Flour', 397], ['Baking Powder', 4.8], ['Baking Soda', 1.9], ['Salt', 5.7], ['Softened Butter', 215], ['Sugar', 266, 380], ['Egg', 95], ['Vanilla Extract', 15], ['Milk', 466]] },
-        { title: 'Frosting', rows: [['Softened Butter', 188], ['Powdered Sugar', 239.4, 399], ['Heavy Cream (or milk)', 23], ['Vanilla Extract', 7.6]] },
+        { title: 'Frosting', rows: [['Softened Butter', 188], ['Powdered Sugar', 239.4, 399], ['Milk', 23], ['Vanilla Extract', 7.6]] },
         { title: 'Coating', rows: [['Vanilla Almond Bark', 454], ['Cocoa Butter', 20], ['Mini Waffle Cones', 62, null, ' pcs']], note: '454 g of vanilla almond bark melted with 20 g cocoa butter per batch. Sprinkles (no amount given). With real white chocolate, add 1/2 tsp vegetable oil to thin it.' } ],
-      rows: [['All Purpose Flour', 397], ['Baking Powder', 4.8], ['Baking Soda', 1.9], ['Salt', 5.7], ['Unsalted Butter', 215], ['Sugar', 266], ['Eggs', 95], ['Vanilla Extract', 15], ['Milk', 466], ['Unsalted Butter (frosting)', 188], ['Powdered Sugar', 239.4], ['Heavy Cream', 23], ['Vanilla Extract (frosting)', 7.6], ['Vanilla Almond Bark', 454], ['Cocoa Butter', 20], ['Mini Waffle Cones', 62]],
-      notes: '<b>Sugar is cut.</b> Cake sugar is 30% less: 266 g, from an original 380 g (the source recipe\'s 200 g for a 9-inch pan, scaled 1.9 times to the sheet pan). Frosting powdered sugar is 40% less: 239.4 g, from an original 399 g. Everything else is the original amount scaled 1.9 times.<br><br><b>1 batch</b> = one quarter sheet pan, about 62 pops. Batter prep takes about 20 minutes and it bakes 30 minutes.<br><br><b>Pan options</b><br>Quarter sheet pan: 1 batch (the amounts above).<br>Full sheet pan: <b>3.5 batches</b>, about 217 pops. Do not use 4: the batter would sit about 3% deeper than one quarter-sheet batch and about 14% deeper than the source recipe, which can overflow the pan or leave the middle underbaked. 3.5 batches matches the depth of the source recipe. Set Batches to 3.5 (or tap the full sheet button), or use: flour 1,390 g, baking powder 16.8 g, baking soda 6.7 g, salt 20 g, butter 753 g, sugar 931 g, eggs 333 g, vanilla 52.5 g, milk 1,631 g (cake batter about 5,130 g); frosting butter 658 g, powdered sugar 838 g, cream 80.5 g, vanilla 26.6 g; coating 1,589 g bark + 70 g cocoa butter; 217 cones.<br><br><b>Method</b><br>1. Heat the oven to 350°F (177°C). Grease and line the pan.<br>2. Flour, baking powder, baking soda and salt.<br><br>3. Beat butter and sugar until creamed.<br>4. Egg and vanilla, beat on high.<br><br>5. Dry mix and milk, mix on low until combined. Spread in the pan, bake 30 minutes. Cool completely (best made the day before).<br><i>Tips:</i> Stir by hand to catch lumps. Tent with foil if the top browns too fast.<br><br><b>Frosting:</b><br>Beat the butter on medium about 2 minutes.<br>Add powdered sugar, cream and vanilla, mix on low.<br><br>6. Crumble the cooled cake into the frosting with no big lumps. Beat on low until combined.<br>7. Roll into balls (25g). Chill 2 hours or freeze 1 hour.<br><i>Tips:</i> Keep the tray cold and work a few at a time.<br>8. Melt the coating. Let it cool about 5 minutes so it does not crack the pops.<br><i>Tips:</i> The balls must stay very cold.<br>9. Dip a stick 1/2 inch in the coating, push halfway into a ball, dip the whole ball, tap off the excess, add sprinkles, stand upright.<br><br><b>Shelf life:</b><br>Keep in the fridge up to 1 week.<br>Undipped balls keep 2 days in the fridge or 6 weeks frozen; finished pops freeze 6 weeks.' },
+      rows: [['All Purpose Flour', 397], ['Baking Powder', 4.8], ['Baking Soda', 1.9], ['Salt', 5.7], ['Unsalted Butter', 215], ['Sugar', 266], ['Eggs', 95], ['Vanilla Extract', 15], ['Milk', 466], ['Unsalted Butter (frosting)', 188], ['Powdered Sugar', 239.4], ['Milk (frosting)', 23], ['Vanilla Extract (frosting)', 7.6], ['Vanilla Almond Bark', 454], ['Cocoa Butter', 20], ['Mini Waffle Cones', 62]],
+      notes: '<b>Sugar is cut.</b> Cake sugar is 30% less: 266 g, from an original 380 g (the source recipe\'s 200 g for a 9-inch pan, scaled 1.9 times to the sheet pan). Frosting powdered sugar is 40% less: 239.4 g, from an original 399 g. Everything else is the original amount scaled 1.9 times.<br><br><b>1 batch</b> = one quarter sheet pan, about 62 pops. Batter prep takes about 20 minutes and it bakes 30 minutes.<br><br><b>Pan options</b><br>Quarter sheet pan: 1 batch (the amounts above).<br>Full sheet pan: <b>3.5 batches</b>, about 217 pops. Do not use 4: the batter would sit about 3% deeper than one quarter-sheet batch and about 14% deeper than the source recipe, which can overflow the pan or leave the middle underbaked. 3.5 batches matches the depth of the source recipe. Set Batches to 3.5 (or tap the full sheet button), or use: flour 1,390 g, baking powder 16.8 g, baking soda 6.7 g, salt 20 g, butter 753 g, sugar 931 g, eggs 333 g, vanilla 52.5 g, milk 1,631 g (cake batter about 5,130 g); frosting butter 658 g, powdered sugar 838 g, milk 80.5 g, vanilla 26.6 g; coating 1,589 g bark + 70 g cocoa butter; 217 cones.<br><br><b>Method</b><br>1. Heat the oven to 350°F (177°C). Grease and line the pan.<br>2. Flour, baking powder, baking soda and salt.<br><br>3. Beat butter and sugar until creamed.<br>4. Egg and vanilla, beat on high.<br><br>5. Dry mix and milk, mix on low until combined. Spread in the pan, bake 30 minutes. Cool completely (best made the day before).<br><i>Tips:</i> Stir by hand to catch lumps. Tent with foil if the top browns too fast.<br><br><b>Frosting:</b><br>Beat the butter on medium about 2 minutes.<br>Add powdered sugar, milk and vanilla, mix on low.<br><br>6. Crumble the cooled cake into the frosting with no big lumps. Beat on low until combined.<br>7. Roll into balls (25g). Chill 2 hours or freeze 1 hour.<br><i>Tips:</i> Keep the tray cold and work a few at a time.<br>8. Melt the coating. Let it cool about 5 minutes so it does not crack the pops.<br><i>Tips:</i> The balls must stay very cold.<br>9. Dip a stick 1/2 inch in the coating, push halfway into a ball, dip the whole ball, tap off the excess, add sprinkles, stand upright.<br><br><b>Shelf life:</b><br>Keep in the fridge up to 1 week.<br>Undipped balls keep 2 days in the fridge or 6 weeks frozen; finished pops freeze 6 weeks.' },
     { key: 'churrosfinancier', type: 'simple', name: 'Chocolate Churros Financier', yield: 12, yieldText: 'makes 12 financiers',
       rows: [['Unsalted Butter', 160], ['Egg White', 120], ['Brown Sugar', 115], ['Honey', 35], ['Almond Flour', 84], ['Cake Flour', 18], ['Cocoa Powder', 12], ['Cinnamon', 4], ['Baking Powder', 2]],
       notes: '<b>Coating (no amounts given):</b> sugar and cinnamon at 10 : 1 (sugar : cinnamon), plus coating chocolate. Milk chocolate is recommended over dark.<br><br>1. Brown the butter, cool to 50°C (122°F).<br>2. Whisk egg whites, brown sugar and honey until combined and slightly pale.<br>3. Mix in the cooled brown butter until smooth.<br><br>4. Sift in almond flour, cake flour, cocoa, cinnamon and baking powder, mix gently.<br>5. Pipe into a financier pan.<br><br>6. Preheat to 200°C (392°F). Bake at 190°C (374°F) 8 minutes, then 180°C (356°F) 6 minutes.<br>7. Cool completely on a wire rack.<br>8. Dip in melted chocolate, roll in the cinnamon sugar.' },
@@ -6601,7 +6650,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     let body = '';
     if (item.type === 'twocol') {
       body = item.rows.map(r => `<div class="proj-row"><span class="k">${r[0]}</span><span style="display:flex;gap:24px"><span style="min-width:58px;text-align:right">${recQtyIn(r[1], b, 'g')}</span><span style="min-width:58px;text-align:right">${recQtyIn(r[2], b, 'g')}</span></span></div>`).join('');
-      body = `<div class="proj-row" style="border-bottom:none;padding-bottom:0"><span class="k"></span><span style="display:flex;gap:24px;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em"><span style="min-width:58px;text-align:right">${item.cols[0]}</span><span style="min-width:58px;text-align:right">${item.cols[1]}</span></span></div>` + body;
+      body = `<div class="proj-row" style="border-bottom:none;padding-bottom:0"><span class="k"></span><span style="display:flex;gap:24px;font-size:var(--fs-micro);color:var(--muted);text-transform:uppercase;letter-spacing:0.05em"><span style="min-width:58px;text-align:right">${item.cols[0]}</span><span style="min-width:58px;text-align:right">${item.cols[1]}</span></span></div>` + body;
     } else if (item.type === 'ratio') {
       body = `<div class="rec-ratio">${item.ratio.split(':').map(p => recFillAmt(p.trim(), b)).join(' : ')}</div><div class="rec-ratio-lbl">${item.label}</div>`;
     } else {
@@ -7419,19 +7468,17 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       ${row(`Ingredients<span class="cost-hint">incl. ${rFmt(r.wastePct)}% waste (${fm(r.ingrWaste)}) and ledger tax &amp; fees (${fm(r.ingrTax)})</span>`, fm(r0.ingr))}
       ${scItems.length ? row('Added items: ingredients<span class="cost-hint">what-if</span>', fm(aIng)) : ''}
       ${r.missing.length ? `<div class="cost-miss" style="padding:4px 0">No cost for ${r.missing.map(esc).join(', ')} (no recipe or an unapproved price), so those count as $0.</div>` : ''}
-      ${wst}
       ${row(`Baking labor<span class="cost-hint">${(r.bakeMin / 60).toFixed(1)} h at $${rFmt(r.rate)}/hr</span>`, fm(r.bakeLabor))}
       ${row(`Delivery labor<span class="cost-hint">${(r.delivMin / 60).toFixed(1)} h (${rFmt(r.delivWk)} min/wk${r.delivFrac === 0 ? ', no deliveries this month' : r.delivFrac < 1 ? ', prorated ' + Math.round(r.delivFrac * 100) + '%' : ''})</span>`, fm(r.delivLabor))}
       ${scItems.length ? row('Added items: labor<span class="cost-hint">what-if</span>', fm(aLab)) : ''}
       ${row('Total labor', fm(r.labor), 'cost-total')}
       <div class="cost-sub" style="margin-top:10px">Kitchen and other</div>
       ${r.partial ? `<div class="cost-hint" style="padding:4px 0">Full month of fixed costs vs ${r.days} day${r.days === 1 ? '' : 's'} of sales.</div>` : ''}
-      ${kit}
       ${row('Kitchen total<span class="cost-hint">block plus tax</span>', fm(r.kitchen))}
       ${r.overCost > 0 ? row(`Overage hours<span class="cost-hint">${r.overH.toFixed(1)} h × ${fm(r.overRate)}/h</span>`, fm(r.overCost)) : ''}
-      ${oth}
       ${row('Total recurring', fm(r.recurring), 'cost-total')}
-      ${row('Total costs', fm(totCost), 'cost-total')}</div>`;
+      ${row('Total costs', fm(totCost), 'cost-total')}
+      <details class="fin-fold"${finEditOpen || wi ? ' open' : ''} ontoggle="finEditOpen = this.open"><summary>Edit rates and fixed costs</summary>${wst}${kit}${oth}</details></div>`;
     const net = r.sales > 0 ? (r.postLabor / r.sales * 100).toFixed(0) + '%' : '—', netPre = r.sales > 0 ? (r.preLabor / r.sales * 100).toFixed(0) + '%' : '—';
     const profCard = `<div class="proj-card fin-prof"><h3 class="fin-card-h">Profit</h3>
       ${row('Total sales', fm(r.sales))}${scItems.length ? row('Added items profit<span class="cost-hint">what-if, included in these totals</span>', fm(scItems.reduce((t, x) => t + x.profit, 0))) : ''}${row('Ingredients', fm(-r.ingr))}${row('Recurring', fm(-r.recurring))}
@@ -7489,11 +7536,12 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       finSheet.model = { rows2d: mrows }; }
     el.innerHTML = banner + `
       <div class="db-filter" id="finViewTog" style="margin-bottom:10px"><button data-finview="sum"${finView === 'sum' ? ' class="on"' : ''}>Summary</button><button data-finview="item"${finView === 'item' ? ' class="on"' : ''}>By item</button><button data-finview="labor"${finView === 'labor' ? ' class="on"' : ''}>Labor</button><button data-finview="sim"${finView === 'sim' ? ' class="on"' : ''}>Simulator</button></div>
-      <button class="cp-btn" id="finSheetBtn" style="margin:0 0 10px">Send to Google Sheet</button>
       <div class="db-filter" style="margin-bottom:10px"><select id="finMonth" aria-label="Month">${months.map(m => `<option value="${m}"${m === finMonth ? ' selected' : ''}>${finMonthName(m)}</option>`).join('')}</select>
         <label class="fin-sw"><input type="checkbox" id="finWhat" role="switch"${wi ? ' checked' : ''}><span class="fin-sw-t"></span><span class="fin-sw-l">What if</span></label></div>
-      ${finView === 'sim' ? simView() : finView === 'labor' ? laborView() : whatIfCard + scenCard + (finView === 'item' ? itemView : revCard + costCard + profCard)}`;
+      ${finView === 'sim' ? simView() : finView === 'labor' ? laborView() : whatIfCard + scenCard + (finView === 'item' ? itemView : revCard + costCard + profCard)}
+      <div class="fin-export"><button class="btn-ghost" id="finSheetBtn">Send to Google Sheet</button></div>`;
   }
+  let finEditOpen = false;
   // Labor planner: monthly madeleine and muffin totals spread over 3, 4 or 5 bake sessions. Prep, setup and cleaning are fixed per session; only oven time scales.
   // Oven + prep + setup/cleaning minutes for a set of items baked over `sess` sessions a month (shared by the Labor and Simulator views).
   function labPlan(list, sess) {
@@ -8555,7 +8603,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     });
   }
   // ----- Trends (Home → Trends): weekly sales as a stacked chart plus a table, and a raw day-by-day list. Reads the same /api/sales rows as the Data tab. -----
-  let trLoc = 'La Mirada', trItem = 'All', trSpan = 4, trMetric = 'usd';   // trMetric: share of sales by 'usd' or 'qty'
+  let trLoc = 'Both', trItem = 'All', trSpan = 4, trMetric = 'usd';   // trMetric: share of sales by 'usd' or 'qty'
   const trAll = a => Object.values(a || {}).reduce((n, v) => n + (v || 0), 0);   // every item sold, madeleines or not
   const TR_RAMP = ['#111', '#2e2e2e', '#4a4a4a', '#666', '#808080', '#999', '#b0b0b0', '#c4c4c4', '#d6d6d6', '#e8e8e8'];   // one grey per item, biggest first; the donut lists every item
   function trWeeks(rows) {
@@ -8592,7 +8640,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       if (part && v) g += `<rect x="${x}" y="${y(v)}" width="${bw}" height="${y(0) - y(v)}" fill="url(#trHatch)" stroke="var(--muted, #6d6660)" stroke-dasharray="3 2" stroke-width="1"/>`;
       g += `<text class="tr-tot" x="${x + bw / 2}" y="${y(v) - 4}" text-anchor="middle">${v}</text>`;
       g += `<text x="${x + bw / 2}" y="${H - 12}" text-anchor="middle">${esc(trFmtDay(w.start))}</text>`;
-      if (part) g += `<text x="${x + bw / 2}" y="${H - 2}" text-anchor="middle" style="font-size:9px">${w.days}/7d</text>`;
+      if (part) g += `<text x="${x + bw / 2}" y="${H - 2}" text-anchor="middle" style="font-size:var(--fs-micro)">${w.days}/7d</text>`;
     });
     return `<svg class="tr-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(label)} sold per week">${g}</svg>`;
   }
@@ -8654,7 +8702,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       const rowsHtml = mk => tbl.map(w => { const prev = weeks.slice(0, weeks.indexOf(w)).reverse().find(x => x.days >= 7); return `<tr${w.days < 7 ? ' class="tr-part"' : ''}><td>${esc(trFmtDay(w.start))}${w.days < 7 ? `<span class="tr-d">${w.days} of 7 days</span>` : ''}</td>${mk(w, prev)}</tr>`; }).join('');
       const pieWeeks = trSpan === 0 ? shown.slice(-1) : trSpan === 1 ? shown.filter(w => w.days >= 7).slice(-1) : weeks.filter(w => w.days >= 7 && w.start < curWk && w.start >= addDays(curWk, -7 * trSpan));   // 0 = the newest (often part-way) week, 1 = the last complete week, 4 / 8 = the complete calendar weeks of the last 4 / 8 before this Monday (a missing week is not replaced by an older one)
       const sel = (id, opts, cur) => `<select id="${id}" data-native>${opts.map(([v, t]) => `<option value="${esc(String(v))}"${String(v) === String(cur) ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select>`;
-      body = `<h3>Share of sales</h3><div class="tr-bar">${sel('trSpanSel', [[0, 'This week so far'], [1, 'Last full week'], [4, 'Last 4 weeks'], [8, 'Last 8 weeks']], trSpan)}${sel('trMetricSel', [['usd', 'By dollars'], ['qty', 'By pieces']], trMetric)}</div>` + trPie(pieWeeks, cols) +
+      body = `<h3>Share of sales</h3><div class="tr-bar">${sel('trSpanSel', [[0, 'This week so far'], [1, 'Last full week'], [4, 'Last 4 weeks'], [8, 'Last 8 weeks']], trSpan)}${sel('trMetricSel', [['usd', 'By dollars'], ['qty', 'By pieces']], trMetric)}</div>` + (pieWeeks.length ? `<div class="pn-note">${esc(trFmtDay(pieWeeks[0].start))} to ${esc(trFmtDay(pieWeeks[pieWeeks.length - 1].days < 7 ? addDays(pieWeeks[pieWeeks.length - 1].start, pieWeeks[pieWeeks.length - 1].days - 1) : addDays(pieWeeks[pieWeeks.length - 1].start, 6)))}${pieWeeks[pieWeeks.length - 1].days < 7 ? ' (part week)' : ''}</div>` : '') + trPie(pieWeeks, cols) +
         `<h3>By week</h3><div class="tr-bar">${sel('trItemSel', [['All', 'All items'], ...cols.map(p => [p, p])], trItem)}</div>` +
         trChartSvg(shown, val, trItem === 'All' ? 'All items' : trItem) +
         `<h3>Every item by week</h3><div class="tr-scroll"><table class="tr-tbl"><tr><th>Week of</th><th>All</th>${cols.map(p => `<th>${esc(PRODUCT_TOKEN[p])}</th>`).join('')}</tr>` +
@@ -8820,17 +8868,20 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     const opt = (v, t) => `<option value="${v}"${v === bakeView ? ' selected' : ''}>${t}</option>`, dl = d => `${esc(wkShort(d))} ${esc(pantryDate(d))}`;
     const pick = onlyDates.length ? `<div class="pn-bar"><select data-native id="bkThru" aria-label="Which bakes to shop for"><option value="">Whole plan (${thruDates.length} bake${thruDates.length === 1 ? '' : 's'})</option>${thruDates.length > 1 ? `<optgroup label="Through a date">${thruDates.map(d => opt('t:' + d, 'Through ' + dl(d))).join('')}</optgroup>` : ''}<optgroup label="One bake only">${onlyDates.map(d => opt('o:' + d, 'Only ' + dl(d) + ((BAKES || []).some(b => b.date === d) ? ' (done)' : ''))).join('')}</optgroup></select></div>` : '';
     box.innerHTML = pick + `<div class="bk-sum">${bakeView ? (single ? `Only the ${esc(pantryDate(vDate))} bake` : `Bakes from today through ${esc(pantryDate(vDate))}`) + ' (forecast recipes only; hand-added recipes are left out)' : `Whole bake plan${next ? ` · next bake ${esc(pantryDate(next))}` : ''}`}. Need is the plan's ingredients; have is your latest count plus approved purchases since.</div>` +
-      `<h3>To buy${buy.length ? ` (${buy.length})` : ''}</h3>` +
+      (bakeView ? `<h3>To buy${buy.length ? ` (${buy.length})` : ''}</h3>` +
       (buy.length ? bkBuyList(buy, rows) + `<div class="buy-total"><span>Estimated total${unpriced ? `<small>${unpriced} item${unpriced === 1 ? '' : 's'} without a price</small>` : ''}</span><b>${money2(total)}</b></div>` : '<div class="pn-note">Everything the plan needs is on hand.</div>') +
-      `<div class="pn-bar" style="margin-top:10px"><button type="button" class="btn-ghost" id="bkCopy">Copy list</button><button type="button" class="btn-ghost" id="bkClear">Clear ticks</button></div>` +
+      `<div class="pn-bar" style="margin-top:10px"><button type="button" class="btn-ghost" id="bkCopy">Copy list</button><button type="button" class="btn-ghost" id="bkClear">Clear ticks</button></div>`
+      // Whole plan: the same list is Inventory > Ingredients > What to buy, so link there instead of repeating it (design pass v1.183).
+      : `<div class="bk-link"><span>${buy.length ? `${buy.length} item${buy.length === 1 ? '' : 's'} to buy for the whole plan.` : 'Everything the plan needs is on hand.'} The shopping list is in Inventory, Ingredients.</span><button type="button" class="btn-ghost" id="bkToIng">Open Ingredients</button></div>`) +
 
       bakeDoneHtml +
       `<details class="bk-rc"${bakeRcOpen ? ' open' : ''}><summary>After the bake: recount what is left</summary><div class="pn-note">Baking does not take anything off the pantry by itself. Weigh what is left and save it; blank rows are skipped. Today's date is used.</div>${rc}<div class="pn-bar" style="margin-top:12px"><button class="primary" type="button" id="bkSave">Save counts</button></div></details>`;
     const thru = box.querySelector('#bkThru'); if (thru) thru.onchange = () => { bakeView = thru.value; bakeFormFresh = true; bdPending = null; bakePaint(); };
     box.querySelector('.bk-rc').addEventListener('toggle', e => { bakeRcOpen = e.target.open; });
     bkWireTicks(box);
-    box.querySelector('#bkClear').onclick = () => { buyChecked = {}; buySave(); bakePaint(); };
-    box.querySelector('#bkCopy').onclick = async e => {
+    const bkToIng = box.querySelector('#bkToIng'); if (bkToIng) bkToIng.onclick = () => go('pantry', 'inventory');
+    const bkClr = box.querySelector('#bkClear'); if (bkClr) bkClr.onclick = () => { buyChecked = {}; buySave(); bakePaint(); };
+    const bkCp = box.querySelector('#bkCopy'); if (bkCp) bkCp.onclick = async e => {
       const left = buy.filter(r => !buyChecked[r.i.name]), vs = [...new Set(left.map(bkVendor))].sort();
       const lines = vs.flatMap(v => ['', v.toUpperCase(), ...left.filter(r => bkVendor(r) === v).sort((x, y) => x.i.name.localeCompare(y.i.name)).map(r => { const q = part(r); return `☐ ${q.n ? `${q.n} ${q.n === 1 ? 'pack' : 'packs'}` : buyFmt(r.short, r.i.unit)} ${r.i.name}${q.n ? ` (${packFmt(r.i.pkAmt, r.i.unit)} each)` : ''}${r.st === 'none' ? ' [not counted]' : ''}`; })]);
       const text = 'Bake day buy list (includes 20% waste)' + lines.join('\n');
@@ -9252,7 +9303,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   // ---- Pull down to refresh (home-screen app has no reload button). Also: tap the version badge. ----
   (function () {
     const ind = document.createElement('div'); ind.id = 'ptr';
-    ind.style.cssText = 'position:fixed;left:0;right:0;top:0;z-index:90;text-align:center;padding:calc(env(safe-area-inset-top) + 10px) 0 12px;font:600 15px -apple-system,system-ui,sans-serif;background:#000;color:#fff;transform:translateY(-100%);transition:transform .15s;pointer-events:none;visibility:hidden';
+    ind.style.cssText = 'position:fixed;left:0;right:0;top:0;z-index:90;text-align:center;padding:calc(env(safe-area-inset-top) + 10px) 0 12px;font:600 var(--fs-body) -apple-system,system-ui,sans-serif;background:#000;color:#fff;transform:translateY(-100%);transition:transform .15s;pointer-events:none;visibility:hidden';
     ind.textContent = 'Pull to refresh';
     document.body.appendChild(ind);
     let y0 = null, dy = 0;
