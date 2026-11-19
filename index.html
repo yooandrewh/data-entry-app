@@ -2654,7 +2654,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.173.00 · Nov 18, 8:40 PM PST</div>
+<div class="ver-badge">v1.174.00 · Nov 18, 9:05 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -5700,9 +5700,9 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   }
   // ---- Schedule: who does what, and when. Tasks come from the plan (planBakeTotals); drag a block along its row to move it in time, or to another person / oven. ----
   // Setup -> batch prep -> fill the pans -> oven round -> (cool) -> glaze -> cleaning. People do everything but the oven and the cooling; one oven round at a time per oven.
-  let schedCfg = { people: 2, ovens: 2, fill: 5 }, schedPin = {}, schedOv = {}, schedAt = {}, schedSel = null, schedPpm = 2;
-  try { Object.assign(schedCfg, JSON.parse(localStorage.getItem('sched.v2') || '{}')); const m = JSON.parse(localStorage.getItem('schedMap.v2') || '{}') || {}; schedPin = m.pin || {}; schedOv = m.ov || {}; schedAt = m.at || {}; } catch (e) {}
-  const schedSave = () => { try { localStorage.setItem('sched.v2', JSON.stringify(schedCfg)); localStorage.setItem('schedMap.v2', JSON.stringify({ pin: schedPin, ov: schedOv, at: schedAt })); } catch (e) {} };
+  let schedCfg = { people: 2, ovens: 2, fill: 5 }, schedPin = {}, schedOv = {}, schedAt = {}, schedDur = {}, schedZoom = 1, schedSel = null, schedPpm = 2;
+  try { Object.assign(schedCfg, JSON.parse(localStorage.getItem('sched.v2') || '{}')); const m = JSON.parse(localStorage.getItem('schedMap.v2') || '{}') || {}; schedPin = m.pin || {}; schedOv = m.ov || {}; schedAt = m.at || {}; schedDur = m.dur || {}; schedZoom = m.zoom || 1; } catch (e) {}
+  const schedSave = () => { try { localStorage.setItem('sched.v2', JSON.stringify(schedCfg)); localStorage.setItem('schedMap.v2', JSON.stringify({ pin: schedPin, ov: schedOv, at: schedAt, dur: schedDur, zoom: schedZoom })); } catch (e) {} };
   const schedStrip = t => String(t || '').replace(/<br\s*\/?>/g, '\n').replace(/<\/?(b|i|small|p|div|span)[^>]*>/g, '').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
   function schedTasks() {
     const T = [{ id: 'setup', name: 'Setup', p: '', min: KT.setupMin, who: true, deps: [] }], bake = planBakeTotals || {};
@@ -5723,6 +5723,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       if (GLAZED.includes(p) && last) T.push({ id: p + ':glaze', name: pdisp(p) + ' glaze', p, min: Math.max(1, Math.round(n * KT.glazeSec / 60)), who: true, deps: [last], delay: KT.coolMin });
     }
     if (T.length > 1) T.push({ id: 'clean', name: 'Cleaning', p: '', min: KT.cleanMin, who: true, deps: T.map(t => t.id) });
+    T.forEach(t => { if (schedDur[t.id]) t.min = schedDur[t.id]; });
     return T.length > 1 ? T : [];
   }
   // First time >= ready where `dur` minutes are free on a resource (slots = [[start, end], ...]).
@@ -5774,20 +5775,20 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     const el = document.getElementById('homeSched'); if (!el) return;
     const T = schedTasks();
     const step = (k, lbl, v) => `<div class="sc-set"><span>${lbl}</span><button type="button" data-sc="${k}-" aria-label="Fewer ${lbl}">−</button><b>${v}</b><button type="button" data-sc="${k}+" aria-label="More ${lbl}">+</button></div>`;
-    let h = `<div class="card sc-card"><h3>Who does what</h3><div class="sc-help">Built from the Plan page's bake. Drag a block along its row to move it in time, or onto another person or oven to hand it over. A block can't start before the step it waits on, so it snaps later if you go too early. Times snap to 5 min.</div>`
-      + `<div class="sc-sets">${step('people', 'People', schedCfg.people)}${step('ovens', 'Ovens', schedCfg.ovens)}${step('fill', 'Min to fill pans', schedCfg.fill)}</div>`;
+    let h = `<div class="card sc-card"><h3>Who does what</h3><div class="sc-help">Built from the Plan page's bake. Drag a block along its row to move it in time, or onto another person or oven to hand it over. Tap a block, then drag the handle on its right end to stretch or shorten it. A block can't start before the step it waits on, so it snaps later if you go too early. Times snap to 5 min.</div>`
+      + `<div class="sc-sets">${step('people', 'People', schedCfg.people)}${step('ovens', 'Ovens', schedCfg.ovens)}${step('fill', 'Min to fill pans', schedCfg.fill)}<div class="sc-set"><span>Zoom</span><button type="button" data-sc="zoom-" aria-label="Zoom out">−</button><b>${schedZoom}×</b><button type="button" data-sc="zoom+" aria-label="Zoom in">+</button></div></div>`;
     if (!T.length) { el.innerHTML = h + `<div class="sc-none">Nothing to bake yet. Pick days for at least one item on the Plan page (step 1).</div></div>`; return; }
-    const R = schedRun(T), total = Math.max(...R.map(x => x.end)), ppm = schedPpm = Math.max(1.2, Math.min(6, 640 / total)), W = Math.ceil(total * ppm) + 4;
+    const R = schedRun(T), total = Math.max(...R.map(x => x.end)), ppm = schedPpm = Math.max(1.2, Math.min(6, 640 / total)) * schedZoom, W = Math.ceil(total * ppm) + 4;
     const lanes = [...Array(schedCfg.people).keys()].map(i => ({ label: 'Person ' + (i + 1), items: R.filter(x => x.who === i), kind: 'p', idx: i })).concat([...Array(schedCfg.ovens).keys()].map(i => ({ label: 'Oven ' + (i + 1), items: R.filter(x => x.ov === i), kind: 'o', idx: i })));
     const col = x => (x.p && PRODUCT_COLOR[x.p]) || '#6b6b6b';
-    const moved = id => schedPin[id] != null || schedOv[id] != null || schedAt[id] != null;
-    const blk = x => `<div class="sc-blk${x.oven ? ' oven' : ''}${schedSel === x.id ? ' sel' : ''}${moved(x.id) ? ' mv' : ''}" data-id="${esc(x.id)}" data-drag="1" style="left:${Math.round(x.start * ppm)}px;width:${Math.max(6, Math.round(x.min * ppm) - 1)}px;--c:${col(x)}" title="${esc(x.name)}"><span>${esc(x.name)}</span></div>`;
+    const moved = id => schedPin[id] != null || schedOv[id] != null || schedAt[id] != null || schedDur[id] != null;
+    const blk = x => `<div class="sc-blk${x.oven ? ' oven' : ''}${schedSel === x.id ? ' sel' : ''}${moved(x.id) ? ' mv' : ''}" data-id="${esc(x.id)}" data-drag="1" style="left:${Math.round(x.start * ppm)}px;width:${Math.max(6, Math.round(x.min * ppm) - 1)}px;--c:${col(x)}" title="${esc(x.name)}"><span>${esc(x.name)}</span>${schedSel === x.id ? '<i class="sc-rz" data-rz="1"></i>' : ''}</div>`;
     const ticks = []; for (let m = 0; m <= total; m += total > 360 ? 60 : 30) ticks.push(`<i style="left:${Math.round(m * ppm)}px">${clk(m)}</i>`);
     const busy = lanes.filter(l => l.kind === 'p').map(l => Math.round(l.items.reduce((a, x) => a + x.min, 0)));
     h += `<div class="sc-sum"><b>${fmtDur(Math.round(total))}</b> start to finish · ${schedCfg.people} ${schedCfg.people === 1 ? 'person' : 'people'} · ${schedCfg.ovens} oven${schedCfg.ovens === 1 ? '' : 's'}<small>Hands-on time: ${busy.map((m, i) => 'Person ' + (i + 1) + ' ' + fmtDur(m)).join(' · ')}</small></div>`
       + `<div class="sc-scroll"><div class="sc-chart" style="width:${W}px"><div class="sc-axis">${ticks.join('')}</div>${lanes.map(l => `<div class="sc-lane" data-kind="${l.kind}" data-lane="${l.idx}"><span class="sc-lbl">${l.label}</span>${l.items.map(blk).join('')}</div>`).join('')}</div></div>`;
     const sel = R.find(x => x.id === schedSel);
-    h += `<div class="sc-detail">${sel ? `<b>${esc(sel.name)}</b> · ${clk(sel.start)} to ${clk(sel.end)} (${sel.min} min)${sel.who >= 0 ? ' · Person ' + (sel.who + 1) : ' · Oven ' + (sel.ov + 1)}${moved(sel.id) ? ' · moved by you <button type="button" data-sc="unpin">Put back</button>' : ''}` : 'Tap a block for its details.'}</div>`;
+    h += `<div class="sc-detail">${sel ? `<b>${esc(sel.name)}</b> · ${clk(sel.start)} to ${clk(sel.end)} (${sel.min} min)${sel.who >= 0 ? ' · Person ' + (sel.who + 1) : ' · Oven ' + (sel.ov + 1)}${schedDur[sel.id] ? ' · length set by you' : ''}${moved(sel.id) ? ' · edited by you <button type="button" data-sc="unpin">Put back</button>' : ''}` : 'Tap a block for its details.'}</div>`;
     h += `<div class="sc-lists">${lanes.map(l => `<div class="sc-list"><b>${l.label}</b>${l.items.map(x => `<div><span>${clk(x.start)}</span> ${esc(x.name)} <small>${x.min} min</small></div>`).join('') || '<div><small>Nothing</small></div>'}</div>`).join('')}</div>`
       + `<h3 style="margin-top:16px">Steps for each item</h3><div class="sc-help">The blocks you drag are the timed parts. Open an item for every step of its method.</div>${schedSteps(T)}<button type="button" class="sc-reset" data-sc="reset">Auto-arrange (clear my moves)</button></div>`;
     el.innerHTML = h;
@@ -5800,8 +5801,9 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       const b = e.target.closest('[data-sc]');
       if (b) {
         const v = b.dataset.sc;
-        if (v === 'reset') { schedPin = {}; schedOv = {}; schedAt = {}; }
-        else if (v === 'unpin') { delete schedPin[schedSel]; delete schedOv[schedSel]; delete schedAt[schedSel]; }
+        if (v === 'reset') { schedPin = {}; schedOv = {}; schedAt = {}; schedDur = {}; }
+        else if (v === 'zoom+' || v === 'zoom-') { schedZoom = Math.max(1, Math.min(6, schedZoom + (v === 'zoom+' ? 1 : -1))); }
+        else if (v === 'unpin') { delete schedPin[schedSel]; delete schedOv[schedSel]; delete schedAt[schedSel]; delete schedDur[schedSel]; }
         else { const k = v.slice(0, -1), d = v.endsWith('+') ? 1 : -1, lim = { people: [1, 4], ovens: [1, 4], fill: [0, 30] }[k]; schedCfg[k] = Math.max(lim[0], Math.min(lim[1], schedCfg[k] + d)); schedPin = Object.fromEntries(Object.entries(schedPin).filter(([, i]) => i < schedCfg.people)); schedOv = Object.fromEntries(Object.entries(schedOv).filter(([, i]) => i < schedCfg.ovens)); }
         schedSave(); schedPaint(); return;
       }
@@ -5809,16 +5811,19 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     });
     root.addEventListener('pointerdown', e => {
       const bl = e.target.closest('.sc-blk[data-drag]'); if (!bl) return;
+      if (e.target.closest('[data-rz]')) { drag = { id: bl.dataset.id, el: bl, rz: true, x: e.clientX, w: bl.getBoundingClientRect().width, moved: false }; try { bl.setPointerCapture(e.pointerId); } catch (x) {} e.preventDefault(); return; }
       drag = { id: bl.dataset.id, el: bl, x: e.clientX, y: e.clientY, grab: e.clientX - bl.getBoundingClientRect().left, moved: false }; try { bl.setPointerCapture(e.pointerId); } catch (x) {}
     });
     root.addEventListener('pointermove', e => {
       if (!drag) return; const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
       if (!drag.moved && Math.hypot(dx, dy) < 6) return; drag.moved = true;
+      if (drag.rz) { drag.el.style.width = Math.max(5 * schedPpm, drag.w + dx) + 'px'; return; }
       drag.el.style.transform = `translate(${dx}px, ${dy}px)`; drag.el.style.zIndex = 5; drag.el.classList.add('drag');
     });
     const finish = e => {
       if (!drag) return; const d = drag; drag = null; d.el.style.transform = ''; d.el.classList.remove('drag');
       if (!d.moved) return;
+      if (d.rz) { const m = Math.max(5, Math.round((d.w + (e.clientX - d.x)) / schedPpm / 5) * 5); schedDur[d.id] = m; schedSave(); schedPaint(); return; }
       d.el.style.pointerEvents = 'none'; const under = document.elementFromPoint(e.clientX, e.clientY); d.el.style.pointerEvents = '';
       const lane = under && under.closest('.sc-lane'), isOven = d.el.classList.contains('oven');
       if (lane) {
@@ -9245,8 +9250,11 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
 .sc-axis i { position: absolute; font-style: normal; font-size: var(--fs-micro); color: #6b6b6b; border-left: 1px solid #e3e3e3; padding-left: 3px; height: 20px; }
 .sc-lane { position: relative; height: 48px; border-top: 1px solid #e3e3e3; }
 .sc-lbl { position: sticky; left: 6px; z-index: 2; display: inline-block; font-size: var(--fs-micro); color: #6b6b6b; background: rgba(255,255,255,.85); padding: 0 4px; border-radius: 4px; margin-top: 2px; }
-.sc-blk { position: absolute; top: 16px; height: 28px; border-radius: 6px; background: var(--c, #6b6b6b); color: #fff; font-size: var(--fs-micro); overflow: hidden; white-space: nowrap; padding: 0 4px; line-height: 28px; touch-action: none; cursor: grab; user-select: none; }
+.sc-blk { position: absolute; top: 16px; height: 28px; border-radius: 6px; background: var(--c, #6b6b6b); color: #fff; font-size: var(--fs-micro); overflow: visible; white-space: nowrap; padding: 0 4px; line-height: 28px; touch-action: none; cursor: grab; user-select: none; }
 .sc-blk.oven { background: #fff; color: var(--c, #232323); border: 2px solid var(--c, #6b6b6b); line-height: 24px; cursor: default; }
+.sc-blk > span { display: block; overflow: hidden; }
+.sc-rz { position: absolute; right: -9px; top: -3px; bottom: -3px; width: 18px; cursor: ew-resize; z-index: 6; touch-action: none; }
+.sc-rz::after { content: ''; position: absolute; left: 7px; top: 4px; bottom: 4px; width: 4px; border-radius: 2px; background: #000; }
 .sc-blk.sel { outline: 2px solid #000; outline-offset: 1px; }
 .sc-blk.mv::after { content: ''; position: absolute; right: 2px; top: 2px; width: 6px; height: 6px; border-radius: 3px; background: #fff; border: 1px solid #000; }
 .sc-sum small { display: block; margin-top: 2px; font-size: var(--fs-caption); color: #6b6b6b; }

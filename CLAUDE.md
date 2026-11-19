@@ -239,6 +239,8 @@ Ingredients: **Dark Chocolate 70% and Dark Chocolate Couverture are retired into
 
 **v1.173.00: Schedule v2** (Andrew: 2 people, 2 ovens). Defaults People 2 / Ovens 2 / fill 5 min (`sched.v2`; moves in `schedMap.v2` = `{pin, ov, at}`). Every block is draggable (pointer events): along the row sets a start time (snaps to 5 min, `schedAt`, can't start before its dependency), onto another person / oven lane hands it over (`schedPin` / `schedOv`); moved blocks get a dot; "Put back" / "Auto-arrange" clear moves. `schedRun` fills gaps per resource. Shows hands-on time per person and, under it, **Steps for each item** (`schedSteps`): the timed steps plus **every step of the recipe method**, one line each. Headless-tested (26 blocks, drag simulated); touch drag not tried on a phone. Same unconfirmed assumptions as v1.172.00.
 
+**v1.174.00: resize blocks.** Tap a block, drag the handle on its right end to stretch or shorten it in 5-minute slots (min 5; `schedDur` in `schedMap.v2.dur`, applied in `schedTasks`, later steps wait for the new end). Zoom stepper (1-6x, `schedZoom`) spreads the chart for finer drags. Headless-tested; touch not tried on a phone.
+
 ## Design pass (v1.149.00)
 
 Last CSS block: **every `<select>` has one style** (white, 1px #c9c9c9, 12px radius, 44px, black chevron; `.row-select` and `[data-labi]` excluded); the Forecast store toggle (`.fc-locs`) uses the pill style. On desktop (>=900px) all pages share a 1120px column, page chips sit centered at natural width, the Trends donut is 220px. On phones the 5 Inventory chips shrink (11px padding) to fit. Counts' total says "pieces", not "madeleines". Still open: coloured snowflake/flame/arrow icons in Forecast misses (breaks the B/W rule), today's half-finished day shows as a 0.0x miss, Stock's section headers use the old grey band style.
@@ -259,7 +261,7 @@ The headless check at 390px misses what iOS does. Apply these to every new or ch
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.173.00**; the next feature is v1.174.00, a fix v1.173.01. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.174.00**; the next feature is v1.175.00, a fix v1.174.01. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 
