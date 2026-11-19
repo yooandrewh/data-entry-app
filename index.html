@@ -2297,6 +2297,9 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
 .sc-axis i { position: absolute; left: 0; right: 0; font-style: normal; font-size: var(--fs-micro); color: #6b6b6b; border-top: 1px solid #e3e3e3; padding-left: 4px; }
 .sc-lane { position: relative; border-left: 1px solid #e3e3e3; }
 .sc-blk { position: absolute; left: 2px; right: 2px; box-sizing: border-box; border-radius: 6px; background: var(--c, #6b6b6b); color: #fff; font-size: var(--fs-nav); padding: 2px 5px; line-height: 1.2; touch-action: none; cursor: grab; user-select: none; }
+.sc-blk span { display: block; overflow: hidden; text-overflow: ellipsis; }
+.sc-blk.sm span { white-space: nowrap; }
+.sc-blk.sm { padding-top: 0; padding-bottom: 0; font-size: var(--fs-micro); line-height: 14px; }
 .sc-blk.rest { background: repeating-linear-gradient(135deg, #f1f1f1 0 6px, #e4e4e4 6px 12px); color: #555; border: 1px dashed #999; cursor: default; touch-action: auto; }
 .sc-blk.oven { background: #fff; color: var(--c, #232323); border: 2px solid var(--c, #6b6b6b); cursor: default; }
 .sc-blk > span { display: block; overflow: hidden; height: 100%; }
@@ -2702,7 +2705,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.176.02 · Nov 18, 6:05 PM PST</div>
+<div class="ver-badge">v1.176.03 · Nov 18, 6:25 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -5752,12 +5755,13 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   try { Object.assign(schedCfg, JSON.parse(localStorage.getItem('sched.v2') || '{}')); const m = JSON.parse(localStorage.getItem('schedMap.v2') || '{}') || {}; schedPin = m.pin || {}; schedOv = m.ov || {}; schedAt = m.at || {}; schedDur = m.dur || {}; schedZoom = m.zoom || 2; } catch (e) {}
   const schedSave = () => { try { localStorage.setItem('sched.v2', JSON.stringify(schedCfg)); localStorage.setItem('schedMap.v2', JSON.stringify({ pin: schedPin, ov: schedOv, at: schedAt, dur: schedDur, zoom: schedZoom })); } catch (e) {} };
   const schedStrip = t => String(t || '').replace(/<br\s*\/?>/g, '\n').replace(/<\/?(b|i|small|p|div|span)[^>]*>/g, '').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+  let SCHED_ORDER = ['Chookie', 'Pumpkin Bundt', 'Blueberry Muffin', 'Maple Pecan', 'Sea Salt', 'Lemon Poppy'];   // work order after cake pops: the long oven items first so both ovens stay full (40-day plan: 355 of 362 oven-minutes busy, 6h25); bundt before muffin is fine (Andrew 2026-11-18)
   const SCHED_PREP_MIN = 30, SCHED_OWN_PREP = ['Pumpkin Muffin', 'Blueberry Muffin', 'Chookie', 'Cake Pop'];
   function schedTasks() {
     const T = [{ id: 'setup', name: 'Setup', p: '', min: KT.setupMin, who: true, deps: [], ix: -1, rk: 0 }], bake = planBakeTotals || {};
     for (const p of PRODUCTS) {
       const n = Math.round(bake[p] || 0); if (n <= 0) continue;
-      const ix = p === 'Cake Pop' ? -0.5 : PRODUCTS.indexOf(p), o = ovenSteps({ [p]: n }).rows[0], batches = flavorBatches(n, p);   // cake pops go first: they need hours of resting after the oven
+      const ix = p === 'Cake Pop' ? -0.5 : SCHED_ORDER.indexOf(p), o = ovenSteps({ [p]: n }).rows[0], batches = flavorBatches(n, p);   // cake pops go first: they need hours of resting after the oven
       let group = KT.prepGroup, pmin = KT.prepMin;
       try { const key = Object.keys(BS_PRODUCT).find(k => BS_PRODUCT[k] === p), f = key && bsFind(key); if (f && f.sec !== 'mad') { group = 1; pmin = (f.it && f.it.prep) || 20; } } catch (e) {}
       if (!SCHED_OWN_PREP.includes(p)) pmin = SCHED_PREP_MIN;   // Andrew 2026-11-18: every prep block is 30 min except muffins, cookies and cake pops (they keep their recipe's own prep time)
@@ -5850,7 +5854,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     const rests = R.filter(x => x.rest); if (rests.length) lanes.push({ label: 'Resting', items: rests, kind: 'r', idx: 0 });
     const col = x => (x.p && PRODUCT_COLOR[x.p]) || '#6b6b6b';
     const moved = id => schedPin[id] != null || schedOv[id] != null || schedAt[id] != null || schedDur[id] != null;
-    const blk = x => x.rest ? `<div class="sc-blk rest" data-id="${esc(x.id)}" style="top:${Math.round(x.start * ppm)}px;height:${Math.max(6, Math.round(x.min * ppm) - 1)}px;--c:${col(x)}" title="${esc(x.name)}"><span>${esc(x.name)}</span></div>` : `<div class="sc-blk${x.oven ? ' oven' : ''}${schedSel === x.id ? ' sel' : ''}${moved(x.id) ? ' mv' : ''}" data-id="${esc(x.id)}" data-drag="1" style="top:${Math.round(x.start * ppm)}px;height:${Math.max(6, Math.round(x.min * ppm) - 1)}px;--c:${col(x)}" title="${esc(x.name)}"><span>${esc(x.name)}</span>${schedSel === x.id ? '<i class="sc-rz" data-rz="1"></i>' : ''}</div>`;
+    const blk = x => x.rest ? `<div class="sc-blk rest" data-id="${esc(x.id)}" style="top:${Math.round(x.start * ppm)}px;height:${Math.max(6, Math.round(x.min * ppm) - 1)}px;--c:${col(x)}" title="${esc(x.name)}"><span>${esc(x.name)}</span></div>` : `<div class="sc-blk${x.min * ppm < 30 ? ' sm' : ''}${x.oven ? ' oven' : ''}${schedSel === x.id ? ' sel' : ''}${moved(x.id) ? ' mv' : ''}" data-id="${esc(x.id)}" data-drag="1" style="top:${Math.round(x.start * ppm)}px;height:${Math.max(16, Math.round(x.min * ppm) - 1)}px;--c:${col(x)}" title="${esc(x.name)}"><span>${esc(x.name)}</span>${schedSel === x.id ? '<i class="sc-rz" data-rz="1"></i>' : ''}</div>`;
     const ticks = []; for (let m = 0; m <= total; m += schedZoom > 1 ? 30 : 60) ticks.push(`<i style="top:${Math.round(m * ppm)}px">${clk(m)}</i>`);
     const busy = lanes.filter(l => l.kind === 'p').map(l => Math.round(l.items.reduce((a, x) => a + x.min, 0)));
     h += `<div class="sc-sum"><b>${fmtDur(Math.round(total))}</b> start to finish · ${schedCfg.people} ${schedCfg.people === 1 ? 'person' : 'people'} · ${schedCfg.ovens} oven${schedCfg.ovens === 1 ? '' : 's'}<small>Hands-on time: ${busy.map((m, i) => 'Person ' + (i + 1) + ' ' + fmtDur(m)).join(' · ')}</small></div>`

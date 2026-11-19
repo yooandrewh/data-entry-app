@@ -251,6 +251,8 @@ Ingredients: **Dark Chocolate 70% and Dark Chocolate Couverture are retired into
 
 **v1.176.02: Schedule is less squished.** Default zoom 2x (3.2 px per minute), lanes at least 112px wide (the chart scrolls sideways on a phone), block text 12px (`--fs-nav`).
 
+**v1.176.03: oven-first order and labelled small blocks.** `SCHED_ORDER` (Cookie, Bundt, Muffin, Maple Pecan, Sea Salt, Lemon Poppy, after Cake Pop) sets who is worked on first; long oven items go first so both ovens stay full from 0:45 (355 of 362 oven-minutes busy, was about 80%) and the 40-day plan is 6h25. Bundt before muffin is fine (Andrew asked). The end is set by the cake pop chain (cool, frost, roll, chill, dip), not the ovens. Blocks under 30px are one line with the text kept (`.sc-blk.sm`), min height 16px.
+
 ## Design pass (v1.149.00)
 
 Last CSS block: **every `<select>` has one style** (white, 1px #c9c9c9, 12px radius, 44px, black chevron; `.row-select` and `[data-labi]` excluded); the Forecast store toggle (`.fc-locs`) uses the pill style. On desktop (>=900px) all pages share a 1120px column, page chips sit centered at natural width, the Trends donut is 220px. On phones the 5 Inventory chips shrink (11px padding) to fit. Counts' total says "pieces", not "madeleines". Still open: coloured snowflake/flame/arrow icons in Forecast misses (breaks the B/W rule), today's half-finished day shows as a 0.0x miss, Stock's section headers use the old grey band style.
@@ -271,7 +273,7 @@ The headless check at 390px misses what iOS does. Apply these to every new or ch
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.176.02**; the next feature is v1.177.00, a fix v1.176.03. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.176.03**; the next feature is v1.177.00, a fix v1.176.04. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 
