@@ -2710,7 +2710,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.177.03 · Nov 18, 10:40 PM PST</div>
+<div class="ver-badge">v1.177.04 · Nov 18, 11:05 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -5762,7 +5762,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   const schedStrip = t => String(t || '').replace(/<br\s*\/?>/g, '\n').replace(/<\/?(b|i|small|p|div|span)[^>]*>/g, '').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
   const SCHED_PREDONE = ['Maple Pecan'];   // Andrew 2026-11-18: Maple Pecan batter is made ahead, so it has no prep block and its first fill can start right after setup
   const SCHED_COMBO = ['Lemon Poppy', 'Sea Salt'], SCHED_COMBO_X = 1.5;   // Andrew 2026-11-18: these two can be prepped together; both at once takes 1.5x one prep (45 min instead of 30)
-  let SCHED_ORDER = ['Maple Pecan', 'Lemon Poppy', 'Sea Salt', 'Pumpkin Bundt', 'Blueberry Muffin', 'Chookie'];   // work order after cake pops (they need long rests): Maple Pecan, Lemon Poppy, Sea Salt, then bundt, muffin, cookie last (Andrew 2026-11-18). 40-day plan 6h32; cookie-first was 6h25 with the ovens fuller
+  let SCHED_ORDER = ['Chookie', 'Maple Pecan', 'Lemon Poppy', 'Sea Salt', 'Pumpkin Bundt', 'Blueberry Muffin'];   // work order after cake pops (they need long rests). Cookie moved first on 2026-11-18 (Andrew: use the oven time): its 6 rounds run one after another, so starting them last stretched the ovens to 5h10; first, the ovens are 91% busy and done by 4h00. 40-day plan 6h32; cookie-first was 6h25 with the ovens fuller
   const SCHED_PREP_MIN = 30, SCHED_OWN_PREP = ['Pumpkin Muffin', 'Blueberry Muffin', 'Chookie', 'Cake Pop'];
   function schedTasks() {
     const T = [{ id: 'setup', name: 'Setup', p: '', min: KT.setupMin, who: true, deps: [], ix: -1, rk: 0 }], bake = planBakeTotals || {};
