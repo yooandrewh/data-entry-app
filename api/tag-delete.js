@@ -22,9 +22,6 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  if (process.env.APP_KEY && req.headers['x-app-key'] !== process.env.APP_KEY) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
   if (!requireCode(req, res)) return;
 
   try {

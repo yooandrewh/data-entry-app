@@ -2,7 +2,7 @@
 // Google Sheet — update its date/time, location, and/or amounts by row id.
 //
 // Body: { pageId, datetime?, location?, amounts? }
-// Required env vars: GOOGLE_SA_JSON, SHEET_ID   (optional: APP_KEY)
+// Required env vars: GOOGLE_SA_JSON, SHEET_ID
 //
 // Safety: only rows in the Deliveries/Inventory tabs are editable, and goodwill /
 // transfer rows are refused here (they're signed / two-legged — delete + re-add).
@@ -59,9 +59,6 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  if (process.env.APP_KEY && req.headers['x-app-key'] !== process.env.APP_KEY) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
   if (!requireCode(req, res)) return;
 
   try {

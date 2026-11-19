@@ -1,9 +1,9 @@
 // Writes the Finance tab's top-line numbers into the "Finance" tab of the Google Sheet.
 // POST { month: '2026-10', rows: [[...], ...] } -> { written }. The tab is cleared and rewritten each time.
-// Auth matches ledger writes: x-ledger-code must equal env LEDGER_CODE (503 if unset, 401 if wrong), plus APP_KEY if set.
+// Auth matches ledger writes: x-ledger-code must equal env LEDGER_CODE (503 if unset, 401 if wrong).
 // Cost cap: no paid API; at most MAX_ROWS x MAX_COLS cells, strings clipped.
 //
-// Required env vars: GOOGLE_SA_JSON, SHEET_ID, LEDGER_CODE   (optional: APP_KEY)
+// Required env vars: GOOGLE_SA_JSON, SHEET_ID, LEDGER_CODE
 
 import { replaceTab } from './_sheets.js';
 import { codeEq } from './_auth.js';
@@ -20,9 +20,6 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  if (process.env.APP_KEY && req.headers['x-app-key'] !== process.env.APP_KEY) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
   const code = process.env.LEDGER_CODE;
   if (!code) return res.status(503).json({ error: 'Set LEDGER_CODE in Vercel to enable this' });
   if (!codeEq(req.headers['x-ledger-code'], code)) return res.status(401).json({ error: 'Wrong code' });

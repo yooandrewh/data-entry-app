@@ -7,7 +7,6 @@
 //   SHEET_ID        - the spreadsheet id
 // Optional env vars:
 //   SHEET_DELIVERIES_TAB / SHEET_INVENTORY_TAB - tab name overrides
-//   APP_KEY         - if set, requests must send a matching "x-app-key" header
 //   NTFY_TOPIC      - ntfy.sh topic for phone push notifications
 
 import crypto from 'node:crypto';
@@ -97,9 +96,6 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  if (process.env.APP_KEY && req.headers['x-app-key'] !== process.env.APP_KEY) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
   if (!requireCode(req, res)) return;
 
   try {

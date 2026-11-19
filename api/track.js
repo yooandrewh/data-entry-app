@@ -8,7 +8,7 @@
 // identifies a person. The app URL is public, so anyone who opens the link is
 // recorded the same anonymous way.
 //
-// Required env vars: GOOGLE_SA_JSON, SHEET_ID   (optional: APP_KEY, SHEET_EVENTS_TAB)
+// Required env vars: GOOGLE_SA_JSON, SHEET_ID   (optional: SHEET_EVENTS_TAB)
 
 import { appendRows, ensureTab } from './_sheets.js';
 
@@ -38,10 +38,6 @@ export default async function handler(req, res) {
 
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-
-  if (process.env.APP_KEY && req.headers['x-app-key'] !== process.env.APP_KEY) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
 
   try {
     // sendBeacon posts a Blob, so the body may arrive as a string rather than parsed.

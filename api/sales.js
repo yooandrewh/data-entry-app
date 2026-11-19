@@ -1,7 +1,7 @@
 // Reads the "Sales" tab of the Google Sheet — the complete daily POS/OCR sales —
 // for the Sales and Projections tabs. The service-account key stays server-side.
 //
-// Required env vars: GOOGLE_SA_JSON, SHEET_ID   (optional: APP_KEY, SHEET_SALES_TAB)
+// Required env vars: GOOGLE_SA_JSON, SHEET_ID   (optional: SHEET_SALES_TAB)
 
 import { getRows } from './_sheets.js';
 
@@ -14,10 +14,6 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-app-key');
 
   if (req.method === 'OPTIONS') return res.status(204).end();
-
-  if (process.env.APP_KEY && req.headers['x-app-key'] !== process.env.APP_KEY) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
 
   try {
     const { rows } = await getRows(SALES_TAB, { cache: true });

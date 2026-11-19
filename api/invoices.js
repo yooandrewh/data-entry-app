@@ -10,7 +10,7 @@
 // header to match env LOGS_CODE (falls back to LEDGER_CODE), the same check as /api/logs. With neither set, every
 // call is refused (503). No paid API is called; each field is clipped and rows per read are capped.
 //
-// Required env vars: GOOGLE_SA_JSON, SHEET_ID, LOGS_CODE or LEDGER_CODE   (optional: APP_KEY)
+// Required env vars: GOOGLE_SA_JSON, SHEET_ID, LOGS_CODE or LEDGER_CODE
 
 import { getRows, appendRow, ensureTab, updateCell } from './_sheets.js';
 
@@ -29,9 +29,6 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'GET' && req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  if (process.env.APP_KEY && req.headers['x-app-key'] !== process.env.APP_KEY) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
   // Deny by default, for reads and writes.
   const code = process.env.LOGS_CODE || process.env.LEDGER_CODE;
   if (!code) return res.status(503).json({ error: 'Set LOGS_CODE in Vercel to enable shared invoices' });

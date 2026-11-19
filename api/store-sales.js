@@ -3,7 +3,7 @@
 // Columns are unevenly filled per store (some days have gross, some net; LM has no
 // transaction counts) so we normalize here.
 //
-// Required env vars: GOOGLE_SA_JSON, SHEET_ID   (optional: APP_KEY, SHEET_STORE_SALES_TAB)
+// Required env vars: GOOGLE_SA_JSON, SHEET_ID   (optional: SHEET_STORE_SALES_TAB)
 
 import { getRows } from './_sheets.js';
 
@@ -19,10 +19,6 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-app-key');
 
   if (req.method === 'OPTIONS') return res.status(204).end();
-
-  if (process.env.APP_KEY && req.headers['x-app-key'] !== process.env.APP_KEY) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
 
   try {
     const { rows } = await getRows(TAB, { cache: true });

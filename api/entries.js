@@ -2,7 +2,7 @@
 // tabs of the Google Sheet so every device shows the same shared list (read side
 // of the sync). The service-account key stays server-side.
 //
-// Required env vars: GOOGLE_SA_JSON, SHEET_ID   (optional: APP_KEY)
+// Required env vars: GOOGLE_SA_JSON, SHEET_ID
 
 import { getRows } from './_sheets.js';
 
@@ -58,10 +58,6 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, x-app-key');
 
   if (req.method === 'OPTIONS') return res.status(204).end();
-
-  if (process.env.APP_KEY && req.headers['x-app-key'] !== process.env.APP_KEY) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
 
   try {
     const all = (await Promise.all(TABS.map(readTab))).flat();

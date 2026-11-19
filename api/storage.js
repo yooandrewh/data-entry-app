@@ -12,7 +12,7 @@
 // Auth: reads are open (same as pantry). Writes need the x-ledger-code header to match env LEDGER_CODE;
 // with no LEDGER_CODE set, writes are refused. Cost cap: no paid API is called; each write is limited to MAX_LINES rows.
 //
-// Required env vars: GOOGLE_SA_JSON, SHEET_ID, LEDGER_CODE   (optional: APP_KEY)
+// Required env vars: GOOGLE_SA_JSON, SHEET_ID, LEDGER_CODE
 
 import { getRows, appendRows, ensureTab, updateCell } from './_sheets.js';
 import { codeEq } from './_auth.js';
@@ -34,10 +34,6 @@ export default async function handler(req, res) {
 
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'GET' && req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-
-  if (process.env.APP_KEY && req.headers['x-app-key'] !== process.env.APP_KEY) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
 
   try {
     if (req.method === 'GET') {

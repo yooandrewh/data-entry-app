@@ -15,7 +15,7 @@
 // Auth: plain GET and POST `add` (the phone upload) are open. Pending GET and the other POST actions need the x-ledger-code header to match env LEDGER_CODE
 // (503 when LEDGER_CODE is unset, 401 when wrong). Cost cap: no paid API is called; photo size and the pending count are capped.
 //
-// Required env vars: GOOGLE_SA_JSON, SHEET_ID, LEDGER_CODE   (optional: APP_KEY)
+// Required env vars: GOOGLE_SA_JSON, SHEET_ID, LEDGER_CODE
 
 import { getRows, appendRows, ensureTab, updateCell } from './_sheets.js';
 import { codeEq } from './_auth.js';
@@ -41,10 +41,6 @@ export default async function handler(req, res) {
 
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'GET' && req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-
-  if (process.env.APP_KEY && req.headers['x-app-key'] !== process.env.APP_KEY) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
 
   try {
     const wantsPending = req.method === 'GET' && String((req.query && req.query.pending) || '') === '1';
