@@ -243,6 +243,8 @@ Ingredients: **Dark Chocolate 70% and Dark Chocolate Couverture are retired into
 
 **v1.174.01: prep blocks are 30 min** (`SCHED_PREP_MIN`, Andrew 2026-11-18) for madeleines and bundt, except muffins, Cookie and Cake Pop (`SCHED_OWN_PREP`), which keep the recipe's own prep minutes (20 now). Schedule only; Kitchen time (`bakeEffort`) still uses `KT.prepMin`. Madeleine prep still groups 3 batches per block, so one block = 3 batches in 30 min; not confirmed.
 
+**v1.175.00: Schedule is vertical, styled, and packs better.** Time runs down the page, lanes are columns (`.sc-chart` grid, 1.6 px per minute x zoom, drag up/down = time, sideways = hand over, bottom bar = length). **Bug found:** every CSS block added since v1.171.00 (oven card, Schedule, Cake Pop pan buttons) had landed inside the JS template literal in the PDF export (`<style>${fontCss}${css}` near `elementsToPdf`), not the page stylesheet, so those pages were unstyled on the live site. Moved into the real `<style>` (ends near line 2320). **Rule: add CSS before the FIRST `</style>` in the file; the last one is inside a JS string. Check with a screenshot, not just the DOM.** `schedRun` now picks, among tasks that can start at the earliest moment, item by item and round by round (fill / bake of round k before prep for round k+1), so ovens are fed while prep continues: the 40-day plan went from 12h45 to 12h22. People, not ovens, are the limit (Oven 2 is barely needed).
+
 ## Design pass (v1.149.00)
 
 Last CSS block: **every `<select>` has one style** (white, 1px #c9c9c9, 12px radius, 44px, black chevron; `.row-select` and `[data-labi]` excluded); the Forecast store toggle (`.fc-locs`) uses the pill style. On desktop (>=900px) all pages share a 1120px column, page chips sit centered at natural width, the Trends donut is 220px. On phones the 5 Inventory chips shrink (11px padding) to fit. Counts' total says "pieces", not "madeleines". Still open: coloured snowflake/flame/arrow icons in Forecast misses (breaks the B/W rule), today's half-finished day shows as a 0.0x miss, Stock's section headers use the old grey band style.
@@ -263,7 +265,7 @@ The headless check at 390px misses what iOS does. Apply these to every new or ch
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.174.01**; the next feature is v1.175.00, a fix v1.174.02. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.175.00**; the next feature is v1.176.00, a fix v1.175.01. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 
