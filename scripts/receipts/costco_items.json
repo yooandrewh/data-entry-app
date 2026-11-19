@@ -104,9 +104,9 @@
   },
   "1653649": {
     "item": "Eggs",
-    "size": 10200,
+    "size": 11481.5,
     "unit": "g",
-    "what": "Extra Large Eggs, Cage Free, 15 dozen (180 ct), Business Center (looked up 2026-11-19, receipt $21.29)"
+    "what": "Extra Large Eggs, Cage Free, 15 dozen (180 XL at 27 oz/dozen USDA = 63.8 g each), Business Center (2026-11-19, $21.29)"
   },
   "97288": {
     "item": "Powdered Sugar",
@@ -143,5 +143,23 @@
     "size": 6123.5,
     "unit": "g",
     "what": "Arm & Hammer Pure Baking Soda, 13.5 lb (looked up 2026-11-19, $8.89)"
+  },
+  "1146273": {
+    "item": "Medium Vinyl Gloves",
+    "size": 300,
+    "unit": "g",
+    "what": "Medline Clear-Touch vinyl gloves, medium, 3 x 100 ct, counted as pieces (2026-11-19, $11.69)"
+  },
+  "630911": {
+    "item": "Cambro 8 qt Container (equipment)",
+    "size": 2,
+    "unit": "g",
+    "what": "Cambro round 8 qt with lid, 2-pack, equipment counted as pieces (2026-11-19, $15.49)"
+  },
+  "1189837": {
+    "item": "Cambro 22 qt Bucket (equipment)",
+    "size": 2,
+    "unit": "g",
+    "what": "Cambro 22 qt bucket with lid, 2-pack, equipment counted as pieces (2026-11-19, $23.99)"
   }
 }
