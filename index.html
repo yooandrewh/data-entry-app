@@ -2710,7 +2710,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.177.05 · Nov 18, 11:30 PM PST</div>
+<div class="ver-badge">v1.177.06 · Nov 18, 11:55 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -5762,7 +5762,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   const schedStrip = t => String(t || '').replace(/<br\s*\/?>/g, '\n').replace(/<\/?(b|i|small|p|div|span)[^>]*>/g, '').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
   const SCHED_PREDONE = ['Maple Pecan'];   // Andrew 2026-11-18: Maple Pecan batter is made ahead, so it has no prep block and its first fill can start right after setup
   const SCHED_COMBO = ['Lemon Poppy', 'Sea Salt'], SCHED_COMBO_X = 1.5;   // Andrew 2026-11-18: these two can be prepped together; both at once takes 1.5x one prep (45 min instead of 30)
-  let SCHED_ORDER = ['Chookie', 'Maple Pecan', 'Lemon Poppy', 'Sea Salt', 'Pumpkin Bundt', 'Blueberry Muffin'];   // work order after cake pops (they need long rests). Cookie moved first on 2026-11-18 (Andrew: use the oven time): its 6 rounds run one after another, so starting them last stretched the ovens to 5h10; first, the ovens are 91% busy and done by 4h00. 40-day plan 6h32; cookie-first was 6h25 with the ovens fuller
+  let SCHED_ORDER = ['Chookie', 'Cake Pop', 'Maple Pecan', 'Pumpkin Bundt', 'Lemon Poppy', 'Sea Salt', 'Blueberry Muffin'];   // work order, found by trying all 5,040 orders (2026-11-18, Andrew: shortest oven time): shortest time the ovens are on while the day stays 6h20. Cake Pop is in the list now (it used to be forced first)
   const SCHED_PREP_MIN = 30, SCHED_OWN_PREP = ['Pumpkin Muffin', 'Blueberry Muffin', 'Chookie', 'Cake Pop'];
   function schedTasks() {
     const T = [{ id: 'setup', name: 'Setup', p: '', min: KT.setupMin, who: true, deps: [], ix: -1, rk: 0 }], bake = planBakeTotals || {};
@@ -5770,7 +5770,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     const big = PRODUCTS.filter(q => Math.round(bake[q] || 0) > 0 && bowlQt(q) === 60 && !SCHED_COMBO.includes(q)).sort((a, b) => SCHED_ORDER.indexOf(a) - SCHED_ORDER.indexOf(b));   // 60 qt bowls cost extra: their preps run back to back as one block
     for (const p of PRODUCTS) {
       const n = Math.round(bake[p] || 0); if (n <= 0) continue;
-      const ix = p === 'Cake Pop' ? -0.5 : SCHED_ORDER.indexOf(p), o = ovenSteps({ [p]: n }).rows[0], batches = flavorBatches(n, p);   // cake pops go first: they need hours of resting after the oven
+      const ix = SCHED_ORDER.includes(p) ? SCHED_ORDER.indexOf(p) : p === 'Cake Pop' ? -0.5 : SCHED_ORDER.indexOf(p), o = ovenSteps({ [p]: n }).rows[0], batches = flavorBatches(n, p);   // cake pops go first: they need hours of resting after the oven
       let group = KT.prepGroup, pmin = KT.prepMin;
       try { const key = Object.keys(BS_PRODUCT).find(k => BS_PRODUCT[k] === p), f = key && bsFind(key); if (f && f.sec !== 'mad') { group = 1; pmin = (f.it && f.it.prep) || 20; } } catch (e) {}
       if (!SCHED_OWN_PREP.includes(p)) pmin = SCHED_PREP_MIN;   // Andrew 2026-11-18: every prep block is 30 min except muffins, cookies and cake pops (they keep their recipe's own prep time)
