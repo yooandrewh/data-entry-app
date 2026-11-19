@@ -101,5 +101,47 @@
     "size": 3785.4,
     "unit": "ml",
     "what": "Kirkland Signature Whole Milk, 1 gallon (receipt prints \"2 WHOLE MILK\" = 2 gallons, no item number; matched by the printed name)"
+  },
+  "1653649": {
+    "item": "Eggs",
+    "size": 10200,
+    "unit": "g",
+    "what": "Extra Large Eggs, Cage Free, 15 dozen (180 ct), Business Center (looked up 2026-11-19, receipt $21.29)"
+  },
+  "97288": {
+    "item": "Powdered Sugar",
+    "size": 22679.6,
+    "unit": "g",
+    "what": "C&H Pure Cane Confectioners Powdered Sugar, 50 lb, Business Center (looked up 2026-11-19, $36.99)"
+  },
+  "814602": {
+    "item": "Sugar",
+    "size": 22679.6,
+    "unit": "g",
+    "what": "C&H Pure Cane Granulated Sugar, 50 lb, Business Center (looked up 2026-11-19, $34.79)"
+  },
+  "19352": {
+    "item": "Pan Liners",
+    "size": 1000,
+    "unit": "g",
+    "what": "Dixie Lift-Off pan liners 16-3/8 x 24-3/8, 1000 ct, Business Center (counted as pieces; $56.99 on 2026-11-19)"
+  },
+  "1347776": {
+    "item": "Honey",
+    "size": 2268,
+    "unit": "g",
+    "what": "Kirkland Signature Wildflower Honey, 5 lb (looked up 2026-11-19, $15.99)"
+  },
+  "1218198": {
+    "item": "Vanilla Extract",
+    "size": 946.35,
+    "unit": "ml",
+    "what": "Rodelle Pure Vanilla Extract, 32 fl oz (looked up 2026-11-19, $18.99)"
+  },
+  "426292": {
+    "item": "Baking Soda",
+    "size": 6123.5,
+    "unit": "g",
+    "what": "Arm & Hammer Pure Baking Soda, 13.5 lb (looked up 2026-11-19, $8.89)"
   }
 }
