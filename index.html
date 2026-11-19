@@ -2325,6 +2325,11 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
 .rec-pans { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0; }
 .rec-pans button { min-height: 44px; border: 1px solid #c9c9c9; border-radius: 12px; background: #fff; padding: 0 14px; font-size: var(--fs-caption); }
 .rec-pans button.on { background: #000; color: #fff; border-color: #000; }
+  .sc-blk em { display: block; font-style: normal; opacity: .7; font-size: var(--fs-micro); line-height: 14px; }
+  .sc-blk > span { height: auto; }
+  .sc-blk.sm span, .sc-blk.sm em { display: inline; }
+  .sc-blk.sm em { margin-left: 4px; }
+  .sc-blk.sm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 </style>
 </head>
 <body>
@@ -2705,7 +2710,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.176.04 · Nov 18, 6:50 PM PST</div>
+<div class="ver-badge">v1.176.05 · Nov 18, 7:20 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -5755,7 +5760,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   try { Object.assign(schedCfg, JSON.parse(localStorage.getItem('sched.v2') || '{}')); const m = JSON.parse(localStorage.getItem('schedMap.v2') || '{}') || {}; schedPin = m.pin || {}; schedOv = m.ov || {}; schedAt = m.at || {}; schedDur = m.dur || {}; schedZoom = m.zoom || 2; } catch (e) {}
   const schedSave = () => { try { localStorage.setItem('sched.v2', JSON.stringify(schedCfg)); localStorage.setItem('schedMap.v2', JSON.stringify({ pin: schedPin, ov: schedOv, at: schedAt, dur: schedDur, zoom: schedZoom })); } catch (e) {} };
   const schedStrip = t => String(t || '').replace(/<br\s*\/?>/g, '\n').replace(/<\/?(b|i|small|p|div|span)[^>]*>/g, '').replace(/<[^>]+>/g, '').replace(/&nbsp;/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
-  let SCHED_ORDER = ['Lemon Poppy', 'Maple Pecan', 'Sea Salt', 'Blueberry Muffin', 'Pumpkin Bundt', 'Chookie'];   // work order after cake pops (they need long rests): madeleines first, cookies last (Andrew 2026-11-18). 40-day plan 6h32; cookie-first was 6h25 with the ovens fuller
+  let SCHED_ORDER = ['Maple Pecan', 'Lemon Poppy', 'Sea Salt', 'Pumpkin Bundt', 'Blueberry Muffin', 'Chookie'];   // work order after cake pops (they need long rests): Maple Pecan, Lemon Poppy, Sea Salt, then bundt, muffin, cookie last (Andrew 2026-11-18). 40-day plan 6h32; cookie-first was 6h25 with the ovens fuller
   const SCHED_PREP_MIN = 30, SCHED_OWN_PREP = ['Pumpkin Muffin', 'Blueberry Muffin', 'Chookie', 'Cake Pop'];
   function schedTasks() {
     const T = [{ id: 'setup', name: 'Setup', p: '', min: KT.setupMin, who: true, deps: [], ix: -1, rk: 0 }], bake = planBakeTotals || {};
@@ -5854,7 +5859,8 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     const rests = R.filter(x => x.rest); if (rests.length) lanes.push({ label: 'Resting', items: rests, kind: 'r', idx: 0 });
     const col = x => (x.p && PRODUCT_COLOR[x.p]) || '#6b6b6b';
     const moved = id => schedPin[id] != null || schedOv[id] != null || schedAt[id] != null || schedDur[id] != null;
-    const blk = x => x.rest ? `<div class="sc-blk rest" data-id="${esc(x.id)}" style="top:${Math.round(x.start * ppm)}px;height:${Math.max(6, Math.round(x.min * ppm) - 1)}px;--c:${col(x)}" title="${esc(x.name)}"><span>${esc(x.name)}</span></div>` : `<div class="sc-blk${x.min * ppm < 30 ? ' sm' : ''}${x.oven ? ' oven' : ''}${schedSel === x.id ? ' sel' : ''}${moved(x.id) ? ' mv' : ''}" data-id="${esc(x.id)}" data-drag="1" style="top:${Math.round(x.start * ppm)}px;height:${Math.max(16, Math.round(x.min * ppm) - 1)}px;--c:${col(x)}" title="${esc(x.name)}"><span>${esc(x.name)}</span>${schedSel === x.id ? '<i class="sc-rz" data-rz="1"></i>' : ''}</div>`;
+    const dm = m => m < 90 ? m + ' min' : fmtDur(m);
+    const blk = x => x.rest ? `<div class="sc-blk rest" data-id="${esc(x.id)}" style="top:${Math.round(x.start * ppm)}px;height:${Math.max(6, Math.round(x.min * ppm) - 1)}px;--c:${col(x)}" title="${esc(x.name)}"><span>${esc(x.name)}</span><em>${dm(x.min)}</em></div>` : `<div class="sc-blk${x.min * ppm < 30 ? ' sm' : ''}${x.oven ? ' oven' : ''}${schedSel === x.id ? ' sel' : ''}${moved(x.id) ? ' mv' : ''}" data-id="${esc(x.id)}" data-drag="1" style="top:${Math.round(x.start * ppm)}px;height:${Math.max(16, Math.round(x.min * ppm) - 1)}px;--c:${col(x)}" title="${esc(x.name)}"><span>${esc(x.name)}</span><em>${dm(x.min)}</em>${schedSel === x.id ? '<i class="sc-rz" data-rz="1"></i>' : ''}</div>`;
     const ticks = []; for (let m = 0; m <= total; m += schedZoom > 1 ? 30 : 60) ticks.push(`<i style="top:${Math.round(m * ppm)}px">${clk(m)}</i>`);
     const busy = lanes.filter(l => l.kind === 'p').map(l => Math.round(l.items.reduce((a, x) => a + x.min, 0)));
     h += `<div class="sc-sum"><b>${fmtDur(Math.round(total))}</b> start to finish · ${schedCfg.people} ${schedCfg.people === 1 ? 'person' : 'people'} · ${schedCfg.ovens} oven${schedCfg.ovens === 1 ? '' : 's'}<small>Hands-on time: ${busy.map((m, i) => 'Person ' + (i + 1) + ' ' + fmtDur(m)).join(' · ')}</small></div>`
