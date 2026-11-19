@@ -2702,7 +2702,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.176.00 · Nov 18, 5:35 PM PST</div>
+<div class="ver-badge">v1.176.01 · Nov 18, 5:50 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -5761,7 +5761,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       let group = KT.prepGroup, pmin = KT.prepMin;
       try { const key = Object.keys(BS_PRODUCT).find(k => BS_PRODUCT[k] === p), f = key && bsFind(key); if (f && f.sec !== 'mad') { group = 1; pmin = (f.it && f.it.prep) || 20; } } catch (e) {}
       if (!SCHED_OWN_PREP.includes(p)) pmin = SCHED_PREP_MIN;   // Andrew 2026-11-18: every prep block is 30 min except muffins, cookies and cake pops (they keep their recipe's own prep time)
-      const nPrep = Math.ceil(batches / group), perPrep = group * (PRODUCT_YIELD[p] || BATCH_YIELD);
+      const nPrep = 1, perPrep = n;   // Andrew 2026-11-18: prep is one block per item for the whole amount, not per batch
       for (let i = 1; i <= nPrep; i++) T.push({ id: p + ':prep:' + i, name: pdisp(p) + ' prep ' + i + '/' + nPrep, p, min: pmin, who: true, deps: ['setup'], ix, rk: 99 });
       let last = null;
       for (let k = 1; k <= o.rounds; k++) {
