@@ -2653,7 +2653,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.170.01 · Nov 18, 3:57 PM PST</div>
+<div class="ver-badge">v1.170.02 · Nov 18, 4:10 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -8495,10 +8495,13 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   // Spare stock: every shelf (not fridge / freezer) item with a known pack size is kept at one spare pack after the plan's use (Andrew, 2026-11-18),
   // so the whole-plan list buys need + 1 pack minus what is on hand. `rsv` is the pack size added; the per-date Bake Day views (a list is passed) get no spare.
   const SPARE_PACKS = 1;
+  // Dry goods keep one extra month of use on hand after the plan (Andrew, 2026-11-18), never less than 1 pack. A month of use = the plan's amount x 30 / the plan's days.
+  const SPARE_DAYS = 30;
+  const planDaysNow = () => { let d = 0; if (wizLast) for (const p of PRODUCTS) if (wizLast[p] && wizLast[p].days > d) d = wizLast[p].days; if (d) return d; const t = todayISO(), last = planBakeDates.filter(x => x >= t).sort().pop(); return last ? Math.max(1, Math.round((parseEntryDate(last) - parseEntryDate(t)) / 864e5)) : 30; };
   function bakeRows(list) {
-    const stock = new Map(pantryStock().map(s => [s.name, s]));
+    const stock = new Map(pantryStock().map(s => [s.name, s])), PD = Math.max(1, planDaysNow());
     return (list ? buyItems(list) : buyItems()).map(i => {
-      const s = stock.get(i.name), rsv = !list && !isCold(i.name) && i.pkAmt > 0 ? SPARE_PACKS * i.pkAmt : 0;
+      const s = stock.get(i.name), rsv = !list && !isCold(i.name) && i.pkAmt > 0 ? Math.max(SPARE_PACKS * i.pkAmt, i.qty * SPARE_DAYS / PD) : 0;
       if (!s) return { i, s, st: 'none', short: i.qty + rsv, rsv };
       if (s.unit !== i.unit) return { i, s, st: 'unit', short: i.qty + rsv, rsv };
       const short = Math.max(0, i.qty + rsv - s.onHand);
@@ -8528,7 +8531,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     const have = r.st === 'short' ? ` · have ${buyFmt(r.s.onHand, i.unit)}` : '';
     const flag = r.st === 'none' || (r.s && r.s.uncounted) ? 'not counted' : r.st === 'unit' ? 'counted in another unit' : '';
     const big = q.n ? `${q.n} ${q.n === 1 ? 'pack' : 'packs'}` : `Buy ${buyFmt(r.short, i.unit)}`;
-    const sub = (q.n ? `${packFmt(i.pkAmt, i.unit)} each · ` : 'no price yet · ') + `need ${buyFmt(i.qty, i.unit)}${have}${flag ? ' · ' + flag : ''}${r.rsv ? (r.spareOnly ? ' · <b class="buy-spare">spare pack only</b>' : ' · incl. 1 spare pack') : ''}`;
+    const sub = (q.n ? `${packFmt(i.pkAmt, i.unit)} each · ` : 'no price yet · ') + `need ${buyFmt(i.qty, i.unit)}${have}${flag ? ' · ' + flag : ''}${r.rsv ? (r.spareOnly ? ' · <b class="buy-spare">extra month only</b>' : ' · incl. 1 extra month') : ''}`;
     return `<div class="buy-item"><label class="buy-row buy-big${buyChecked[nm] ? ' done' : ''}"><input type="checkbox" data-bkc="${esc(nm)}"${buyChecked[nm] ? ' checked' : ''}><span class="buy-main"><b><em>${big}</em> ${esc(nm)}</b><small>${sub}</small></span><span class="buy-r">${q.cost != null ? money2(q.cost) : ''}</span></label>${shopUrl(nm) ? `<a class="buy-open" href="${esc(shopUrl(nm))}" target="_blank" rel="noopener">Open store page</a>` : ''}${usesHtml(nm, i.unit)}</div>`;
   };
   // Costco warehouse and Costco Business Center are different stores: a Costco line is Business Center when its link is costcobusinessdelivery.com or its note says Business Delivery / Business Center.
@@ -8586,7 +8589,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     const by = new Map(), put = (r, k) => { const v = bkVendor(r); if (!by.has(v)) by.set(v, { buy: [], have: [] }); by.get(v)[k].push(r); };
     rows.forEach(r => put(r, 'buy')); have.forEach(r => put(r, 'have'));
     const order = [...by.keys()].sort((a, b) => (a === 'No price yet') - (b === 'No price yet') || (a === 'Other') - (b === 'Other') || a.localeCompare(b)), byName = (x, y) => x.i.name.localeCompare(y.i.name);
-    return `<div class="buy-list"><div class="pn-note">Amounts include ${Math.round(BUY_WASTE * 100)}% extra for waste (10% for waffle cones). Shelf items also keep 1 spare pack on hand after the plan.${have.length ? ' Items marked Have it are already on hand.' : ''}</div>` + order.map(v => {
+    return `<div class="buy-list"><div class="pn-note">Amounts include ${Math.round(BUY_WASTE * 100)}% extra for waste (10% for waffle cones). Shelf items also keep an extra month of use on hand after the plan (at least 1 pack).${have.length ? ' Items marked Have it are already on hand.' : ''}</div>` + order.map(v => {
       const g = by.get(v), sub = g.buy.reduce((n, r) => n + (bkPart(r).cost || 0), 0);
       return `<div class="buy-vendor"><span>${esc(v)}</span><small>${g.buy.length} to buy${g.have.length ? ` · ${g.have.length} on hand` : ''}${sub ? ' · ' + money2(sub) : ''}</small></div>` +
         (/amazon/i.test(v) ? amzCart(g.buy) : (v === 'Other' || v === 'No price yet' || /^costco$/i.test(v)) ? '' : shopPages(v, g.buy)) +
