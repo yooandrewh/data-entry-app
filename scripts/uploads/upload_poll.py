@@ -163,6 +163,7 @@ def api(path, body=None):
 
 
 COLLECTED = {"video": 0, "receipt": 0}
+RECEIPT_RESULTS = {}   # status -> count, for the push ("1 receipt held: enter it by hand")
 
 
 def notify(event, **fields):
@@ -282,6 +283,7 @@ def process_file(f, dry):
             log(f"receipt {final.name}: Mac error {type(e).__name__}, will retry")
             return False
         log(f"receipt {final.name}: {status}: {text}")
+        RECEIPT_RESULTS[str(status)] = RECEIPT_RESULTS.get(str(status), 0) + 1
     try:
         r = api("/api/uploads", {"action": "remove", "pathnames": [pathname]})
         log(f"{kind} {final.name}: removed from inbox ({r.get('removed')})")
@@ -420,7 +422,13 @@ def main(argv=None):
             failed += 1
             log(f"{f.get('pathname')}: unexpected {type(e).__name__}, will retry")
     if not dry and (COLLECTED["video"] or COLLECTED["receipt"]):
-        notify("upload", videos=COLLECTED["video"], receipts=COLLECTED["receipt"])
+        bad = {k: v for k, v in RECEIPT_RESULTS.items() if k != "done"}
+        detail = ""
+        if RECEIPT_RESULTS:
+            ok = RECEIPT_RESULTS.get("done", 0)
+            detail = (f"{ok} receipt{'s' if ok != 1 else ''} read into the ledger." if ok else "") + \
+                     "".join(f" {v} {k}: enter by hand or send a clearer photo." for k, v in bad.items())
+        notify("upload", videos=COLLECTED["video"], receipts=COLLECTED["receipt"], detail=detail.strip())
     sent = sync_air(dry)
     if not dry and start_ocr():
         print("sales video OCR started in the background")
