@@ -1,0 +1,175 @@
+{
+"_note": "Real Amazon order page screenshot, 2026-11-18 (name, address, card and order digits blanked).",
+"lines": [
+{
+"t": "Order Summary",
+"x": 0.0067,
+"y": 0.0431
+},
+{
+"t": "Order # 113-0000000-0000000",
+"x": 0.2542,
+"y": 0.1077
+},
+{
+"t": "Order placed November 18, 2026",
+"x": 0.0044,
+"y": 0.1186
+},
+{
+"t": "Print",
+"x": 0.9404,
+"y": 0.124
+},
+{
+"t": "Ship to",
+"x": 0.0247,
+"y": 0.2129
+},
+{
+"t": "Payment method",
+"x": 0.3067,
+"y": 0.2129
+},
+{
+"t": "Order Summary",
+"x": 0.689,
+"y": 0.2129
+},
+{
+"t": "Jane Doe",
+"x": 0.0246,
+"y": 0.2583
+},
+{
+"t": "Ink Business Cash •••• 0000",
+"x": 0.359,
+"y": 0.2614
+},
+{
+"t": "$50.99",
+"x": 0.9185,
+"y": 0.2637
+},
+{
+"t": "Items) Subtotal:",
+"x": 0.6875,
+"y": 0.2693
+},
+{
+"x": 0.0247,
+"y": 0.299,
+"t": "1 EXAMPLE ST"
+},
+{
+"x": 0.9273,
+"y": 0.3046,
+"t": "$0.00"
+},
+{
+"x": 0.689,
+"y": 0.3069,
+"t": "Shipping & Handling:"
+},
+{
+"x": 0.3198,
+"y": 0.3342,
+"t": "View related transactions"
+},
+{
+"x": 0.0247,
+"y": 0.3396,
+"t": "ANYTOWN, CA 90000-0000"
+},
+{
+"x": 0.689,
+"y": 0.3475,
+"t": "Subscribe & Save:"
+},
+{
+"x": 0.9201,
+"y": 0.3477,
+"t": "-$5.10"
+},
+{
+"x": 0.0247,
+"y": 0.3772,
+"t": "United States"
+},
+{
+"x": 0.917,
+"y": 0.3819,
+"t": "$45.89"
+},
+{
+"x": 0.6875,
+"y": 0.3827,
+"t": "Total before tax:"
+},
+{
+"x": 0.9242,
+"y": 0.4196,
+"t": "$0.00"
+},
+{
+"x": 0.689,
+"y": 0.4205,
+"t": "Estimated tax to be"
+},
+{
+"x": 0.6875,
+"y": 0.4607,
+"t": "collected:"
+},
+{
+"x": 0.9156,
+"y": 0.501,
+"t": "$45.89"
+},
+{
+"x": 0.6889,
+"y": 0.5036,
+"t": "Grand Total:"
+},
+{
+"x": 0.0247,
+"y": 0.6307,
+"t": "Arriving tomorrow"
+},
+{
+"x": 0.141,
+"y": 0.698,
+"t": "Healthworks Superfoods Organic Cacao Butter 2 lb Raw Unrefined Keto Non-GMO |"
+},
+{
+"x": 0.141,
+"y": 0.7385,
+"t": "Organic, Raw, Unrefined, Food Grade, Keto, Non-GMO, Vegan, For Baking, For"
+},
+{
+"x": 0.1375,
+"y": 0.7614,
+"t": "Chocolate Making, For Skin Care, Fat Bomb"
+},
+{
+"x": 0.1395,
+"y": 0.8218,
+"t": "Sold by: HealthWorks"
+},
+{
+"x": 0.1395,
+"y": 0.8624,
+"t": "Supplied by: Other"
+},
+{
+"x": 0.1395,
+"y": 0.9,
+"t": "$50.99"
+},
+{
+"x": 0.1424,
+"y": 0.9406,
+"t": "Auto-delivered: Every 3 months"
+}
+]
+}
