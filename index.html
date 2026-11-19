@@ -2732,7 +2732,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.178.00 · Nov 18, 7:10 PM PST</div>
+<div class="ver-badge">v1.179.00 · Nov 18, 8:24 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -4479,7 +4479,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const d = await r.json();
     const rows = Array.isArray(d.sales) ? d.sales : [];
-    try { addExtraSales(rows, await fetchRemoteEntries()); } catch (e) { /* extras are optional */ }
+    try { const ents = await fetchRemoteEntries(); addExtraSales(rows, ents); addMissingDays(rows, ents); } catch (e) { /* extras are optional */ }
     salesCache = rows;
     return salesCache;
   }
@@ -4520,6 +4520,76 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
         if (!add[p]) continue;
         row.amounts[p] = add[p]; row.extra += add[p];
         (row.derived = row.derived || []).push(p);   // derived from stock counts, not read from a receipt
+      }
+    }
+  }
+  // Missing sales days, estimated from stock counts (Andrew, 2026-11-18: counts are more accurate than sales). For two good counts
+  // of a store up to 14 days apart, implied sold = first count + deliveries/transfers/goodwill in between - second count. What the
+  // sheet already holds for the days in between (and on the two count days) is taken off, and the rest goes to the days in between
+  // that have no row at all, split evenly, capped at 1.5x the store's own average per recorded day so one bad count cannot invent a
+  // huge day. Shown like the other derived numbers (`*`), never written to the sheet. Pumpkin Bundt, Cake Pop and Chookie are handled
+  // by addExtraSales (booked on the count date), so they are left out here.
+  const GAP_PRODUCTS = ['Lemon Poppy', 'Sea Salt', 'Maple Pecan', 'Pumpkin Muffin', 'Blueberry Muffin'];
+  const GAP_ALL = ['Lemon Poppy', 'Sea Salt', 'Maple Pecan', 'Pumpkin Muffin', 'Blueberry Muffin', 'Pumpkin Bundt', 'Cake Pop', 'Chookie'];
+  function addMissingDays(rows, entries) {
+    const live = entries.filter(e => !e.taggedForDeletion && e.datetime);
+    const num = (e, p) => { const v = e.amounts && e.amounts[p]; return typeof v === 'number' ? v : null; };
+    const nz = (e) => GAP_ALL.filter(p => num(e, p)).length;
+    const dayAdd = (ymd, n) => { const [y, m, d] = ymd.split('-').map(Number); const t = new Date(Date.UTC(y, m - 1, d + n)); return t.toISOString().slice(0, 10); };
+    const dayDiff = (a, b) => Math.round((Date.parse(b + 'T00:00:00Z') - Date.parse(a + 'T00:00:00Z')) / 86400000);
+    for (const loc of new Set(live.map(e => e.location))) {
+      const inv = live.filter(e => e.type === 'inventory' && e.location === loc).sort((a, b) => a.datetime.localeCompare(b.datetime));
+      const good = inv.filter((e, i) => {
+        const n = nz(e);
+        if (n === 0) return false;
+        if (n <= 1) return !([inv[i - 1], inv[i + 1]].some(x => x && nz(x) >= 4));
+        return true;
+      });
+      const moves = live.filter(e => e.type !== 'inventory' && e.location === loc);
+      for (let i = 1; i < good.length; i++) {
+        const a = good[i - 1], b = good[i], da = a.datetime.slice(0, 10), db = b.datetime.slice(0, 10);
+        const span = dayDiff(da, db);
+        if (span < 2 || span > 14) continue;
+        const between = [];
+        for (let k = 1; k < span; k++) between.push(dayAdd(da, k));
+        const have = new Set(rows.filter(r => r.location === loc).map(r => r.date));
+        const miss = between.filter(d => !have.has(d));
+        if (!miss.length) continue;
+        const present = between.length - miss.length;
+        const inWin = (m) => {
+          const d = m.datetime.slice(0, 10);
+          if (d < da || d > db) return false;
+          if (d > da && d < db) return true;
+          if (m.datetime.length <= 10 || a.datetime.length <= 10 || b.datetime.length <= 10) return false;   // date-only on a count day: ambiguous, leave out
+          const t = Date.parse(m.datetime);
+          return (d !== da || t > Date.parse(a.datetime)) && (d !== db || t <= Date.parse(b.datetime));
+        };
+        const ins = moves.filter(inWin);
+        const fill = {};
+        for (const p of GAP_PRODUCTS) {
+          if (STORE_SKIP[loc] && STORE_SKIP[loc].includes(p)) continue;
+          const ca = num(a, p), cb = num(b, p);
+          if (ca === null || cb === null) continue;
+          const implied = ca + ins.reduce((t, m) => t + ((m.amounts && m.amounts[p]) || 0), 0) - cb;
+          let full = 0, edge = 0;
+          for (const r of rows) {
+            if (r.location !== loc) continue;
+            const v = r.amounts[p] || 0;
+            if (r.date > da && r.date < db) full += v; else if (r.date === da || r.date === db) edge += v;
+          }
+          const resid = implied - full - edge;
+          if (resid <= 0 || !present) continue;
+          const cap = Math.ceil(1.5 * (full / present) * miss.length);
+          const tot = Math.min(resid, cap);
+          if (tot <= 0) continue;
+          const base = Math.floor(tot / miss.length); let rem = tot - base * miss.length;
+          fill[p] = miss.map((d, j) => base + (j >= miss.length - rem ? 1 : 0));
+        }
+        miss.forEach((d, j) => {
+          const amounts = {}; let any = false, total = 0; const derived = [];
+          for (const p of Object.keys(fill)) { const v = fill[p][j]; if (v > 0) { amounts[p] = v; total += v; derived.push(p); any = true; } }
+          if (any) rows.push({ date: d, location: loc, amounts, total, flights: 0, derived, estimated: true });
+        });
       }
     }
   }
