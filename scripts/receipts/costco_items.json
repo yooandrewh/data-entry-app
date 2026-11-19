@@ -77,5 +77,23 @@
     "size": 1999.2,
     "unit": "ml",
     "what": "Marianne's Avocado Oil, 67.6 fl oz, counted as Vegetable Oil like the ledger line (confirm: item number 1129578 vs ledger note 129578, same $26.99)"
+  },
+  "815544": {
+    "item": "Blueberry",
+    "size": 1360.8,
+    "unit": "g",
+    "what": "Kirkland Signature Organic Blueberries (frozen), 3 lb (looked up 2026-11-18; receipt price $9.59)"
+  },
+  "65519": {
+    "item": "Sour Cream",
+    "size": 1360.8,
+    "unit": "g",
+    "what": "Knudsen Hampshire Sour Cream, 3 lb (looked up 2026-11-18; receipt price $4.89)"
+  },
+  "1835596": {
+    "item": "Vanilla Bean",
+    "size": 20,
+    "unit": "g",
+    "what": "Kirkland Signature Organic Madagascar Vanilla Beans, 20 count (counted in pieces; looked up 2026-11-18, receipt price $9.79)"
   }
 }

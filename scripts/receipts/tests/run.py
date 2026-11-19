@@ -22,16 +22,16 @@ for n in ("costco_yorba_linda_sideways", "costco_yorba_linda_rot90", "costco_yor
     r = P.parse(load(n))
     check(f"{n}: vendor Costco", r["vendor"] == "Costco", r["vendor"])
     check(f"{n}: receipt id", r["receipt"] == "Costco Yorba Linda", r["receipt"])
-    check(f"{n}: 23 known items", len(r["items"]) == 23, len(r["items"]))
-    check(f"{n}: unknown = milk, blueberry, vanilla bean, sour cream", sorted(u["label"] for u in r["unknown"]).count("KS BLUEBERRY") == 10 and len(r["unknown"]) == 15, r["unknown"])
+    check(f"{n}: 36 known items", len(r["items"]) == 36, len(r["items"]))
+    check(f"{n}: only the numberless whole milk is unknown", [u["label"] for u in r["unknown"]] == ["WHOLE MILK", "WHOLE MILK"], r["unknown"])
     check(f"{n}: 3 coupons kept as negative fees", sorted(f["price"] for f in r["fees"]) == [-4.0, -4.0, -3.0], r["fees"])
     check(f"{n}: total from subtotal+tax checks", r["check"] and r["check"]["ok"] and r["total"] == 417.32 and "subtotal" in r["check"].get("note", ""), r["check"])
     check(f"{n}: date unreadable -> None (photo cut off)", r["date"] is None, r["date"])
-    check(f"{n}: unknown list names numbers and prices", "#815544 KS BLUEBERRY 9.59 x10" in P.unknown_summary(r), P.unknown_summary(r))
+    check(f"{n}: unknown list names numbers and prices", "WHOLE MILK 4.09 x2" in P.unknown_summary(r), P.unknown_summary(r))
 # same photo with every coordinate turned by hand
 for k in (1, 2, 3):
     r = P.parse(turn(load("costco_yorba_linda_sideways"), k))
-    check(f"yorba coordinates turned {k}: still reads", r["vendor"] == "Costco" and len(r["items"]) == 23 and r["check"] and r["check"]["ok"], (r["vendor"], len(r["items"]), r["check"]))
+    check(f"yorba coordinates turned {k}: still reads", r["vendor"] == "Costco" and len(r["items"]) == 36 and r["check"] and r["check"]["ok"], (r["vendor"], len(r["items"]), r["check"]))
 
 # ---- Target and Amazon samples (must not be mistaken for Costco) ----
 r = P.parse(load("target_anaheim_hills"))
