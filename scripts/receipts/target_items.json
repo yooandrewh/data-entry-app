@@ -1,6 +1,21 @@
 {
   "_note": "Target item number (9 digits as printed, the DPCI without dashes) -> ledger item. size is one package in grams (or ml when unit is ml). Add a row for every new number the poller flags as unknown. Sizes marked 'confirm' were inferred from the price, not read off a package.",
-  "261050271": {"item": "Vanilla Almond Bark", "size": 567, "unit": "g", "what": "Favorite Day Vanilla Almond Bark, 20 oz ($4.19, matches the 2026-10-22 ledger line)"},
-  "261050498": {"item": "Milk", "size": 3785.4, "unit": "ml", "what": "Good & Gather whole milk, 1 gal (confirm: inferred from $4.69, the half gallon was $2.39)"},
-  "261050026": {"item": "Pumpkin Puree", "size": 425, "unit": "g", "what": "Good & Gather 100% Pure Pumpkin, 15 oz (confirmed 2026-11-18: DPCI 261-05-0026, TCIN 81647715; the 29 oz can is a separate item)"}
+  "261050271": {
+    "item": "Vanilla Almond Bark",
+    "size": 567,
+    "unit": "g",
+    "what": "Favorite Day Vanilla Almond Bark, 20 oz ($4.19, matches the 2026-10-22 ledger line)"
+  },
+  "261050498": {
+    "item": "Skim Milk Powder",
+    "size": 272.2,
+    "unit": "g",
+    "what": "Good & Gather instant non-fat dry milk, 9.6 oz (Andrew 2026-11-19; receipt prints GG MILK, $4.69 matches the 10/13 ledger line)"
+  },
+  "261050026": {
+    "item": "Pumpkin Puree",
+    "size": 425,
+    "unit": "g",
+    "what": "Good & Gather 100% Pure Pumpkin, 15 oz (confirmed 2026-11-18: DPCI 261-05-0026, TCIN 81647715; the 29 oz can is a separate item)"
+  }
 }
