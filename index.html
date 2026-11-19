@@ -2653,7 +2653,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.170.04 · Nov 18, 4:32 PM PST</div>
+<div class="ver-badge">v1.170.05 · Nov 18, 4:34 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -9118,8 +9118,9 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     ind.textContent = 'Pull to refresh';
     document.body.appendChild(ind);
     let y0 = null, dy = 0;
-    const blocked = () => upBusy || document.getElementById('view-entry').classList.contains('active') || document.getElementById('scrim').classList.contains('show') || document.querySelector('.sp-pop');
-    function doReload() { try { sessionStorage.setItem('lastScroll.v1', String(window.scrollY)); } catch {} ind.textContent = 'Refreshing…'; ind.style.visibility = 'visible'; ind.style.transform = 'translateY(0)'; setTimeout(() => location.reload(), 150); }
+    const blocked = () => upBusy || document.getElementById('scrim').classList.contains('show') || document.querySelector('.sp-pop');
+    const keepEntry = () => { try { if (document.getElementById('view-entry').classList.contains('active')) sessionStorage.setItem('reopenEntry.v1', '1'); } catch {} };   // a refresh from Entry comes back to Entry (the form is blank)
+    function doReload() { keepEntry(); try { sessionStorage.setItem('lastScroll.v1', String(window.scrollY)); } catch {} ind.textContent = 'Refreshing…'; ind.style.visibility = 'visible'; ind.style.transform = 'translateY(0)'; setTimeout(() => location.reload(), 150); }
     document.addEventListener('touchstart', e => {
       y0 = (window.scrollY <= 0 && e.touches.length === 1 && !blocked()) ? e.touches[0].clientY : null; dy = 0;
     }, { passive: true });
@@ -9138,7 +9139,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     }, { passive: true });
     document.addEventListener('touchcancel', () => { y0 = null; dy = 0; hideInd(); }, { passive: true });
     try { document.getElementById('refreshBtn').innerHTML = ic('refresh', 18) + ' Refresh'; } catch {}
-    document.addEventListener('click', e => { if (e.target.closest('.ver-badge, #refreshBtn') && !upBusy) { try { sessionStorage.setItem('lastScroll.v1', String(window.scrollY)); } catch {} ind.textContent = 'Refreshing…'; location.reload(); } });
+    document.addEventListener('click', e => { if (e.target.closest('.ver-badge, #refreshBtn') && !upBusy) { keepEntry(); try { sessionStorage.setItem('lastScroll.v1', String(window.scrollY)); } catch {} ind.textContent = 'Refreshing…'; location.reload(); } });
   })();
   track('open', { standalone: !!(window.navigator.standalone || matchMedia('(display-mode: standalone)').matches) });
   // A refresh keeps you on the same page (sessionStorage: survives reload, not a fresh launch of the app).
@@ -9146,6 +9147,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   try { const lp = JSON.parse(sessionStorage.getItem('lastPage.v1') || 'null'); if (lp && PAGES[lp.page] && SECTIONS[lp.sec] && SECTIONS[lp.sec].pages.includes(lp.page)) startPage = [lp.page, lp.sec]; } catch {}
   if (!(document.body.dataset.tab === 'home' && homeTab === 'timers')) {   // a ?timer= link already opened Timers
     go(startPage[0], startPage[1]);
+    try { if (sessionStorage.getItem('reopenEntry.v1')) { sessionStorage.removeItem('reopenEntry.v1'); openEntry(); } } catch {}
     try { const y = +sessionStorage.getItem('lastScroll.v1'); sessionStorage.removeItem('lastScroll.v1'); if (y > 0) [900, 1800, 3000].forEach(ms => setTimeout(() => { if (window.scrollY < 5) window.scrollTo(0, y); }, ms)); } catch {}
   }
 </script>
