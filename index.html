@@ -2710,7 +2710,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.177.10 · Nov 18, 7:20 PM PST</div>
+<div class="ver-badge">v1.177.11 · Nov 18, 7:40 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -5764,7 +5764,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   const SCHED_NOPANS = ['Chookie'];   // Andrew 2026-11-18: cookies need no pans, so their oven rounds don't wait for the previous round and can bake in both ovens at once
   const SCHED_PREDONE = ['Maple Pecan'];   // Andrew 2026-11-18: Maple Pecan batter is made ahead, so it has no prep block and its first fill can start right after setup
   const SCHED_COMBO = ['Lemon Poppy', 'Sea Salt'], SCHED_COMBO_X = 1.5;   // Andrew 2026-11-18: these two can be prepped together; both at once takes 1.5x one prep (45 min instead of 30)
-  let SCHED_ORDER = ['Lemon Poppy', 'Cake Pop', 'Blueberry Muffin', 'Chookie', 'Sea Salt', 'Pumpkin Bundt', 'Maple Pecan'];   // work order, found by trying all 5,040 orders (2026-11-18, Andrew: Lemon Poppy early so the day ends on the cake pop melt and dip, shortest oven time with a day of 6h20 or less)
+  let SCHED_ORDER = ['Cake Pop', 'Blueberry Muffin', 'Pumpkin Bundt', 'Maple Pecan', 'Lemon Poppy', 'Chookie', 'Sea Salt'];   // work order, found by trying all 5,040 orders (2026-11-18, Andrew: Lemon Poppy only has to finish its glaze before the cake pop melt and dip; shortest oven time with Maple Pecan baking first at 0:25 and a day of 6h20)
   const SCHED_PREP_MIN = 30, SCHED_OWN_PREP = ['Pumpkin Muffin', 'Blueberry Muffin', 'Chookie', 'Cake Pop'];
   function schedTasks() {
     const T = [{ id: 'setup', name: 'Setup', p: '', min: KT.setupMin, who: true, deps: [], ix: -1, rk: 0 }], bake = planBakeTotals || {};

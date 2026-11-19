@@ -283,6 +283,8 @@ Ingredients: **Dark Chocolate 70% and Dark Chocolate Couverture are retired into
 
 **v1.177.10: cookies need no pans; Lemon Poppy early** (Andrew 2026-11-18). `SCHED_NOPANS = ['Chookie']`: a cookie round no longer waits for the one before it, so rounds can bake in both ovens at once. `SCHED_ORDER` searched again (all 5,040 orders) so Lemon Poppy bakes and glazes early and the day ends on the cake pop melt and dip: Lemon Poppy, Cake Pop, Muffin, Cookie, Sea Salt, Bundt, Maple Pecan. 40-day plan: Lemon Poppy done at 2h32 (was 4h48), ovens span 204 min (was 230 with the old order under the new rule), day 6h20. Maple Pecan now bakes last (it shares madeleine pans, so it can't start at minute 20 any more; the first fill is still early). Tried and rejected: cookie round sharing the oven with the cake pop bake on 4 racks (32 cookies, so 240 cookies need a 7th round, no time saved).
 
+**v1.177.11: Maple Pecan first again, Lemon Poppy only has to glaze before the cake pop melt** (Andrew: Lemon Poppy doesn't have to be first, just not last because of the glaze). `SCHED_ORDER` is now Cake Pop, Muffin, Bundt, Maple Pecan, Lemon Poppy, Cookie, Sea Salt: best of all 5,040 orders with Maple Pecan ahead of the other madeleines and Lemon Poppy's glaze done before the cake pop melt starts. 40-day plan: ovens 25-221 (span 196, was 45-249 / 204), Maple Pecan bakes at 0:25, Lemon Poppy glaze done at 3h37 (melt starts 4h50), day 6h20. Without the Maple Pecan rule the shortest span is 191 (ovens 45-236).
+
 ## Design pass (v1.149.00)
 
 Last CSS block: **every `<select>` has one style** (white, 1px #c9c9c9, 12px radius, 44px, black chevron; `.row-select` and `[data-labi]` excluded); the Forecast store toggle (`.fc-locs`) uses the pill style. On desktop (>=900px) all pages share a 1120px column, page chips sit centered at natural width, the Trends donut is 220px. On phones the 5 Inventory chips shrink (11px padding) to fit. Counts' total says "pieces", not "madeleines". Still open: coloured snowflake/flame/arrow icons in Forecast misses (breaks the B/W rule), today's half-finished day shows as a 0.0x miss, Stock's section headers use the old grey band style.
@@ -303,7 +305,7 @@ The headless check at 390px misses what iOS does. Apply these to every new or ch
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.177.10**; the next feature is v1.178.00, a fix v1.177.11. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.177.11**; the next feature is v1.178.00, a fix v1.177.12. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 
