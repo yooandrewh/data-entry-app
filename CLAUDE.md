@@ -265,6 +265,8 @@ Ingredients: **Dark Chocolate 70% and Dark Chocolate Couverture are retired into
 
 **v1.177.01: 60 qt preps back to back** (Andrew: the 60 qt bowl costs extra). `schedTasks()` finds items whose bowl is 60 qt (`bowlQt()`, today Blueberry Muffin and Cookie) and merges their prep into one block on one person ("... prep (60 qt)", minutes = sum of each item's own prep, `back` list on the task). Cookie therefore preps right after muffin instead of last. 40-day plan 6h25 (was 6h20). Only applies when 2+ items need 60 qt.
 
+**v1.177.02: Maple Pecan is made ahead** (Andrew, 2026-11-18: assume it is pre-done). `SCHED_PREDONE = ['Maple Pecan']`: no prep block, its fills depend only on Setup, so the first Maple Pecan bake starts at 0:25. Steps say "already done ahead of the day". Its batter still counts in pantry use and shopping. 40-day plan 6h20 (was 6h25). Add an item to the array to treat it the same.
+
 ## Design pass (v1.149.00)
 
 Last CSS block: **every `<select>` has one style** (white, 1px #c9c9c9, 12px radius, 44px, black chevron; `.row-select` and `[data-labi]` excluded); the Forecast store toggle (`.fc-locs`) uses the pill style. On desktop (>=900px) all pages share a 1120px column, page chips sit centered at natural width, the Trends donut is 220px. On phones the 5 Inventory chips shrink (11px padding) to fit. Counts' total says "pieces", not "madeleines". Still open: coloured snowflake/flame/arrow icons in Forecast misses (breaks the B/W rule), today's half-finished day shows as a 0.0x miss, Stock's section headers use the old grey band style.
