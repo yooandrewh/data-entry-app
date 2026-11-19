@@ -2650,7 +2650,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
   </div>
 </div>
 
-<div class="ver-badge">v1.186.02 · Nov 19, 12:40 PM PST</div>
+<div class="ver-badge">v1.186.03 · Nov 19, 3:49 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -7135,8 +7135,14 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
     if (recState.idx >= list.length) recState.idx = 0;
     const pick = document.getElementById('recPick');
     // One dropdown, grouped by category (replaces the row of category buttons). Values are "<section>|<index>".
-    const rlabel = (it, sec) => it.name + (it.key === 'pumpkinmuffin' ? ' (disabled)' : (sec === 'mad' ? seasonRank('mad', it) < 99 : isSeasonal(recRealSec(it), it)) ? ' (season)' : '');
-    pick.innerHTML = REC_GROUPS.map(([sec, label]) => { const l = recList(sec); return l.length ? `<optgroup label="${label}">${l.map((it, i) => `<option value="${sec}|${i}" data-icon="${recKey(it.name)}">${esc(rlabel(it, sec))}</option>`).join('')}</optgroup>` : ''; }).join('');
+    const isSea = (it, sec) => it.key !== 'pumpkinmuffin' && (sec === 'mad' ? seasonRank('mad', it) < 99 : isSeasonal(recRealSec(it), it));
+    const rlabel = it => it.name + (it.key === 'pumpkinmuffin' ? ' (disabled)' : '');
+    // This season's recipes sit in their own group at the top (A-Z); an option keeps its real section and index, so nothing else about the page changes.
+    const opt = (it, sec, i) => `<option value="${sec}|${i}" data-icon="${recKey(it.name)}">${esc(rlabel(it))}</option>`;
+    const groups = REC_GROUPS.map(([sec, label]) => ({ sec, label, l: recList(sec) }));
+    const sea = groups.flatMap(g => g.l.map((it, i) => ({ it, sec: g.sec, i })).filter(x => isSea(x.it, x.sec))).sort((a, b) => byName(a.it, b.it));
+    pick.innerHTML = (sea.length ? `<optgroup label="This season">${sea.map(x => opt(x.it, x.sec, x.i)).join('')}</optgroup>` : '')
+      + groups.map(g => { const o = g.l.map((it, i) => isSea(it, g.sec) ? '' : opt(it, g.sec, i)).join(''); return o ? `<optgroup label="${g.label}">${o}</optgroup>` : ''; }).join('');
     pick.value = recState.sec + '|' + recState.idx;
     const item = list[recState.idx];
     let html;
