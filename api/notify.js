@@ -1,7 +1,7 @@
 // Phone push for the Mac collector (scripts/uploads/upload_poll.py): a new upload arrived, or the sales OCR finished.
 // Same ntfy topic as entry notifications (api/sync.js), which stays in the Vercel env NTFY_TOPIC and never leaves the server.
 //
-// POST { event: 'upload' | 'ocr', videos, receipts, detail } -> { ok }
+// POST { event: 'upload' | 'ocr' | 'reconcile', videos, receipts, detail } -> { ok }
 // Auth: needs x-ledger-code = env LEDGER_CODE (deny by default; 503 unset, 401 wrong). The message text is built here from
 // the event name and two small counts; `detail` is a short plain line (clipped, control characters stripped).
 // Cost cap: free service, one message per call, body clipped to 300 chars.
@@ -37,6 +37,10 @@ export default async function handler(req, res) {
       title = 'Sales OCR done';
       body = 'Ready to review in inbox_summary.md.' + (detail ? ` ${detail}` : '');
       tag = 'white_check_mark';
+    } else if (b.event === 'reconcile') {
+      title = 'Inventory reconciled';
+      body = detail || 'Counts and deliveries checked against sales.';
+      tag = 'scales';
     } else {
       return res.status(400).json({ error: 'Unknown event' });
     }
