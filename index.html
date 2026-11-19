@@ -2653,7 +2653,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.170.02 · Nov 18, 4:10 PM PST</div>
+<div class="ver-badge">v1.170.03 · Nov 18, 4:31 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -8521,7 +8521,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   const packFmt = (amt, unit) => unit === 'pcs' ? `${Math.round(amt)} pcs` : amt >= 454 ? `${Math.round(amt / 453.592 * 10) / 10} lb (${buyFmt(amt, unit)})` : buyFmt(amt, unit);
   // Non-Amazon items: the ledger's product link opens the store's own page (only Amazon can fill a cart from a link).
   const shopUrl = name => {
-    const ok = l => /^https:\/\//.test(String(l || '')) && !/amazon\.com/i.test(l);
+    const ok = l => /^https:\/\//.test(String(l || '')) && !/amazon\.com|costco/i.test(l);   // Costco is bought in person: never link it
     const c = costPrices[name]; if (c && ok(c.link)) return c.link;
     const k = costCanon(name); for (const l of (LEDGER || [])) if (ok(l.link) && costCanon(l.item) === k) return l.link;
     return '';
@@ -8555,7 +8555,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       (miss.length ? `<div class="pn-note">Paste the Amazon link for ${miss.length === 1 ? 'this item' : 'these items'} to add ${miss.length === 1 ? 'it' : 'them'} to the cart button.</div>` + miss.map(n => `<div class="amz-add"><label>${esc(n)}</label><div><input type="url" inputmode="url" placeholder="Paste Amazon link" data-amz-in="${esc(n)}"><button type="button" data-amz-save="${esc(n)}">Save</button></div></div>`).join('') : '');
   };
   // Other stores (Target, Costco, ...): one button opens every saved product page; items with no link get a search link (to find the product) and a paste box (to save it).
-  const SHOP_SEARCH = [[/costco business/i, k => 'https://www.costcobusinessdelivery.com/CatalogSearch?keyword=' + k], [/costco/i, k => 'https://www.costco.com/CatalogSearch?dept=All&keyword=' + k], [/target/i, k => 'https://www.target.com/s?searchTerm=' + k], [/webstaurant/i, k => 'https://www.webstaurantstore.com/search/' + k + '.html']];
+  const SHOP_SEARCH = [[/target/i, k => 'https://www.target.com/s?searchTerm=' + k], [/webstaurant/i, k => 'https://www.webstaurantstore.com/search/' + k + '.html']];
   const shopPages = (v, buy) => {
     const have = [], miss = [];
     buy.forEach(r => { const u = shopUrl(r.i.name); if (u) have.push(u); else miss.push(r.i.name); });
@@ -8592,7 +8592,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     return `<div class="buy-list"><div class="pn-note">Amounts include ${Math.round(BUY_WASTE * 100)}% extra for waste (10% for waffle cones). Shelf items also keep an extra month of use on hand after the plan (at least 1 pack).${have.length ? ' Items marked Have it are already on hand.' : ''}</div>` + order.map(v => {
       const g = by.get(v), sub = g.buy.reduce((n, r) => n + (bkPart(r).cost || 0), 0);
       return `<div class="buy-vendor"><span>${esc(v)}</span><small>${g.buy.length} to buy${g.have.length ? ` · ${g.have.length} on hand` : ''}${sub ? ' · ' + money2(sub) : ''}</small></div>` +
-        (/amazon/i.test(v) ? amzCart(g.buy) : (v === 'Other' || v === 'No price yet' || /^costco$/i.test(v)) ? '' : shopPages(v, g.buy)) +
+        (/amazon/i.test(v) ? amzCart(g.buy) : (v === 'Other' || v === 'No price yet' || /costco/i.test(v)) ? '' : shopPages(v, g.buy)) +
         coldSplit(g.buy.sort(byName).map(r => ({ cold: isCold(r.i.name), html: bkBuyRow(r) }))) + g.have.sort(byName).map(bkHaveRow).join('');
     }).join('') + '</div>';
   }

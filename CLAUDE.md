@@ -209,7 +209,7 @@ Ingredients: **Dark Chocolate 70% and Dark Chocolate Couverture are retired into
 
 **v1.169.07: Frozen toggle** on Plan step 1's pans card (`boxCfg.frozen`, `FROZEN_STACK`, `boxCap()`): when on, madeleines, Pumpkin Bundt and Cake Pops hold double per pan (two layers; muffins and cookies do not). It changes the pan count and the "per pan" lines on step 3; Pan Liners still follow `boxPlan().trays` (one per layer, assumed, not confirmed).
 
-**v1.169.08: store-page buttons.** Each non-Amazon vendor group in the shopping lists (`shopPages()`, next to `amzCart`) has **Open N <store> pages** (opens every saved product link; the browser may block all but the first pop-up, per-item Open store page stays) and, for items with no link, a **Search <store>** link (`SHOP_SEARCH`: Costco, Costco Business Center, Target, WebstaurantStore) plus the paste-and-Save box (`setlink`). **Costco warehouse (plain "Costco") gets none of this: in person only (Andrew, 2026-11-18); Costco Business Center keeps it.** Target has no add-to-cart link, so Andrew adds to the cart on the page. Tested on the mock server only.
+**v1.169.08: store-page buttons.** Each non-Amazon vendor group in the shopping lists (`shopPages()`, next to `amzCart`) has **Open N <store> pages** (opens every saved product link; the browser may block all but the first pop-up, per-item Open store page stays) and, for items with no link, a **Search <store>** link (`SHOP_SEARCH`: Costco, Costco Business Center, Target, WebstaurantStore) plus the paste-and-Save box (`setlink`). **Costco (warehouse and Business Center) gets no links at all, no Open pages button, Search link, paste box or per-item Open store page (v1.170.03, Andrew: "we don't buy like that"); ledger links stay in the sheet, just unused.** Target has no add-to-cart link, so Andrew adds to the cart on the page. Tested on the mock server only.
 
 **v1.169.09: minimum stock.** `MIN_STOCK_DAYS = {'Lemon Poppy': 30}` (Andrew: the minimum stock is necessary): `wizCompute` plans each store's Lemon Poppy goal over at least 30 days of expected sales, whatever the span ("Not now" still gives 0). The row says so. Scope is Lemon Poppy only because that is what Andrew named; add an item to the map to extend it.
 
@@ -239,7 +239,7 @@ The headless check at 390px misses what iOS does. Apply these to every new or ch
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.170.02**; the next feature is v1.171.00, a fix v1.170.03. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.170.03**; the next feature is v1.171.00, a fix v1.170.04. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 
