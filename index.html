@@ -2653,7 +2653,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.170.03 · Nov 18, 4:31 PM PST</div>
+<div class="ver-badge">v1.170.04 · Nov 18, 4:32 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -8008,6 +8008,17 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       if (m && msg != null) m.textContent = msg;
     });
   }
+  // File names the Mac watcher reads: videos become "<Store> yyyy-MM-dd HHmm.<ext>" (store from the Send dropdown, time from the file); receipts keep their own name.
+  function shStamp(ms) { const d = new Date(ms || Date.now()), p = n => String(n).padStart(2, '0'); return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}${p(d.getMinutes())}`; }
+  function shNames(files, kind) {
+    if (kind === 'R') return files.map(f => f.name || 'receipt.jpg');
+    const store = kind === 'STN' ? 'Stanton' : 'La Mirada', used = {};
+    return files.map(f => {
+      const ext = ((/\.([A-Za-z0-9]+)$/.exec(f.name || '') || [])[1] || (/video/.test(f.type) ? 'mov' : 'jpg')).toLowerCase();
+      const base = `${store} ${shStamp(f.lastModified)}`; used[base] = (used[base] || 0) + 1;
+      return `${base}${used[base] > 1 ? ' ' + used[base] : ''}.${ext}`;
+    });
+  }
   function upType(f, isVideo) {
     if (f.type) return f.type;
     const ext = ((/\.([A-Za-z0-9]+)$/.exec(f.name || '') || [])[1] || '').toLowerCase();
@@ -8046,7 +8057,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     } catch (e) {
       upBusy = false;
       const t = String((e && e.message) || e);
-      upPaint((/Connect a Blob store/i.test(t) ? 'Uploads are not switched on yet.' : /too many|too big|Choose a/i.test(t) ? t : "Couldn't send that. Check your connection and try again.") + (sent ? ` Sent ${sent} of ${total}.` : ''));
+      upPaint((/Connect a Blob store/i.test(t) ? 'Uploads are not switched on yet.' : /too many|too big|Choose a/i.test(t) ? t : "Couldn't send that (" + t.slice(0, 80) + "). Check your connection and try again.") + (sent ? ` Sent ${sent} of ${total}.` : ''));
     }
   }
   function renderUploadBox(box, bare) {
