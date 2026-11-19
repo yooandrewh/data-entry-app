@@ -2710,7 +2710,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.176.06 · Nov 18, 7:45 PM PST</div>
+<div class="ver-badge">v1.176.07 · Nov 18, 8:05 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -5966,7 +5966,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
         const locLine = Object.keys(r.loc).map(l => `${esc(l)}: have ${Math.round(r.loc[l].have)}, goal ${Math.round(r.loc[l].need)}`).join('<br>');
         const minNote = r.hz > r.days ? `<br><i>Minimum stock: ${r.hz} days of sales per store</i>` : '';
         sub = !(r.rate > 0) ? 'No recent sales to forecast from'
-          : r.bake > 0 ? `Bake <b>${r.bake}</b> · ${flavorBatches(r.bake, p)} batch${flavorBatches(r.bake, p) === 1 ? '' : 'es'}${pans ? ` · <b>${pans}</b> pan${pans === 1 ? '' : 's'}` : ''}<br>${locLine}${minNote}`
+          : r.bake > 0 ? `Bake <b>${r.bake}</b> · ${flavorBatches(r.bake, p)} batch${flavorBatches(r.bake, p) === 1 ? '' : 'es'}${pans ? ` · <b>${pans}</b> Cambro pan${pans === 1 ? '' : 's'}` : ''}<br>${locLine}${minNote}`
           : `Enough on hand<br>${locLine}${minNote}`;
       }
       if (r.days > 0 && r.sales > 0) sub += `<br>Expected sales <b>${money0(r.sales * unitPriceOn(p, todayISO()))}</b> (${Math.round(r.sales)} pcs)`;
