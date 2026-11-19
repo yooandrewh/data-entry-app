@@ -2234,6 +2234,42 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
 #homeOrders .od-kv span { color: var(--muted); }
 #homeOrders .od-kv b { font-weight: 600; text-align: right; overflow-wrap: anywhere; }
 @media (min-width: 900px) { .fin-export .btn-ghost { max-width: 320px; } }
+/* Bake Day on Plan step 3 */
+#dayBox { padding: 16px; margin: 12px 0 0; }
+#dayBox h3 { margin: 0 0 10px; }
+#dayBox .bd-who { display: flex; gap: 8px; margin-bottom: 12px; }
+#dayBox .bd-who button { flex: 1; min-height: 52px; border: 2px solid #000; border-radius: 12px; background: #fff; color: #000; font-size: var(--fs-lg); font-weight: 700; }
+#dayBox .bd-who button.on { background: #000; color: #fff; }
+#dayBox .bd-none { padding: 10px 0; color: var(--muted); font-size: var(--fs-body); }
+#dayBox .bd-sum { font-size: var(--fs-body); margin-bottom: 10px; }
+#dayBox .bd-sum small { display: block; color: var(--muted); font-size: var(--fs-caption); margin-top: 2px; }
+#dayBox .bd-run { border: 2px solid #000; border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; }
+#dayBox .bd-run > div { display: flex; justify-content: space-between; gap: 10px; padding: 4px 0; font-size: var(--fs-body); }
+#dayBox .bd-left { font-variant-numeric: tabular-nums; font-weight: 700; font-size: var(--fs-lg); min-width: 64px; }
+#dayBox .bd-left.ring { background: #000; color: #fff; border-radius: 6px; padding: 2px 8px; }
+#dayBox .bd-ctl { display: flex; gap: 8px; margin-bottom: 12px; }
+#dayBox .bd-b { min-height: 44px; padding: 0 14px; border: 1px solid #c9c9c9; border-radius: 10px; background: #fff; color: #000; font-size: var(--fs-body); font-weight: 600; }
+#dayBox .bd-b.pri { background: #000; color: #fff; border-color: #000; }
+#dayBox .bd-row { display: grid; grid-template-columns: 56px 1fr; gap: 10px; padding: 10px 10px; margin-top: 8px; border-left: 5px solid #bbb; border-radius: 6px; background: #f6f6f6; }
+#dayBox .bd-row.now { border-left-color: #000; background: #fff; border: 2px solid #000; border-left-width: 5px; }
+#dayBox .bd-row.done { opacity: .5; }
+#dayBox .bd-row.ringing, #dayBox .bd-kid.ringing { outline: 3px solid #000; }
+#dayBox .bd-t b { display: block; font-size: var(--fs-body); }
+#dayBox .bd-t small, #dayBox .bd-kt small { color: var(--muted); font-size: var(--fs-caption); }
+#dayBox .bd-nm { font-size: var(--fs-lg); font-weight: 700; }
+#dayBox .bd-nm em { font-style: normal; background: #000; color: #fff; border-radius: 6px; padding: 1px 7px; font-size: var(--fs-caption); margin-right: 4px; }
+#dayBox .bd-note { color: var(--muted); font-size: var(--fs-caption); margin-top: 4px; }
+#dayBox .bd-bt { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 8px; }
+#dayBox .bd-meth { margin-top: 8px; }
+#dayBox .bd-meth summary { min-height: 44px; display: flex; align-items: center; font-weight: 700; font-size: var(--fs-body); }
+#dayBox .bd-meth ol { margin: 4px 0 4px 20px; padding: 0; font-size: var(--fs-body); }
+#dayBox .bd-meth li { margin: 4px 0; }
+#dayBox .bd-mp { font-weight: 700; margin-top: 6px; font-size: var(--fs-caption); }
+#dayBox .bd-kid { margin-top: 10px; padding: 8px 10px; border: 2px solid #000; border-radius: 8px; background: #fff; }
+#dayBox .bd-kid.rest { border-style: dashed; border-color: #888; background: #f1f1f1; }
+#dayBox .bd-kid.done { opacity: .5; }
+#dayBox .bd-kt { font-size: var(--fs-body); }
+@media (min-width: 900px) { #dayBox { max-width: 760px; } }
 </style>
 </head>
 <body>
@@ -2614,7 +2650,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
   </div>
 </div>
 
-<div class="ver-badge">v1.185.07 · Nov 19, 10:55 AM PST</div>
+<div class="ver-badge">v1.186.00 · Nov 19, 11:30 AM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -6216,6 +6252,98 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
       + `<h3 style="margin-top:16px">Steps for each item</h3><div class="sc-help">The blocks you drag are the timed parts. Open an item for every step of its method.</div>${schedSteps(T)}<button type="button" class="sc-reset" data-sc="reset">Auto-arrange (clear my moves)</button></div>`;
     el.innerHTML = h;
   }
+  // ---- Bake Day on Plan step 3 (v1.186.00): pick Person 1 or 2, follow that person's steps in order with countdown timers ----
+  // Steps come from the Schedule (same tasks, same moves you made there). State (this device only): chosen person, done steps, running timers as end times, so a reload keeps them.
+  const BD_KEY = 'bakeDay.v1';
+  let BD = { person: null, done: {}, run: {}, fired: {}, t0: null };
+  try { const s = JSON.parse(localStorage.getItem(BD_KEY)); if (s && typeof s === 'object') BD = Object.assign(BD, s, { done: s.done || {}, run: s.run || {}, fired: s.fired || {} }); } catch {}
+  const bdSave = () => { try { localStorage.setItem(BD_KEY, JSON.stringify(BD)); } catch {} };
+  let bdTick = null, bdAudio = null, bdLastBeep = 0, bdArm = false;
+  function bdUnlock() { try { const A = window.AudioContext || window.webkitAudioContext; if (!A) return; bdAudio = bdAudio || new A(); if (bdAudio.state === 'suspended') bdAudio.resume(); } catch {} }
+  function bdBeep() {
+    bdLastBeep = Date.now();
+    try { const c = bdAudio; if (c) for (let i = 0; i < 4; i++) { const o = c.createOscillator(), g = c.createGain(); o.frequency.value = 880; o.connect(g); g.connect(c.destination); const s = c.currentTime + i * 0.4; g.gain.setValueAtTime(0.25, s); g.gain.exponentialRampToValueAtTime(0.001, s + 0.25); o.start(s); o.stop(s + 0.3); } } catch {}
+    try { if (navigator.vibrate) navigator.vibrate([300, 150, 300, 150, 300]); } catch {}
+  }
+  function bdProducts(x) {
+    if (!/:prep:/.test(x.id)) return [];
+    if (x.back) return x.back.slice();
+    if (SCHED_COMBO.includes(x.p) && / \+ /.test(x.name)) return SCHED_COMBO.filter(q => Math.round((planBakeTotals || {})[q] || 0) > 0);
+    return x.p ? [x.p] : [];
+  }
+  function bdMethod(p) {
+    let t = '';
+    try { const key = Object.keys(BS_PRODUCT).find(k => BS_PRODUCT[k] === p), f = key && bsFind(key); t = schedStrip(f && f.sec === 'mad' ? REC_MAD_NOTES : (f && f.it && (f.it.notes || (f.it.versions && f.it.versions[0] && f.it.versions[0].notes))) || ''); } catch (e) {}
+    const i = t.search(/^\s*Method\s*$/mi); if (i >= 0) t = t.slice(i).replace(/^\s*Method\s*\n/i, '');
+    const j = t.search(/^\s*(Yield|Shelf life|One month)/mi); if (j > 0) t = t.slice(0, j);
+    return t.split('\n').map(x => x.trim()).filter(Boolean).map(x => x.replace(/^\d+[.)]\s*/, ''));
+  }
+  const bdTime = m => BD.t0 ? new Date(BD.t0 + m * 60000).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) : clk(m);
+  function bdPaint() {
+    const el = document.getElementById('dayBox'); if (!el) return;
+    const T = schedTasks();
+    let h = `<h3>Bake day</h3>`;
+    if (!T.length) { el.innerHTML = h + `<div class="bd-none">Nothing to bake yet. Pick days for at least one item in step 1.</div>`; return; }
+    const R = schedRun(T), byId = {}; R.forEach(x => { byId[x.id] = x; });
+    const n = schedCfg.people;
+    if (BD.person != null && BD.person >= n) BD.person = null;
+    const total = Math.max(...R.map(x => x.end));
+    h += `<div class="bd-who" role="group" aria-label="Who are you">${[...Array(n).keys()].map(i => `<button type="button" data-bd="person:${i}" class="${BD.person === i ? 'on' : ''}">Person ${i + 1}</button>`).join('')}</div>`;
+    if (BD.person == null) { el.innerHTML = h + `<div class="bd-none">Pick who you are to see your steps. The day takes about ${fmtDur(Math.round(total))} with ${n} ${n === 1 ? 'person' : 'people'} and ${schedCfg.ovens} oven${schedCfg.ovens === 1 ? '' : 's'}. Change that on the Schedule page.</div>`; return; }
+    const mine = R.filter(x => x.who === BD.person).sort((a, b) => a.start - b.start || a.end - b.end);
+    const shown = new Set(), kids = x => R.filter(k => (k.oven || k.rest) && k.deps.includes(x.id) && !shown.has(k.id));
+    const now = Date.now(), left = id => BD.run[id] - now;
+    const nextId = (mine.find(x => !BD.done[x.id]) || {}).id;
+    const btns = (x, big) => {
+      const run = BD.run[x.id] != null, ring = run && left(x.id) <= 0;
+      if (BD.done[x.id]) return `<button type="button" class="bd-b" data-bd="undo:${esc(x.id)}">Undo</button>`;
+      return (run ? (ring ? `<span class="bd-left ring" data-bd-left="${esc(x.id)}">Time is up</span>` : `<span class="bd-left" data-bd-left="${esc(x.id)}">${tmClock(left(x.id))}</span>`) + `<button type="button" class="bd-b" data-bd="stop:${esc(x.id)}">${ring ? 'Silence' : 'Stop'}</button>` : `<button type="button" class="bd-b${big ? ' pri' : ''}" data-bd="start:${esc(x.id)}">Start ${x.min} min timer</button>`)
+        + `<button type="button" class="bd-b${ring ? ' pri' : ''}" data-bd="done:${esc(x.id)}">Done</button>`;
+    };
+    const kid = k => { shown.add(k.id); const run = BD.run[k.id] != null;
+      return `<div class="bd-kid${k.rest ? ' rest' : ' oven'}${BD.done[k.id] ? ' done' : ''}${run && left(k.id) <= 0 && !BD.done[k.id] ? ' ringing' : ''}"><div class="bd-kt"><b>${k.rest ? 'Wait' : 'Oven ' + (k.ov + 1)}</b> ${esc(k.name)} <small>${k.min} min${BD.t0 ? ' · ' + bdTime(k.start) : ''}</small></div><div class="bd-bt">${btns(k, false)}</div></div>`; };
+    let nDone = 0;
+    const rows = mine.map(x => {
+      const done = !!BD.done[x.id]; if (done) nDone++;
+      const run = BD.run[x.id] != null, ring = run && left(x.id) <= 0 && !done, isNow = x.id === nextId;
+      const ps = bdProducts(x), meth = ps.map(p => ({ p, lines: bdMethod(p) })).filter(m => m.lines.length);
+      let bowl = ''; if (ps.length) { const g = ps.reduce((a, q) => a + flavorBatches(Math.round((planBakeTotals || {})[q] || 0), q) * batterGrams(q), 0), b = bowlLine(g, DOUGH_ITEMS.includes(ps[0])); if (b) bowl = `<div class="bd-note">${esc(b)}</div>`; }
+      const kk = kids(x).map(kid).join('');
+      return `<div class="bd-row${isNow ? ' now' : ''}${done ? ' done' : ''}${ring ? ' ringing' : ''}"><div class="bd-t"><b>${bdTime(x.start)}</b><small>${x.min} min</small></div><div class="bd-x"><div class="bd-nm">${isNow ? '<em>Now</em> ' : ''}${esc(x.name)}</div>${bowl}<div class="bd-bt">${btns(x, isNow)}</div>${meth.length ? `<details class="bd-meth"${isNow ? ' open' : ''}><summary>Method</summary>${meth.map(m => `${meth.length > 1 ? `<div class="bd-mp">${esc(pdisp(m.p))}</div>` : ''}<ol>${m.lines.map(l => `<li>${esc(l)}</li>`).join('')}</ol>`).join('')}</details>` : ''}${kk}</div></div>`;
+    }).join('');
+    const runs = Object.keys(BD.run).filter(id => byId[id] && !BD.done[id]).sort((a, b) => BD.run[a] - BD.run[b]);
+    h += `<div class="bd-sum"><b>${nDone} of ${mine.length}</b> steps done · about ${fmtDur(Math.round(mine.length ? mine[mine.length - 1].end : 0))} for you<small>Times are minutes from the start of the day${BD.t0 ? ' (clock times from when you started)' : ''}. Oven and wait steps sit under the step that starts them.</small></div>`
+      + (runs.length ? `<div class="bd-run"><b>Timers running</b>${runs.map(id => `<div><span>${esc(byId[id].name)}</span><span class="bd-left${left(id) <= 0 ? ' ring' : ''}" data-bd-left="${esc(id)}">${left(id) <= 0 ? 'Time is up' : tmClock(left(id))}</span></div>`).join('')}</div>` : '')
+      + `<div class="bd-ctl"><button type="button" class="bd-b" data-bd="clock">${BD.t0 ? 'Show minutes instead' : 'Start the day clock'}</button><button type="button" class="bd-b" data-bd="reset">${bdArm ? 'Tap again to clear' : 'Start over'}</button></div>`
+      + `<div class="bd-rows">${rows || '<div class="bd-none">Nothing for this person.</div>'}</div>`;
+    el.innerHTML = h;
+    if (!bdTick) bdTick = setInterval(bdTickFn, 1000);
+  }
+  function bdTickFn() {
+    const box = document.getElementById('dayBox');
+    if (!box || !box.offsetParent) { if (!box) { clearInterval(bdTick); bdTick = null; } return; }
+    const now = Date.now(); let repaint = false, ringing = false;
+    for (const id of Object.keys(BD.run)) {
+      if (BD.done[id]) continue;
+      const l = BD.run[id] - now;
+      if (l <= 0) { ringing = true; if (!BD.fired[id]) { BD.fired[id] = true; bdSave(); bdBeep(); repaint = true; } }
+      else box.querySelectorAll(`[data-bd-left="${CSS.escape(id)}"]`).forEach(e => { e.textContent = tmClock(l); });
+    }
+    if (ringing && !repaint && now - bdLastBeep > 15000) bdBeep();
+    if (repaint) bdPaint();
+  }
+  document.addEventListener('click', e => {
+    const b = e.target.closest('#dayBox [data-bd]'); if (!b) return;
+    const [k, ...r] = b.dataset.bd.split(':'), id = r.join(':');
+    if (k !== 'reset') bdArm = false;
+    if (k === 'person') BD.person = Number(id);
+    else if (k === 'start') { const x = schedRun(schedTasks()).find(t => t.id === id); if (x) { bdUnlock(); BD.run[id] = Date.now() + x.min * 60000; delete BD.fired[id]; } }
+    else if (k === 'stop' || k === 'done') { delete BD.run[id]; delete BD.fired[id]; if (k === 'done') BD.done[id] = true; }
+    else if (k === 'undo') delete BD.done[id];
+    else if (k === 'clock') BD.t0 = BD.t0 ? null : Date.now();
+    else if (k === 'reset') { if (!bdArm) { bdArm = true; setTimeout(() => { if (bdArm) { bdArm = false; bdPaint(); } }, 4000); } else { bdArm = false; BD.done = {}; BD.run = {}; BD.fired = {}; BD.t0 = null; } }
+    bdSave(); bdPaint();
+  });
   async function schedOpen() { schedPaint(); try { await renderPlan(); } catch (e) {} if (homeTab === 'sched') schedPaint(); }
   (function schedWire() {
     const root = document.getElementById('homeSched'); if (!root) return;
@@ -6373,10 +6501,11 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
         + `<div class="pw-nav"><button type="button" class="btn-ghost" data-wgo="1">Back</button><button type="button" class="btn-primary" data-wgo="3">Next: bake sheet</button></div>`;
     } else {
       h += `<div class="pw-head"><b>Bake sheet</b><span>Batches from step 1. Change a number or add a recipe, then preview or print.</span></div>`
-        + `<div class="pw-nav pw-nav-top"><button type="button" class="btn-ghost" data-wgo="2">Back</button><span></span></div>`;
+        + `<div class="pw-nav pw-nav-top"><button type="button" class="btn-ghost" data-wgo="2">Back</button><span></span></div>` + `<div class="card" id="dayBox"></div>`;
     }
     box.innerHTML = h; box.dataset.s1 = wizStep === 1 ? '1' : '';
     try { boxPaint(); } catch {}
+    if (wizStep === 3) { try { bdPaint(); } catch (e) { console.error(e); } }
     if (wizStep === 2) {
       const b = document.getElementById('pwBuy'); if (b) { try { bkWireTicks(b); } catch {} }
       if (PANTRY === null || LEDGER === null) setTimeout(() => { if (wizStep === 2) wizPaint(); }, 1200);   // repaint once the pantry and ledger have loaded
