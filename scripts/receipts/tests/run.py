@@ -27,7 +27,7 @@ for n in ("costco_yorba_linda_sideways", "costco_yorba_linda_rot90", "costco_yor
     check(f"{n}: 3 coupons kept as negative fees", sorted(f["price"] for f in r["fees"]) == [-4.0, -4.0, -3.0], r["fees"])
     check(f"{n}: total from subtotal+tax checks", r["check"] and r["check"]["ok"] and r["total"] == 417.32 and "subtotal" in r["check"].get("note", ""), r["check"])
     check(f"{n}: date unreadable -> None (photo cut off)", r["date"] is None, r["date"])
-    check(f"{n}: unknown list names numbers and prices", "WHOLE MILK 4.09 x2" in P.unknown_summary(r), P.unknown_summary(r))
+    check(f"{n}: unknown list names numbers and prices", "#no-number WHOLE MILK 4.09 x2" in P.unknown_summary(r), P.unknown_summary(r))
 # same photo with every coordinate turned by hand
 for k in (1, 2, 3):
     r = P.parse(turn(load("costco_yorba_linda_sideways"), k))
