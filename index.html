@@ -2650,7 +2650,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
   </div>
 </div>
 
-<div class="ver-badge">v1.186.01 · Nov 19, 12:20 PM PST</div>
+<div class="ver-badge">v1.186.02 · Nov 19, 12:40 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -9199,7 +9199,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
   const amzAsin = l => { const m = /(?:\/dp\/|\/gp\/product\/|\/product\/)([A-Z0-9]{10})(?:[\/?#]|$)/i.exec(String(l || '')); return m ? m[1].toUpperCase() : ''; };
   const amzFor = name => {
     const c = costPrices[name]; let a = c && amzAsin(c.link); if (a) return a;
-    const k = costCanon(name); for (const l of (LEDGER || [])) if (l.link && costCanon(l.item) === k && (a = amzAsin(l.link))) return a;
+    const k = costCanon(name); for (const l of (LEDGER || [])) if (l.approved && l.link && costCanon(l.item) === k && (a = amzAsin(l.link))) return a;
     return '';
   };
   const amzCart = buy => {

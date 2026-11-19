@@ -323,6 +323,8 @@ Ingredients: **Dark Chocolate 70% and Dark Chocolate Couverture are retired into
 
 **v1.186.00: Bake day on Plan step 3 (Andrew 2026-11-19).** `#dayBox` (`bdPaint()`, above `schedOpen`) sits under the step 3 header: pick **Person 1 / 2** (as many as the Schedule's People count), then that person's steps from `schedRun(schedTasks())` in time order, so Schedule moves and settings carry over. The first undone step is **Now** (method folded open for prep steps, plus the mixing bowl line); every step has a countdown **Start N min timer** and **Done**; oven bakes and waits (cool, chill) show under the fill or step that starts them, each with its own timer. A **Timers running** strip lists every active countdown. Timers are stored as end times (`bakeDay.v1` in localStorage: person, done, run, fired, day clock), so a reload keeps them; at zero it beeps (WebAudio, unlocked by the Start tap), vibrates where the phone allows and shows **Time is up** until Silence or Done, re-beeping every 15 s. The beep and vibration only work while the page is open and the screen is on (no background push). **Start the day clock** shows real clock times instead of minutes. State is per device, so two people on two phones each pick their own person. Not tried on a phone; headless 390px only.
 
+**v1.186.02: Amazon cart links come only from approved ledger lines** (`amzFor` fallback skips unapproved seed lines; the cocoa butter cart link had come from an unapproved 1 lb Yajna seed line). Cocoa Butter's Nov 18 receipt line now carries the link Andrew says is the one they buy (`B0C3VK5W26`). A product link has to sit on an approved line to be used.
+
 ## Design pass (v1.149.00)
 
 Last CSS block: **every `<select>` has one style** (white, 1px #c9c9c9, 12px radius, 44px, black chevron; `.row-select` and `[data-labi]` excluded); the Forecast store toggle (`.fc-locs`) uses the pill style. On desktop (>=900px) all pages share a 1120px column, page chips sit centered at natural width, the Trends donut is 220px. On phones the 5 Inventory chips shrink (11px padding) to fit. Counts' total says "pieces", not "madeleines". Still open: coloured snowflake/flame/arrow icons in Forecast misses (breaks the B/W rule), today's half-finished day shows as a 0.0x miss, Stock's section headers use the old grey band style.
@@ -343,7 +345,7 @@ The headless check at 390px misses what iOS does. Apply these to every new or ch
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.186.01**; the next feature is v1.187.00, a fix v1.186.02 Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.186.02**; the next feature is v1.187.00, a fix v1.186.03 Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 
