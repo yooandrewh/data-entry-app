@@ -279,6 +279,8 @@ Ingredients: **Dark Chocolate 70% and Dark Chocolate Couverture are retired into
 
 **v1.177.08: Cookie and Muffin preps are separate blocks again** (Andrew: they should be separate). `SCHED_MERGE_60QT = false` turns off the v1.177.01 merge of 60 qt preps (set it to true to bring it back). 40-day plan unchanged at 6h25, ovens 25-241. The 60 qt bowl now gets used in two separate stretches; Andrew's earlier note was that it costs extra per use.
 
+**v1.177.09: work order searched again** (Andrew: minimize oven time) with the v1.177.07 / .08 rules (Maple Pecan first fill at 0:20, Cookie and Muffin preps separate). All 5,040 orders through `schedRun`, 40-day plan: `SCHED_ORDER` is now Cake Pop, Cookie, Maple Pecan, Sea Salt, Muffin, Bundt, Lemon Poppy. Ovens run 25-226 (3h21, was 3h36 with the old order), day 6h21 (was 6h25), 355 busy oven-minutes, no pan overlaps. Shortest oven span of any order is 193 min but its day is 7h45; the shortest day of any order is 6h20.
+
 ## Design pass (v1.149.00)
 
 Last CSS block: **every `<select>` has one style** (white, 1px #c9c9c9, 12px radius, 44px, black chevron; `.row-select` and `[data-labi]` excluded); the Forecast store toggle (`.fc-locs`) uses the pill style. On desktop (>=900px) all pages share a 1120px column, page chips sit centered at natural width, the Trends donut is 220px. On phones the 5 Inventory chips shrink (11px padding) to fit. Counts' total says "pieces", not "madeleines". Still open: coloured snowflake/flame/arrow icons in Forecast misses (breaks the B/W rule), today's half-finished day shows as a 0.0x miss, Stock's section headers use the old grey band style.
@@ -299,7 +301,7 @@ The headless check at 390px misses what iOS does. Apply these to every new or ch
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.177.08**; the next feature is v1.178.00, a fix v1.177.09. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.177.09**; the next feature is v1.178.00, a fix v1.177.10. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 
