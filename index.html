@@ -2710,7 +2710,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.176.05 · Nov 18, 7:20 PM PST</div>
+<div class="ver-badge">v1.176.06 · Nov 18, 7:45 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -5791,7 +5791,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
         T.push(Object.assign({ id: p + ':dip1', name: 'Cake pops dip 1/2', min: half(30), who: true, deps: [p + ':chill', p + ':melt'], lag: { [p + ':melt']: 5 } }, fin));
         T.push(Object.assign({ id: p + ':dip2', name: 'Cake pops dip 2/2', min: half(30), who: true, deps: [p + ':chill', p + ':melt'], lag: { [p + ':melt']: 5 } }, fin));
       }
-      if (GLAZED.includes(p) && last) T.push({ id: p + ':glaze', name: pdisp(p) + ' glaze', p, min: Math.max(1, Math.round(n * KT.glazeSec / 60)), who: true, deps: [last], delay: KT.coolMin, ix, rk: 98 });
+      if (GLAZED.includes(p) && last) T.push({ id: p + ':glaze', name: pdisp(p) + ' glaze', p, min: Math.max(1, Math.round(n * KT.glazeSec / 60)), who: true, deps: [last], delay: KT.coolMin, ix: 500, rk: 98 });   // glaze waits behind every oven-feeding step (prep, fill) so it never delays the next bake
     }
     if (T.length > 1) T.push({ id: 'clean', name: 'Cleaning', p: '', min: KT.cleanMin, who: true, deps: T.map(t => t.id), ix: 999, rk: 0 });
     T.forEach(t => { if (schedDur[t.id]) t.min = schedDur[t.id]; });
