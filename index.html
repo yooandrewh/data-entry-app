@@ -2297,6 +2297,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
 .sc-axis i { position: absolute; left: 0; right: 0; font-style: normal; font-size: var(--fs-micro); color: #6b6b6b; border-top: 1px solid #e3e3e3; padding-left: 4px; }
 .sc-lane { position: relative; border-left: 1px solid #e3e3e3; }
 .sc-blk { position: absolute; left: 2px; right: 2px; box-sizing: border-box; border-radius: 6px; background: var(--c, #6b6b6b); color: #fff; font-size: var(--fs-micro); padding: 1px 3px; line-height: 1.15; touch-action: none; cursor: grab; user-select: none; }
+.sc-blk.rest { background: repeating-linear-gradient(135deg, #f1f1f1 0 6px, #e4e4e4 6px 12px); color: #555; border: 1px dashed #999; cursor: default; touch-action: auto; }
 .sc-blk.oven { background: #fff; color: var(--c, #232323); border: 2px solid var(--c, #6b6b6b); cursor: default; }
 .sc-blk > span { display: block; overflow: hidden; height: 100%; }
 .sc-rz { position: absolute; left: 0; right: 0; bottom: -9px; height: 18px; cursor: ns-resize; z-index: 6; touch-action: none; }
@@ -2701,7 +2702,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.175.00 · Nov 18, 10:10 PM PST</div>
+<div class="ver-badge">v1.176.00 · Nov 18, 5:35 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -5756,7 +5757,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     const T = [{ id: 'setup', name: 'Setup', p: '', min: KT.setupMin, who: true, deps: [], ix: -1, rk: 0 }], bake = planBakeTotals || {};
     for (const p of PRODUCTS) {
       const n = Math.round(bake[p] || 0); if (n <= 0) continue;
-      const ix = PRODUCTS.indexOf(p), o = ovenSteps({ [p]: n }).rows[0], batches = flavorBatches(n, p);
+      const ix = p === 'Cake Pop' ? -0.5 : PRODUCTS.indexOf(p), o = ovenSteps({ [p]: n }).rows[0], batches = flavorBatches(n, p);   // cake pops go first: they need hours of resting after the oven
       let group = KT.prepGroup, pmin = KT.prepMin;
       try { const key = Object.keys(BS_PRODUCT).find(k => BS_PRODUCT[k] === p), f = key && bsFind(key); if (f && f.sec !== 'mad') { group = 1; pmin = (f.it && f.it.prep) || 20; } } catch (e) {}
       if (!SCHED_OWN_PREP.includes(p)) pmin = SCHED_PREP_MIN;   // Andrew 2026-11-18: every prep block is 30 min except muffins, cookies and cake pops (they keep their recipe's own prep time)
@@ -5769,6 +5770,17 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
         if (schedCfg.fill > 0) T.push({ id: p + ':fill:' + k, name: pdisp(p) + ' fill ' + k, p, min: schedCfg.fill, who: true, deps: pd, ix, rk: k });
         T.push({ id: p + ':bake:' + k, name: pdisp(p) + ' bake ' + k + '/' + o.rounds, p, min: o.bk, oven: true, deps: schedCfg.fill > 0 ? [p + ':fill:' + k] : pd, ix, rk: k });
         last = p + ':bake:' + k;
+      }
+      if (p === 'Cake Pop' && last) {   // finishing (assumed minutes, Andrew has not confirmed): cool 60, frost 20, roll 15 s/pop, chill 120, melt coating 10, dip 30 s/pop; two people split the rolling and dipping
+        const c5 = m => Math.max(5, Math.ceil(m / 5) * 5), half = sec => c5(n * sec / 60 / 2), fin = { ix, rk: 50, p, fin: true };
+        T.push(Object.assign({ id: p + ':cool', name: 'Cake pops cool', min: 60, rest: true, deps: [last] }, fin));
+        T.push(Object.assign({ id: p + ':frost', name: 'Cake pops crumble and frost', min: 20, who: true, deps: [p + ':cool'] }, fin));
+        T.push(Object.assign({ id: p + ':roll1', name: 'Cake pops roll 1/2', min: half(15), who: true, deps: [p + ':frost'] }, fin));
+        T.push(Object.assign({ id: p + ':roll2', name: 'Cake pops roll 2/2', min: half(15), who: true, deps: [p + ':frost'] }, fin));
+        T.push(Object.assign({ id: p + ':chill', name: 'Cake pops chill (2 h)', min: 120, rest: true, deps: [p + ':roll1', p + ':roll2'] }, fin));
+        T.push(Object.assign({ id: p + ':melt', name: 'Cake pops melt coating', min: 10, who: true, deps: [p + ':chill'], lag: { [p + ':chill']: -15 } }, fin));
+        T.push(Object.assign({ id: p + ':dip1', name: 'Cake pops dip 1/2', min: half(30), who: true, deps: [p + ':chill', p + ':melt'], lag: { [p + ':melt']: 5 } }, fin));
+        T.push(Object.assign({ id: p + ':dip2', name: 'Cake pops dip 2/2', min: half(30), who: true, deps: [p + ':chill', p + ':melt'], lag: { [p + ':melt']: 5 } }, fin));
       }
       if (GLAZED.includes(p) && last) T.push({ id: p + ':glaze', name: pdisp(p) + ' glaze', p, min: Math.max(1, Math.round(n * KT.glazeSec / 60)), who: true, deps: [last], delay: KT.coolMin, ix, rk: 98 });
     }
@@ -5786,9 +5798,10 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       let best = null; const cands = [];
       for (const t of left) {
         if (!t.deps.every(d => end.has(d))) continue;
-        const ready = Math.max(schedAt[t.id] || 0, ...t.deps.map(d => end.get(d)).map((v, i) => v + (t.delay || 0)));
+        const ready = Math.max(schedAt[t.id] || 0, ...t.deps.map(d => end.get(d) + (t.lag && t.lag[d] != null ? t.lag[d] : (t.delay || 0))));
         let c = null;
-        if (t.who) {
+        if (t.rest) c = { start: ready, who: -1, ov: -1 };   // resting (cooling, chilling) uses no person and no oven
+        else if (t.who) {
           const pin = schedPin[t.id], list = pin != null && pin < ps.length ? [pin] : ps.map((_, i) => i);
           list.forEach(i => { const st = schedGap(ps[i], ready, t.min); if (!c || st < c.start) c = { start: st, who: i, ov: -1 }; });
         } else {
@@ -5820,6 +5833,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       steps.push(`Bake: ${bakes.length} round${bakes.length === 1 ? '' : 's'} × ${o.bk} min in the oven.`);
       if (o.cool) steps.push(`Cool: ${o.cool} min on the rack after each round.`);
       if (gl) steps.push(`Glaze: ${gl.min} min once cooled.`);
+      if (mine.some(t => t.fin)) { const g = id => (mine.find(t => t.id === p + ':' + id) || {}).min || 0; steps.push(`Finish: cool ${g('cool')} min, crumble and frost ${g('frost')} min, roll ${g('roll1')} min each for two people, chill ${g('chill')} min (nobody needed), melt the coating ${g('melt')} min, dip ${g('dip1')} min each for two people. These minutes are my guess.`); }
       out.push(`<details class="sc-steps"><summary><b>${esc(pdisp(p))}</b> · ${n} pieces · ${steps.length} steps</summary><ol>${steps.map(x => `<li>${esc(x)}</li>`).join('')}</ol>${method ? `<div class="sc-mh">Every step of the method</div><ol class="sc-mlist">${method.split('\n').map(x => x.trim()).filter(Boolean).map(x => `<li>${esc(x.replace(/^\d+[.)]\s*/, ''))}</li>`).join('')}</ol>` : '<div class="sc-mh">No written method on file for this item.</div>'}</details>`);
     }
     return out.join('');
@@ -5833,15 +5847,16 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
     if (!T.length) { el.innerHTML = h + `<div class="sc-none">Nothing to bake yet. Pick days for at least one item on the Plan page (step 1).</div></div>`; return; }
     const R = schedRun(T), total = Math.max(...R.map(x => x.end)), ppm = schedPpm = 1.6 * schedZoom, H = Math.ceil(total * ppm) + 8;
     const lanes = [...Array(schedCfg.people).keys()].map(i => ({ label: 'Person ' + (i + 1), items: R.filter(x => x.who === i), kind: 'p', idx: i })).concat([...Array(schedCfg.ovens).keys()].map(i => ({ label: 'Oven ' + (i + 1), items: R.filter(x => x.ov === i), kind: 'o', idx: i })));
+    const rests = R.filter(x => x.rest); if (rests.length) lanes.push({ label: 'Resting', items: rests, kind: 'r', idx: 0 });
     const col = x => (x.p && PRODUCT_COLOR[x.p]) || '#6b6b6b';
     const moved = id => schedPin[id] != null || schedOv[id] != null || schedAt[id] != null || schedDur[id] != null;
-    const blk = x => `<div class="sc-blk${x.oven ? ' oven' : ''}${schedSel === x.id ? ' sel' : ''}${moved(x.id) ? ' mv' : ''}" data-id="${esc(x.id)}" data-drag="1" style="top:${Math.round(x.start * ppm)}px;height:${Math.max(6, Math.round(x.min * ppm) - 1)}px;--c:${col(x)}" title="${esc(x.name)}"><span>${esc(x.name)}</span>${schedSel === x.id ? '<i class="sc-rz" data-rz="1"></i>' : ''}</div>`;
+    const blk = x => x.rest ? `<div class="sc-blk rest" data-id="${esc(x.id)}" style="top:${Math.round(x.start * ppm)}px;height:${Math.max(6, Math.round(x.min * ppm) - 1)}px;--c:${col(x)}" title="${esc(x.name)}"><span>${esc(x.name)}</span></div>` : `<div class="sc-blk${x.oven ? ' oven' : ''}${schedSel === x.id ? ' sel' : ''}${moved(x.id) ? ' mv' : ''}" data-id="${esc(x.id)}" data-drag="1" style="top:${Math.round(x.start * ppm)}px;height:${Math.max(6, Math.round(x.min * ppm) - 1)}px;--c:${col(x)}" title="${esc(x.name)}"><span>${esc(x.name)}</span>${schedSel === x.id ? '<i class="sc-rz" data-rz="1"></i>' : ''}</div>`;
     const ticks = []; for (let m = 0; m <= total; m += schedZoom > 1 ? 30 : 60) ticks.push(`<i style="top:${Math.round(m * ppm)}px">${clk(m)}</i>`);
     const busy = lanes.filter(l => l.kind === 'p').map(l => Math.round(l.items.reduce((a, x) => a + x.min, 0)));
     h += `<div class="sc-sum"><b>${fmtDur(Math.round(total))}</b> start to finish · ${schedCfg.people} ${schedCfg.people === 1 ? 'person' : 'people'} · ${schedCfg.ovens} oven${schedCfg.ovens === 1 ? '' : 's'}<small>Hands-on time: ${busy.map((m, i) => 'Person ' + (i + 1) + ' ' + fmtDur(m)).join(' · ')}</small></div>`
       + `<div class="sc-scroll"><div class="sc-chart" style="--n:${lanes.length}"><div class="sc-hd"></div>${lanes.map(l => `<div class="sc-hd">${l.label}</div>`).join('')}<div class="sc-axis" style="height:${H}px">${ticks.join('')}</div>${lanes.map(l => `<div class="sc-lane" data-kind="${l.kind}" data-lane="${l.idx}" style="height:${H}px">${l.items.map(blk).join('')}</div>`).join('')}</div></div>`;
     const sel = R.find(x => x.id === schedSel);
-    h += `<div class="sc-detail">${sel ? `<b>${esc(sel.name)}</b> · ${clk(sel.start)} to ${clk(sel.end)} (${sel.min} min)${sel.who >= 0 ? ' · Person ' + (sel.who + 1) : ' · Oven ' + (sel.ov + 1)}${schedDur[sel.id] ? ' · length set by you' : ''}${moved(sel.id) ? ' · edited by you <button type="button" data-sc="unpin">Put back</button>' : ''}` : 'Tap a block for its details.'}</div>`;
+    h += `<div class="sc-detail">${sel ? `<b>${esc(sel.name)}</b> · ${clk(sel.start)} to ${clk(sel.end)} (${sel.min} min)${sel.who >= 0 ? ' · Person ' + (sel.who + 1) : sel.ov >= 0 ? ' · Oven ' + (sel.ov + 1) : ' · resting, nobody needed'}${schedDur[sel.id] ? ' · length set by you' : ''}${moved(sel.id) ? ' · edited by you <button type="button" data-sc="unpin">Put back</button>' : ''}` : 'Tap a block for its details.'}</div>`;
     h += `<div class="sc-lists">${lanes.map(l => `<div class="sc-list"><b>${l.label}</b>${l.items.map(x => `<div><span>${clk(x.start)}</span> ${esc(x.name)} <small>${x.min} min</small></div>`).join('') || '<div><small>Nothing</small></div>'}</div>`).join('')}</div>`
       + `<h3 style="margin-top:16px">Steps for each item</h3><div class="sc-help">The blocks you drag are the timed parts. Open an item for every step of its method.</div>${schedSteps(T)}<button type="button" class="sc-reset" data-sc="reset">Auto-arrange (clear my moves)</button></div>`;
     el.innerHTML = h;
