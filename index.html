@@ -2710,7 +2710,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.177.02 · Nov 18, 10:15 PM PST</div>
+<div class="ver-badge">v1.177.03 · Nov 18, 10:40 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -5786,8 +5786,11 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       for (let k = 1; k <= o.rounds; k++) {
         const need = Math.min(nPrep, Math.max(1, Math.ceil(k * o.cap / perPrep))), pd = []; for (let i = 1; i <= need; i++) pd.push(SCHED_PREDONE.includes(p) ? 'setup' : pid(i));
         for (let i = 1; i <= need; i++) { const pt = T.find(t => t.id === pid(i)); if (pt && pt.rk > k) pt.rk = k; }
-        if (schedCfg.fill > 0) T.push({ id: p + ':fill:' + k, name: pdisp(p) + ' fill ' + k, p, min: schedCfg.fill, who: true, deps: pd, ix, rk: k });
-        T.push({ id: p + ':bake:' + k, name: pdisp(p) + ' bake ' + k + '/' + o.rounds, p, min: o.bk, oven: true, deps: schedCfg.fill > 0 ? [p + ':fill:' + k] : pd, ix, rk: k });
+        // Andrew 2026-11-18: there are only enough pans for one round of an item at a time, so an item's rounds run one after another (never in both ovens at once); different items can still bake side by side. The pans are refilled after the previous round comes out (plus the cooling time for madeleines).
+        const prev = k > 1 ? p + ':bake:' + (k - 1) : null, lg = prev ? { [prev]: o.cool || 0 } : null;
+        if (prev) pd.push(prev);
+        if (schedCfg.fill > 0) T.push({ id: p + ':fill:' + k, name: pdisp(p) + ' fill ' + k, p, min: schedCfg.fill, who: true, deps: pd, ix, rk: k, lag: lg || undefined });
+        T.push({ id: p + ':bake:' + k, name: pdisp(p) + ' bake ' + k + '/' + o.rounds, p, min: o.bk, oven: true, deps: schedCfg.fill > 0 ? [p + ':fill:' + k] : pd, ix, rk: k, lag: schedCfg.fill > 0 ? undefined : lg || undefined });
         last = p + ':bake:' + k;
       }
       if (p === 'Cake Pop' && last) {   // finishing (assumed minutes, Andrew has not confirmed): cool 60, frost 20, roll 15 s/pop, chill 120, melt coating 10, dip 30 s/pop; two people split the rolling and dipping

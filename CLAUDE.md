@@ -267,6 +267,8 @@ Ingredients: **Dark Chocolate 70% and Dark Chocolate Couverture are retired into
 
 **v1.177.02: Maple Pecan is made ahead** (Andrew, 2026-11-18: assume it is pre-done). `SCHED_PREDONE = ['Maple Pecan']`: no prep block, its fills depend only on Setup, so the first Maple Pecan bake starts at 0:25. Steps say "already done ahead of the day". Its batter still counts in pantry use and shopping. 40-day plan 6h20 (was 6h25). Add an item to the array to treat it the same.
 
+**v1.177.03: one round of an item at a time** (Andrew, 2026-11-18: not enough pans to run the same item in both ovens). In `schedTasks()` fill k and bake k of an item wait for bake k-1 of the same item (plus `o.cool` for madeleines, 5 min, before the pans are refilled; assumed). Different items still bake in the two ovens side by side. 40-day plan still 6h20, no same-item overlaps, no oven double-booking.
+
 ## Design pass (v1.149.00)
 
 Last CSS block: **every `<select>` has one style** (white, 1px #c9c9c9, 12px radius, 44px, black chevron; `.row-select` and `[data-labi]` excluded); the Forecast store toggle (`.fc-locs`) uses the pill style. On desktop (>=900px) all pages share a 1120px column, page chips sit centered at natural width, the Trends donut is 220px. On phones the 5 Inventory chips shrink (11px padding) to fit. Counts' total says "pieces", not "madeleines". Still open: coloured snowflake/flame/arrow icons in Forecast misses (breaks the B/W rule), today's half-finished day shows as a 0.0x miss, Stock's section headers use the old grey band style.
