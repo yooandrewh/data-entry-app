@@ -34,14 +34,16 @@ ITEM_RE = re.compile(r"^(?:[A-Z]\s+)?(\d{3,8})\s+(.+?)\s+(\d{1,4}\.\d{2})(?:\s*[
 DISC_RE = re.compile(r"^\d{3,8}\s*/\s*(\d{3,8})\b.*?(\d{1,4}\.\d{2})\s*-")
 MONEY = r"(\d{1,5}\.\d{2})"
 
-def parse(lines):
+def parse(lines, names=None):
+    """names: ledger item names (for matching products on Amazon and unknown-vendor receipts)."""
     rs = rows(orient(lines))
     text = "\n".join(rs)
     low = text.lower()
     res = {"vendor": None, "date": None, "receipt": None, "items": [], "unknown": [], "unhandled": [],
            "tax": None, "total": None, "check": None, "rows": rs, "fees": []}
     if "costco" not in low and re.search(r"\btarget\b", low): return parse_target(rs, text, res)
-    if "costco" not in low: return res
+    if "costco" not in low and re.search(r"order summary|order #\s*\d{3}-\d{7}-\d{7}|amazon", low) and re.search(r"order #\s*\d{3}-", low): return parse_amazon(rs, text, res, names)
+    if "costco" not in low: return parse_generic(rs, text, res, names)
     res["vendor"] = "Costco"
     m = re.search(r"WESTMINSTER|FULLERTON|BUENA PARK|LA HABRA|ANAHEIM|TUSTIN|IRVINE|GARDEN GROVE|COSTA MESA", text.upper())
     place = m.group(0).title() if m else ""
@@ -76,6 +78,108 @@ def parse(lines):
         got = round(sum(i["price"] for i in res["items"]) + sum(u["price"] for u in res["unknown"]) + (res["tax"] or 0), 2)
         res["check"] = {"items_plus_tax": got, "receipt_total": res["total"], "ok": abs(got - res["total"]) < 0.015}
     return res
+
+# ---- Product -> ledger item for receipts that print a product name (Amazon, other stores) ----
+AMAZON_ITEMS = {k: v for k, v in json.load(open(Path(__file__).with_name("amazon_items.json"))).items() if not k.startswith("_")}
+_UNITS = [(r"fl\.?\s*oz|fluid ounces?", 29.5735, "ml"), (r"lbs?\b|pounds?", 453.592, "g"), (r"oz\b|ounces?", 28.3495, "g"), (r"kg\b|kilograms?", 1000, "g"),
+          (r"ml\b|milliliters?", 1, "ml"), (r"gal(?:lons?)?\b", 3785.41, "ml"), (r"liters?\b|litres?\b|\bl\b", 1000, "ml"), (r"g\b|grams?", 1, "g"),
+          (r"ct\b|count\b|pcs\b|pieces\b", 1, "g")]   # a count is stored as "g" and shown in pieces, like the app's other counted items
+def parse_size(label):
+    """First plain size in a product name ('2 lb', '16 oz', '4 fl oz', '100 ct') -> (amount, unit); None when absent or a multipack ('2 x 16 oz')."""
+    t = label.lower()
+    if re.search(r"\d\s*(?:x|pack|ct\s*of)\s*\d|\d+\s*pack\b|pack of \d", t): return None
+    for pat, mult, unit in _UNITS:
+        m = re.search(r"(\d+(?:\.\d+)?)\s*-?\s*(?:" + pat + ")", t)
+        if m: return round(float(m.group(1)) * mult, 1), unit
+    return None
+_ALIAS = {"cacao": "cocoa"}
+def guess_item(label, names):
+    """Ledger item whose words all appear in the product name (longest name wins, must be unique) + the size printed in it."""
+    if not names: return None
+    words = set(re.findall(r"[a-z]+", " ".join(_ALIAS.get(w, w) for w in re.findall(r"[a-z]+", label.lower()))))
+    hits = []
+    for n in set(names):
+        ws = re.findall(r"[a-z]+", n.lower())
+        if ws and all(w in words or w + "s" in words or (w.endswith("s") and w[:-1] in words) for w in ws): hits.append((len(ws), n))
+    if not hits: return None
+    top = max(h[0] for h in hits); best = [n for k, n in hits if k == top]
+    sz = parse_size(label)
+    if len(best) != 1 or not sz: return None
+    return {"item": best[0], "size": sz[0], "unit": sz[1], "what": "auto-matched from the product name: check item and size"}
+def match_product(label, names):
+    low = label.lower()
+    for k, v in AMAZON_ITEMS.items():
+        if k in low: return v
+    return guess_item(label, names)
+
+def _fill(res):
+    if res["total"] is not None:
+        got = round(sum(i["price"] for i in res["items"]) + sum(u["price"] for u in res["unknown"]) + sum(f["price"] for f in res["fees"]) + (res["tax"] or 0), 2)
+        res["check"] = {"items_plus_tax": got, "receipt_total": res["total"], "ok": abs(got - res["total"]) < 0.015}
+    return res
+
+MONTHS = {m: i + 1 for i, m in enumerate("january february march april may june july august september october november december".split())}
+def _date(text):
+    m = re.search(r"(\d{1,2})/(\d{1,2})/(\d{4})", text)
+    if m: return f"{m.group(3)}-{int(m.group(1)):02d}-{int(m.group(2)):02d}"
+    m = re.search(r"([A-Za-z]{3,9})\.? (\d{1,2}), (\d{4})", text)
+    if m and m.group(1).lower() in MONTHS: return f"{m.group(3)}-{MONTHS[m.group(1).lower()]:02d}-{int(m.group(2)):02d}"
+    m = re.search(r"(\d{4})-(\d{2})-(\d{2})", text)
+    return m.group(0) if m else None
+
+def parse_amazon(rs, text, res, names):
+    """Amazon order summary (screenshot or page): title row after 'Arriving/Delivered', price row after 'Sold by', then Subtotal /
+    Shipping / Subscribe & Save and other '-$x' lines (negative fees) / tax / Grand Total."""
+    res["vendor"] = "Amazon"; res["date"] = _date(text)
+    m = re.search(r"Order #\s*([\d-]{15,})", text)
+    res["receipt"] = "Amazon " + (m.group(1) if m else (res["date"] or ""))
+    title = None; sold = False; qty = 1; items = []
+    for r in rs:
+        r = r.strip()
+        if re.match(r"(?i)^(arriving|delivered|shipped|arrived|now arriving|out for delivery|preparing)\b", r): title, sold = "", False; items_open = True; continue
+        if title == "" and not re.match(r"(?i)^(sold by|supplied by|\$)", r): title = r; continue
+        if title and re.match(r"(?i)^sold by", r): sold = True; continue
+        mq = re.match(r"(?i)^qty:?\s*(\d+)$", r)
+        if mq and title: qty = int(mq.group(1)); continue
+        mp = re.match(r"^\$(\d{1,4}(?:,\d{3})*\.\d{2})$", r)
+        if mp and title and sold:
+            items.append({"label": title, "price": float(mp.group(1).replace(",", "")), "n": qty}); title, sold, qty = None, False, 1; continue
+        m = re.search(r"(?i)shipping\s*&\s*handling:?\s*\$(\d+\.\d{2})", r)
+        if m and float(m.group(1)) > 0: res["fees"].append({"price": float(m.group(1)), "note": "Amazon shipping"})
+        m = re.search(r"(?i)([A-Za-z&' ]{3,40}?):\s*-\s*\$(\d+\.\d{2})", r)
+        if m: lab = "Subscribe & Save" if re.search(r"(?i)subscribe", m.group(1)) else m.group(1).strip()[-40:]; res["fees"].append({"price": -float(m.group(2)), "note": "Amazon " + lab}); continue
+        m = re.search(r"(?i)\btax\b.*?\$(\d+\.\d{2})", r)
+        if m and res["tax"] is None and not re.search(r"(?i)before tax", r): res["tax"] = float(m.group(1))
+        m = re.search(r"(?i)grand total:?\s*\$(\d{1,5}(?:,\d{3})*\.\d{2})", r)
+        if m and res["total"] is None: res["total"] = float(m.group(1).replace(",", ""))
+    for it in items:
+        v = match_product(it["label"], names)
+        for _ in range(it["n"]):
+            if v: res["items"].append({"num": "", "label": it["label"], "price": it["price"], **v})
+            else: res["unknown"].append({"num": "", "label": it["label"][:60], "price": it["price"]})
+    if not items: res["unhandled"].append("no items found in the order")
+    return _fill(res)
+
+def parse_generic(rs, text, res, names):
+    """Any other store: vendor = first text row, rows ending in a price are items (matched to ledger names), tax and total rows. Held unless the total adds up."""
+    top = next((r for r in rs[:6] if re.search(r"[A-Za-z]{3,}", r) and not re.search(r"\d{3}[-\s]\d{3,4}|\d{5}", r)), None)
+    res["date"] = _date(text)
+    if not top or not res["date"] or not re.search(r"(?i)\btotal\b", text): return res   # not recognisably a receipt
+    res["vendor"] = re.sub(r"[^A-Za-z0-9&' ]", "", top).strip().title()[:30]
+    res["receipt"] = f"{res['vendor']} {res['date']}"
+    for r in rs:
+        r = r.strip()
+        m = re.match(r"(?i)^(?:sales\s+)?tax\b.*?\$?(\d{1,4}\.\d{2})$", r)
+        if m and res["tax"] is None: res["tax"] = float(m.group(1)); continue
+        m = re.match(r"(?i)^\**\s*(?:grand\s+)?total\b.*?\$?(\d{1,5}\.\d{2})$", r)
+        if m and res["total"] is None: res["total"] = float(m.group(1)); continue
+        if re.match(r"(?i)^(sub\s*total|change|cash|visa|mastercard|amex|debit|credit|balance|tendered|payment|card)", r): continue
+        m = re.match(r"^(?:\d+\s*[x@]\s*)?([A-Za-z].{2,60}?)\s+\$?(\d{1,4}\.\d{2})\s*[A-Z]?$", r)
+        if m:
+            v = guess_item(m.group(1), names)
+            if v: res["items"].append({"num": "", "label": m.group(1), "price": float(m.group(2)), **v})
+            else: res["unknown"].append({"num": "", "label": m.group(1)[:60], "price": float(m.group(2))})
+    return _fill(res)
 
 def parse_target(rs, text, res):
     """Target: rows look like `261050498 GG MILK NF $14.07`, then `3 @ $4.69 ea` (quantity line comes AFTER its item; the item's price is the line total).
@@ -136,7 +240,7 @@ def ledger_lines(res):
     for i in res["items"]:
         out.append({"receipt": res["receipt"], "date": res["date"], "vendor": res["vendor"], "kind": "item",
                     "item": i["item"], "amt": i["size"], "unit": i["unit"], "price": i["price"],
-                    "note": f"item #{i['num']} {i['label']}"[:200]})
+                    "note": (f"item #{i['num']} {i['label']}" if i.get("num") else f"{i['label']}" + (" (auto-matched: check)" if "auto-matched" in i.get("what", "") else ""))[:200]})
     for f in res.get("fees", []):
         out.append({"receipt": res["receipt"], "date": res["date"], "vendor": res["vendor"], "kind": "fee",
                     "price": f["price"], "note": f["note"]})

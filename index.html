@@ -2653,7 +2653,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.170.06 · Nov 18, 4:40 PM PST</div>
+<div class="ver-badge">v1.170.07 · Nov 18, 5:30 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -8149,7 +8149,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       if (!cur || isoD(p.date) > isoD(cur.date) || (isoD(p.date) === isoD(cur.date) && p.idx > cur.idx)) latest.set(k, p);
     });
     const buys = [];
-    ledgerReceipts().forEach(r => r.items.filter(l => l.approved).forEach(l => buys.push(l)));
+    ledgerReceipts().filter(r => !/^(listing-|seed-)/.test(String(r.id))).forEach(r => r.items.filter(l => l.approved).forEach(l => buys.push(l)));   // price listings and the seed import are not purchases
     const out = [...latest.entries()].map(([name, p]) => {
       let bought = 0, mixed = false;
       const c = toGrams(name, p.amt, p.unit);   // a count in ml becomes grams when the item has a density

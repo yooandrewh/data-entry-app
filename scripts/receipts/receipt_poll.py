@@ -29,12 +29,17 @@ def ocr(jpeg):
     for ln in r.stdout.splitlines():
         if ln.strip().startswith("{"): return json.loads(ln)["lines"]
     return []
+def _names():
+    """Ledger item names, so a product name on an Amazon / other receipt can be matched to a ledger item."""
+    try: return sorted({r.get("item") for r in http("/api/ledger", auth=False).get("rows", []) if r.get("kind") == "item" and r.get("item")})
+    except Exception: return []
+
 def process(jpeg, existing):
     """-> (status, result text, ledger lines to post)"""
     lines = ocr(jpeg)
     if not lines: return "failed", "No text found. Retake the photo flat, in good light, whole receipt.", []
-    res = parse(lines)
-    if not res["vendor"]: return "held", "Only Costco and Target receipts are read so far. Enter this one by hand.", []
+    res = parse(lines, _names())
+    if not res["vendor"]: return "held", "Couldn't read this as a receipt (no store, date or matching total). Costco, Target and Amazon are read; others only when every item matches a ledger item. Enter this one by hand.", []
     if res["receipt"] in existing: return "done", f"Already in the ledger: {res['receipt']}. Nothing added.", []
     why = []
     for u in res["unknown"]: why.append(f"unknown item #{u['num']} {u['label']} (tell Claude to add it)")

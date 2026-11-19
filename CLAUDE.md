@@ -227,6 +227,8 @@ Ingredients: **Dark Chocolate 70% and Dark Chocolate Couverture are retired into
 
 **v1.170.06: upload file names.** `api/upload.js` `safeName` now keeps plain ASCII only and swaps `# ? % & + = ; : @ " ' < > | *` for `-`. macOS screenshot names have a narrow no-break space (U+202F) before PM that made Blob refuse the signed link ("Blob path does not match the signed token scope"), so desktop uploads of screenshots failed. Reproduced on the live endpoint, then fixed.
 
+**v1.170.07 + any-vendor receipts (2026-11-18).** `pantryStock()` ignores `listing-*` and `seed-*` ledger receipts (price listings are not purchases; a Costco milk listing was counted as 7.5 L on hand). Pantry counts are strictly "purchases dated after the count": a count and a receipt on the same day do not add up, so enter counts dated before the shopping (Pumpkin Puree / Vanilla Almond Bark sheet counts moved to 11/17). `receipt_parse.parse(lines, names)` now also reads **Amazon order pages** (`parse_amazon`, `amazon_items.json` product text -> ledger item, `Subscribe & Save` as a negative fee, receipt id `Amazon <order #>`) and **any other store** (`parse_generic`: first text line = vendor, price rows matched to ledger item names plus a size printed in the name; held unless every item matches and the total checks). `receipt_poll.process` fetches ledger names. Unknown products hold the receipt once; map them in `amazon_items.json` / `target_items.json` / `costco_items.json` and the next upload is automatic. Name-matched sizes are tagged "auto-matched: check".
+
 ## Design pass (v1.149.00)
 
 Last CSS block: **every `<select>` has one style** (white, 1px #c9c9c9, 12px radius, 44px, black chevron; `.row-select` and `[data-labi]` excluded); the Forecast store toggle (`.fc-locs`) uses the pill style. On desktop (>=900px) all pages share a 1120px column, page chips sit centered at natural width, the Trends donut is 220px. On phones the 5 Inventory chips shrink (11px padding) to fit. Counts' total says "pieces", not "madeleines". Still open: coloured snowflake/flame/arrow icons in Forecast misses (breaks the B/W rule), today's half-finished day shows as a 0.0x miss, Stock's section headers use the old grey band style.
@@ -247,7 +249,7 @@ The headless check at 390px misses what iOS does. Apply these to every new or ch
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.170.06**; the next feature is v1.171.00, a fix v1.170.07. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.170.07**; the next feature is v1.171.00, a fix v1.170.08. Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 

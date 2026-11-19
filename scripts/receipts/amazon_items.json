@@ -1,0 +1,4 @@
+{
+  "_note": "Lowercase text found in an Amazon / online product title -> ledger item. size is one package in grams (or ml when unit is ml; counts are stored as g). Products not listed here are matched by ledger item name and the size printed in the title; anything else is held.",
+  "healthworks superfoods organic cacao butter": {"item": "Cocoa Butter", "size": 907.2, "unit": "g", "what": "Healthworks organic cacao butter, 2 lb (Subscribe & Save, every 3 months)"}
+}
