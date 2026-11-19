@@ -2614,7 +2614,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
   </div>
 </div>
 
-<div class="ver-badge">v1.185.02 · Nov 19, 9:31 AM PST</div>
+<div class="ver-badge">v1.185.03 · Nov 19, 9:32 AM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -5465,7 +5465,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
     try {
       const raw = bake !== planBakeTotals, R = schedRun(schedTasks(bake, raw), raw); if (!R.length) return z;
       const o = ovenSteps(bake), sum = f => R.filter(f).reduce((a, x) => a + x.min, 0);
-      const setup = sum(x => x.id === 'setup'), prep = sum(x => /:prep:/.test(x.id)), fill = sum(x => /:fill:/.test(x.id)), glaze = sum(x => /:glaze2?$/.test(x.id)), clean = sum(x => /^clean2?$/.test(x.id));
+      const setup = sum(x => /^setup2?$/.test(x.id)), prep = sum(x => /:prep:/.test(x.id)), fill = sum(x => /:fill:/.test(x.id)), glaze = sum(x => /:glaze2?$/.test(x.id)), clean = sum(x => /^clean2?$/.test(x.id));
       const finish = sum(x => x.fin && x.who >= 0), hands = sum(x => x.who >= 0), min = Math.round(Math.max(...R.map(x => x.end)));
       return Object.assign(z, { rounds: o.rounds, bakeCool: o.min, prep, fill, glaze, finish, clean, setup, hands: Math.round(hands), min, baking: Math.max(0, min - setup), people: schedCfg.people, ovens: schedCfg.ovens });
     } catch (e) { console.error(e); return z; }
@@ -6023,7 +6023,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
   const SCHED_TOPPED = ['Maple Pecan'];   // Andrew 2026-11-18: Maple Pecan's pecan and maple syrup topping was missing from the schedule. ASSUMED, not confirmed: it goes on after cooling, same 15 s per piece as a glaze
   const SCHED_PREDONE = ['Maple Pecan'];   // Andrew 2026-11-18: Maple Pecan batter is made ahead, so it has no prep block and its first fill can start right after setup
   const SCHED_COMBO = ['Lemon Poppy', 'Sea Salt'], SCHED_COMBO_X = 1.5;   // Andrew 2026-11-18: these two can be prepped together; both at once takes 1.5x one prep (45 min instead of 30)
-  let SCHED_ORDER = ['Cake Pop', 'Lemon Poppy', 'Sea Salt', 'Maple Pecan', 'Blueberry Muffin', 'Chookie', 'Pumpkin Bundt'];   // Andrew 2026-11-19: Maple Pecan is the LAST madeleine baked (searched all 1,680 orders that keep it after Lemon Poppy and Sea Salt; v1.185.02 order searched again with the split topping and cleaning: cleaning ends 4h04, ovens 0:45-3:53; Maple Pecan first would be 3h42). Older note follows.   // work order, found by trying all 5,040 orders (2026-11-18): both Maple Pecan rounds bake in the early free oven time (done by 1:03), Lemon Poppy's glaze is done before the cake pop melt and dip, shortest day (6h20)
+  let SCHED_ORDER = ['Cake Pop', 'Lemon Poppy', 'Sea Salt', 'Maple Pecan', 'Blueberry Muffin', 'Chookie', 'Pumpkin Bundt'];   // Andrew 2026-11-19: Maple Pecan is the LAST madeleine baked (searched all 1,680 orders that keep it after Lemon Poppy and Sea Salt; v1.185.02 order searched again with the split topping and cleaning: cleaning ends 3h54 with setup split too, ovens 0:35-3:43; Maple Pecan first would be about 3h32). Older note follows.   // work order, found by trying all 5,040 orders (2026-11-18): both Maple Pecan rounds bake in the early free oven time (done by 1:03), Lemon Poppy's glaze is done before the cake pop melt and dip, shortest day (6h20)
   const SCHED_PREP_MIN = 30, SCHED_OWN_PREP = ['Pumpkin Muffin', 'Blueberry Muffin', 'Chookie', 'Cake Pop'];
   // bk: pieces per item (default: the Plan's bake). raw: ignore the hand edits made on the Schedule page (they belong to the Plan's bake only).
   function schedTasks(bk, raw) {
@@ -6073,6 +6073,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
           T.push({ id: p + ':glaze2', name: gn + ' 2/2', p, min: h, who: true, deps: [last], delay: SCHED_GLAZE_WAIT, ix: 500, rk: 98 }); }
         else T.push({ id: p + ':glaze', name: gn, p, min: gm, who: true, deps: [last], delay: SCHED_GLAZE_WAIT, ix: 500, rk: 98 }); }   // glaze waits behind every oven-feeding step (prep, fill) so it never delays the next bake
     }
+    if (T.length > 1 && KT.setupMin >= 10) { const su = T[0], sh = Math.ceil(KT.setupMin / 2 / 5) * 5; su.min = sh; su.name = 'Setup 1/2'; T.push(Object.assign({}, su, { id: 'setup2', name: 'Setup 2/2' })); T.forEach(t => { if (t.deps && t.deps.includes('setup')) t.deps = t.deps.concat('setup2'); }); }   // Andrew 2026-11-19: both people set up at once, half the time each (ovens start at 0:35 instead of 0:45)
     if (T.length > 1) { const cd = T.filter(t => !t.rest).map(t => t.id), ch = KT.cleanMin >= 10 ? Math.ceil(KT.cleanMin / 2 / 5) * 5 : 0;   // Andrew 2026-11-19: both people clean at once (Andrew confirmed: half the time each)
       if (ch) { T.push({ id: 'clean', name: 'Cleaning 1/2', p: '', min: ch, who: true, deps: cd, ix: 999, rk: 0 }); T.push({ id: 'clean2', name: 'Cleaning 2/2', p: '', min: ch, who: true, deps: cd.slice(), ix: 999, rk: 0 }); }
       else T.push({ id: 'clean', name: 'Cleaning', p: '', min: KT.cleanMin, who: true, deps: cd, ix: 999, rk: 0 }); }   // Andrew 2026-11-19: cleaning does not wait for the cake pops to chill (a resting step needs no one)
