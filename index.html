@@ -2737,7 +2737,7 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
   </div>
 </div>
 
-<div class="ver-badge">v1.181.02 · Nov 18, 8:48 PM PST</div>
+<div class="ver-badge">v1.181.03 · Nov 18, 9:03 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -8986,9 +8986,9 @@ details.buy-use[open] > summary::after { transform: rotate(90deg); }
       const firstSeen = {}; for (const p of cols) { const w = weeks.find(x => (x.amounts[p] || 0) > 0); firstSeen[p] = w ? w.start : null; }
       const cell = (w, p) => (firstSeen[p] && w.start >= firstSeen[p]) ? (w.amounts[p] || 0) + (w.est.has(p) ? '~' : '') + projTag(w, PRODUCTS.includes(p) ? p : '\u0000') : '—';
       const rowsHtml = mk => tbl.map(w => { const prev = weeks.slice(0, weeks.indexOf(w)).reverse().find(x => x.days >= 7); return `<tr${w.days < 7 ? ' class="tr-part"' : ''}><td>${esc(trFmtDay(w.start))}${w.days < 7 ? `<span class="tr-d">${w.days} of 7 days</span>` : ''}</td>${mk(w, prev)}</tr>`; }).join('');
-      const pieWeeks = trSpan === 1 ? shown.slice(-1) : shown.slice(-trSpan);
+      const pieWeeks = trSpan === 0 ? shown.slice(-1) : trSpan === 1 ? shown.filter(w => w.days >= 7).slice(-1) : shown.slice(-trSpan);   // 0 = the newest (often part-way) week, 1 = the last complete week
       const sel = (id, opts, cur) => `<select id="${id}" data-native>${opts.map(([v, t]) => `<option value="${esc(String(v))}"${String(v) === String(cur) ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select>`;
-      body = `<h3>Share of sales</h3><div class="tr-bar">${sel('trSpanSel', [[1, 'Last week'], [4, 'Last 4 weeks'], [8, 'Last 8 weeks']], trSpan)}${sel('trMetricSel', [['usd', 'By dollars'], ['qty', 'By pieces']], trMetric)}</div>` + trPie(pieWeeks, cols) +
+      body = `<h3>Share of sales</h3><div class="tr-bar">${sel('trSpanSel', [[0, 'This week so far'], [1, 'Last full week'], [4, 'Last 4 weeks'], [8, 'Last 8 weeks']], trSpan)}${sel('trMetricSel', [['usd', 'By dollars'], ['qty', 'By pieces']], trMetric)}</div>` + trPie(pieWeeks, cols) +
         `<h3>By week</h3><div class="tr-bar">${sel('trItemSel', [['All', 'All items'], ...cols.map(p => [p, p])], trItem)}</div>` +
         trChartSvg(shown, val, trItem === 'All' ? 'All items' : trItem) +
         `<h3>Every item by week</h3><div class="tr-scroll"><table class="tr-tbl"><tr><th>Week of</th><th>All</th>${cols.map(p => `<th>${esc(PRODUCT_TOKEN[p])}</th>`).join('')}</tr>` +
