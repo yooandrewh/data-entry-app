@@ -2675,7 +2675,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
   </div>
 </div>
 
-<div class="ver-badge">v1.188.02 · Nov 20, 12:10 PM PST</div>
+<div class="ver-badge">v1.188.03 · Nov 20, 1:05 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -4144,7 +4144,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
   }
 
   // ===== Profit (v1.188.00): sales against what the receipts cost, month by month, with the lines behind every number =====
-  // Spend comes from api/spend.js (Sheet tab Spend, built on the Mac by scripts/spend/build_spend.py; needs the access code). Sales are
+  // v1.188.03: Sales = deliveries (count x unitPriceOn), not OCR sales (Andrew 2026-11-20: the stores pay for deliveries). Spend comes from api/spend.js (Sheet tab Spend, built on the Mac by scripts/spend/build_spend.py; needs the access code). Sales are
   // the same rows as the Sales page (getSales: recorded days plus count-derived ones), priced per item with unitPriceOn.
   const PL = { spend: null, sales: null, err: '', busy: false };
   const PL_CATS = [['ingredient', 'Ingredients'], ['supplies_equipment', 'Supplies and equipment'], ['other', 'Shipping, tax, credits']];
@@ -4154,11 +4154,11 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
     if (!kCodeGet()) { PL.err = 'nocode'; PL.spend = null; plPaint(); return; }
     PL.busy = true; PL.err = ''; plPaint();
     try {
-      const [r, sales] = await Promise.all([fetch('/api/spend', { cache: 'no-store', headers: kHead() }), getSales()]);
+      const [r, deliv] = await Promise.all([fetch('/api/spend', { cache: 'no-store', headers: kHead() }), fetchRemoteEntries().then(rm => mergeEntries(rm, true))]);
       if (r.status === 401) { kBad(r); PL.err = 'bad'; PL.spend = null; }
       else if (r.status === 503) { PL.err = 'unset'; PL.spend = null; }
       else if (!r.ok) PL.err = 'fail';
-      else { const j = await r.json(); PL.spend = Array.isArray(j && j.rows) ? j.rows.filter(x => /^\d{4}-\d\d-\d\d$/.test(x.date || '') && PL_CATS.some(c => c[0] === x.category)) : []; PL.sales = sales; PL.err = ''; }
+      else { const j = await r.json(); PL.spend = Array.isArray(j && j.rows) ? j.rows.filter(x => /^\d{4}-\d\d-\d\d$/.test(x.date || '') && PL_CATS.some(c => c[0] === x.category)) : []; PL.sales = deliv.filter(e => e.type === 'delivery' && !e.taggedForDeletion && /^\d{4}-\d\d-\d\d/.test(e.datetime || '')); PL.err = ''; }
     } catch { PL.err = 'fail'; }
     PL.busy = false; plPaint();
   }
@@ -4166,11 +4166,11 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
     const m = {};
     const get = ym => m[ym] || (m[ym] = { ym, sales: 0, pcs: 0, est: 0, byItem: {}, byStore: {}, cost: { ingredient: 0, supplies_equipment: 0, other: 0 }, lines: [] });
     (PL.sales || []).forEach(s => {
-      const o = get(s.date.slice(0, 7));
+      const day = String(s.datetime).slice(0, 10), o = get(day.slice(0, 7));
       Object.entries(s.amounts || {}).forEach(([p, n]) => {
-        n = +n || 0; if (!n) return;
-        const d = n * unitPriceOn(p, s.date), raw = Math.min(n, (s.rawAmounts && +s.rawAmounts[p]) || 0), b = o.byItem[p] || (o.byItem[p] = { n: 0, d: 0, e: 0 });
-        o.sales += d; o.pcs += n; o.est += n - raw; b.n += n; b.d += d; b.e += n - raw;
+        n = +n || 0; if (n <= 0) return;
+        const d = n * unitPriceOn(p, day), b = o.byItem[p] || (o.byItem[p] = { n: 0, d: 0, e: 0 });
+        o.sales += d; o.pcs += n; b.n += n; b.d += d;
         o.byStore[s.location] = (o.byStore[s.location] || 0) + d;
       });
     });
@@ -4190,11 +4190,11 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
     const [y, mo] = o.ym.split('-').map(Number), cur = o.ym === nowPST().slice(0, 7);
     const name = new Date(y, mo - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) + (cur ? ' (so far)' : '');
     const items = Object.entries(o.byItem).sort((a, b) => b[1].d - a[1].d);
-    const salesBody = items.map(([p, b]) => `<div class="pl-ln"><span>${esc(pdisp(p))}<em>${b.n} sold at ${usd(b.d / b.n)}${b.e ? ` · ${b.e} estimated from counts` : ''}</em></span><span>${usd(b.d)}</span></div>`).join('') +
+    const salesBody = items.map(([p, b]) => `<div class="pl-ln"><span>${esc(pdisp(p))}<em>${b.n} delivered at ${usd(b.d / b.n)}</em></span><span>${usd(b.d)}</span></div>`).join('') +
       Object.entries(o.byStore).sort((a, b) => b[1] - a[1]).map(([s, d]) => `<div class="pl-ln"><span>${esc(s)}</span><span>${usd(d)}</span></div>`).join('').replace(/^/, '<div class="pl-note">By store</div>');
     const sect = (title, amt, sub, body) => `<details><summary><span>${esc(title)}${sub ? `<small>${sub}</small>` : ''}</span><span>${amt}</span></summary><div class="pl-in">${body}</div></details>`;
     return `<details class="pl-mo"><summary><span>${esc(name)}<small>Sales ${usd(o.sales)} · Cost ${usd(cost)}</small></span><span>${net < 0 ? 'Loss ' : 'Made '}${plUsd(Math.abs(net))}</span></summary><div class="pl-in">` +
-      sect('Sales', usd(o.sales), `${o.pcs} pieces${o.est ? `, ${o.est} estimated from counts` : ''}`, salesBody || '<div class="pl-note">No sales this month.</div>') +
+      sect('Sales', usd(o.sales), `${o.pcs} pieces delivered`, salesBody || '<div class="pl-note">No sales this month.</div>') +
       PL_CATS.map(([k, t]) => { const ls = o.lines.filter(r => r.category === k); return ls.length ? sect(t, plUsd(o.cost[k]), ls.length + ' lines', plGroupHtml(ls)) : ''; }).join('') +
       `</div></details>`;
   }
@@ -4214,7 +4214,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
       `<div class="pl-note">Sales from ${esc(new Date(+first.slice(0, 4), +first.slice(5) - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }))}, the first month with sales${B ? `. Start-up spending before then (${usd(B)}) is listed at the bottom and not counted` : ''}. Tap a month, then a line, to see what is behind it.</div>` +
       shown.slice().reverse().map(k => plMonthHtml(m[k])).join('') +
       (B ? `<details class="pl-mo"><summary><span>Start-up costs, not counted<small>Before sales began · ${esc(before.map(k => new Date(+k.slice(0, 4), +k.slice(5) - 1, 1).toLocaleDateString('en-US', { month: 'short' })).join(', '))}</small></span><span>${usd(B)}</span></summary><div class="pl-in">${before.slice().reverse().map(k => plMonthHtml(m[k])).join('')}</div></details>` : '') +
-      `<div class="pl-note">Sales are pieces sold times the price, including days estimated from stock counts, so they are a floor. Costs are what was paid, counted in the month it was bought, not the month it was used. Shipping, tax, credits and refunds sit on their own line. Receipts not yet in the sheet are not counted.</div>`;
+      `<div class="pl-note">Sales are pieces delivered to the stores times the wholesale price, the same as the invoices (goodwill and transfers are not counted), so they depend on every delivery being logged. Costs are what was paid, counted in the month it was bought, not the month it was used. Shipping, tax, credits and refunds sit on their own line. Receipts not yet in the sheet are not counted.</div>`;
   }
   function renderProfit() {
     const box = document.getElementById('homeProfit'); if (!box) return;
