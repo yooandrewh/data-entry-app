@@ -29,9 +29,10 @@ def zip_rows():
     for r in R:
         rid = f"{r['vendor']} {r['order_or_invoice_number']}"[:40]
         paid = f(r["adjusted_grand_total"] or r["grand_total_stated"])
+        paid = max(paid - f(r["refund_total"]), 0.0)   # a returned item was paid back: drop it and take the refund off what was paid
         kept = 0.0
         for t in by[r["source_file"]]:
-            if t["kind"] != "item" or t["removed"] in TRUE: continue
+            if t["kind"] != "item" or t["removed"] in TRUE or t["refunded"] in TRUE: continue
             amt = f(t["line_net"]) + f(t["tax_allocated"])
             if t["include_in_business"] != "yes":
                 paid -= amt            # a personal line is not part of the business cost
