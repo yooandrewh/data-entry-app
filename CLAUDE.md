@@ -329,7 +329,7 @@ Ingredients: **Dark Chocolate 70% and Dark Chocolate Couverture are retired into
 
 **v1.186.04: Chookie is 10.7 per batch** (Andrew 2026-11-19: he scoops about 100 g and 3 batches made 32 cookies; was 12 at 90 g each). Set in `PRODUCT_YIELD`, the recipe's `yield` and its notes; cost per cookie is about $0.41 ingredients. Decimal yields work in `flavorBatches` (ceil of pieces / yield).
 
-**v1.186.05: cookie prep follows batches (Andrew 2026-11-19).** 3 batches took 30 min and 6 batches also about 30, so `SCHED_BATCH_PREP = {Chookie: {min 30, per 6}}`: one prep block of 30 min x ceil(batches / 6) (17 batches = 90 min, was a flat 20). Assumes a bigger plan repeats the 6-batch mix; not confirmed. 40-day plan: hands-on day ends 4h23 (was 3h54). Scooping is not in these minutes.
+**v1.186.06: cookie prep follows the mixing bowl (Andrew 2026-11-19).** 3 batches took 30 min, 6 about 30, and a batch that fits one bowl takes the same or 10 min more. `SCHED_BATCH_PREP = {Chookie: {min 30, small 6, extra 10}}`: 30 min up to 6 batches, 40 above that, times the number of 60 qt mixes (`batterGrams`, dough fill 55%). 17 batches fit one bowl = 40 min (was a flat 20); 40-day plan hands-on day ends 4h02 (was 3h54). Scooping not included. The 40 (vs 30) is a guess inside Andrew's range.
 
 ## Design pass (v1.149.00)
 
@@ -351,7 +351,7 @@ The headless check at 390px misses what iOS does. Apply these to every new or ch
 
 ## Version badge
 
-`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.186.05**; the next feature is v1.187.00, a fix v1.186.06 Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
+`.ver-badge` reads `v<major>.<minor 2-digit>.<patch 2-digit> · <PST time>` and is **bumped by hand in every deploy commit** (it is in normal flow above the nav; `#homeVer` copies it). major = redesign or new data model, minor = new feature or page, patch = fix, wording, price or recipe data. Last deploy: **v1.186.06**; the next feature is v1.187.00, a fix v1.186.07 Check live: `curl -s https://data-entry-app-roan.vercel.app | grep -o 'ver-badge">[^<]*'`.
 
 ## Usage analytics
 

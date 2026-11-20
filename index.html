@@ -2650,7 +2650,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
   </div>
 </div>
 
-<div class="ver-badge">v1.186.05 · Nov 19, 4:58 PM PST</div>
+<div class="ver-badge">v1.186.06 · Nov 19, 4:59 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -6061,7 +6061,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
   const SCHED_PREDONE = ['Maple Pecan'];   // Andrew 2026-11-18: Maple Pecan batter is made ahead, so it has no prep block and its first fill can start right after setup
   const SCHED_COMBO = ['Lemon Poppy', 'Sea Salt'], SCHED_COMBO_X = 1.5;   // Andrew 2026-11-18: these two can be prepped together; both at once takes 1.5x one prep (45 min instead of 30)
   let SCHED_ORDER = ['Cake Pop', 'Lemon Poppy', 'Blueberry Muffin', 'Sea Salt', 'Maple Pecan', 'Pumpkin Bundt', 'Chookie'];   // Andrew 2026-11-19: Maple Pecan is the LAST madeleine baked (searched all 1,680 orders that keep it after Lemon Poppy and Sea Salt; v1.185.04 order searched again with Cake Pop and the first muffin round sharing an oven (day 3h56, 305 oven-minutes vs 3h54 and 335 without sharing); v1.185.02 order searched again with the split topping and cleaning: cleaning ends 3h54 with setup split too, ovens 0:35-3:43; Maple Pecan first would be about 3h32). Older note follows.   // work order, found by trying all 5,040 orders (2026-11-18): both Maple Pecan rounds bake in the early free oven time (done by 1:03), Lemon Poppy's glaze is done before the cake pop melt and dip, shortest day (6h20)
-  const SCHED_BATCH_PREP = { 'Chookie': { min: 30, per: 6 } };
+  const SCHED_BATCH_PREP = { 'Chookie': { min: 30, small: 6, extra: 10 } };
   const SCHED_PREP_MIN = 30, SCHED_OWN_PREP = ['Pumpkin Muffin', 'Blueberry Muffin', 'Chookie', 'Cake Pop'];
   // bk: pieces per item (default: the Plan's bake). raw: ignore the hand edits made on the Schedule page (they belong to the Plan's bake only).
   function schedTasks(bk, raw) {
@@ -6074,7 +6074,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
       let group = KT.prepGroup, pmin = KT.prepMin;
       try { const key = Object.keys(BS_PRODUCT).find(k => BS_PRODUCT[k] === p), f = key && bsFind(key); if (f && f.sec !== 'mad') { group = 1; pmin = (f.it && f.it.prep) || 20; } } catch (e) {}
       if (!SCHED_OWN_PREP.includes(p)) pmin = SCHED_PREP_MIN;   // Andrew 2026-11-18: every prep block is 30 min except muffins, cookies and cake pops (they keep their recipe's own prep time)
-      if (SCHED_BATCH_PREP[p]) pmin = SCHED_BATCH_PREP[p].min * Math.max(1, Math.ceil(batches / SCHED_BATCH_PREP[p].per));   // Andrew 2026-11-19: cookie prep for 3 batches took 30 min and 6 batches also about 30, so it is 30 min per mix of up to 6 batches (assumed: a bigger plan repeats the mix)
+      if (SCHED_BATCH_PREP[p]) { const bp = SCHED_BATCH_PREP[p], mixes = Math.max(1, Math.ceil(batches * batterGrams(p) / (60 * 946 * (DOUGH_ITEMS.includes(p) ? DOUGH_FILL : BOWL_FILL)))); pmin = (batches <= bp.small ? bp.min : bp.min + bp.extra) * mixes; }   // Andrew 2026-11-19: 3 batches took 30 min and 6 about 30; if the whole thing fits one mixing bowl it takes the same or 10 min more: 30 up to 6 batches, 40 above that, times the number of 60 qt mixes
       const nPrep = 1, perPrep = n;   // Andrew 2026-11-18: prep is one block per item for the whole amount, not per batch
       const shared = SCHED_COMBO.includes(p) && SCHED_COMBO.every(q => Math.round(bake[q] || 0) > 0), backTo = big.length > 1 && big.includes(p), pid = i => (shared ? SCHED_COMBO[0] : backTo ? big[0] : p) + ':prep:' + i;   // Sea Salt and Lemon Poppy are mixed together: one prep block for both
       for (let i = 1; i <= nPrep; i++) {
