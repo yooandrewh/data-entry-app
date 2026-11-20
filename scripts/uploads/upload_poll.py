@@ -352,6 +352,9 @@ def ocr_headline():
         t = (OCR_DIR / "inbox_summary.md").read_text()
     except OSError:
         return ""
+    h = re.search(r"^Headline: (.+)$", t, re.M)   # written by kairos_inbox_watch.py: pushed, or why it stopped
+    if h:
+        return h.group(1).strip()[:180]
     n = len(re.findall(r"^- `", t, re.M))
     bad = len(re.findall(r"needs a manual|MIXED|failed|error", t, re.I))
     return f"{n} video(s) read" + (", some need a look." if bad else ".")
@@ -365,7 +368,9 @@ def run_ocr():
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
     except OSError:
         return 0
-    env = dict(os.environ, PATH=OCR_PATH, KAIROS_NO_PUSH="1", KAIROS_NO_DRYRUN="1")
+    # KAIROS_NO_PUSH only stops parse_kairos.py's own auto-push; the watcher now runs the dry runs itself and pushes
+    # only when every check passes (see its docstring). It needs a readable service-account key (not ~/Downloads).
+    env = dict(os.environ, PATH=OCR_PATH, KAIROS_NO_PUSH="1")
     log(f"ocr: starting on {len(queued_videos())} queued video(s)", quiet=True)
     try:
         r = subprocess.run([OCR_PY, str(OCR_DIR / "kairos_inbox_watch.py"), str(VIDEOS)], cwd=str(OCR_DIR),
@@ -373,6 +378,7 @@ def run_ocr():
         log(f"ocr: finished (exit {r.returncode}); summary at {OCR_DIR / 'inbox_summary.md'}", quiet=True)
         if r.returncode:
             log("ocr: " + (r.stderr or r.stdout or "")[-300:].replace("\n", " "), quiet=True)
+            notify("ocr", detail="OCR run failed, nothing pushed. See ~/.kairos-uploads/poll.log.")
         else:
             notify("ocr", detail=ocr_headline())
         return r.returncode
