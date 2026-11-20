@@ -75,6 +75,8 @@ def nov_rows():
 
 def main():
     rows = zip_rows() + nov_rows()
+    man = OUT / "manual_spend.json"   # receipts typed in by hand from invoices / screenshots (same row shape)
+    if man.exists(): rows += json.load(open(man))
     rows.sort(key=lambda r: (r[0], r[2]))
     json.dump(rows, open(OUT / "spend_rows.json", "w"))
     m = collections.defaultdict(lambda: collections.defaultdict(float))
