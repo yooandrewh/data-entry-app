@@ -13,12 +13,19 @@ receipt's rows always add up to what was paid. The replace is whole-tab (same as
 
 Usage:  build_spend.py            writes the rows to ~/kairos-receipts-backfill/out/spend_rows.json and prints month totals
         build_spend.py --push     also replaces the Spend tab (code from ~/.kairos-ledger-code)"""
-import csv, json, sys, os, collections, urllib.request
+import csv, json, sys, os, re, collections, urllib.request
 from pathlib import Path
 OUT = Path.home() / "kairos-receipts-backfill/out"
 BASE = os.environ.get("KAIROS_API", "https://data-entry-app-roan.vercel.app")
 f = lambda x: float(x) if x not in ("", None) else 0.0
 TRUE = ("TRUE", "True", "true", "1")
+
+GIFT_RE = re.compile(r"Gift Card Amount:\s*-\$([\d,.]+)")
+def gift_card(source_file):
+    """Amazon gift-card money applied to an order. It was real value spent, so it counts as cost (cash back and coupons stay discounts)."""
+    p = OUT / "txt" / (source_file.replace("/", "__") + ".txt")
+    try: return sum(float(x.replace(",", "")) for x in GIFT_RE.findall(p.read_text()))
+    except OSError: return 0.0
 
 def zip_rows():
     R = list(csv.DictReader(open(OUT / "receipts.csv")))
@@ -29,7 +36,7 @@ def zip_rows():
     for r in R:
         rid = f"{r['vendor']} {r['order_or_invoice_number']}"[:40]
         paid = f(r["adjusted_grand_total"] or r["grand_total_stated"])
-        paid = max(paid - f(r["refund_total"]), 0.0)   # a returned item was paid back: drop it and take the refund off what was paid
+        paid = max(paid + gift_card(r["source_file"]) - f(r["refund_total"]), 0.0)   # a returned item was paid back: drop it and take the refund off what was paid
         kept = 0.0
         for t in by[r["source_file"]]:
             if t["kind"] != "item" or t["removed"] in TRUE or t["refunded"] in TRUE: continue
@@ -77,9 +84,14 @@ def main():
         print(k, {c: round(v) for c, v in m[k].items()}, "total", round(t, 2))
     print(len(rows), "rows")
     if "--push" in sys.argv:
+        last = OUT / "spend_last_count"      # a failed ledger read must never wipe the tab: refuse a push that lost over 10% of its rows
+        try: prev = int(last.read_text())
+        except (OSError, ValueError): prev = 0
+        if prev and len(rows) < prev * 0.9: sys.exit(f"refusing to push: {len(rows)} rows, last push had {prev}")
         code = (Path.home() / ".kairos-ledger-code").read_text().strip()
         req = urllib.request.Request(BASE + "/api/spend", data=json.dumps({"action": "replace", "rows": rows}).encode(),
                                      headers={"Content-Type": "application/json", "x-ledger-code": code})
         print(json.load(urllib.request.urlopen(req, timeout=120)))
+        last.write_text(str(len(rows)))
 
 if __name__ == "__main__": main()
