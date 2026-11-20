@@ -2233,6 +2233,30 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
 #homeOrders .od-kv { border-top: 1px solid var(--sep); }
 #homeOrders .od-kv span { color: var(--muted); }
 #homeOrders .od-kv b { font-weight: 600; text-align: right; overflow-wrap: anywhere; }
+/* Profit page (v1.188.00) */
+#homeProfit { max-width: 860px; margin: 0 auto; }
+#homeProfit .pl-bar { display: flex; gap: 8px; margin: 0 0 8px; }
+#homeProfit .pl-btn { flex: 1 1 0; min-height: 44px; padding: 0 14px; border: 1px solid #c9c9c9; border-radius: 999px; background: #fff; color: #000; font: inherit; font-size: var(--fs-body); font-weight: 600; cursor: pointer; }
+#homeProfit .pl-btn.big { width: 100%; margin: 8px 0; }
+#homeProfit .pl-tot { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 0 0 8px; }
+#homeProfit .pl-tot > div { border: 1px solid var(--sep); border-radius: 12px; padding: 10px 12px; min-width: 0; }
+#homeProfit .pl-tot span { display: block; color: var(--muted); font-size: var(--fs-micro); text-transform: uppercase; letter-spacing: .03em; }
+#homeProfit .pl-tot b { display: block; font-size: var(--fs-lg); overflow-wrap: anywhere; }
+#homeProfit details { border-bottom: 1px solid var(--sep); }
+#homeProfit summary { list-style: none; cursor: pointer; min-height: 44px; padding: 10px 0; display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; font-size: var(--fs-body); }
+#homeProfit summary::-webkit-details-marker { display: none; }
+#homeProfit summary > span:first-child { min-width: 0; overflow-wrap: anywhere; }
+#homeProfit summary > span:last-child { text-align: right; flex: none; }
+#homeProfit summary small { display: block; color: var(--muted); font-size: var(--fs-caption); font-weight: 400; }
+#homeProfit .pl-mo > summary { font-weight: 600; }
+#homeProfit .pl-in { padding: 0 0 8px 12px; border-left: 2px solid #000; margin: 0 0 8px; }
+#homeProfit .pl-in details > summary { font-size: var(--fs-caption); font-weight: 600; }
+#homeProfit .pl-ln { display: flex; justify-content: space-between; gap: 12px; padding: 5px 0; font-size: var(--fs-caption); }
+#homeProfit .pl-ln > span:first-child { min-width: 0; overflow-wrap: anywhere; }
+#homeProfit .pl-ln > span:last-child { flex: none; text-align: right; }
+#homeProfit .pl-ln em { display: block; font-style: normal; color: var(--muted); font-size: var(--fs-micro); }
+#homeProfit .pl-note { color: var(--muted); font-size: var(--fs-caption); margin: 8px 0; }
+#homeProfit .pl-nested { padding-left: 12px; }
 @media (min-width: 900px) { .fin-export .btn-ghost { max-width: 320px; } }
 /* Bake Day on Plan step 3 */
 #dayBox { padding: 16px; margin: 12px 0 0; }
@@ -2389,6 +2413,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
     <div id="homeUpload" class="up-box" hidden></div>
     <div id="homeTrends" hidden></div>
     <div id="homeOrders" hidden></div>
+    <div id="homeProfit" hidden></div>
 
     <!-- Invoice -->
     <div id="homeInvoice" hidden>
@@ -2650,7 +2675,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
   </div>
 </div>
 
-<div class="ver-badge">v1.187.00 · Nov 20, 8:15 AM PST</div>
+<div class="ver-badge">v1.188.00 · Nov 20, 10:45 AM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -3717,7 +3742,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
     sales:     { first: 'sales',  pages: ['sales', 'trends', 'orders', 'invoice'] },
     inventory: { first: 'pantry', pages: ['pantry', 'stock', 'counts', 'receipts'] },
     plan:      { first: 'plan',   pages: ['plan', 'bake', 'sched', 'recipes'] },
-    other:     { first: 'fin',    pages: ['fin', 'costs', 'labels', 'timers', 'upload'] },
+    other:     { first: 'fin',    pages: ['fin', 'profit', 'costs', 'labels', 'timers', 'upload'] },
   };
   const PAGES = {
     sales:    { t: 'Sales',       view: 'db', db: 'sales' },
@@ -3734,6 +3759,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
     sched:    { t: 'Schedule',    view: 'home', home: 'sched' },
     recipes:  { t: 'Recipes',     view: 'plan', mode: 'recipes' },
     fin:      { t: 'Finance',     view: 'fin' },
+    profit:   { t: 'Profit',      view: 'home', home: 'profit' },
     costs:    { t: 'Costs',       view: 'plan', mode: 'costs' },
     labels:   { t: 'Labels',      fn: () => mlOpen() },
     timers:   { t: 'Timers',      view: 'home', home: 'timers' },
@@ -4076,7 +4102,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
 
   // ---- Home: a landing screen with three buttons; each opens its own page ----
   let homeTab = null;   // null = landing | 'forecast' | 'plan' | 'invoice'
-  const HOME_TITLES = { forecast: 'Forecast', plan: 'Baking Plan', invoice: 'Invoice / Labels', timers: 'Timers', pantry: 'Pantry', storage: 'Storage', bake: 'Bake Day', sched: 'Schedule', receipts: 'Receipts', trends: 'Trends', orders: 'Orders', upload: 'Upload' };
+  const HOME_TITLES = { forecast: 'Forecast', plan: 'Baking Plan', invoice: 'Invoice / Labels', timers: 'Timers', pantry: 'Pantry', storage: 'Storage', bake: 'Bake Day', sched: 'Schedule', receipts: 'Receipts', trends: 'Trends', orders: 'Orders', profit: 'Profit', upload: 'Upload' };
   // The version line lives over the photo on Home's landing; everywhere else it is the fixed strip.
   function syncVer() {
     const onHome = (document.querySelector('.tabbar button.on') || {}).dataset?.tab === 'home';
@@ -4099,6 +4125,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
     document.getElementById('homeReceipts').hidden = homeTab !== 'receipts';
     document.getElementById('homeTrends').hidden = homeTab !== 'trends';
     document.getElementById('homeOrders').hidden = homeTab !== 'orders';
+    document.getElementById('homeProfit').hidden = homeTab !== 'profit';
     document.getElementById('homeUpload').hidden = homeTab !== 'upload';
     document.getElementById('hpTitle').textContent = HOME_TITLES[homeTab] || '';
     if (homeTab === 'plan') { renderBakeSheet(); renderPlan(); }
@@ -4111,8 +4138,94 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
     if (homeTab === 'upload') renderUpload();
     if (homeTab === 'trends') renderTrends();
     if (homeTab === 'orders') renderOrders();
+    if (homeTab === 'profit') renderProfit();
     if (homeTab === 'timers') renderTimers(); else stopTick();
     syncVer(); window.scrollTo(0, 0);
+  }
+
+  // ===== Profit (v1.188.00): sales against what the receipts cost, month by month, with the lines behind every number =====
+  // Spend comes from api/spend.js (Sheet tab Spend, built on the Mac by scripts/spend/build_spend.py; needs the access code). Sales are
+  // the same rows as the Sales page (getSales: recorded days plus count-derived ones), priced per item with unitPriceOn.
+  const PL = { spend: null, sales: null, err: '', busy: false };
+  const PL_CATS = [['ingredient', 'Ingredients'], ['supplies_equipment', 'Supplies and equipment'], ['other', 'Shipping, tax, credits']];
+  const plDay = d => { const [y, m, dd] = d.split('-').map(Number); return new Date(y, m - 1, dd).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); };
+  const plUsd = n => (n < 0 ? '-' : '') + usd(Math.abs(n));
+  async function plLoad() {
+    if (!kCodeGet()) { PL.err = 'nocode'; PL.spend = null; plPaint(); return; }
+    PL.busy = true; PL.err = ''; plPaint();
+    try {
+      const [r, sales] = await Promise.all([fetch('/api/spend', { cache: 'no-store', headers: kHead() }), getSales()]);
+      if (r.status === 401) { kBad(r); PL.err = 'bad'; PL.spend = null; }
+      else if (r.status === 503) { PL.err = 'unset'; PL.spend = null; }
+      else if (!r.ok) PL.err = 'fail';
+      else { const j = await r.json(); PL.spend = Array.isArray(j && j.rows) ? j.rows.filter(x => /^\d{4}-\d\d-\d\d$/.test(x.date || '') && PL_CATS.some(c => c[0] === x.category)) : []; PL.sales = sales; PL.err = ''; }
+    } catch { PL.err = 'fail'; }
+    PL.busy = false; plPaint();
+  }
+  function plMonths() {
+    const m = {};
+    const get = ym => m[ym] || (m[ym] = { ym, sales: 0, pcs: 0, est: 0, byItem: {}, byStore: {}, cost: { ingredient: 0, supplies_equipment: 0, other: 0 }, lines: [] });
+    (PL.sales || []).forEach(s => {
+      const o = get(s.date.slice(0, 7));
+      Object.entries(s.amounts || {}).forEach(([p, n]) => {
+        n = +n || 0; if (!n) return;
+        const d = n * unitPriceOn(p, s.date), raw = Math.min(n, (s.rawAmounts && +s.rawAmounts[p]) || 0), b = o.byItem[p] || (o.byItem[p] = { n: 0, d: 0, e: 0 });
+        o.sales += d; o.pcs += n; o.est += n - raw; b.n += n; b.d += d; b.e += n - raw;
+        o.byStore[s.location] = (o.byStore[s.location] || 0) + d;
+      });
+    });
+    (PL.spend || []).forEach(r => { const o = get(r.date.slice(0, 7)), a = +r.amount || 0; o.cost[r.category] += a; o.lines.push(r); });
+    return m;
+  }
+  function plGroupHtml(lines) {
+    const rc = {};
+    lines.forEach(r => { const k = r.date + '|' + r.vendor + '|' + r.receipt; (rc[k] || (rc[k] = { date: r.date, vendor: r.vendor, rows: [], t: 0 })).rows.push(r); rc[k].t += +r.amount || 0; });
+    return Object.values(rc).sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0).map(g =>
+      `<details><summary><span>${esc(plDay(g.date))} · ${esc(g.vendor)}<small>${g.rows.length} line${g.rows.length === 1 ? '' : 's'}</small></span><span>${plUsd(g.t)}</span></summary><div class="pl-nested">` +
+      g.rows.sort((a, b) => (+b.amount || 0) - (+a.amount || 0)).map(r => `<div class="pl-ln"><span>${(+r.qty || 1) > 1 ? esc(String(r.qty)) + ' × ' : ''}${esc(r.item)}${r.note ? `<em>${esc(r.note)}</em>` : ''}</span><span>${plUsd(+r.amount || 0)}</span></div>`).join('') +
+      `</div></details>`).join('');
+  }
+  function plMonthHtml(o) {
+    const cost = o.cost.ingredient + o.cost.supplies_equipment + o.cost.other, net = o.sales - cost;
+    const [y, mo] = o.ym.split('-').map(Number), cur = o.ym === nowPST().slice(0, 7);
+    const name = new Date(y, mo - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) + (cur ? ' (so far)' : '');
+    const items = Object.entries(o.byItem).sort((a, b) => b[1].d - a[1].d);
+    const salesBody = items.map(([p, b]) => `<div class="pl-ln"><span>${esc(pdisp(p))}<em>${b.n} sold at ${usd(b.d / b.n)}${b.e ? ` · ${b.e} estimated from counts` : ''}</em></span><span>${usd(b.d)}</span></div>`).join('') +
+      Object.entries(o.byStore).sort((a, b) => b[1] - a[1]).map(([s, d]) => `<div class="pl-ln"><span>${esc(s)}</span><span>${usd(d)}</span></div>`).join('').replace(/^/, '<div class="pl-note">By store</div>');
+    const sect = (title, amt, sub, body) => `<details><summary><span>${esc(title)}${sub ? `<small>${sub}</small>` : ''}</span><span>${amt}</span></summary><div class="pl-in">${body}</div></details>`;
+    return `<details class="pl-mo"><summary><span>${esc(name)}<small>Sales ${usd(o.sales)} · Cost ${usd(cost)}</small></span><span>${net < 0 ? 'Loss ' : 'Made '}${plUsd(Math.abs(net))}</span></summary><div class="pl-in">` +
+      sect('Sales', usd(o.sales), `${o.pcs} pieces${o.est ? `, ${o.est} estimated from counts` : ''}`, salesBody || '<div class="pl-note">No sales this month.</div>') +
+      PL_CATS.map(([k, t]) => { const ls = o.lines.filter(r => r.category === k); return ls.length ? sect(t, plUsd(o.cost[k]), ls.length + ' lines', plGroupHtml(ls)) : ''; }).join('') +
+      `</div></details>`;
+  }
+  function plPaint() {
+    const box = document.getElementById('homeProfit'); if (!box || homeTab !== 'profit') return;
+    if (!PL.spend) {
+      const msg = { nocode: 'Profit is private. Enter the access code to see it.', bad: 'That access code was wrong, so it was forgotten. Enter it again.', unset: 'Profit is not set up on the server yet.', fail: 'Could not load Profit. Check your connection and try again.' }[PL.err];
+      box.innerHTML = PL.busy || !msg ? '<div class="pn-note">Loading Profit…</div>'
+        : `<div class="pn-note">${esc(msg)}</div>` + (PL.err === 'unset' ? '' : `<button type="button" class="pl-btn big" data-pl="${PL.err === 'fail' ? 'refresh' : 'code'}">${PL.err === 'fail' ? 'Try again' : 'Enter access code'}</button>`);
+      return;
+    }
+    const m = plMonths(), yms = Object.keys(m).sort();
+    const first = yms.find(k => m[k].sales > 0) || yms[0], shown = yms.filter(k => k >= first), before = yms.filter(k => k < first);
+    const S = shown.reduce((a, k) => a + m[k].sales, 0), C = shown.reduce((a, k) => a + m[k].cost.ingredient + m[k].cost.supplies_equipment + m[k].cost.other, 0), B = before.reduce((a, k) => a + m[k].cost.ingredient + m[k].cost.supplies_equipment + m[k].cost.other, 0);
+    box.innerHTML = `<div class="pl-bar"><button type="button" class="pl-btn" data-pl="refresh"${PL.busy ? ' disabled' : ''}>${PL.busy ? 'Refreshing…' : 'Refresh'}</button></div>` +
+      `<div class="pl-tot"><div><span>Sales</span><b>${usd(S)}</b></div><div><span>Cost</span><b>${usd(C)}</b></div><div><span>${S - C < 0 ? 'Loss' : 'Made'}</span><b>${plUsd(Math.abs(S - C))}</b></div></div>` +
+      `<div class="pl-note">From ${esc(new Date(+first.slice(0, 4), +first.slice(5) - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }))}, the first month with sales. Tap a month, then a line, to see what is behind it.</div>` +
+      shown.slice().reverse().map(k => plMonthHtml(m[k])).join('') +
+      (B ? `<div class="pl-note">Before sales began, ${usd(B)} was spent (${esc(before.map(k => k.slice(5)).join(', '))}). Not counted above.</div>` : '') +
+      `<div class="pl-note">Sales are pieces sold times the price, including days estimated from stock counts, so they are a floor. Costs are what was paid, counted in the month it was bought, not the month it was used. Shipping, tax, credits and refunds sit on their own line. Receipts not yet in the sheet are not counted.</div>`;
+  }
+  function renderProfit() {
+    const box = document.getElementById('homeProfit'); if (!box) return;
+    if (!box.dataset.bound) {
+      box.dataset.bound = '1';
+      box.addEventListener('click', e => {
+        const b = e.target.closest('[data-pl]'); if (!b) return;
+        if (b.dataset.pl === 'code') { if (kCodeAsk()) plLoad(); } else { salesCache = null; plLoad(); }
+      });
+    }
+    salesCache = null; plLoad();
   }
 
   // ---- Invoice: deliveries for one store over a date range, priced per unit ----
