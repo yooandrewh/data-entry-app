@@ -374,7 +374,7 @@ def run_ocr():
     log(f"ocr: starting on {len(queued_videos())} queued video(s)", quiet=True)
     try:
         r = subprocess.run([OCR_PY, str(OCR_DIR / "kairos_inbox_watch.py"), str(VIDEOS)], cwd=str(OCR_DIR),
-                           env=env, capture_output=True, text=True, timeout=4 * 3600)
+                           env=env, capture_output=True, text=True, timeout=45 * 60)   # a run takes minutes; a hang must not hold the OCR lock for hours (2026-11-20)
         log(f"ocr: finished (exit {r.returncode}); summary at {OCR_DIR / 'inbox_summary.md'}", quiet=True)
         if r.returncode:
             log("ocr: " + (r.stderr or r.stdout or "")[-300:].replace("\n", " "), quiet=True)
@@ -384,6 +384,7 @@ def run_ocr():
         return r.returncode
     except Exception as e:
         log(f"ocr: failed ({type(e).__name__})", quiet=True)
+        notify("ocr", detail="OCR run hung or crashed and was stopped; the next run retries. See ~/.kairos-uploads/poll.log.")
         return 1
 
 
