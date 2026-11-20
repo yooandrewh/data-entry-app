@@ -2650,7 +2650,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
   </div>
 </div>
 
-<div class="ver-badge">v1.186.06 · Nov 19, 4:59 PM PST</div>
+<div class="ver-badge">v1.187.00 · Nov 20, 8:15 AM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -4599,6 +4599,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
     if (!r.ok) throw new Error('HTTP ' + r.status);
     const d = await r.json();
     const rows = Array.isArray(d.sales) ? d.sales : [];
+    rows.forEach(r => { r.rawAmounts = Object.assign({}, r.amounts); });   // what the sheet holds, before count-derived days and amounts are added (Trends' per-100 view uses only this)
     try { const ents = await fetchRemoteEntries(); addMissingDays(rows, ents); addExtraSales(rows, ents); } catch (e) { /* extras are optional */ }
     salesCache = rows;
     return salesCache;
@@ -9025,7 +9026,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
     });
   }
   // ----- Trends (Home → Trends): weekly sales as a stacked chart plus a table, and a raw day-by-day list. Reads the same /api/sales rows as the Data tab. -----
-  let trLoc = 'Both', trItem = 'All', trSpan = 4, trMetric = 'usd';   // trMetric: share of sales by 'usd' or 'qty'
+  let trLoc = 'Both', trItem = 'All', trSpan = 4, trMetric = 'usd', trView = 'sales';   // trView: 'sales' (items sold) | 'per100' (items sold per 100 store transactions)   // trMetric: share of sales by 'usd' or 'qty'
   const trAll = a => Object.values(a || {}).reduce((n, v) => n + (v || 0), 0);   // every item sold, madeleines or not
   const TR_RAMP = ['#111', '#2e2e2e', '#4a4a4a', '#666', '#808080', '#999', '#b0b0b0', '#c4c4c4', '#d6d6d6', '#e8e8e8'];   // one grey per item, biggest first; the donut lists every item
   function trWeeks(rows) {
@@ -9087,6 +9088,77 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
     const list = parts.map((x, i) => `<div class="tr-pie-row"><i style="background:${TR_RAMP[Math.min(i, TR_RAMP.length - 1)]}"></i><span>${esc(nm(x.k))}</span><b>${dollars ? usd(Math.round(x.v)).replace('.00', '') : x.v}</b><em>${Math.round(x.v / tot * 100)}%</em></div>`).join('');
     return `<div class="tr-pie"><svg viewBox="0 0 160 160" role="img" aria-label="Share of sales by item">${paths}<text x="${C}" y="${C - 2}" text-anchor="middle" class="tr-pie-n" style="font-size:${fit}px">${centre}</text><text x="${C}" y="${C + 14}" text-anchor="middle" class="tr-pie-s">${dollars ? qty + ' sold' : 'sold'}</text></svg><div class="tr-pie-list">${list}</div></div>`;
   }
+  // Traffic adjusted: items sold per 100 store transactions. Only days with BOTH a sheet sales row (not a count-derived estimate) and a
+  // transaction count (Store Sales tab) are used, for the items and the transactions alike; a store-day missing either side is left out of both.
+  const TR_MAD = ['Lemon Poppy', 'Sea Salt', 'Maple Pecan', 'Earl Grey', 'Ube', 'Dot'];   // madeleines (never the sheet's `total`, which counts muffins and cookies too)
+  function trTraffic(rows, store) {
+    const tx = new Map(); for (const r of store) if (r.transactions > 0) tx.set(r.location + '|' + r.date, r.transactions);
+    const sold = new Map();   // store-day -> items, summed if a day has more than one row
+    for (const r of rows) {
+      if (r.estimated || (trLoc !== 'Both' && r.location !== trLoc)) continue;
+      const k = r.location + '|' + r.date, o = sold.get(k) || { date: r.date, items: {} };
+      for (const [p, v] of Object.entries(r.rawAmounts || r.amounts || {})) if (p !== 'Unknown' && v > 0) o.items[p] = (o.items[p] || 0) + v;
+      sold.set(k, o);
+    }
+    const weeks = new Map();
+    for (const [k, o] of sold) {
+      if (!tx.has(k)) continue;
+      const w = weekStart(o.date), rec = weeks.get(w) || { start: w, dates: new Set(), tx: 0, items: {}, mad: 0, oth: 0 };
+      rec.dates.add(o.date); rec.tx += tx.get(k);
+      for (const [p, v] of Object.entries(o.items)) { rec.items[p] = (rec.items[p] || 0) + v; if (TR_MAD.includes(p)) rec.mad += v; else rec.oth += v; }
+      weeks.set(w, rec);
+    }
+    const list = [...weeks.values()].sort((a, b) => a.start.localeCompare(b.start));
+    list.forEach(w => { w.days = w.dates.size; w.per = x => w.tx ? x / w.tx * 100 : 0; });
+    return list;
+  }
+  // Stacked bars (madeleines dark, other items grey) or one bar for a single item; days used sit under each bar, short weeks are hatched.
+  function trChart100(weeks, parts, label) {
+    const W = 360, H = 206, L = 26, R = 8, T = 30, B = 40, n = weeks.length, step = (W - L - R) / n, bw = Math.min(34, step * 0.62);
+    const tot = w => parts.reduce((a, q) => a + q.val(w), 0);
+    const max = Math.max(1, ...weeks.map(tot)), top = max <= 4 ? Math.ceil(max) : Math.ceil(max / 2) * 2, y = v => T + (H - T - B) * (1 - v / top);
+    const fmt = v => (Math.round(v * 10) / 10).toString();
+    let g = `<defs><pattern id="trHatch2" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="2" height="5" fill="#fff" fill-opacity=".7"/></pattern></defs>`;
+    for (const t of [0, top / 2, top]) g += `<line x1="${L}" x2="${W - R}" y1="${y(t)}" y2="${y(t)}" stroke="var(--sep, #ddd)" stroke-width="1"/><text x="${L - 3}" y="${y(t) + 4}" text-anchor="end">${fmt(t)}</text>`;
+    if (parts.length > 1) { let lx = W - R; for (const q of parts.slice().reverse()) { const tw = q.name.length * 6 + 16; lx -= tw; g += `<rect x="${lx}" y="3" width="9" height="9" fill="${q.fill}"/><text x="${lx + 13}" y="11">${esc(q.name)}</text>`; } }
+    weeks.forEach((w, i) => {
+      const x = L + step * i + (step - bw) / 2, part = w.days < 7; let acc = 0;
+      for (const q of parts) {
+        const v = q.val(w); if (!v) continue;
+        const y0 = y(acc), y1 = y(acc + v); acc += v;
+        g += `<rect x="${x}" y="${y1}" width="${bw}" height="${y0 - y1}" fill="${q.fill}"${part ? ' fill-opacity=".55"' : ''}/>`;
+        if (part) g += `<rect x="${x}" y="${y1}" width="${bw}" height="${y0 - y1}" fill="url(#trHatch2)" stroke="var(--muted, #6d6660)" stroke-dasharray="3 2" stroke-width="1"/>`;
+      }
+      if (w.days) g += `<text class="tr-tot" x="${x + bw / 2}" y="${y(acc) - 4}" text-anchor="middle">${fmt(acc)}</text>`;
+      g += `<text x="${x + bw / 2}" y="${H - 22}" text-anchor="middle">${esc(trFmtDay(w.start))}</text><text x="${x + bw / 2}" y="${H - 9}" text-anchor="middle">${w.days}/7d</text>`;
+    });
+    return `<svg class="tr-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${esc(label)} sold per 100 transactions per week">${g}</svg>`;
+  }
+  // Last 8 Mon-Sun weeks of traffic data, ready to draw: calendar gaps stay as empty weeks so the bars keep their spacing.
+  function trTrafficData(rows, stores) {
+    const list = trTraffic(rows, stores), by = new Map(list.map(w => [w.start, w]));
+    if (!list.length) return { weeks: [], cols: [] };
+    const last = list[list.length - 1].start, weeks = [];
+    for (let i = 7; i >= 0; i--) { const st = addDays(last, -7 * i), w = by.get(st); if (w) weeks.push(w); else if (weeks.length) weeks.push({ start: st, days: 0, dates: new Set(), tx: 0, items: {}, mad: 0, oth: 0, per: () => 0 }); }
+    const seen = new Set(); for (const w of weeks) for (const [k, v] of Object.entries(w.items)) if (v) seen.add(k);
+    return { weeks, cols: SALES_FLAVORS.filter(p => p !== 'Unknown' && seen.has(p)) };
+  }
+  function trTrafficHtml(tf) {
+    const { weeks, cols } = tf;
+    if (!weeks.length) return '<div class="pn-note">No days with both a sales count and a transaction count for this store yet.</div>';
+    const f1 = v => (Math.round(v * 10) / 10).toFixed(1), item = trItem !== 'All' ? trItem : '';
+    const parts = item ? [{ name: item, fill: '#111', val: w => w.per(w.items[item] || 0) }]
+      : [{ name: 'Madeleines', fill: '#111', val: w => w.per(w.mad) }, { name: 'Other items', fill: '#9a9a9a', val: w => w.per(w.oth) }];
+    const all = w => w.per(w.mad + w.oth);
+    const rowsHtml = weeks.filter(w => w.days).slice().reverse().map(w => {
+      const prev = weeks.slice(0, weeks.indexOf(w)).reverse().find(x => x.days >= 7);
+      return `<tr${w.days < 7 ? ' class="tr-part"' : ''}><td>${esc(trFmtDay(w.start))}<span class="tr-d">${w.days} of 7 days</span><span class="tr-d">${w.tx.toLocaleString('en-US')} txns</span></td><td><b>${f1(all(w))}</b>${trDelta(w, prev, all)}</td><td>${f1(w.per(w.mad))}</td><td>${f1(w.per(w.oth))}</td>${cols.map(p => `<td>${f1(w.per(w.items[p] || 0))}</td>`).join('')}</tr>`;
+    }).join('');
+    return trChart100(weeks, parts, item || 'All items') +
+      `<div class="pn-note">Items sold per 100 transactions on days with both counts. Sales counts come from video OCR and run low, so read the direction, not the exact number. Days used are under each bar; hatched bars have fewer than 7 days and get no change arrow. Change arrows compare a full week with the last full week before it.</div>` +
+      `<h3>Every item per 100 transactions</h3><div class="tr-scroll"><table class="tr-tbl"><tr><th>Week of</th><th>All</th><th>Mad.</th><th>Other</th>${cols.map(p => `<th>${esc(PRODUCT_TOKEN[p])}</th>`).join('')}</tr>${rowsHtml}</table></div>` +
+      `<div class="pn-note">${cols.map(p => `${PRODUCT_TOKEN[p]} ${esc(p)}`).join(' · ')}. Mad. is the madeleines together; Other is every other item.</div>`;
+  }
   function trDelta(cur, prev, val) {
     val = val || (w => w.total);
     if (!prev || prev.days < 7 || cur.days < 7 || !val(prev)) return '';
@@ -9109,6 +9181,8 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
       const shown = p ? (w.amounts[p] || 0) : w.total;
       return add >= 0.5 ? `<span class="tr-d">→ ~${Math.round(shown + add)}</span>` : '';
     };
+    let stores = null;   // per-100 view only: the Store Sales tab's transaction counts
+    if (trView === 'per100') { try { stores = await getStoreSales(); } catch (e) { stores = []; } if (homeTab !== 'trends') return; }
     const { days, weeks } = trWeeks(rows.map(r => r.date >= curWk ? noLump(r) : r));   // this week drops count-derived lumps, same as Sales > This week
     const head = `<div class="tr-bar"><select id="trLoc" data-native>${['La Mirada', 'Stanton', 'Both'].map(l => `<option${l === trLoc ? ' selected' : ''}>${l}</option>`).join('')}</select></div>`;
     let body = '';
@@ -9124,17 +9198,20 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
       const rowsHtml = mk => tbl.map(w => { const prev = weeks.slice(0, weeks.indexOf(w)).reverse().find(x => x.days >= 7); return `<tr${w.days < 7 ? ' class="tr-part"' : ''}><td>${esc(trFmtDay(w.start))}${w.days < 7 ? `<span class="tr-d">${w.days} of 7 days</span>` : ''}</td>${mk(w, prev)}</tr>`; }).join('');
       const pieWeeks = trSpan === 0 ? shown.slice(-1) : trSpan === 1 ? shown.filter(w => w.days >= 7).slice(-1) : weeks.filter(w => w.days >= 7 && w.start < curWk && w.start >= addDays(curWk, -7 * trSpan));   // 0 = the newest (often part-way) week, 1 = the last complete week, 4 / 8 = the complete calendar weeks of the last 4 / 8 before this Monday (a missing week is not replaced by an older one)
       const sel = (id, opts, cur) => `<select id="${id}" data-native>${opts.map(([v, t]) => `<option value="${esc(String(v))}"${String(v) === String(cur) ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select>`;
-      body = `<h3>Share of sales</h3><div class="tr-bar">${sel('trSpanSel', [[0, 'This week so far'], [1, 'Last full week'], [4, 'Last 4 weeks'], [8, 'Last 8 weeks']], trSpan)}${sel('trMetricSel', [['usd', 'By dollars'], ['qty', 'By pieces']], trMetric)}</div>` + (pieWeeks.length ? `<div class="pn-note">${esc(trFmtDay(pieWeeks[0].start))} to ${esc(trFmtDay(pieWeeks[pieWeeks.length - 1].days < 7 ? addDays(pieWeeks[pieWeeks.length - 1].start, pieWeeks[pieWeeks.length - 1].days - 1) : addDays(pieWeeks[pieWeeks.length - 1].start, 6)))}${pieWeeks[pieWeeks.length - 1].days < 7 ? ' (part week)' : ''}</div>` : '') + trPie(pieWeeks, cols) +
-        `<h3>By week</h3><div class="tr-bar">${sel('trItemSel', [['All', 'All items'], ...cols.map(p => [p, p])], trItem)}</div>` +
-        trChartSvg(shown, val, trItem === 'All' ? 'All items' : trItem) +
+      const tf = trView === 'per100' ? trTrafficData(rows, stores) : null;
+      if (tf && trItem !== 'All' && !tf.cols.includes(trItem)) trItem = 'All';
+      const oldWeekly = trChartSvg(shown, val, trItem === 'All' ? 'All items' : trItem) +
         `<h3>Every item by week</h3><div class="tr-scroll"><table class="tr-tbl"><tr><th>Week of</th><th>All</th>${cols.map(p => `<th>${esc(PRODUCT_TOKEN[p])}</th>`).join('')}</tr>` +
         rowsHtml((w, prev) => `<td><b>${w.total}</b>${trDelta(w, prev)}${projTag(w)}</td>${cols.map(p => `<td>${cell(w, p)}</td>`).join('')}`) + `</table></div>` +
         `<div class="pn-note">${cols.map(p => `${PRODUCT_TOKEN[p]} ${esc(p)}`).join(' · ')}. All counts every item sold. Hatched bars are weeks with fewer than 7 days of data, so they are not compared. Change arrows compare a full week with the last full week before it. A dash means the item was not tracked yet that week, not that it sold zero. A ~ means the number was worked out from stock counts, not read from receipts.</div>`;
+      body = `<h3>Share of sales</h3><div class="tr-bar">${sel('trSpanSel', [[0, 'This week so far'], [1, 'Last full week'], [4, 'Last 4 weeks'], [8, 'Last 8 weeks']], trSpan)}${sel('trMetricSel', [['usd', 'By dollars'], ['qty', 'By pieces']], trMetric)}</div>` + (pieWeeks.length ? `<div class="pn-note">${esc(trFmtDay(pieWeeks[0].start))} to ${esc(trFmtDay(pieWeeks[pieWeeks.length - 1].days < 7 ? addDays(pieWeeks[pieWeeks.length - 1].start, pieWeeks[pieWeeks.length - 1].days - 1) : addDays(pieWeeks[pieWeeks.length - 1].start, 6)))}${pieWeeks[pieWeeks.length - 1].days < 7 ? ' (part week)' : ''}</div>` : '') + trPie(pieWeeks, cols) +
+        `<h3>By week</h3><div class="tr-bar">${sel('trViewSel', [['sales', 'Items sold'], ['per100', 'Per 100 transactions']], trView)}</div><div class="tr-bar">${sel('trItemSel', [['All', 'All items'], ...(tf ? tf.cols : cols).map(p => [p, p])], trItem)}</div>` +
+        (tf ? trTrafficHtml(tf) : oldWeekly);
     }
     box.innerHTML = head + body;
     box.querySelector('#trLoc').onchange = e => { trLoc = e.target.value; renderTrends(); };
     const bind = (id, fn) => { const e = box.querySelector('#' + id); if (e) e.onchange = ev => { fn(ev.target.value); renderTrends(); }; };
-    bind('trSpanSel', v => { trSpan = +v; }); bind('trMetricSel', v => { trMetric = v; }); bind('trItemSel', v => { trItem = v; });
+    bind('trSpanSel', v => { trSpan = +v; }); bind('trMetricSel', v => { trMetric = v; }); bind('trItemSel', v => { trItem = v; }); bind('trViewSel', v => { trView = v; });
   }
   // ----- Bake Day: the bake plan's ingredients against what's on hand (Pantry). Shows what to buy, then lets you recount after the bake. -----
   let BAKES = null, bakesBusy = false;   // finished bakes from the Bakes tab: [{id, date, minutes, recipes, note}]
