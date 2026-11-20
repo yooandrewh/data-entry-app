@@ -138,7 +138,7 @@ Costco receipts print a quantity line (`3 @ 4.99`) above an item whose price is 
 - Bake Sheet: per-recipe batches in the Bake Plan, Preview Plan with mixing steps, "Total ingredients needed" split into "Used in 2+ recipes" and "Other". PDF only (`elementsToPdf()`, `bakeSheetPages()` packs two columns per Letter page; `PAGE_H = 846`), plus Print. No image export.
 - Seasonal recipes (`SEASONAL`, `seasonal.v1`) sort first in every recipe/cost dropdown. Recipe cards group ingredients by mixing step (`REC_MAD_STEPS`, or a `steps` / `components` key). Bake temp/time comes from `bsBakeText()`. Maple Pecan has **no bake temperature on file**; don't invent one.
 - Testing recipes live in the Recipes **Test** tab (`REC_TEST`). Kitchen Times (`kitchenTimes.v1`) feed `bakeEffort()`.
-- Invoices (Home → Invoice): sums `delivery` entries per store and date range, excludes goodwill / transfers / deleted rows. Unit prices default to `PRICE_PER_UNIT` ($2.50, retail), with dated changes in `PRICE_FROM` / `unitPriceOn()` (Blueberry Muffin $2.75 before 2026-11-10). Nothing is written to the sheet.
+- Invoices (Home → Invoice): sums `delivery` entries per store and date range, excludes goodwill / transfers / deleted rows. Unit prices default to `PRICE_PER_UNIT` ($2.50, the wholesale price the stores pay; Andrew 2026-11-20), with dated changes in `PRICE_FROM` / `unitPriceOn()` (Blueberry Muffin $2.75 before 2026-11-10). Nothing is written to the sheet.
 - Print and PDF documents use **Archivo** (embedded by `archivoEmbedCss()`; falls back to Arial offline) and `@page { size: letter; margin: .5in }`.
 
 ## Visual language
