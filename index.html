@@ -2675,7 +2675,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
   </div>
 </div>
 
-<div class="ver-badge">v1.188.01 · Nov 20, 11:30 AM PST</div>
+<div class="ver-badge">v1.188.02 · Nov 20, 12:10 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -4210,10 +4210,10 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
     const first = yms.find(k => m[k].sales > 0) || yms[0], shown = yms.filter(k => k >= first), before = yms.filter(k => k < first);
     const S = shown.reduce((a, k) => a + m[k].sales, 0), C = shown.reduce((a, k) => a + m[k].cost.ingredient + m[k].cost.supplies_equipment + m[k].cost.other, 0), B = before.reduce((a, k) => a + m[k].cost.ingredient + m[k].cost.supplies_equipment + m[k].cost.other, 0);
     box.innerHTML = `<div class="pl-bar"><button type="button" class="pl-btn" data-pl="refresh"${PL.busy ? ' disabled' : ''}>${PL.busy ? 'Refreshing…' : 'Refresh'}</button></div>` +
-      `<div class="pl-tot"><div><span>Sales</span><b>${usd(S)}</b></div><div><span>Cost</span><b>${usd(C + B)}</b></div><div><span>${S - C - B < 0 ? 'Loss' : 'Made'}</span><b>${plUsd(Math.abs(S - C - B))}</b></div></div>` +
-      `<div class="pl-note">Sales from ${esc(new Date(+first.slice(0, 4), +first.slice(5) - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }))}, the first month with sales${B ? `. Cost includes ${usd(B)} of start-up spending before then` : ''}. Tap a month, then a line, to see what is behind it.</div>` +
+      `<div class="pl-tot"><div><span>Sales</span><b>${usd(S)}</b></div><div><span>Cost</span><b>${usd(C)}</b></div><div><span>${S - C < 0 ? 'Loss' : 'Made'}</span><b>${plUsd(Math.abs(S - C))}</b></div></div>` +
+      `<div class="pl-note">Sales from ${esc(new Date(+first.slice(0, 4), +first.slice(5) - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }))}, the first month with sales${B ? `. Start-up spending before then (${usd(B)}) is listed at the bottom and not counted` : ''}. Tap a month, then a line, to see what is behind it.</div>` +
       shown.slice().reverse().map(k => plMonthHtml(m[k])).join('') +
-      (B ? `<details class="pl-mo"><summary><span>Start-up costs<small>Before sales began · ${esc(before.map(k => new Date(+k.slice(0, 4), +k.slice(5) - 1, 1).toLocaleDateString('en-US', { month: 'short' })).join(', '))}</small></span><span>${usd(B)}</span></summary><div class="pl-in">${before.slice().reverse().map(k => plMonthHtml(m[k])).join('')}</div></details>` : '') +
+      (B ? `<details class="pl-mo"><summary><span>Start-up costs, not counted<small>Before sales began · ${esc(before.map(k => new Date(+k.slice(0, 4), +k.slice(5) - 1, 1).toLocaleDateString('en-US', { month: 'short' })).join(', '))}</small></span><span>${usd(B)}</span></summary><div class="pl-in">${before.slice().reverse().map(k => plMonthHtml(m[k])).join('')}</div></details>` : '') +
       `<div class="pl-note">Sales are pieces sold times the price, including days estimated from stock counts, so they are a floor. Costs are what was paid, counted in the month it was bought, not the month it was used. Shipping, tax, credits and refunds sit on their own line. Receipts not yet in the sheet are not counted.</div>`;
   }
   function renderProfit() {
