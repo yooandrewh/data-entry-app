@@ -1408,7 +1408,7 @@
   /* long labels wrap instead of pushing the value out of the card */
   .proj-row > .k { min-width: 0; flex: 1 1 auto; overflow-wrap: anywhere; }
   .proj-row > span:last-child:not(.k) { flex: none; }
-  .proj-row .k .cost-hint { display: block; }
+  .proj-row .k .cost-hint { display: block; white-space: normal; overflow-wrap: anywhere; }   /* a long hint under a row label wraps instead of widening the whole page (Costs, 390px, v1.189.10) */
   .cost-in { max-width: 5.5em; }
   .pg-head { align-items: center; padding: 0 0 8px; }
   .pg-t { margin: 0; display: flex; align-items: center; gap: 8px; }
@@ -2675,7 +2675,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
   </div>
 </div>
 
-<div class="ver-badge">v1.189.09 · Nov 20, 5:30 PM PST</div>
+<div class="ver-badge">v1.189.10 · Nov 20, 8:55 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
