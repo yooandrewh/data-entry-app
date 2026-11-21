@@ -2675,7 +2675,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
   </div>
 </div>
 
-<div class="ver-badge">v1.189.08 · Nov 20, 5:00 PM PST</div>
+<div class="ver-badge">v1.189.09 · Nov 20, 5:30 PM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -7422,7 +7422,10 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
     'scone:plainscone': { yield: 797 / 90, toppings: [{ label: 'Strawberry Cream Cheese filling (60g)', refRecipe: { section: 'scone', key: 'strawberrycc', grams: 60 } }] },
     'scone:strawberrycc': { yield: 1368 / 60 },
   };
-  const COST_SECTIONS = [['mad', 'Madeleines', () => activeFirst('mad', REC_MADS)], ['fill', 'Fillings', () => activeFirst('fill', REC_FILLINGS)], ['scone', 'Scones', () => activeFirst('scone', REC_SCONES)], ['other', 'Other', () => activeFirst('other', REC_OTHER)], ['test', 'Testing', () => [...REC_TEST].sort(byName)]];
+  // A recipe with sized versions (Mochi Cheesecake 6 in / 8 in) is costed once per version: each is its own entry in Costs and in Finance's recipe pickers.
+  // The 6 in keeps the recipe's own key; later versions get the key + the version's number of inches.
+  const costVariants = it => it.key === 'mochicheesecake' && it.vers ? it.vers.map((v, i) => ({ ...it, key: i ? it.key + parseInt(v.label) : it.key, name: `${it.name} (${v.label})`, rows: v.rows, yield: v.yield, yieldText: v.yieldText, vers: undefined })) : [it];
+  const COST_SECTIONS = [['mad', 'Madeleines', () => activeFirst('mad', REC_MADS)], ['fill', 'Fillings', () => activeFirst('fill', REC_FILLINGS)], ['scone', 'Scones', () => activeFirst('scone', REC_SCONES)], ['other', 'Other', () => activeFirst('other', REC_OTHER).flatMap(costVariants)], ['test', 'Testing', () => [...REC_TEST].sort(byName)]];
   const costItemKey = (sec, it) => `${sec}:${it.key || it.name}`;
   const costItemName = (sec, it) => sec === 'mad' ? (it.title || it.name + ' Madeleine') : (it.type === 'sable' ? 'Sable Cookies' : it.name);
 
