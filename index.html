@@ -2675,7 +2675,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
   </div>
 </div>
 
-<div class="ver-badge">v1.189.10 · Nov 20, 8:55 PM PST</div>
+<div class="ver-badge">v1.189.11 · Nov 21, 9:05 AM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -7021,9 +7021,9 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
   const recState = { sec: 'mad', idx: 0, batches: 1, madVer: 0, sableType: 0, sableFlav: 0, macScale: 1, macCustom: null, gfSize: 0 };
   function recResetVariants() { recState.batches = 1; recState.madVer = 0; recState.sableType = 0; recState.sableFlav = 0; recState.macScale = 1; recState.macCustom = null; recState.gfSize = 0; }
   // This season's recipes — pulled to the top of every recipe dropdown, and the only ones the bake sheet offers.
-  const SEASONAL_DEFAULT = ['other:pumpkinbundt', 'other:cakepop', 'other:blueberrymuffin', 'mad:Classic', 'mad:Lemon Poppy', 'mad:Maple Pecan', 'other:brownbutterchip'];
+  const SEASONAL_DEFAULT = ['other:pumpkinbundt', 'other:cakepop', 'other:blueberrymuffin', 'mad:Classic', 'mad:Lemon Poppy', 'mad:Maple Pecan', 'other:brownbutterchip', 'other:mochicheesecake8'];
   let SEASONAL = SEASONAL_DEFAULT;   // editable in the app ("This season's recipes"), saved on this device
-  try { const v = JSON.parse(localStorage.getItem('seasonal.v1')); if (Array.isArray(v)) SEASONAL = v.map(k => k === 'mad:Pumpkin Pie Spice' ? 'other:pumpkinmuffin' : k === 'other:flatchookie' ? 'other:brownbutterchip' : k); if (!localStorage.getItem('seasonalOct23')) { SEASONAL = SEASONAL_DEFAULT; localStorage.setItem('seasonal.v1', JSON.stringify(SEASONAL)); localStorage.setItem('seasonalOct23', '1'); } if (!localStorage.getItem('seasonalNov7')) { SEASONAL = SEASONAL.filter(k => k !== 'other:earlgreymini'); localStorage.setItem('seasonal.v1', JSON.stringify(SEASONAL)); localStorage.setItem('seasonalNov7', '1'); } } catch {}   // 2026-10-23: one-time reset to the new season (bundt, Earl Grey, cake pop, blueberry, 3 madeleines, chookie)
+  try { const v = JSON.parse(localStorage.getItem('seasonal.v1')); if (Array.isArray(v)) SEASONAL = v.map(k => k === 'mad:Pumpkin Pie Spice' ? 'other:pumpkinmuffin' : k === 'other:flatchookie' ? 'other:brownbutterchip' : k); if (!localStorage.getItem('seasonalOct23')) { SEASONAL = SEASONAL_DEFAULT; localStorage.setItem('seasonal.v1', JSON.stringify(SEASONAL)); localStorage.setItem('seasonalOct23', '1'); } if (!localStorage.getItem('seasonalNov21')) { if (!SEASONAL.includes('other:mochicheesecake8')) SEASONAL = [...SEASONAL, 'other:mochicheesecake8']; localStorage.setItem('seasonal.v1', JSON.stringify(SEASONAL)); localStorage.setItem('seasonalNov21', '1'); } if (!localStorage.getItem('seasonalNov7')) { SEASONAL = SEASONAL.filter(k => k !== 'other:earlgreymini'); localStorage.setItem('seasonal.v1', JSON.stringify(SEASONAL)); localStorage.setItem('seasonalNov7', '1'); } } catch {}   // 2026-10-23: one-time reset to the new season (bundt, Earl Grey, cake pop, blueberry, 3 madeleines, chookie)
   const seasonRank = (sec, it) => { const i = SEASONAL.indexOf(`${sec}:${it.key || it.name}`); return i < 0 ? 99 : i; };
   const isSeasonal = (sec, it) => seasonRank(sec, it) < 99;
   // Active items (Andrew, 2026-10-13): Maple Pecan, Lemon Poppy, Sea Salt (the Classic recipe) and the Pumpkin + Blueberry muffins.
@@ -7424,7 +7424,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
   };
   // A recipe with sized versions (Mochi Cheesecake 6 in / 8 in) is costed once per version: each is its own entry in Costs and in Finance's recipe pickers.
   // The 6 in keeps the recipe's own key; later versions get the key + the version's number of inches.
-  const costVariants = it => it.key === 'mochicheesecake' && it.vers ? it.vers.map((v, i) => ({ ...it, key: i ? it.key + parseInt(v.label) : it.key, name: `${it.name} (${v.label})`, rows: v.rows, yield: v.yield, yieldText: v.yieldText, vers: undefined })) : [it];
+  const costVariants = it => it.key === 'mochicheesecake' && it.vers ? it.vers.map((v, i) => ({ ...it, key: i ? it.key + parseInt(v.label) : it.key, name: `${it.name} (${v.label})`, rows: v.rows, yield: v.yield, yieldText: v.yieldText, components: v.components, notes: v.notes, vers: undefined })) : [it];
   const COST_SECTIONS = [['mad', 'Madeleines', () => activeFirst('mad', REC_MADS)], ['fill', 'Fillings', () => activeFirst('fill', REC_FILLINGS)], ['scone', 'Scones', () => activeFirst('scone', REC_SCONES)], ['other', 'Other', () => activeFirst('other', REC_OTHER).flatMap(costVariants)], ['test', 'Testing', () => [...REC_TEST].sort(byName)]];
   const costItemKey = (sec, it) => `${sec}:${it.key || it.name}`;
   const costItemName = (sec, it) => sec === 'mad' ? (it.title || it.name + ' Madeleine') : (it.type === 'sable' ? 'Sable Cookies' : it.name);
