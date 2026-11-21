@@ -2675,7 +2675,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
   </div>
 </div>
 
-<div class="ver-badge">v1.189.11 · Nov 21, 9:05 AM PST</div>
+<div class="ver-badge">v1.189.12 · Nov 21, 9:40 AM PST</div>
 <button type="button" id="refreshBtn" aria-label="Refresh the app"></button>
 
 <!-- ===== Tab bar ===== -->
@@ -4989,7 +4989,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
         if (r && d <= today) { for (const p of PRODUCTS) items[p].actual += storeSale(loc, p, r); continue; }
         out.projDays.add(d);
         const ahead = Math.max(0, Math.round((parseEntryDate(d) - parseEntryDate(latest)) / 86400000));
-        for (const p of PRODUCTS) { const v = st.dowRate[p][isWe(d) ? 'we' : 'wd'] * pace * Math.pow(g, ahead / 7); items[p].proj += v; out.pieces += v; out.money += v * unitPriceOn(p, d); }
+        for (const p of PRODUCTS) { const v = st.dowRate[p][isWe(d) ? 'we' : 'wd'] * pace * Math.pow(growthOf(p, g), ahead / 7); items[p].proj += v; out.pieces += v; out.money += v * unitPriceOn(p, d); }
       }
       out.stores.push({ loc, items, pace, have });
       if (have >= 2) out.pace.push(pace);
@@ -5263,12 +5263,12 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
     for (const p of PRODUCTS) {
       const dr = stats.dowRate[p] || { wd: stats.rate[p], we: stats.rate[p] };
       if (!(dr.wd > 0 || dr.we > 0)) { days[p] = lo[p] = hi[p] = Infinity; continue; }
-      const base = depleteDow(stats.stock[p], dr, 1, stats.asOf, stats.growth);
+      const base = depleteDow(stats.stock[p], dr, 1, stats.asOf, growthOf(p, stats.growth));
       const n = Math.max(1, base === Infinity ? 1 : (base || 1));
       const m = Math.min(0.6, FCAST_Z * cv / Math.sqrt(n));
       days[p] = base;
-      lo[p] = depleteDow(stats.stock[p], dr, 1 + m, stats.asOf, stats.growth);   // faster sales → sooner
-      hi[p] = depleteDow(stats.stock[p], dr, 1 - m, stats.asOf, stats.growth);   // slower → later
+      lo[p] = depleteDow(stats.stock[p], dr, 1 + m, stats.asOf, growthOf(p, stats.growth));   // faster sales → sooner
+      hi[p] = depleteDow(stats.stock[p], dr, 1 - m, stats.asOf, growthOf(p, stats.growth));   // slower → later
       if (base < firstD) { firstD = base; firstP = p; firstLo = lo[p]; firstHi = hi[p]; }
     }
     return { days, lo, hi, firstP, firstD, firstLo, firstHi };
@@ -5279,6 +5279,9 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
   // multiplier (1 = flat) that Forecast/Plan compound day-by-day.
   // v1.145.00: Andrew's rule is a flat +1.2%/week on the recent daily rate. Set FLAT_GROWTH = null for the measured trend.
   const FLAT_GROWTH = 0.012;
+  // Per-item override (Andrew 2026-11-21): Chookie grows 50% a month, compounded daily (weekly multiplier 1.5^(7/30) = +9.9%/wk). Everything else keeps the store growth.
+  const PRODUCT_GROWTH = { Chookie: Math.pow(1.5, 7 / 30) };
+  const growthOf = (p, g) => PRODUCT_GROWTH[p] || g || 1;
   function weeklyGrowth(locSales) {
     if (FLAT_GROWTH != null) return 1 + FLAT_GROWTH;
     const wk =weeklySeries(locSales.map(s => ({
@@ -5527,8 +5530,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
     const end = parseEntryDate(targetYmd);
     for (let d = parseEntryDate(startYmd); d <= end; d.setDate(d.getDate() + 1)) {
       const isWe = [0, 6].includes(d.getDay());
-      const f = Math.pow(g, nDays / 7);   // compound the weekly sales trend
-      for (const p of PRODUCTS) demand[p] += (isWe ? dowr.rate[p].we : dowr.rate[p].wd) * f;
+      for (const p of PRODUCTS) demand[p] += (isWe ? dowr.rate[p].we : dowr.rate[p].wd) * Math.pow(growthOf(p, g), nDays / 7);   // compound the weekly sales trend
       nDays++; if (isWe) nWe++;
     }
     return { demand, nDays, nWe };
@@ -5548,9 +5550,8 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
     for (let d = parseEntryDate(startYmd); d <= end; d.setDate(d.getDate() + 1))
       days.push({ ymd: ymdOf(d), dow: d.getDay(), we: [0, 6].includes(d.getDay()) });
     const demandOf = (day, idx) => {
-      const f = Math.pow(g, idx / 7);
       const out = ZERO();
-      for (const p of PRODUCTS) out[p] = (day.we ? dowr.rate[p].we : dowr.rate[p].wd) * f;
+      for (const p of PRODUCTS) out[p] = (day.we ? dowr.rate[p].we : dowr.rate[p].wd) * Math.pow(growthOf(p, g), idx / 7);
       return out;
     };
     const m = Math.min(0.6, FCAST_Z * (st.dailyCV || 0) / Math.sqrt(Math.max(1, days.length)));
@@ -6106,7 +6107,7 @@ summary.db-head, details > summary.db-head { min-height: 44px; box-sizing: borde
         let need = 0;
         for (let i = 1; i <= hz; i++) {
           const dt = parseEntryDate(addDays(today, i)), we = [0, 6].includes(dt.getDay());
-          const dayN = (we ? c.dowr.rate[p].we : c.dowr.rate[p].wd) * Math.pow(c.st.growth || 1, Math.min(i - 1, 28) / 7);
+          const dayN = (we ? c.dowr.rate[p].we : c.dowr.rate[p].wd) * Math.pow(growthOf(p, c.st.growth), (PRODUCT_GROWTH[p] ? i - 1 : Math.min(i - 1, 28)) / 7);   // the 4-week cap is for the store trend only; a set per-item growth runs the whole span
           need += dayN; if (i <= days) r.sales += dayN;   // r.sales: expected pieces sold over the chosen span only (the Lemon Poppy minimum stock reaches further)
         }
         const m = Math.min(0.6, FCAST_Z * (c.st.dailyCV || 0) / Math.sqrt(hz)), n = need * Math.max(STOCK_TARGET, 1 + m);
